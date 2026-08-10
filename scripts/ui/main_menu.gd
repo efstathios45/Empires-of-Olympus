@@ -219,6 +219,22 @@ func _framed_image(path: String, size: Vector2) -> Control:
 	frame.add_child(tr)
 	return frame
 
+## The selection cards were authored for a cream marble frame (panel_card.tres)
+## that the export dropped, which left dark body ink on a dark void. Restore the
+## intended parchment so the lore reads, but only when that art is missing.
+func _card_fallback_style() -> StyleBoxFlat:
+	var sb := StyleBoxFlat.new()
+	sb.bg_color = Color(0.93, 0.90, 0.82)
+	sb.set_border_width_all(2)
+	sb.border_color = Color(0.72, 0.58, 0.24, 0.9)
+	sb.set_corner_radius_all(6)
+	sb.set_content_margin_all(10)
+	return sb
+
+func _dress_card(card: PanelContainer) -> void:
+	if not ResourceLoader.exists("res://assets/ui/panel_card.tres"):
+		card.add_theme_stylebox_override("panel", _card_fallback_style())
+
 ## "env_greek_temple" -> "Greek Temple".
 func _pretty_name(path: String) -> String:
 	var base := path.get_file().get_basename()
@@ -409,6 +425,7 @@ func _build_empire_step() -> void:
 
 func _make_empire_card(id: String, data: Dictionary) -> PanelContainer:
 	var card := Kit.make_card_panel()
+	_dress_card(card)
 	card.custom_minimum_size = Vector2(CARD_W, EMPIRE_CARD_H)
 	card.size_flags_vertical = Control.SIZE_SHRINK_CENTER
 	card.mouse_filter = Control.MOUSE_FILTER_PASS
@@ -490,6 +507,7 @@ func _build_class_step() -> void:
 
 func _make_class_card(id: String, data: Dictionary) -> PanelContainer:
 	var card := Kit.make_card_panel()
+	_dress_card(card)
 	card.custom_minimum_size = Vector2(CARD_W, CLASS_CARD_H)
 	card.size_flags_vertical = Control.SIZE_SHRINK_CENTER
 	card.mouse_filter = Control.MOUSE_FILTER_PASS
@@ -574,7 +592,7 @@ func _show_gallery_overlay() -> void:
 	_overlay.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
 
 	var dim := Kit.make_dimmer()
-	dim.color = Color(0.02, 0.015, 0.03, 0.9)
+	dim.color = Color(0.03, 0.02, 0.04, 0.985)
 	_overlay.add_child(dim)
 	dim.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
 
@@ -596,10 +614,10 @@ func _show_gallery_overlay() -> void:
 	v.add_child(scroll)
 
 	var grid := GridContainer.new()
-	grid.columns = 5
-	grid.add_theme_constant_override("h_separation", 16)
-	grid.add_theme_constant_override("v_separation", 16)
-	grid.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	grid.columns = 6
+	grid.add_theme_constant_override("h_separation", 14)
+	grid.add_theme_constant_override("v_separation", 14)
+	grid.size_flags_horizontal = Control.SIZE_SHRINK_CENTER
 	scroll.add_child(grid)
 	for path in GALLERY:
 		grid.add_child(_gallery_tile(path))
@@ -613,7 +631,7 @@ func _show_gallery_overlay() -> void:
 func _gallery_tile(path: String) -> Control:
 	var col := VBoxContainer.new()
 	col.add_theme_constant_override("separation", 4)
-	var img := _framed_image(path, Vector2(200, 200))
+	var img := _framed_image(path, Vector2(150, 150))
 	if img != null:
 		col.add_child(img)
 	col.add_child(Kit.make_hud_label(
