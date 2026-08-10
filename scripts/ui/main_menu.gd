@@ -592,7 +592,7 @@ func _show_gallery_overlay() -> void:
 	_overlay.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
 
 	var dim := Kit.make_dimmer()
-	dim.color = Color(0.03, 0.02, 0.04, 0.985)
+	dim.color = Color(0.03, 0.02, 0.04, 1.0)
 	_overlay.add_child(dim)
 	dim.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
 
