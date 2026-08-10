@@ -1,0 +1,1687 @@
+{
+  "version": 1,
+  "assets": {
+    "assets/ui/title_poster.webp": {
+      "tool": "mcp__game-assets__generate_2d_images_batch",
+      "primary_prompt": "mythological Ancient Greece with three rival city-states under a divine golden sky, marble temples, bronze warriors, and cursed glowing oracle stones, Fantasy Action RPG, epic and sunlit with divine grandeur, realistic, Spartan hoplite with bronze spear and crimson cloak, Athenian marble Acropolis silhouette, glowing cracked oracle stone floating above ruins, Mediterranean cliffs and olive groves, dramatic god rays through clouds",
+      "raw_input": {
+        "type": "title_poster",
+        "gameName": "Empires of Olympus",
+        "theme": "mythological Ancient Greece with three rival city-states under a divine golden sky, marble temples, bronze warriors, and cursed glowing oracle stones",
+        "genre": "Fantasy Action RPG",
+        "style": "realistic",
+        "mood": "epic and sunlit with divine grandeur",
+        "elements": [
+          "Spartan hoplite with bronze spear and crimson cloak",
+          "Athenian marble Acropolis silhouette",
+          "glowing cracked oracle stone floating above ruins",
+          "Mediterranean cliffs and olive groves",
+          "dramatic god rays through clouds"
+        ]
+      },
+      "tool_use_id": "call-9c7536df-ba26-4f9e-82ba-5982fd5567c8-3",
+      "updated_at": "2026-08-07T21:07:52.823891"
+    },
+    "assets/characters/spartan_hoplite/spartan_hoplite.glb": {
+      "tool": "mcp__game-3d-models__generate_characters_batch",
+      "primary_prompt": "Full body T-pose ancient Greek Spartan hoplite warrior, muscular athletic build, polished bronze Corinthian helmet with tall red horsehair crest, bronze muscle cuirass armor, crimson red cloak draped over shoulders, leather pteruges skirt, bronze greaves, empty bare hands, weathered skin, high fidelity fantasy game character like Final Fantasy XIV quality, realistic proportions, complete silhouette head to toe standing upright",
+      "raw_input": {
+        "name": "spartan_hoplite",
+        "prompt": "Full body T-pose ancient Greek Spartan hoplite warrior, muscular athletic build, polished bronze Corinthian helmet with tall red horsehair crest, bronze muscle cuirass armor, crimson red cloak draped over shoulders, leather pteruges skirt, bronze greaves, empty bare hands, weathered skin, high fidelity fantasy game character like Final Fantasy XIV quality, realistic proportions, complete silhouette head to toe standing upright",
+        "style": "realistic"
+      },
+      "tool_use_id": "call-9c7536df-ba26-4f9e-82ba-5982fd5567c8-4",
+      "updated_at": "2026-08-07T21:07:59.458894"
+    },
+    "assets/characters/minotaur_boss/minotaur_boss.glb": {
+      "tool": "mcp__game-3d-models__generate_characters_batch",
+      "primary_prompt": "Full body T-pose mythological Minotaur boss monster, massive bull head with curved horns, muscular humanoid body covered in dark brown fur and bronze ritual armor plates, empty bare clawed hands, thick legs with hoofed feet, scarred battle-worn hide, high fidelity fantasy game enemy like Final Fantasy XIV quality, complete silhouette head to toe standing upright",
+      "raw_input": {
+        "name": "minotaur_boss",
+        "prompt": "Full body T-pose mythological Minotaur boss monster, massive bull head with curved horns, muscular humanoid body covered in dark brown fur and bronze ritual armor plates, empty bare clawed hands, thick legs with hoofed feet, scarred battle-worn hide, high fidelity fantasy game enemy like Final Fantasy XIV quality, complete silhouette head to toe standing upright",
+        "style": "realistic"
+      },
+      "tool_use_id": "call-9c7536df-ba26-4f9e-82ba-5982fd5567c8-4",
+      "updated_at": "2026-08-07T21:07:59.458894"
+    },
+    "assets/environment/buildings/athena_temple.glb": {
+      "tool": "mcp__game-3d-models__generate_environment_batch",
+      "primary_prompt": "Ancient Greek temple dedicated to Athena, white marble Doric columns, triangular pediment with sculpted reliefs, wide stone steps, golden accents, weathered but majestic Mediterranean ruins, high detail fantasy game landmark",
+      "raw_input": {
+        "name": "athena_temple",
+        "prompt": "Ancient Greek temple dedicated to Athena, white marble Doric columns, triangular pediment with sculpted reliefs, wide stone steps, golden accents, weathered but majestic Mediterranean ruins, high detail fantasy game landmark",
+        "category": "buildings",
+        "style": "realistic"
+      },
+      "tool_use_id": "call-9c7536df-ba26-4f9e-82ba-5982fd5567c8-5",
+      "updated_at": "2026-08-07T21:08:04.531216"
+    },
+    "assets/environment/vegetation/olive_tree_ancient.glb": {
+      "tool": "mcp__game-3d-models__generate_environment_batch",
+      "primary_prompt": "Ancient gnarled Greek olive tree with twisted silver-green trunk, sparse olive canopy, Mediterranean sacred grove tree, high detail",
+      "raw_input": {
+        "name": "olive_tree_ancient",
+        "prompt": "Ancient gnarled Greek olive tree with twisted silver-green trunk, sparse olive canopy, Mediterranean sacred grove tree, high detail",
+        "category": "vegetation",
+        "style": "realistic"
+      },
+      "tool_use_id": "call-9c7536df-ba26-4f9e-82ba-5982fd5567c8-5",
+      "updated_at": "2026-08-07T21:08:04.531216"
+    },
+    "assets/props/weapons/dory_spear.glb": {
+      "tool": "mcp__game-3d-models__generate_weapons_batch",
+      "primary_prompt": "Ancient Greek dory spear, long polished ash wood shaft, leaf-shaped bronze spearhead with blood groove, bronze butt-spike sauroter, leather grip wrap, legendary warrior weapon, clean product view",
+      "raw_input": {
+        "name": "dory_spear",
+        "prompt": "Ancient Greek dory spear, long polished ash wood shaft, leaf-shaped bronze spearhead with blood groove, bronze butt-spike sauroter, leather grip wrap, legendary warrior weapon, clean product view",
+        "weaponType": "melee"
+      },
+      "tool_use_id": "call-9c7536df-ba26-4f9e-82ba-5982fd5567c8-6",
+      "updated_at": "2026-08-07T21:08:09.223023"
+    },
+    "assets/props/weapons/xiphos_sword.glb": {
+      "tool": "mcp__game-3d-models__generate_weapons_batch",
+      "primary_prompt": "Ancient Greek xiphos short sword, double-edged leaf-shaped iron blade, ornate bronze crossguard with lion motifs, leather-wrapped hilt, mythic warrior sidearm",
+      "raw_input": {
+        "name": "xiphos_sword",
+        "prompt": "Ancient Greek xiphos short sword, double-edged leaf-shaped iron blade, ornate bronze crossguard with lion motifs, leather-wrapped hilt, mythic warrior sidearm",
+        "weaponType": "melee"
+      },
+      "tool_use_id": "call-9c7536df-ba26-4f9e-82ba-5982fd5567c8-6",
+      "updated_at": "2026-08-07T21:08:09.223023"
+    },
+    "assets/props/items/oracle_stone.glb": {
+      "tool": "mcp__game-3d-models__generate_props_batch",
+      "primary_prompt": "Cursed Greek oracle stone, cracked dark basalt meteorite boulder with glowing cyan runes carved into the surface, sitting on cracked marble base, divine corruption artifact",
+      "raw_input": {
+        "category": "items",
+        "name": "oracle_stone",
+        "prompt": "Cursed Greek oracle stone, cracked dark basalt meteorite boulder with glowing cyan runes carved into the surface, sitting on cracked marble base, divine corruption artifact",
+        "style": "realistic"
+      },
+      "tool_use_id": "mcp__game_3d_models__generate_props_batch_39",
+      "updated_at": "2026-08-10T10:56:09.764617"
+    },
+    "assets/props/items/hoplon_shield.glb": {
+      "tool": "mcp__game-3d-models__generate_props_batch",
+      "primary_prompt": "Ancient Greek aspis hoplon round shield, large bronze face with crimson lambda Lambda of Sparta emblem, wooden core rim, leather arm straps on back, battle-scarred heroic shield",
+      "raw_input": {
+        "name": "hoplon_shield",
+        "category": "items",
+        "prompt": "Ancient Greek aspis hoplon round shield, large bronze face with crimson lambda Lambda of Sparta emblem, wooden core rim, leather arm straps on back, battle-scarred heroic shield",
+        "style": "realistic"
+      },
+      "tool_use_id": "call-9c7536df-ba26-4f9e-82ba-5982fd5567c8-7",
+      "updated_at": "2026-08-07T21:08:14.347413"
+    },
+    "assets/environment/structures/greek_ruins_column.glb": {
+      "tool": "mcp__game-3d-models__generate_environment_batch",
+      "primary_prompt": "Broken ancient Greek marble column ruins, classical Doric pillar fragment, weathered white stone, archaeological ruins piece",
+      "raw_input": {
+        "name": "greek_ruins_column",
+        "prompt": "Broken ancient Greek marble column ruins, classical Doric pillar fragment, weathered white stone, archaeological ruins piece",
+        "category": "structures",
+        "style": "realistic"
+      },
+      "tool_use_id": "call-ee1773c4-8b5d-494c-b98f-632d5b57401d-8",
+      "updated_at": "2026-08-07T21:08:30.982880"
+    },
+    "assets/environment/structures/marble_statue_base.glb": {
+      "tool": "mcp__game-3d-models__generate_environment_batch",
+      "primary_prompt": "Ancient Greek stone pedestal plinth for statues, carved marble base with classical moldings",
+      "raw_input": {
+        "name": "marble_statue_base",
+        "prompt": "Ancient Greek stone pedestal plinth for statues, carved marble base with classical moldings",
+        "category": "structures",
+        "style": "realistic"
+      },
+      "tool_use_id": "call-ee1773c4-8b5d-494c-b98f-632d5b57401d-8",
+      "updated_at": "2026-08-07T21:08:30.982880"
+    },
+    "assets/environment/vegetation/cypress_tree.glb": {
+      "tool": "mcp__game-3d-models__generate_environment_batch",
+      "primary_prompt": "Tall Mediterranean cypress tree, dark green columnar foliage, classic Greek landscape tree",
+      "raw_input": {
+        "name": "cypress_tree",
+        "prompt": "Tall Mediterranean cypress tree, dark green columnar foliage, classic Greek landscape tree",
+        "category": "vegetation",
+        "style": "realistic"
+      },
+      "tool_use_id": "call-ee1773c4-8b5d-494c-b98f-632d5b57401d-8",
+      "updated_at": "2026-08-07T21:08:30.982880"
+    },
+    "assets/environment/rocks/greek_rock_cliff.glb": {
+      "tool": "mcp__game-3d-models__generate_environment_batch",
+      "primary_prompt": "Large sun-bleached Mediterranean limestone rock outcrop, cliff boulder for Greek hillside",
+      "raw_input": {
+        "name": "greek_rock_cliff",
+        "prompt": "Large sun-bleached Mediterranean limestone rock outcrop, cliff boulder for Greek hillside",
+        "category": "rocks",
+        "style": "realistic"
+      },
+      "tool_use_id": "call-ee1773c4-8b5d-494c-b98f-632d5b57401d-8",
+      "updated_at": "2026-08-07T21:08:30.982880"
+    },
+    "assets/props/containers/bronze_amphora.glb": {
+      "tool": "mcp__game-3d-models__generate_props_batch",
+      "primary_prompt": "Ancient Greek bronze amphora vase with two handles, ornate classical pattern, museum quality prop",
+      "raw_input": {
+        "name": "bronze_amphora",
+        "category": "containers",
+        "prompt": "Ancient Greek bronze amphora vase with two handles, ornate classical pattern, museum quality prop",
+        "style": "realistic"
+      },
+      "tool_use_id": "call-ee1773c4-8b5d-494c-b98f-632d5b57401d-9",
+      "updated_at": "2026-08-07T21:08:36.245921"
+    },
+    "assets/props/furniture/marble_altar.glb": {
+      "tool": "mcp__game-3d-models__generate_props_batch",
+      "primary_prompt": "Ancient Greek stone sacrificial altar, rectangular marble block with carved reliefs and bronze fire bowl on top",
+      "raw_input": {
+        "category": "furniture",
+        "name": "marble_altar",
+        "prompt": "Ancient Greek stone sacrificial altar, rectangular marble block with carved reliefs and bronze fire bowl on top",
+        "style": "realistic"
+      },
+      "tool_use_id": "mcp__game_3d_models__generate_props_batch_39",
+      "updated_at": "2026-08-10T10:56:09.764617"
+    },
+    "assets/props/containers/treasure_chest_bronze.glb": {
+      "tool": "mcp__game-3d-models__generate_props_batch",
+      "primary_prompt": "Ornate bronze and wood treasure chest with Greek meander patterns, hinged lid closed",
+      "raw_input": {
+        "name": "treasure_chest_bronze",
+        "category": "containers",
+        "prompt": "Ornate bronze and wood treasure chest with Greek meander patterns, hinged lid closed",
+        "style": "realistic"
+      },
+      "tool_use_id": "call-ee1773c4-8b5d-494c-b98f-632d5b57401d-9",
+      "updated_at": "2026-08-07T21:08:36.245921"
+    },
+    "assets/textures/stone/white_marble.png": {
+      "tool": "mcp__game-assets__generate_textures_batch",
+      "primary_prompt": "Polished white Carrara marble with subtle grey veins, seamless tileable surface for Greek temples",
+      "raw_input": {
+        "name": "white_marble",
+        "prompt": "Polished white Carrara marble with subtle grey veins, seamless tileable surface for Greek temples",
+        "category": "stone",
+        "style": "realistic",
+        "size": "1024"
+      },
+      "tool_use_id": "call-ee1773c4-8b5d-494c-b98f-632d5b57401d-10",
+      "updated_at": "2026-08-07T21:08:37.068420"
+    },
+    "assets/textures/metal/bronze_metal.png": {
+      "tool": "mcp__game-assets__generate_textures_batch",
+      "primary_prompt": "Polished ancient bronze metal with green patina edges, seamless metal surface",
+      "raw_input": {
+        "name": "bronze_metal",
+        "prompt": "Polished ancient bronze metal with green patina edges, seamless metal surface",
+        "category": "metal",
+        "style": "realistic",
+        "size": "1024"
+      },
+      "tool_use_id": "call-ee1773c4-8b5d-494c-b98f-632d5b57401d-10",
+      "updated_at": "2026-08-07T21:08:37.068420"
+    },
+    "assets/textures/nature/mediterranean_ground.png": {
+      "tool": "mcp__game-assets__generate_textures_batch",
+      "primary_prompt": "Dry Mediterranean dirt path with sparse grass and small stones, sunlit seamless ground",
+      "raw_input": {
+        "name": "mediterranean_ground",
+        "prompt": "Dry Mediterranean dirt path with sparse grass and small stones, sunlit seamless ground",
+        "category": "nature",
+        "style": "realistic",
+        "size": "1024"
+      },
+      "tool_use_id": "call-ee1773c4-8b5d-494c-b98f-632d5b57401d-10",
+      "updated_at": "2026-08-07T21:08:37.068420"
+    },
+    "assets/audio/music/music_exploration_olympus_exploration.mp3": {
+      "tool": "mcp__game-audio__generate_audio_batch",
+      "primary_prompt": "epic orchestral Mediterranean fantasy with lyre, aulos flutes, and heroic brass, majestic and adventurous, moderate 100 BPM",
+      "raw_input": {
+        "type": "music",
+        "name": "olympus_exploration",
+        "gameState": "exploration",
+        "style": "epic orchestral Mediterranean fantasy with lyre, aulos flutes, and heroic brass",
+        "mood": "majestic and adventurous",
+        "tempo": "moderate 100 BPM",
+        "instruments": "lyre, flute, brass, strings, soft choir",
+        "durationSeconds": 30
+      },
+      "tool_use_id": "call-ee1773c4-8b5d-494c-b98f-632d5b57401d-11",
+      "updated_at": "2026-08-07T21:08:45.859797"
+    },
+    "assets/audio/sfx/weapon/weapon_spear_clash.mp3": {
+      "tool": "mcp__game-audio__generate_audio_batch",
+      "primary_prompt": "Heavy bronze spear striking a metal shield, sharp metallic ring with short echo",
+      "raw_input": {
+        "type": "sfx",
+        "name": "spear_clash",
+        "category": "weapon",
+        "description": "Heavy bronze spear striking a metal shield, sharp metallic ring with short echo",
+        "duration": 1.2
+      },
+      "tool_use_id": "call-ee1773c4-8b5d-494c-b98f-632d5b57401d-11",
+      "updated_at": "2026-08-07T21:08:45.859797"
+    },
+    "assets/audio/sfx/environment/environment_oracle_pulse.mp3": {
+      "tool": "mcp__game-audio__generate_audio_batch",
+      "primary_prompt": "Mysterious magical stone pulse with deep resonant hum and crystalline chime",
+      "raw_input": {
+        "type": "sfx",
+        "name": "oracle_pulse",
+        "category": "environment",
+        "description": "Mysterious magical stone pulse with deep resonant hum and crystalline chime",
+        "duration": 2
+      },
+      "tool_use_id": "call-ee1773c4-8b5d-494c-b98f-632d5b57401d-11",
+      "updated_at": "2026-08-07T21:08:45.859797"
+    },
+    "assets/characters/harpy_enemy/harpy_enemy.glb": {
+      "tool": "mcp__game-3d-models__generate_characters_batch",
+      "primary_prompt": "Full body T-pose mythological harpy enemy, winged woman creature with bird talons and feathered wings, fierce face, empty bare hands and claws, tattered cloth wraps, high fidelity fantasy game enemy, complete silhouette head to toe standing upright",
+      "raw_input": {
+        "name": "harpy_enemy",
+        "prompt": "Full body T-pose mythological harpy enemy, winged woman creature with bird talons and feathered wings, fierce face, empty bare hands and claws, tattered cloth wraps, high fidelity fantasy game enemy, complete silhouette head to toe standing upright",
+        "style": "realistic"
+      },
+      "tool_use_id": "call-ee1773c4-8b5d-494c-b98f-632d5b57401d-12",
+      "updated_at": "2026-08-07T21:08:50.872106"
+    },
+    "assets/ui/loading_screen.png": {
+      "tool": "mcp__game-assets__generate_2d_images_batch",
+      "primary_prompt": "sunlit marble temple steps overlooking the Aegean sea with olive groves and distant city-state walls under a golden divine sky, realistic",
+      "raw_input": {
+        "type": "loading_screen",
+        "gameName": "Empires of Olympus",
+        "theme": "sunlit marble temple steps overlooking the Aegean sea with olive groves and distant city-state walls under a golden divine sky",
+        "style": "realistic",
+        "includeProgressBar": true
+      },
+      "tool_use_id": "call-ee17afb1-f921-4f69-a5f8-cce5dddd343c-24",
+      "updated_at": "2026-08-07T21:09:42.400766"
+    },
+    "assets/textures/backgrounds/sparta_agora.png": {
+      "tool": "mcp__game-assets__generate_2d_images_batch",
+      "primary_prompt": "Spartan training yard with bronze weapons racks, stone barracks, crimson banners, Mediterranean mountains behind, martial and austere, realistic, bronze shields, stone columns, crimson banners, dusty training ground",
+      "raw_input": {
+        "type": "background",
+        "name": "sparta_agora",
+        "theme": "Spartan training yard with bronze weapons racks, stone barracks, crimson banners, Mediterranean mountains behind",
+        "style": "realistic",
+        "mood": "martial and austere",
+        "perspective": "isometric",
+        "elements": [
+          "bronze shields",
+          "stone columns",
+          "crimson banners",
+          "dusty training ground"
+        ]
+      },
+      "tool_use_id": "call-ee17afb1-f921-4f69-a5f8-cce5dddd343c-24",
+      "updated_at": "2026-08-07T21:09:42.400766"
+    },
+    "assets/characters/satyr_enemy/satyr_enemy.glb": {
+      "tool": "mcp__game-3d-models__generate_characters_batch",
+      "primary_prompt": "Full body T-pose mythological Greek satyr creature, humanoid torso with goat legs and small horns, wild hair, mischievous fierce expression, empty bare hands, rustic leather straps, fantasy game enemy, complete silhouette head to toe standing upright",
+      "raw_input": {
+        "name": "satyr_enemy",
+        "prompt": "Full body T-pose mythological Greek satyr creature, humanoid torso with goat legs and small horns, wild hair, mischievous fierce expression, empty bare hands, rustic leather straps, fantasy game enemy, complete silhouette head to toe standing upright",
+        "style": "realistic"
+      },
+      "tool_use_id": "mcp__game_3d_models__generate_characters_batch_36",
+      "updated_at": "2026-08-10T10:42:25.791920"
+    },
+    "assets/characters/wolf_enemy/wolf_enemy.glb": {
+      "tool": "mcp__game-3d-models__generate_characters_batch",
+      "primary_prompt": "Full body quadruped Greek wild wolf on all fours, large fierce grey-brown wolf with scarred muzzle, standing pose side view, fantasy game enemy, complete silhouette head to tail",
+      "raw_input": {
+        "name": "wolf_enemy",
+        "prompt": "Full body quadruped Greek wild wolf on all fours, large fierce grey-brown wolf with scarred muzzle, standing pose side view, fantasy game enemy, complete silhouette head to tail",
+        "style": "realistic"
+      },
+      "tool_use_id": "mcp__game_3d_models__generate_characters_batch_36",
+      "updated_at": "2026-08-10T10:42:25.791920"
+    },
+    "assets/characters/boar_enemy/boar_enemy.glb": {
+      "tool": "mcp__game-3d-models__generate_characters_batch",
+      "primary_prompt": "Full body quadruped giant Greek wild boar on all fours, huge tusks, bristly dark brown fur, muscular shoulders, standing pose side view, fantasy game enemy, complete silhouette head to tail",
+      "raw_input": {
+        "name": "boar_enemy",
+        "prompt": "Full body quadruped giant Greek wild boar on all fours, huge tusks, bristly dark brown fur, muscular shoulders, standing pose side view, fantasy game enemy, complete silhouette head to tail",
+        "style": "realistic"
+      },
+      "tool_use_id": "mcp__game_3d_models__generate_characters_batch_36",
+      "updated_at": "2026-08-10T10:42:25.791920"
+    },
+    "assets/characters/centaur_enemy/centaur_enemy.glb": {
+      "tool": "mcp__game-3d-models__generate_characters_batch",
+      "primary_prompt": "Full body T-pose mythological Greek centaur, muscular human torso with horse body and four legs, wild warrior with tribal leather and bronze bands, empty bare hands, fantasy game enemy, complete silhouette head to hooves standing upright",
+      "raw_input": {
+        "name": "centaur_enemy",
+        "prompt": "Full body T-pose mythological Greek centaur, muscular human torso with horse body and four legs, wild warrior with tribal leather and bronze bands, empty bare hands, fantasy game enemy, complete silhouette head to hooves standing upright",
+        "style": "realistic"
+      },
+      "tool_use_id": "mcp__game_3d_models__generate_characters_batch_36",
+      "updated_at": "2026-08-10T10:42:25.791920"
+    },
+    "assets/characters/gorgon_enemy/gorgon_enemy.glb": {
+      "tool": "mcp__game-3d-models__generate_characters_batch",
+      "primary_prompt": "Full body T-pose mythological Greek gorgon like Medusa, woman with living green snake hair, scaled serpent lower body tail, bronze claws, piercing eyes, empty hands, fantasy game enemy, complete silhouette head to tail standing upright",
+      "raw_input": {
+        "name": "gorgon_enemy",
+        "prompt": "Full body T-pose mythological Greek gorgon like Medusa, woman with living green snake hair, scaled serpent lower body tail, bronze claws, piercing eyes, empty hands, fantasy game enemy, complete silhouette head to tail standing upright",
+        "style": "realistic"
+      },
+      "tool_use_id": "mcp__game_3d_models__generate_characters_batch_36",
+      "updated_at": "2026-08-10T10:42:25.791920"
+    },
+    "assets/characters/oracle_priestess/oracle_priestess.glb": {
+      "tool": "mcp__game-3d-models__generate_characters_batch",
+      "primary_prompt": "Full body T-pose ancient Greek oracle priestess, elegant white and gold linen chiton robes, laurel wreath, serene mystical woman, empty bare hands, fantasy game NPC, complete silhouette head to toe standing upright",
+      "raw_input": {
+        "name": "oracle_priestess",
+        "prompt": "Full body T-pose ancient Greek oracle priestess, elegant white and gold linen chiton robes, laurel wreath, serene mystical woman, empty bare hands, fantasy game NPC, complete silhouette head to toe standing upright",
+        "style": "realistic"
+      },
+      "tool_use_id": "mcp__game_3d_models__generate_characters_batch_36",
+      "updated_at": "2026-08-10T10:42:25.791920"
+    },
+    "assets/characters/blacksmith_npc/blacksmith_npc.glb": {
+      "tool": "mcp__game-3d-models__generate_characters_batch",
+      "primary_prompt": "Full body T-pose ancient Greek blacksmith, burly muscular man with leather apron, rolled sleeves, soot-stained arms, short beard, empty bare hands, fantasy game NPC, complete silhouette head to toe standing upright",
+      "raw_input": {
+        "name": "blacksmith_npc",
+        "prompt": "Full body T-pose ancient Greek blacksmith, burly muscular man with leather apron, rolled sleeves, soot-stained arms, short beard, empty bare hands, fantasy game NPC, complete silhouette head to toe standing upright",
+        "style": "realistic"
+      },
+      "tool_use_id": "mcp__game_3d_models__generate_characters_batch_36",
+      "updated_at": "2026-08-10T10:42:25.791920"
+    },
+    "assets/props/weapons/cretan_bow.glb": {
+      "tool": "mcp__game-3d-models__generate_weapons_batch",
+      "primary_prompt": "Ancient Greek recurve composite bow, polished wood with bronze reinforcements and horn tips, taut string, elegant Cretan archer weapon, clean side profile product view",
+      "raw_input": {
+        "name": "cretan_bow",
+        "prompt": "Ancient Greek recurve composite bow, polished wood with bronze reinforcements and horn tips, taut string, elegant Cretan archer weapon, clean side profile product view",
+        "weaponType": "melee"
+      },
+      "tool_use_id": "mcp__game_3d_models__generate_weapons_batch_37",
+      "updated_at": "2026-08-10T10:45:58.340634"
+    },
+    "assets/props/weapons/theurgist_staff.glb": {
+      "tool": "mcp__game-3d-models__generate_weapons_batch",
+      "primary_prompt": "Ancient Greek mystic staff, dark wood shaft topped with a golden bronze orb holding a glowing blue crystal, coiled serpent motif, ornate ceremonial mage staff, clean vertical product view",
+      "raw_input": {
+        "name": "theurgist_staff",
+        "prompt": "Ancient Greek mystic staff, dark wood shaft topped with a golden bronze orb holding a glowing blue crystal, coiled serpent motif, ornate ceremonial mage staff, clean vertical product view",
+        "weaponType": "melee"
+      },
+      "tool_use_id": "mcp__game_3d_models__generate_weapons_batch_37",
+      "updated_at": "2026-08-10T10:45:58.340634"
+    },
+    "assets/environment/buildings/greek_temple.glb": {
+      "tool": "mcp__game-3d-models__generate_environment_batch",
+      "primary_prompt": "Ancient Greek temple with white marble Doric columns, triangular pediment, wide stone steps platform, golden accents, majestic Mediterranean sanctuary, complete building front view",
+      "raw_input": {
+        "category": "buildings",
+        "name": "greek_temple",
+        "prompt": "Ancient Greek temple with white marble Doric columns, triangular pediment, wide stone steps platform, golden accents, majestic Mediterranean sanctuary, complete building front view",
+        "style": "realistic"
+      },
+      "tool_use_id": "mcp__game_3d_models__generate_environment_batch_38",
+      "updated_at": "2026-08-10T10:51:27.004242"
+    },
+    "assets/environment/structures/marble_column.glb": {
+      "tool": "mcp__game-3d-models__generate_environment_batch",
+      "primary_prompt": "Single tall ancient Greek Doric marble column with capital, weathered white stone pillar, classical architecture piece",
+      "raw_input": {
+        "category": "structures",
+        "name": "marble_column",
+        "prompt": "Single tall ancient Greek Doric marble column with capital, weathered white stone pillar, classical architecture piece",
+        "style": "realistic"
+      },
+      "tool_use_id": "mcp__game_3d_models__generate_environment_batch_38",
+      "updated_at": "2026-08-10T10:51:27.004242"
+    },
+    "assets/environment/structures/broken_ruins.glb": {
+      "tool": "mcp__game-3d-models__generate_environment_batch",
+      "primary_prompt": "Broken ancient Greek ruins, collapsed marble column segments and stone blocks scattered, weathered archaeological remains",
+      "raw_input": {
+        "category": "structures",
+        "name": "broken_ruins",
+        "prompt": "Broken ancient Greek ruins, collapsed marble column segments and stone blocks scattered, weathered archaeological remains",
+        "style": "realistic"
+      },
+      "tool_use_id": "mcp__game_3d_models__generate_environment_batch_38",
+      "updated_at": "2026-08-10T10:51:27.004242"
+    },
+    "assets/environment/buildings/spartan_barracks.glb": {
+      "tool": "mcp__game-3d-models__generate_environment_batch",
+      "primary_prompt": "Ancient Spartan stone barracks building, austere rectangular structure with terracotta tile roof, wooden beams, bronze shield decorations, militaristic Greek architecture front view",
+      "raw_input": {
+        "category": "buildings",
+        "name": "spartan_barracks",
+        "prompt": "Ancient Spartan stone barracks building, austere rectangular structure with terracotta tile roof, wooden beams, bronze shield decorations, militaristic Greek architecture front view",
+        "style": "realistic"
+      },
+      "tool_use_id": "mcp__game_3d_models__generate_environment_batch_38",
+      "updated_at": "2026-08-10T10:51:27.004242"
+    },
+    "assets/environment/structures/arena_gate.glb": {
+      "tool": "mcp__game-3d-models__generate_environment_batch",
+      "primary_prompt": "Ancient Greek stone archway gate entrance to an arena or labyrinth, massive weathered stone blocks with bronze doors open, imposing monumental entrance front view",
+      "raw_input": {
+        "category": "structures",
+        "name": "arena_gate",
+        "prompt": "Ancient Greek stone archway gate entrance to an arena or labyrinth, massive weathered stone blocks with bronze doors open, imposing monumental entrance front view",
+        "style": "realistic"
+      },
+      "tool_use_id": "mcp__game_3d_models__generate_environment_batch_38",
+      "updated_at": "2026-08-10T10:51:27.004242"
+    },
+    "assets/environment/rocks/cliff_rock.glb": {
+      "tool": "mcp__game-3d-models__generate_environment_batch",
+      "primary_prompt": "Large sun-bleached Mediterranean limestone rock formation, layered cliff boulder, warm beige stone",
+      "raw_input": {
+        "category": "rocks",
+        "name": "cliff_rock",
+        "prompt": "Large sun-bleached Mediterranean limestone rock formation, layered cliff boulder, warm beige stone",
+        "style": "realistic"
+      },
+      "tool_use_id": "mcp__game_3d_models__generate_environment_batch_38",
+      "updated_at": "2026-08-10T10:51:27.004242"
+    },
+    "assets/props/containers/treasure_chest.glb": {
+      "tool": "mcp__game-3d-models__generate_props_batch",
+      "primary_prompt": "Ornate bronze-banded wooden treasure chest with Greek meander patterns, hinged lid closed, game loot chest",
+      "raw_input": {
+        "category": "containers",
+        "name": "treasure_chest",
+        "prompt": "Ornate bronze-banded wooden treasure chest with Greek meander patterns, hinged lid closed, game loot chest",
+        "style": "realistic"
+      },
+      "tool_use_id": "mcp__game_3d_models__generate_props_batch_39",
+      "updated_at": "2026-08-10T10:56:09.764617"
+    },
+    "assets/props/containers/amphora.glb": {
+      "tool": "mcp__game-3d-models__generate_props_batch",
+      "primary_prompt": "Ancient Greek terracotta amphora vase with two handles and painted black-figure patterns",
+      "raw_input": {
+        "category": "containers",
+        "name": "amphora",
+        "prompt": "Ancient Greek terracotta amphora vase with two handles and painted black-figure patterns",
+        "style": "realistic"
+      },
+      "tool_use_id": "mcp__game_3d_models__generate_props_batch_39",
+      "updated_at": "2026-08-10T10:56:09.764617"
+    },
+    "assets/props/items/health_potion.glb": {
+      "tool": "mcp__game-3d-models__generate_props_batch",
+      "primary_prompt": "Small glass vial of glowing red health potion with bronze cap, Greek healing elixir bottle",
+      "raw_input": {
+        "category": "items",
+        "name": "health_potion",
+        "prompt": "Small glass vial of glowing red health potion with bronze cap, Greek healing elixir bottle",
+        "style": "realistic"
+      },
+      "tool_use_id": "mcp__game_3d_models__generate_props_batch_39",
+      "updated_at": "2026-08-10T10:56:09.764617"
+    },
+    "assets/props/tools/blacksmith_anvil.glb": {
+      "tool": "mcp__game-3d-models__generate_props_batch",
+      "primary_prompt": "Ancient Greek bronze working anvil on a stone block base, blacksmith forge tool with hammer resting beside",
+      "raw_input": {
+        "category": "tools",
+        "name": "blacksmith_anvil",
+        "prompt": "Ancient Greek bronze working anvil on a stone block base, blacksmith forge tool with hammer resting beside",
+        "style": "realistic"
+      },
+      "tool_use_id": "mcp__game_3d_models__generate_props_batch_39",
+      "updated_at": "2026-08-10T10:56:09.764617"
+    },
+    "assets/props/decorations/greek_statue.glb": {
+      "tool": "mcp__game-3d-models__generate_props_batch",
+      "primary_prompt": "Classical Greek marble statue of a heroic warrior god, idealized athletic figure standing in contrapposto pose, museum sculpture",
+      "raw_input": {
+        "category": "decorations",
+        "name": "greek_statue",
+        "prompt": "Classical Greek marble statue of a heroic warrior god, idealized athletic figure standing in contrapposto pose, museum sculpture",
+        "style": "realistic"
+      },
+      "tool_use_id": "mcp__game_3d_models__generate_props_batch_39",
+      "updated_at": "2026-08-10T10:56:09.764617"
+    },
+    "assets/ui/wordmark_title.png": {
+      "tool": "mcp__game-assets__generate_ui_kit",
+      "primary_prompt": "Empires of Olympus \u2014 Ancient Greek fantasy RPG, white marble with gold laurel trim, bronze accents, deep navy panels, crimson Spartan red highlights, ornate meander Greek key borders, divine glow, high-fidelity like a premium MMORPG UI",
+      "raw_input": {
+        "element": {
+          "aspect": "wide_3_1",
+          "id": "wordmark_title",
+          "label": "Empires of Olympus",
+          "size": {
+            "height": 280,
+            "width": 840
+          },
+          "type": "wordmark"
+        },
+        "kit_styleBrief": "Ancient Greek fantasy RPG, white marble with gold laurel trim, bronze accents, deep navy panels, crimson Spartan red highlights, ornate meander Greek key borders, divine glow, high-fidelity like a premium MMORPG UI"
+      },
+      "tool_use_id": "mcp__game_assets__generate_ui_kit_41",
+      "updated_at": "2026-08-10T10:58:21.293792"
+    },
+    "assets/ui/panel_main.png": {
+      "tool": "mcp__game-assets__generate_ui_kit",
+      "primary_prompt": "Ancient Greek fantasy RPG, white marble with gold laurel trim, bronze accents, deep navy panels, crimson Spartan red highlights, ornate meander Greek key borders, divine glow, high-fidelity like a premium MMORPG UI",
+      "raw_input": {
+        "element": {
+          "aspect": "landscape_4_3",
+          "id": "panel_main",
+          "size": {
+            "height": 540,
+            "width": 720
+          },
+          "type": "panel_9slice"
+        },
+        "kit_styleBrief": "Ancient Greek fantasy RPG, white marble with gold laurel trim, bronze accents, deep navy panels, crimson Spartan red highlights, ornate meander Greek key borders, divine glow, high-fidelity like a premium MMORPG UI"
+      },
+      "tool_use_id": "mcp__game_assets__generate_ui_kit_41",
+      "updated_at": "2026-08-10T10:58:21.293792"
+    },
+    "assets/ui/panel_hud.png": {
+      "tool": "mcp__game-assets__generate_ui_kit",
+      "primary_prompt": "Ancient Greek fantasy RPG, white marble with gold laurel trim, bronze accents, deep navy panels, crimson Spartan red highlights, ornate meander Greek key borders, divine glow, high-fidelity like a premium MMORPG UI",
+      "raw_input": {
+        "element": {
+          "aspect": "landscape_4_3",
+          "id": "panel_hud",
+          "size": {
+            "height": 360,
+            "width": 480
+          },
+          "type": "panel_9slice"
+        },
+        "kit_styleBrief": "Ancient Greek fantasy RPG, white marble with gold laurel trim, bronze accents, deep navy panels, crimson Spartan red highlights, ornate meander Greek key borders, divine glow, high-fidelity like a premium MMORPG UI"
+      },
+      "tool_use_id": "mcp__game_assets__generate_ui_kit_41",
+      "updated_at": "2026-08-10T10:58:21.293792"
+    },
+    "assets/ui/btn_primary.png": {
+      "tool": "mcp__game-assets__generate_ui_kit",
+      "primary_prompt": "Begin \u2014 Ancient Greek fantasy RPG, white marble with gold laurel trim, bronze accents, deep navy panels, crimson Spartan red highlights, ornate meander Greek key borders, divine glow, high-fidelity like a premium MMORPG UI",
+      "raw_input": {
+        "element": {
+          "aspect": "wide_3_1",
+          "id": "btn_primary",
+          "label": "Begin",
+          "size": {
+            "height": 88,
+            "width": 264
+          },
+          "type": "button_9slice"
+        },
+        "kit_styleBrief": "Ancient Greek fantasy RPG, white marble with gold laurel trim, bronze accents, deep navy panels, crimson Spartan red highlights, ornate meander Greek key borders, divine glow, high-fidelity like a premium MMORPG UI"
+      },
+      "tool_use_id": "mcp__game_assets__generate_ui_kit_41",
+      "updated_at": "2026-08-10T10:58:21.293792"
+    },
+    "assets/ui/btn_secondary.png": {
+      "tool": "mcp__game-assets__generate_ui_kit",
+      "primary_prompt": "Back \u2014 Ancient Greek fantasy RPG, white marble with gold laurel trim, bronze accents, deep navy panels, crimson Spartan red highlights, ornate meander Greek key borders, divine glow, high-fidelity like a premium MMORPG UI",
+      "raw_input": {
+        "element": {
+          "aspect": "wide_3_1",
+          "id": "btn_secondary",
+          "label": "Back",
+          "size": {
+            "height": 88,
+            "width": 264
+          },
+          "type": "button_9slice"
+        },
+        "kit_styleBrief": "Ancient Greek fantasy RPG, white marble with gold laurel trim, bronze accents, deep navy panels, crimson Spartan red highlights, ornate meander Greek key borders, divine glow, high-fidelity like a premium MMORPG UI"
+      },
+      "tool_use_id": "mcp__game_assets__generate_ui_kit_41",
+      "updated_at": "2026-08-10T10:58:21.293792"
+    },
+    "assets/ui/icon_health.png": {
+      "tool": "mcp__game-assets__generate_ui_kit",
+      "primary_prompt": "Ancient Greek fantasy RPG, white marble with gold laurel trim, bronze accents, deep navy panels, crimson Spartan red highlights, ornate meander Greek key borders, divine glow, high-fidelity like a premium MMORPG UI",
+      "raw_input": {
+        "element": {
+          "aspect": "square",
+          "id": "icon_health",
+          "size": {
+            "height": 128,
+            "width": 128
+          },
+          "type": "icon"
+        },
+        "kit_styleBrief": "Ancient Greek fantasy RPG, white marble with gold laurel trim, bronze accents, deep navy panels, crimson Spartan red highlights, ornate meander Greek key borders, divine glow, high-fidelity like a premium MMORPG UI"
+      },
+      "tool_use_id": "mcp__game_assets__generate_ui_kit_41",
+      "updated_at": "2026-08-10T10:58:21.293792"
+    },
+    "assets/ui/icon_mana.png": {
+      "tool": "mcp__game-assets__generate_ui_kit",
+      "primary_prompt": "Ancient Greek fantasy RPG, white marble with gold laurel trim, bronze accents, deep navy panels, crimson Spartan red highlights, ornate meander Greek key borders, divine glow, high-fidelity like a premium MMORPG UI",
+      "raw_input": {
+        "element": {
+          "aspect": "square",
+          "id": "icon_mana",
+          "size": {
+            "height": 128,
+            "width": 128
+          },
+          "type": "icon"
+        },
+        "kit_styleBrief": "Ancient Greek fantasy RPG, white marble with gold laurel trim, bronze accents, deep navy panels, crimson Spartan red highlights, ornate meander Greek key borders, divine glow, high-fidelity like a premium MMORPG UI"
+      },
+      "tool_use_id": "mcp__game_assets__generate_ui_kit_41",
+      "updated_at": "2026-08-10T10:58:21.293792"
+    },
+    "assets/ui/icon_gold.png": {
+      "tool": "mcp__game-assets__generate_ui_kit",
+      "primary_prompt": "Ancient Greek fantasy RPG, white marble with gold laurel trim, bronze accents, deep navy panels, crimson Spartan red highlights, ornate meander Greek key borders, divine glow, high-fidelity like a premium MMORPG UI",
+      "raw_input": {
+        "element": {
+          "aspect": "square",
+          "id": "icon_gold",
+          "size": {
+            "height": 128,
+            "width": 128
+          },
+          "type": "icon"
+        },
+        "kit_styleBrief": "Ancient Greek fantasy RPG, white marble with gold laurel trim, bronze accents, deep navy panels, crimson Spartan red highlights, ornate meander Greek key borders, divine glow, high-fidelity like a premium MMORPG UI"
+      },
+      "tool_use_id": "mcp__game_assets__generate_ui_kit_41",
+      "updated_at": "2026-08-10T10:58:21.293792"
+    },
+    "assets/ui/icon_sword.png": {
+      "tool": "mcp__game-assets__generate_ui_kit",
+      "primary_prompt": "Ancient Greek fantasy RPG, white marble with gold laurel trim, bronze accents, deep navy panels, crimson Spartan red highlights, ornate meander Greek key borders, divine glow, high-fidelity like a premium MMORPG UI",
+      "raw_input": {
+        "element": {
+          "aspect": "square",
+          "id": "icon_sword",
+          "size": {
+            "height": 128,
+            "width": 128
+          },
+          "type": "icon"
+        },
+        "kit_styleBrief": "Ancient Greek fantasy RPG, white marble with gold laurel trim, bronze accents, deep navy panels, crimson Spartan red highlights, ornate meander Greek key borders, divine glow, high-fidelity like a premium MMORPG UI"
+      },
+      "tool_use_id": "mcp__game_assets__generate_ui_kit_41",
+      "updated_at": "2026-08-10T10:58:21.293792"
+    },
+    "assets/ui/icon_shield.png": {
+      "tool": "mcp__game-assets__generate_ui_kit",
+      "primary_prompt": "Ancient Greek fantasy RPG, white marble with gold laurel trim, bronze accents, deep navy panels, crimson Spartan red highlights, ornate meander Greek key borders, divine glow, high-fidelity like a premium MMORPG UI",
+      "raw_input": {
+        "element": {
+          "aspect": "square",
+          "id": "icon_shield",
+          "size": {
+            "height": 128,
+            "width": 128
+          },
+          "type": "icon"
+        },
+        "kit_styleBrief": "Ancient Greek fantasy RPG, white marble with gold laurel trim, bronze accents, deep navy panels, crimson Spartan red highlights, ornate meander Greek key borders, divine glow, high-fidelity like a premium MMORPG UI"
+      },
+      "tool_use_id": "mcp__game_assets__generate_ui_kit_41",
+      "updated_at": "2026-08-10T10:58:21.293792"
+    },
+    "assets/ui/icon_scroll.png": {
+      "tool": "mcp__game-assets__generate_ui_kit",
+      "primary_prompt": "Ancient Greek fantasy RPG, white marble with gold laurel trim, bronze accents, deep navy panels, crimson Spartan red highlights, ornate meander Greek key borders, divine glow, high-fidelity like a premium MMORPG UI",
+      "raw_input": {
+        "element": {
+          "aspect": "square",
+          "id": "icon_scroll",
+          "size": {
+            "height": 128,
+            "width": 128
+          },
+          "type": "icon"
+        },
+        "kit_styleBrief": "Ancient Greek fantasy RPG, white marble with gold laurel trim, bronze accents, deep navy panels, crimson Spartan red highlights, ornate meander Greek key borders, divine glow, high-fidelity like a premium MMORPG UI"
+      },
+      "tool_use_id": "mcp__game_assets__generate_ui_kit_41",
+      "updated_at": "2026-08-10T10:58:21.293792"
+    },
+    "assets/ui/icon_potion.png": {
+      "tool": "mcp__game-assets__generate_ui_kit",
+      "primary_prompt": "Ancient Greek fantasy RPG, white marble with gold laurel trim, bronze accents, deep navy panels, crimson Spartan red highlights, ornate meander Greek key borders, divine glow, high-fidelity like a premium MMORPG UI",
+      "raw_input": {
+        "element": {
+          "aspect": "square",
+          "id": "icon_potion",
+          "size": {
+            "height": 128,
+            "width": 128
+          },
+          "type": "icon"
+        },
+        "kit_styleBrief": "Ancient Greek fantasy RPG, white marble with gold laurel trim, bronze accents, deep navy panels, crimson Spartan red highlights, ornate meander Greek key borders, divine glow, high-fidelity like a premium MMORPG UI"
+      },
+      "tool_use_id": "mcp__game_assets__generate_ui_kit_41",
+      "updated_at": "2026-08-10T10:58:21.293792"
+    },
+    "assets/ui/icon_gem.png": {
+      "tool": "mcp__game-assets__generate_ui_kit",
+      "primary_prompt": "Ancient Greek fantasy RPG, white marble with gold laurel trim, bronze accents, deep navy panels, crimson Spartan red highlights, ornate meander Greek key borders, divine glow, high-fidelity like a premium MMORPG UI",
+      "raw_input": {
+        "element": {
+          "aspect": "square",
+          "id": "icon_gem",
+          "size": {
+            "height": 128,
+            "width": 128
+          },
+          "type": "icon"
+        },
+        "kit_styleBrief": "Ancient Greek fantasy RPG, white marble with gold laurel trim, bronze accents, deep navy panels, crimson Spartan red highlights, ornate meander Greek key borders, divine glow, high-fidelity like a premium MMORPG UI"
+      },
+      "tool_use_id": "mcp__game_assets__generate_ui_kit_41",
+      "updated_at": "2026-08-10T10:58:21.293792"
+    },
+    "assets/ui/icon_anvil.png": {
+      "tool": "mcp__game-assets__generate_ui_kit",
+      "primary_prompt": "Ancient Greek fantasy RPG, white marble with gold laurel trim, bronze accents, deep navy panels, crimson Spartan red highlights, ornate meander Greek key borders, divine glow, high-fidelity like a premium MMORPG UI",
+      "raw_input": {
+        "element": {
+          "aspect": "square",
+          "id": "icon_anvil",
+          "size": {
+            "height": 128,
+            "width": 128
+          },
+          "type": "icon"
+        },
+        "kit_styleBrief": "Ancient Greek fantasy RPG, white marble with gold laurel trim, bronze accents, deep navy panels, crimson Spartan red highlights, ornate meander Greek key borders, divine glow, high-fidelity like a premium MMORPG UI"
+      },
+      "tool_use_id": "mcp__game_assets__generate_ui_kit_41",
+      "updated_at": "2026-08-10T10:58:21.293792"
+    },
+    "assets/ui/icon_skull.png": {
+      "tool": "mcp__game-assets__generate_ui_kit",
+      "primary_prompt": "Ancient Greek fantasy RPG, white marble with gold laurel trim, bronze accents, deep navy panels, crimson Spartan red highlights, ornate meander Greek key borders, divine glow, high-fidelity like a premium MMORPG UI",
+      "raw_input": {
+        "element": {
+          "aspect": "square",
+          "id": "icon_skull",
+          "size": {
+            "height": 128,
+            "width": 128
+          },
+          "type": "icon"
+        },
+        "kit_styleBrief": "Ancient Greek fantasy RPG, white marble with gold laurel trim, bronze accents, deep navy panels, crimson Spartan red highlights, ornate meander Greek key borders, divine glow, high-fidelity like a premium MMORPG UI"
+      },
+      "tool_use_id": "mcp__game_assets__generate_ui_kit_41",
+      "updated_at": "2026-08-10T10:58:21.293792"
+    },
+    "assets/ui/icon_laurel.png": {
+      "tool": "mcp__game-assets__generate_ui_kit",
+      "primary_prompt": "Ancient Greek fantasy RPG, white marble with gold laurel trim, bronze accents, deep navy panels, crimson Spartan red highlights, ornate meander Greek key borders, divine glow, high-fidelity like a premium MMORPG UI",
+      "raw_input": {
+        "element": {
+          "aspect": "square",
+          "id": "icon_laurel",
+          "size": {
+            "height": 128,
+            "width": 128
+          },
+          "type": "icon"
+        },
+        "kit_styleBrief": "Ancient Greek fantasy RPG, white marble with gold laurel trim, bronze accents, deep navy panels, crimson Spartan red highlights, ornate meander Greek key borders, divine glow, high-fidelity like a premium MMORPG UI"
+      },
+      "tool_use_id": "mcp__game_assets__generate_ui_kit_41",
+      "updated_at": "2026-08-10T10:58:21.293792"
+    },
+    "assets/audio/music/music_menu_menu_theme.mp3": {
+      "tool": "mcp__game-audio__generate_audio_batch",
+      "primary_prompt": "epic ancient Greek orchestral, lyre and choir, majestic and mysterious, slow 70 BPM",
+      "raw_input": {
+        "durationSeconds": 30,
+        "gameState": "menu",
+        "instruments": "lyre, soft choir, strings",
+        "mood": "majestic and mysterious",
+        "name": "menu_theme",
+        "style": "epic ancient Greek orchestral, lyre and choir",
+        "tempo": "slow 70 BPM",
+        "type": "music"
+      },
+      "tool_use_id": "mcp__game_audio__generate_audio_batch_44",
+      "updated_at": "2026-08-10T10:59:27.777873"
+    },
+    "assets/audio/music/music_boss_minotaur_battle.mp3": {
+      "tool": "mcp__game-audio__generate_audio_batch",
+      "primary_prompt": "intense percussive battle orchestral with Greek war drums, intense and terrifying, fast 140 BPM",
+      "raw_input": {
+        "durationSeconds": 45,
+        "gameState": "boss",
+        "instruments": "war drums, brass, choir, strings",
+        "mood": "intense and terrifying",
+        "name": "minotaur_battle",
+        "style": "intense percussive battle orchestral with Greek war drums",
+        "tempo": "fast 140 BPM",
+        "type": "music"
+      },
+      "tool_use_id": "mcp__game_audio__generate_audio_batch_44",
+      "updated_at": "2026-08-10T10:59:27.777873"
+    },
+    "assets/audio/sfx/weapon/weapon_sword_swing.mp3": {
+      "tool": "mcp__game-audio__generate_audio_batch",
+      "primary_prompt": "Fast whoosh of a sword or spear swinging through air",
+      "raw_input": {
+        "category": "weapon",
+        "description": "Fast whoosh of a sword or spear swinging through air",
+        "duration": 0.6,
+        "name": "sword_swing",
+        "type": "sfx"
+      },
+      "tool_use_id": "mcp__game_audio__generate_audio_batch_44",
+      "updated_at": "2026-08-10T10:59:27.777873"
+    },
+    "assets/audio/sfx/player/player_hit_flesh.mp3": {
+      "tool": "mcp__game-audio__generate_audio_batch",
+      "primary_prompt": "Meaty impact thud when a weapon hits flesh",
+      "raw_input": {
+        "category": "player",
+        "description": "Meaty impact thud when a weapon hits flesh",
+        "duration": 0.5,
+        "name": "hit_flesh",
+        "type": "sfx"
+      },
+      "tool_use_id": "mcp__game_audio__generate_audio_batch_44",
+      "updated_at": "2026-08-10T10:59:27.777873"
+    },
+    "assets/audio/sfx/player/player_level_up.mp3": {
+      "tool": "mcp__game-audio__generate_audio_batch",
+      "primary_prompt": "Heroic ascending chime fanfare for gaining a level",
+      "raw_input": {
+        "category": "player",
+        "description": "Heroic ascending chime fanfare for gaining a level",
+        "duration": 2,
+        "name": "level_up",
+        "type": "sfx"
+      },
+      "tool_use_id": "mcp__game_audio__generate_audio_batch_44",
+      "updated_at": "2026-08-10T10:59:27.777873"
+    },
+    "assets/audio/sfx/ui/ui_refine_success.mp3": {
+      "tool": "mcp__game-audio__generate_audio_batch",
+      "primary_prompt": "Anvil hammer strike with metallic ring and magical shimmer for successful item refinement",
+      "raw_input": {
+        "category": "ui",
+        "description": "Anvil hammer strike with metallic ring and magical shimmer for successful item refinement",
+        "duration": 1.5,
+        "name": "refine_success",
+        "type": "sfx"
+      },
+      "tool_use_id": "mcp__game_audio__generate_audio_batch_44",
+      "updated_at": "2026-08-10T10:59:27.777873"
+    },
+    "assets/audio/sfx/ui/ui_refine_fail.mp3": {
+      "tool": "mcp__game-audio__generate_audio_batch",
+      "primary_prompt": "Cracking shatter sound of metal breaking, disappointing failure tone",
+      "raw_input": {
+        "category": "ui",
+        "description": "Cracking shatter sound of metal breaking, disappointing failure tone",
+        "duration": 1.5,
+        "name": "refine_fail",
+        "type": "sfx"
+      },
+      "tool_use_id": "mcp__game_audio__generate_audio_batch_44",
+      "updated_at": "2026-08-10T10:59:27.777873"
+    },
+    "assets/audio/sfx/pickup/pickup_gold_pickup.mp3": {
+      "tool": "mcp__game-audio__generate_audio_batch",
+      "primary_prompt": "Pleasant coin pouch jingle of gold drachmae collected",
+      "raw_input": {
+        "category": "pickup",
+        "description": "Pleasant coin pouch jingle of gold drachmae collected",
+        "duration": 0.8,
+        "name": "gold_pickup",
+        "type": "sfx"
+      },
+      "tool_use_id": "mcp__game_audio__generate_audio_batch_44",
+      "updated_at": "2026-08-10T10:59:27.777873"
+    },
+    "assets/audio/sfx/enemy/enemy_minotaur_roar.mp3": {
+      "tool": "mcp__game-audio__generate_audio_batch",
+      "primary_prompt": "Deep bull roar of the Minotaur, echoing and fearsome",
+      "raw_input": {
+        "category": "enemy",
+        "description": "Deep bull roar of the Minotaur, echoing and fearsome",
+        "duration": 2.5,
+        "name": "minotaur_roar",
+        "type": "sfx"
+      },
+      "tool_use_id": "mcp__game_audio__generate_audio_batch_44",
+      "updated_at": "2026-08-10T10:59:27.777873"
+    },
+    "assets/audio/sfx/enemy/enemy_harpy_screech.mp3": {
+      "tool": "mcp__game-audio__generate_audio_batch",
+      "primary_prompt": "Screeching harpy shriek, sharp bird-like cry",
+      "raw_input": {
+        "category": "enemy",
+        "description": "Screeching harpy shriek, sharp bird-like cry",
+        "duration": 1.2,
+        "name": "harpy_screech",
+        "type": "sfx"
+      },
+      "tool_use_id": "mcp__game_audio__generate_audio_batch_44",
+      "updated_at": "2026-08-10T10:59:27.777873"
+    },
+    "assets/audio/sfx/player/player_dodge_roll.mp3": {
+      "tool": "mcp__game-audio__generate_audio_batch",
+      "primary_prompt": "Dodging quick dash whoosh with light wind",
+      "raw_input": {
+        "category": "player",
+        "description": "Dodging quick dash whoosh with light wind",
+        "duration": 0.5,
+        "name": "dodge_roll",
+        "type": "sfx"
+      },
+      "tool_use_id": "mcp__game_audio__generate_audio_batch_44",
+      "updated_at": "2026-08-10T10:59:27.777873"
+    },
+    "assets/audio/sfx/player/player_thunderbolt_cast.mp3": {
+      "tool": "mcp__game-audio__generate_audio_batch",
+      "primary_prompt": "Magical lightning crack of Zeus thunderbolt spell cast",
+      "raw_input": {
+        "category": "player",
+        "description": "Magical lightning crack of Zeus thunderbolt spell cast",
+        "duration": 1.5,
+        "name": "thunderbolt_cast",
+        "type": "sfx"
+      },
+      "tool_use_id": "mcp__game_audio__generate_audio_batch_44",
+      "updated_at": "2026-08-10T10:59:27.777873"
+    },
+    "assets/audio/ambient/ambient_greek_countryside_aegean_wind.mp3": {
+      "tool": "mcp__game-audio__generate_audio_batch",
+      "primary_prompt": "Warm Mediterranean wind through olive leaves with distant birdsong and soft sea",
+      "raw_input": {
+        "description": "Warm Mediterranean wind through olive leaves with distant birdsong and soft sea",
+        "duration": 20,
+        "environment": "greek_countryside",
+        "name": "aegean_wind",
+        "type": "ambient"
+      },
+      "tool_use_id": "mcp__game_audio__generate_audio_batch_46",
+      "updated_at": "2026-08-10T10:59:56.900542"
+    },
+    "assets/audio/music/jingle_level_complete_victory_fanfare.mp3": {
+      "tool": "mcp__game-audio__generate_audio_batch",
+      "primary_prompt": "heroic brass and lyre fanfare, triumphant and glorious",
+      "raw_input": {
+        "durationSeconds": 6,
+        "mood": "triumphant and glorious",
+        "name": "victory_fanfare",
+        "purpose": "level_complete",
+        "style": "heroic brass and lyre fanfare",
+        "type": "jingle"
+      },
+      "tool_use_id": "mcp__game_audio__generate_audio_batch_46",
+      "updated_at": "2026-08-10T10:59:56.900542"
+    },
+    "assets/audio/music/jingle_game_over_defeat_dirge.mp3": {
+      "tool": "mcp__game-audio__generate_audio_batch",
+      "primary_prompt": "mournful strings and soft choir, somber and mournful",
+      "raw_input": {
+        "durationSeconds": 5,
+        "mood": "somber and mournful",
+        "name": "defeat_dirge",
+        "purpose": "game_over",
+        "style": "mournful strings and soft choir",
+        "type": "jingle"
+      },
+      "tool_use_id": "mcp__game_audio__generate_audio_batch_46",
+      "updated_at": "2026-08-10T10:59:56.900542"
+    },
+    "assets/audio/sfx/ui/ui_ui_click.mp3": {
+      "tool": "mcp__game-audio__generate_audio_batch",
+      "primary_prompt": "click",
+      "raw_input": {
+        "name": "ui_click",
+        "style": "fantasy",
+        "type": "ui",
+        "uiType": "click"
+      },
+      "tool_use_id": "mcp__game_audio__generate_audio_batch_46",
+      "updated_at": "2026-08-10T10:59:56.900542"
+    },
+    "assets/audio/sfx/ui/ui_ui_confirm.mp3": {
+      "tool": "mcp__game-audio__generate_audio_batch",
+      "primary_prompt": "confirm",
+      "raw_input": {
+        "name": "ui_confirm",
+        "style": "fantasy",
+        "type": "ui",
+        "uiType": "confirm"
+      },
+      "tool_use_id": "mcp__game_audio__generate_audio_batch_46",
+      "updated_at": "2026-08-10T10:59:56.900542"
+    },
+    "assets/audio/sfx/pickup/pickup_potion_drink.mp3": {
+      "tool": "mcp__game-audio__generate_audio_batch",
+      "primary_prompt": "Refreshing glass bottle uncork and drink gulp with healing sparkle",
+      "raw_input": {
+        "category": "pickup",
+        "description": "Refreshing glass bottle uncork and drink gulp with healing sparkle",
+        "duration": 1.2,
+        "name": "potion_drink",
+        "type": "sfx"
+      },
+      "tool_use_id": "mcp__game_audio__generate_audio_batch_46",
+      "updated_at": "2026-08-10T10:59:56.900542"
+    },
+    "assets/audio/sfx/enemy/enemy_oracle_whisper.mp3": {
+      "tool": "mcp__game-audio__generate_audio_batch",
+      "primary_prompt": "Ghostly whispering voice of a cursed oracle stone, eerie and layered",
+      "raw_input": {
+        "category": "enemy",
+        "description": "Ghostly whispering voice of a cursed oracle stone, eerie and layered",
+        "duration": 2.5,
+        "name": "oracle_whisper",
+        "type": "sfx"
+      },
+      "tool_use_id": "mcp__game_audio__generate_audio_batch_46",
+      "updated_at": "2026-08-10T10:59:56.900542"
+    },
+    "assets/textures/stone/terrain_rock.png": {
+      "tool": "mcp__game-assets__generate_textures_batch",
+      "primary_prompt": "seamless top-down rocky cliff surface, warm weathered limestone with cracks and dry Mediterranean stone, subtle warm beige-grey tones",
+      "raw_input": {
+        "category": "stone",
+        "name": "terrain_rock",
+        "prompt": "seamless top-down rocky cliff surface, warm weathered limestone with cracks and dry Mediterranean stone, subtle warm beige-grey tones",
+        "seamless": true,
+        "size": "512",
+        "style": "realistic"
+      },
+      "tool_use_id": "mcp__game_assets__generate_textures_batch_19",
+      "updated_at": "2026-08-10T11:21:36.560837"
+    },
+    "assets/textures/nature/terrain_dirt.png": {
+      "tool": "mcp__game-assets__generate_textures_batch",
+      "primary_prompt": "seamless top-down packed earth dirt path ground, dry ochre Mediterranean soil with small pebbles and sparse dry grass bits",
+      "raw_input": {
+        "category": "nature",
+        "name": "terrain_dirt",
+        "prompt": "seamless top-down packed earth dirt path ground, dry ochre Mediterranean soil with small pebbles and sparse dry grass bits",
+        "seamless": true,
+        "size": "512",
+        "style": "realistic"
+      },
+      "tool_use_id": "mcp__game_assets__generate_textures_batch_19",
+      "updated_at": "2026-08-10T11:21:36.560837"
+    },
+    "var/games/game-20260807-c19d20fd/assets/ui/wordmark_title_fixed.png": {
+      "tool": "mcp__game-assets__generate_ui_variants",
+      "primary_prompt": "Fix ONLY the lettering: the title must read \"EMPIRES OF OLYMPUS\" in full \u2014 the second line currently reads OLYMP and is missing the final letters US. Complete the word so it says OLYMPUS, shrinking the golden 3D letters slightly so the entire word fits inside the navy plaque. Keep everything else pixel-identical: the ornate golden Greek key frame, laurel wreaths, red side banners, bronze spartan-helmet medallions, navy blue plaque, and the words EMPIRES (top line) and OF (small, middle). Transparent background preserved.",
+      "raw_input": {
+        "description": "Fix ONLY the lettering: the title must read \"EMPIRES OF OLYMPUS\" in full \u2014 the second line currently reads OLYMP and is missing the final letters US. Complete the word so it says OLYMPUS, shrinking the golden 3D letters slightly so the entire word fits inside the navy plaque. Keep everything else pixel-identical: the ornate golden Greek key frame, laurel wreaths, red side banners, bronze spartan-helmet medallions, navy blue plaque, and the words EMPIRES (top line) and OF (small, middle). Transparent background preserved.",
+        "state": "fixed"
+      },
+      "tool_use_id": "mcp__game_assets__generate_ui_variants_31",
+      "updated_at": "2026-08-10T12:58:30.382580"
+    },
+    "var/games/game-20260807-c19d20fd/assets/ui/wordmark_title_final.png": {
+      "tool": "mcp__game-assets__generate_ui_variants",
+      "primary_prompt": "Correct the spelling of the second word on line two. It currently reads \"OLYMPWS\" which is wrong. It must read exactly: OLYMPUS \u2014 the letters O, L, Y, M, P, U, S in that order. Replace the last two letters W and S with U and S so the word is OLYMPUS (like Mount Olympus). Keep the identical golden 3D marble-letter style, the navy plaque, golden Greek key frame, laurel wreaths, red banners and bronze spartan medallions unchanged. Line one stays \"EMPIRES\" with a small \"OF\" between the lines. Transparent background.",
+      "raw_input": {
+        "description": "Correct the spelling of the second word on line two. It currently reads \"OLYMPWS\" which is wrong. It must read exactly: OLYMPUS \u2014 the letters O, L, Y, M, P, U, S in that order. Replace the last two letters W and S with U and S so the word is OLYMPUS (like Mount Olympus). Keep the identical golden 3D marble-letter style, the navy plaque, golden Greek key frame, laurel wreaths, red banners and bronze spartan medallions unchanged. Line one stays \"EMPIRES\" with a small \"OF\" between the lines. Transparent background.",
+        "state": "final"
+      },
+      "tool_use_id": "mcp__game_assets__generate_ui_variants_33",
+      "updated_at": "2026-08-10T13:00:18.315135"
+    },
+    "assets/ui/btn_blank.png": {
+      "tool": "mcp__game-assets__generate_ui_kit",
+      "primary_prompt": "Ancient Greek imperial UI, Final Fantasy XIV quality: polished white marble with warm cream veining, ornate golden laurel and Greek-key filigree edges, deep navy-and-oxblood enamel inlays, bronze rosette studs, soft warm rim-light and subtle inner glow. Clean EMPTY centers with generous flat readable interior space and absolutely NO text, NO letters, NO words, NO numerals anywhere in the art \u2014 only frames and chrome.",
+      "raw_input": {
+        "element": {
+          "id": "btn_blank",
+          "type": "button_9slice",
+          "size": {
+            "width": 300,
+            "height": 104
+          },
+          "aspect": "wide_3_1"
+        },
+        "kit_styleBrief": "Ancient Greek imperial UI, Final Fantasy XIV quality: polished white marble with warm cream veining, ornate golden laurel and Greek-key filigree edges, deep navy-and-oxblood enamel inlays, bronze rosette studs, soft warm rim-light and subtle inner glow. Clean EMPTY centers with generous flat readable interior space and absolutely NO text, NO letters, NO words, NO numerals anywhere in the art \u2014 only frames and chrome."
+      },
+      "tool_use_id": "toolu_01JQprGYVaL9X3dUoZT5EMsP",
+      "updated_at": "2026-08-10T13:27:55.968772"
+    },
+    "assets/ui/btn_blank_alt.png": {
+      "tool": "mcp__game-assets__generate_ui_kit",
+      "primary_prompt": "Ancient Greek imperial UI, Final Fantasy XIV quality: polished white marble with warm cream veining, ornate golden laurel and Greek-key filigree edges, deep navy-and-oxblood enamel inlays, bronze rosette studs, soft warm rim-light and subtle inner glow. Clean EMPTY centers with generous flat readable interior space and absolutely NO text, NO letters, NO words, NO numerals anywhere in the art \u2014 only frames and chrome.",
+      "raw_input": {
+        "element": {
+          "id": "btn_blank_alt",
+          "type": "button_9slice",
+          "size": {
+            "width": 300,
+            "height": 104
+          },
+          "aspect": "wide_3_1"
+        },
+        "kit_styleBrief": "Ancient Greek imperial UI, Final Fantasy XIV quality: polished white marble with warm cream veining, ornate golden laurel and Greek-key filigree edges, deep navy-and-oxblood enamel inlays, bronze rosette studs, soft warm rim-light and subtle inner glow. Clean EMPTY centers with generous flat readable interior space and absolutely NO text, NO letters, NO words, NO numerals anywhere in the art \u2014 only frames and chrome."
+      },
+      "tool_use_id": "toolu_01JQprGYVaL9X3dUoZT5EMsP",
+      "updated_at": "2026-08-10T13:27:55.968772"
+    },
+    "assets/ui/panel_scroll.png": {
+      "tool": "mcp__game-assets__generate_ui_kit",
+      "primary_prompt": "Ancient Greek imperial UI, Final Fantasy XIV quality: polished white marble with warm cream veining, ornate golden laurel and Greek-key filigree edges, deep navy-and-oxblood enamel inlays, bronze rosette studs, soft warm rim-light and subtle inner glow. Clean EMPTY centers with generous flat readable interior space and absolutely NO text, NO letters, NO words, NO numerals anywhere in the art \u2014 only frames and chrome.",
+      "raw_input": {
+        "element": {
+          "id": "panel_scroll",
+          "type": "panel_9slice",
+          "size": {
+            "width": 900,
+            "height": 640
+          },
+          "aspect": "landscape_4_3"
+        },
+        "kit_styleBrief": "Ancient Greek imperial UI, Final Fantasy XIV quality: polished white marble with warm cream veining, ornate golden laurel and Greek-key filigree edges, deep navy-and-oxblood enamel inlays, bronze rosette studs, soft warm rim-light and subtle inner glow. Clean EMPTY centers with generous flat readable interior space and absolutely NO text, NO letters, NO words, NO numerals anywhere in the art \u2014 only frames and chrome."
+      },
+      "tool_use_id": "toolu_01JQprGYVaL9X3dUoZT5EMsP",
+      "updated_at": "2026-08-10T13:27:55.968772"
+    },
+    "assets/ui/panel_card.png": {
+      "tool": "mcp__game-assets__generate_ui_kit",
+      "primary_prompt": "Ancient Greek imperial UI, Final Fantasy XIV quality: polished white marble with warm cream veining, ornate golden laurel and Greek-key filigree edges, deep navy-and-oxblood enamel inlays, bronze rosette studs, soft warm rim-light and subtle inner glow. Clean EMPTY centers with generous flat readable interior space and absolutely NO text, NO letters, NO words, NO numerals anywhere in the art \u2014 only frames and chrome.",
+      "raw_input": {
+        "element": {
+          "id": "panel_card",
+          "type": "panel_9slice",
+          "size": {
+            "width": 520,
+            "height": 660
+          },
+          "aspect": "portrait_4_3"
+        },
+        "kit_styleBrief": "Ancient Greek imperial UI, Final Fantasy XIV quality: polished white marble with warm cream veining, ornate golden laurel and Greek-key filigree edges, deep navy-and-oxblood enamel inlays, bronze rosette studs, soft warm rim-light and subtle inner glow. Clean EMPTY centers with generous flat readable interior space and absolutely NO text, NO letters, NO words, NO numerals anywhere in the art \u2014 only frames and chrome."
+      },
+      "tool_use_id": "toolu_01JQprGYVaL9X3dUoZT5EMsP",
+      "updated_at": "2026-08-10T13:27:55.968772"
+    },
+    "assets/ui/panel_bar.png": {
+      "tool": "mcp__game-assets__generate_ui_kit",
+      "primary_prompt": "Ancient Greek imperial UI, Final Fantasy XIV quality: polished white marble with warm cream veining, ornate golden laurel and Greek-key filigree edges, deep navy-and-oxblood enamel inlays, bronze rosette studs, soft warm rim-light and subtle inner glow. Clean EMPTY centers with generous flat readable interior space and absolutely NO text, NO letters, NO words, NO numerals anywhere in the art \u2014 only frames and chrome.",
+      "raw_input": {
+        "element": {
+          "id": "panel_bar",
+          "type": "panel_9slice",
+          "size": {
+            "width": 600,
+            "height": 220
+          },
+          "aspect": "wide_3_1"
+        },
+        "kit_styleBrief": "Ancient Greek imperial UI, Final Fantasy XIV quality: polished white marble with warm cream veining, ornate golden laurel and Greek-key filigree edges, deep navy-and-oxblood enamel inlays, bronze rosette studs, soft warm rim-light and subtle inner glow. Clean EMPTY centers with generous flat readable interior space and absolutely NO text, NO letters, NO words, NO numerals anywhere in the art \u2014 only frames and chrome."
+      },
+      "tool_use_id": "toolu_01JQprGYVaL9X3dUoZT5EMsP",
+      "updated_at": "2026-08-10T13:27:55.968772"
+    },
+    "assets/ui/panel_tooltip.png": {
+      "tool": "mcp__game-assets__generate_ui_kit",
+      "primary_prompt": "Ancient Greek imperial UI, Final Fantasy XIV quality: polished white marble with warm cream veining, ornate golden laurel and Greek-key filigree edges, deep navy-and-oxblood enamel inlays, bronze rosette studs, soft warm rim-light and subtle inner glow. Clean EMPTY centers with generous flat readable interior space and absolutely NO text, NO letters, NO words, NO numerals anywhere in the art \u2014 only frames and chrome.",
+      "raw_input": {
+        "element": {
+          "id": "panel_tooltip",
+          "type": "panel_9slice",
+          "size": {
+            "width": 480,
+            "height": 200
+          },
+          "aspect": "wide_3_1"
+        },
+        "kit_styleBrief": "Ancient Greek imperial UI, Final Fantasy XIV quality: polished white marble with warm cream veining, ornate golden laurel and Greek-key filigree edges, deep navy-and-oxblood enamel inlays, bronze rosette studs, soft warm rim-light and subtle inner glow. Clean EMPTY centers with generous flat readable interior space and absolutely NO text, NO letters, NO words, NO numerals anywhere in the art \u2014 only frames and chrome."
+      },
+      "tool_use_id": "toolu_01JQprGYVaL9X3dUoZT5EMsP",
+      "updated_at": "2026-08-10T13:27:55.968772"
+    },
+    "assets/ui/icon_map.png": {
+      "tool": "mcp__game-assets__generate_ui_kit",
+      "primary_prompt": "Ancient Greek imperial UI, Final Fantasy XIV quality: polished white marble with warm cream veining, ornate golden laurel and Greek-key filigree edges, deep navy-and-oxblood enamel inlays, bronze rosette studs, soft warm rim-light and subtle inner glow. Clean EMPTY centers with generous flat readable interior space and absolutely NO text, NO letters, NO words, NO numerals anywhere in the art \u2014 only frames and chrome.",
+      "raw_input": {
+        "element": {
+          "id": "icon_map",
+          "type": "icon",
+          "size": {
+            "width": 128,
+            "height": 128
+          },
+          "aspect": "square"
+        },
+        "kit_styleBrief": "Ancient Greek imperial UI, Final Fantasy XIV quality: polished white marble with warm cream veining, ornate golden laurel and Greek-key filigree edges, deep navy-and-oxblood enamel inlays, bronze rosette studs, soft warm rim-light and subtle inner glow. Clean EMPTY centers with generous flat readable interior space and absolutely NO text, NO letters, NO words, NO numerals anywhere in the art \u2014 only frames and chrome."
+      },
+      "tool_use_id": "toolu_01JQprGYVaL9X3dUoZT5EMsP",
+      "updated_at": "2026-08-10T13:27:55.968772"
+    },
+    "assets/ui/icon_quest.png": {
+      "tool": "mcp__game-assets__generate_ui_kit",
+      "primary_prompt": "Ancient Greek imperial UI, Final Fantasy XIV quality: polished white marble with warm cream veining, ornate golden laurel and Greek-key filigree edges, deep navy-and-oxblood enamel inlays, bronze rosette studs, soft warm rim-light and subtle inner glow. Clean EMPTY centers with generous flat readable interior space and absolutely NO text, NO letters, NO words, NO numerals anywhere in the art \u2014 only frames and chrome.",
+      "raw_input": {
+        "element": {
+          "id": "icon_quest",
+          "type": "icon",
+          "size": {
+            "width": 128,
+            "height": 128
+          },
+          "aspect": "square"
+        },
+        "kit_styleBrief": "Ancient Greek imperial UI, Final Fantasy XIV quality: polished white marble with warm cream veining, ornate golden laurel and Greek-key filigree edges, deep navy-and-oxblood enamel inlays, bronze rosette studs, soft warm rim-light and subtle inner glow. Clean EMPTY centers with generous flat readable interior space and absolutely NO text, NO letters, NO words, NO numerals anywhere in the art \u2014 only frames and chrome."
+      },
+      "tool_use_id": "toolu_01JQprGYVaL9X3dUoZT5EMsP",
+      "updated_at": "2026-08-10T13:27:55.968772"
+    },
+    "assets/ui/icon_clan.png": {
+      "tool": "mcp__game-assets__generate_ui_kit",
+      "primary_prompt": "Ancient Greek imperial UI, Final Fantasy XIV quality: polished white marble with warm cream veining, ornate golden laurel and Greek-key filigree edges, deep navy-and-oxblood enamel inlays, bronze rosette studs, soft warm rim-light and subtle inner glow. Clean EMPTY centers with generous flat readable interior space and absolutely NO text, NO letters, NO words, NO numerals anywhere in the art \u2014 only frames and chrome.",
+      "raw_input": {
+        "element": {
+          "id": "icon_clan",
+          "type": "icon",
+          "size": {
+            "width": 128,
+            "height": 128
+          },
+          "aspect": "square"
+        },
+        "kit_styleBrief": "Ancient Greek imperial UI, Final Fantasy XIV quality: polished white marble with warm cream veining, ornate golden laurel and Greek-key filigree edges, deep navy-and-oxblood enamel inlays, bronze rosette studs, soft warm rim-light and subtle inner glow. Clean EMPTY centers with generous flat readable interior space and absolutely NO text, NO letters, NO words, NO numerals anywhere in the art \u2014 only frames and chrome."
+      },
+      "tool_use_id": "toolu_01JQprGYVaL9X3dUoZT5EMsP",
+      "updated_at": "2026-08-10T13:27:55.968772"
+    },
+    "assets/ui/icon_boot.png": {
+      "tool": "mcp__game-assets__generate_ui_kit",
+      "primary_prompt": "Ancient Greek imperial UI, Final Fantasy XIV quality: polished white marble with warm cream veining, ornate golden laurel and Greek-key filigree edges, deep navy-and-oxblood enamel inlays, bronze rosette studs, soft warm rim-light and subtle inner glow. Clean EMPTY centers with generous flat readable interior space and absolutely NO text, NO letters, NO words, NO numerals anywhere in the art \u2014 only frames and chrome.",
+      "raw_input": {
+        "element": {
+          "id": "icon_boot",
+          "type": "icon",
+          "size": {
+            "width": 128,
+            "height": 128
+          },
+          "aspect": "square"
+        },
+        "kit_styleBrief": "Ancient Greek imperial UI, Final Fantasy XIV quality: polished white marble with warm cream veining, ornate golden laurel and Greek-key filigree edges, deep navy-and-oxblood enamel inlays, bronze rosette studs, soft warm rim-light and subtle inner glow. Clean EMPTY centers with generous flat readable interior space and absolutely NO text, NO letters, NO words, NO numerals anywhere in the art \u2014 only frames and chrome."
+      },
+      "tool_use_id": "toolu_01JQprGYVaL9X3dUoZT5EMsP",
+      "updated_at": "2026-08-10T13:27:55.968772"
+    },
+    "assets/textures/backgrounds/empire_map_hellas.png": {
+      "tool": "mcp__game-assets__generate_2d_images_batch",
+      "primary_prompt": "an antique illuminated campaign map of ancient Greece painted on aged parchment, showing three neighbouring realms sharing borders: a crimson mountainous Spartan highland in the south-west, a blue olive-and-marble Athenian coast in the east, and a gold harbour-and-isthmus Corinthian realm in the centre-north, divided by inked borders, tiny painted city icons, temples, triremes on a teal Aegean, sea monsters in the margins, compass rose, gold leaf trim, grand, scholarly, mythic, realistic, three coloured territories with clear borders, painted miniature cities and temples, Aegean sea with ships, gold leaf cartouche corners",
+      "raw_input": {
+        "type": "background",
+        "name": "empire_map_hellas",
+        "theme": "an antique illuminated campaign map of ancient Greece painted on aged parchment, showing three neighbouring realms sharing borders: a crimson mountainous Spartan highland in the south-west, a blue olive-and-marble Athenian coast in the east, and a gold harbour-and-isthmus Corinthian realm in the centre-north, divided by inked borders, tiny painted city icons, temples, triremes on a teal Aegean, sea monsters in the margins, compass rose, gold leaf trim",
+        "style": "realistic",
+        "mood": "grand, scholarly, mythic",
+        "perspective": "top-down",
+        "elements": [
+          "three coloured territories with clear borders",
+          "painted miniature cities and temples",
+          "Aegean sea with ships",
+          "gold leaf cartouche corners"
+        ]
+      },
+      "tool_use_id": "toolu_015PTZze6KzHThjMfapVQrep",
+      "updated_at": "2026-08-10T13:26:57.858676"
+    },
+    "assets/textures/backgrounds/empire_sparta.png": {
+      "tool": "mcp__game-assets__generate_2d_images_batch",
+      "primary_prompt": "a Spartan military highland at dusk: bronze-clad hoplites in crimson cloaks drilling in a rocky mountain valley, austere black-and-red stone barracks, spear racks, Mount Taygetus behind, dust and embers in the air, severe, martial, proud, realistic, phalanx of hoplites, crimson banners, rugged mountains",
+      "raw_input": {
+        "type": "background",
+        "name": "empire_sparta",
+        "theme": "a Spartan military highland at dusk: bronze-clad hoplites in crimson cloaks drilling in a rocky mountain valley, austere black-and-red stone barracks, spear racks, Mount Taygetus behind, dust and embers in the air",
+        "style": "realistic",
+        "mood": "severe, martial, proud",
+        "perspective": "side-view",
+        "elements": [
+          "phalanx of hoplites",
+          "crimson banners",
+          "rugged mountains"
+        ]
+      },
+      "tool_use_id": "toolu_015PTZze6KzHThjMfapVQrep",
+      "updated_at": "2026-08-10T13:26:57.858676"
+    },
+    "assets/textures/backgrounds/empire_athens.png": {
+      "tool": "mcp__game-assets__generate_2d_images_batch",
+      "primary_prompt": "the Athenian acropolis at golden hour: gleaming white marble temples with blue-painted friezes, olive groves and scholars in white robes on wide marble steps, owls, scrolls, a serene bay with triremes below, wise, luminous, serene, realistic, marble temple colonnade, olive trees, scholars and owls",
+      "raw_input": {
+        "type": "background",
+        "name": "empire_athens",
+        "theme": "the Athenian acropolis at golden hour: gleaming white marble temples with blue-painted friezes, olive groves and scholars in white robes on wide marble steps, owls, scrolls, a serene bay with triremes below",
+        "style": "realistic",
+        "mood": "wise, luminous, serene",
+        "perspective": "side-view",
+        "elements": [
+          "marble temple colonnade",
+          "olive trees",
+          "scholars and owls"
+        ]
+      },
+      "tool_use_id": "toolu_015PTZze6KzHThjMfapVQrep",
+      "updated_at": "2026-08-10T13:26:57.858676"
+    },
+    "assets/textures/backgrounds/empire_corinth.png": {
+      "tool": "mcp__game-assets__generate_2d_images_batch",
+      "primary_prompt": "the wealthy Corinthian harbour at midday: a bustling isthmus port of gold-trimmed merchant villas, cranes hauling amphorae, silk awnings over crowded market quays, painted triremes, turquoise water, coins and treasure crates, prosperous, lively, opulent, realistic, harbour with trireme ships, market stalls and amphorae, gold-trimmed villas",
+      "raw_input": {
+        "type": "background",
+        "name": "empire_corinth",
+        "theme": "the wealthy Corinthian harbour at midday: a bustling isthmus port of gold-trimmed merchant villas, cranes hauling amphorae, silk awnings over crowded market quays, painted triremes, turquoise water, coins and treasure crates",
+        "style": "realistic",
+        "mood": "prosperous, lively, opulent",
+        "perspective": "side-view",
+        "elements": [
+          "harbour with trireme ships",
+          "market stalls and amphorae",
+          "gold-trimmed villas"
+        ]
+      },
+      "tool_use_id": "toolu_015PTZze6KzHThjMfapVQrep",
+      "updated_at": "2026-08-10T13:26:57.858676"
+    },
+    "assets/textures/backgrounds/class_hoplite.png": {
+      "tool": "mcp__game-assets__generate_2d_images_batch",
+      "primary_prompt": "a bronze-armoured ancient warrior of Sparta seen from the side on a rocky ledge at sunset, tall red plume on the helmet, large round bronze shield, warm golden light, dramatic clouds behind, stoic, monumental, realistic, bronze plate armour, red plumed helmet, round bronze shield",
+      "raw_input": {
+        "type": "background",
+        "name": "class_hoplite",
+        "theme": "a bronze-armoured ancient warrior of Sparta seen from the side on a rocky ledge at sunset, tall red plume on the helmet, large round bronze shield, warm golden light, dramatic clouds behind",
+        "style": "realistic",
+        "mood": "stoic, monumental",
+        "perspective": "side-view",
+        "elements": [
+          "bronze plate armour",
+          "red plumed helmet",
+          "round bronze shield"
+        ]
+      },
+      "tool_use_id": "toolu_01NBRWuau1yTxPZZPtj5Uz7t",
+      "updated_at": "2026-08-10T13:37:13.123978"
+    },
+    "assets/textures/backgrounds/class_toxotes.png": {
+      "tool": "mcp__game-assets__generate_2d_images_batch",
+      "primary_prompt": "heroic portrait of a Cretan archer in light leather armour and green cloak, drawing a recurve horn bow, arrows at the hip, wind in the hair, moonlit forest background, swift, deadly, precise, realistic, recurve bow drawn, leather armour, quiver of arrows",
+      "raw_input": {
+        "type": "background",
+        "name": "class_toxotes",
+        "theme": "heroic portrait of a Cretan archer in light leather armour and green cloak, drawing a recurve horn bow, arrows at the hip, wind in the hair, moonlit forest background",
+        "style": "realistic",
+        "mood": "swift, deadly, precise",
+        "perspective": "side-view",
+        "elements": [
+          "recurve bow drawn",
+          "leather armour",
+          "quiver of arrows"
+        ]
+      },
+      "tool_use_id": "toolu_015PTZze6KzHThjMfapVQrep",
+      "updated_at": "2026-08-10T13:26:57.858676"
+    },
+    "assets/textures/backgrounds/class_magos.png": {
+      "tool": "mcp__game-assets__generate_2d_images_batch",
+      "primary_prompt": "heroic portrait of a Greek storm theurgist in white and violet robes with gold trim, holding a crackling lightning-wreathed staff, arcs of electricity around the hands, thunderclouds behind, arcane, awe-inspiring, realistic, lightning arcs, ornate staff, violet and gold robes",
+      "raw_input": {
+        "type": "background",
+        "name": "class_magos",
+        "theme": "heroic portrait of a Greek storm theurgist in white and violet robes with gold trim, holding a crackling lightning-wreathed staff, arcs of electricity around the hands, thunderclouds behind",
+        "style": "realistic",
+        "mood": "arcane, awe-inspiring",
+        "perspective": "side-view",
+        "elements": [
+          "lightning arcs",
+          "ornate staff",
+          "violet and gold robes"
+        ]
+      },
+      "tool_use_id": "toolu_015PTZze6KzHThjMfapVQrep",
+      "updated_at": "2026-08-10T13:26:57.858676"
+    },
+    "assets/environment/buildings/agora_market_stall.glb": {
+      "tool": "mcp__game-3d-models__generate_environment_batch",
+      "primary_prompt": "Ancient Greek agora market stall: a low stone-and-timber merchant booth with a striped crimson-and-cream cloth awning on wooden poles, wooden counter stacked with clay amphorae, baskets of olives and figs, hanging brass scales. Warm sun-bleached marble and terracotta palette, Final Fantasy XIV stylized realism, crisp readable silhouette, clean single connected structure standing upright on flat ground.",
+      "raw_input": {
+        "name": "agora_market_stall",
+        "category": "buildings",
+        "prompt": "Ancient Greek agora market stall: a low stone-and-timber merchant booth with a striped crimson-and-cream cloth awning on wooden poles, wooden counter stacked with clay amphorae, baskets of olives and figs, hanging brass scales. Warm sun-bleached marble and terracotta palette, Final Fantasy XIV stylized realism, crisp readable silhouette, clean single connected structure standing upright on flat ground.",
+        "style": "fantasy"
+      },
+      "tool_use_id": "toolu_0133heEqBdCf6qqzX1jB6drG",
+      "updated_at": "2026-08-10T13:33:43.139285"
+    },
+    "assets/environment/buildings/greek_townhouse.glb": {
+      "tool": "mcp__game-3d-models__generate_environment_batch",
+      "primary_prompt": "Ancient Greek city townhouse: two-storey whitewashed plaster villa with warm terracotta roof tiles, blue-painted wooden shutters, a small columned porch with two slim marble columns, stone steps, climbing vine on one wall. Sun-drenched Mediterranean palette, Final Fantasy XIV stylized realism, upright, complete building.",
+      "raw_input": {
+        "name": "greek_townhouse",
+        "category": "buildings",
+        "prompt": "Ancient Greek city townhouse: two-storey whitewashed plaster villa with warm terracotta roof tiles, blue-painted wooden shutters, a small columned porch with two slim marble columns, stone steps, climbing vine on one wall. Sun-drenched Mediterranean palette, Final Fantasy XIV stylized realism, upright, complete building.",
+        "style": "fantasy"
+      },
+      "tool_use_id": "toolu_0133heEqBdCf6qqzX1jB6drG",
+      "updated_at": "2026-08-10T13:33:43.139285"
+    },
+    "assets/environment/buildings/greek_stoa_colonnade.glb": {
+      "tool": "mcp__game-3d-models__generate_environment_batch",
+      "primary_prompt": "Ancient Greek stoa: a long open-fronted marble colonnade gallery with a row of six fluted Doric columns, a red-and-gold painted entablature frieze, terracotta tiled shed roof, shaded stone walkway behind. Polished cream marble with warm gold trim, Final Fantasy XIV stylized realism, upright and complete.",
+      "raw_input": {
+        "name": "greek_stoa_colonnade",
+        "category": "buildings",
+        "prompt": "Ancient Greek stoa: a long open-fronted marble colonnade gallery with a row of six fluted Doric columns, a red-and-gold painted entablature frieze, terracotta tiled shed roof, shaded stone walkway behind. Polished cream marble with warm gold trim, Final Fantasy XIV stylized realism, upright and complete.",
+        "style": "fantasy"
+      },
+      "tool_use_id": "toolu_0133heEqBdCf6qqzX1jB6drG",
+      "updated_at": "2026-08-10T13:33:43.139285"
+    },
+    "assets/environment/structures/marble_fountain.glb": {
+      "tool": "mcp__game-3d-models__generate_environment_batch",
+      "primary_prompt": "Ancient Greek public fountain: circular tiered white marble basin with a carved dolphin-and-laurel centerpiece spout, bronze fittings green with patina, water-worn stone rim, mosaic tile inlay in blue and gold. Ornate but clean, Final Fantasy XIV stylized realism, upright, symmetrical, complete.",
+      "raw_input": {
+        "name": "marble_fountain",
+        "category": "structures",
+        "prompt": "Ancient Greek public fountain: circular tiered white marble basin with a carved dolphin-and-laurel centerpiece spout, bronze fittings green with patina, water-worn stone rim, mosaic tile inlay in blue and gold. Ornate but clean, Final Fantasy XIV stylized realism, upright, symmetrical, complete.",
+        "style": "fantasy"
+      },
+      "tool_use_id": "toolu_0133heEqBdCf6qqzX1jB6drG",
+      "updated_at": "2026-08-10T13:33:43.139285"
+    },
+    "assets/environment/structures/city_gate_arch.glb": {
+      "tool": "mcp__game-3d-models__generate_environment_batch",
+      "primary_prompt": "Grand ancient Greek city gate: a monumental marble arch gateway flanked by two square towers with crenellations, bronze-studded oak doors standing open, carved laurel relief and painted crimson banners hanging from the lintel. Imposing, Final Fantasy XIV stylized realism, upright, complete, symmetrical.",
+      "raw_input": {
+        "name": "city_gate_arch",
+        "category": "structures",
+        "prompt": "Grand ancient Greek city gate: a monumental marble arch gateway flanked by two square towers with crenellations, bronze-studded oak doors standing open, carved laurel relief and painted crimson banners hanging from the lintel. Imposing, Final Fantasy XIV stylized realism, upright, complete, symmetrical.",
+        "style": "fantasy"
+      },
+      "tool_use_id": "toolu_0133heEqBdCf6qqzX1jB6drG",
+      "updated_at": "2026-08-10T13:33:43.139285"
+    },
+    "assets/environment/obstacles/training_dummy.glb": {
+      "tool": "mcp__game-3d-models__generate_environment_batch",
+      "primary_prompt": "Ancient Greek training post: a thick wooden practice pole wrapped in straw rope and battered leather, mounted in a heavy stone base, with a bronze shield and crossed spears leaning against it. Weathered, Final Fantasy XIV stylized realism, upright, complete.",
+      "raw_input": {
+        "name": "training_dummy",
+        "category": "obstacles",
+        "prompt": "Ancient Greek training post: a thick wooden practice pole wrapped in straw rope and battered leather, mounted in a heavy stone base, with a bronze shield and crossed spears leaning against it. Weathered, Final Fantasy XIV stylized realism, upright, complete.",
+        "style": "fantasy"
+      },
+      "tool_use_id": "toolu_0133heEqBdCf6qqzX1jB6drG",
+      "updated_at": "2026-08-10T13:33:43.139285"
+    },
+    "assets/environment/obstacles/olive_cart.glb": {
+      "tool": "mcp__game-3d-models__generate_environment_batch",
+      "primary_prompt": "Ancient Greek wooden hand cart: two-wheeled market cart of aged oak with iron-banded wheels, loaded with clay amphorae, woven baskets of olives, and folded cloth sacks, wooden handles resting on the ground. Warm sunlit wood tones, Final Fantasy XIV stylized realism, upright, complete.",
+      "raw_input": {
+        "name": "olive_cart",
+        "category": "obstacles",
+        "prompt": "Ancient Greek wooden hand cart: two-wheeled market cart of aged oak with iron-banded wheels, loaded with clay amphorae, woven baskets of olives, and folded cloth sacks, wooden handles resting on the ground. Warm sunlit wood tones, Final Fantasy XIV stylized realism, upright, complete.",
+        "style": "fantasy"
+      },
+      "tool_use_id": "toolu_0133heEqBdCf6qqzX1jB6drG",
+      "updated_at": "2026-08-10T13:33:43.139285"
+    },
+    "assets/environment/structures/brazier_flame.glb": {
+      "tool": "mcp__game-3d-models__generate_environment_batch",
+      "primary_prompt": "Ancient Greek bronze brazier: a tall three-legged tripod fire bowl of dark patinated bronze with a laurel-embossed rim and carved lion feet, filled with glowing coals and charred wood. Ornate temple-grade metalwork, Final Fantasy XIV stylized realism, upright, symmetrical, complete.",
+      "raw_input": {
+        "name": "brazier_flame",
+        "category": "structures",
+        "prompt": "Ancient Greek bronze brazier: a tall three-legged tripod fire bowl of dark patinated bronze with a laurel-embossed rim and carved lion feet, filled with glowing coals and charred wood. Ornate temple-grade metalwork, Final Fantasy XIV stylized realism, upright, symmetrical, complete.",
+        "style": "fantasy"
+      },
+      "tool_use_id": "toolu_0133heEqBdCf6qqzX1jB6drG",
+      "updated_at": "2026-08-10T13:33:43.139285"
+    },
+    "assets/characters/citizen_merchant/citizen_merchant.glb": {
+      "tool": "mcp__game-3d-models__generate_characters_batch",
+      "primary_prompt": "Ancient Greek merchant man, middle-aged, warm olive skin, short dark beard, wearing a long cream linen chiton robe with a wide crimson-and-gold trimmed sash belt, leather sandals, a small pouch on the belt. Full body, standing upright, head to toe, T-pose, arms straight out to the sides, empty open hands, Final Fantasy XIV stylized realism, warm sunlit Mediterranean palette.",
+      "raw_input": {
+        "name": "citizen_merchant",
+        "prompt": "Ancient Greek merchant man, middle-aged, warm olive skin, short dark beard, wearing a long cream linen chiton robe with a wide crimson-and-gold trimmed sash belt, leather sandals, a small pouch on the belt. Full body, standing upright, head to toe, T-pose, arms straight out to the sides, empty open hands, Final Fantasy XIV stylized realism, warm sunlit Mediterranean palette.",
+        "style": "stylized"
+      },
+      "tool_use_id": "toolu_019qhgx13XA2pXZTcHogTESq",
+      "updated_at": "2026-08-10T13:36:23.404965"
+    },
+    "assets/characters/citizen_woman/citizen_woman.glb": {
+      "tool": "mcp__game-3d-models__generate_characters_batch",
+      "primary_prompt": "Ancient Greek woman citizen, young adult, olive skin, dark hair braided and pinned with a bronze circlet, wearing a flowing pale blue peplos gown with gold-embroidered hem and a soft cream shawl, leather sandals. Full body, standing upright, head to toe, T-pose, arms straight out to the sides, empty open hands, Final Fantasy XIV stylized realism, warm sunlit palette.",
+      "raw_input": {
+        "name": "citizen_woman",
+        "prompt": "Ancient Greek woman citizen, young adult, olive skin, dark hair braided and pinned with a bronze circlet, wearing a flowing pale blue peplos gown with gold-embroidered hem and a soft cream shawl, leather sandals. Full body, standing upright, head to toe, T-pose, arms straight out to the sides, empty open hands, Final Fantasy XIV stylized realism, warm sunlit palette.",
+        "style": "stylized"
+      },
+      "tool_use_id": "toolu_019qhgx13XA2pXZTcHogTESq",
+      "updated_at": "2026-08-10T13:36:23.404965"
+    },
+    "assets/characters/city_guard/city_guard.glb": {
+      "tool": "mcp__game-3d-models__generate_characters_batch",
+      "primary_prompt": "Ancient Greek city guard soldier, muscular adult man, bronze conical helmet with a short crimson crest, polished bronze cuirass over a red tunic, bronze greaves, leather sandals, a crimson cloak pinned at one shoulder. Full body, standing upright, head to toe, T-pose, arms straight out to the sides, empty open hands, no weapons, Final Fantasy XIV stylized realism.",
+      "raw_input": {
+        "name": "city_guard",
+        "prompt": "Ancient Greek city guard soldier, muscular adult man, bronze conical helmet with a short crimson crest, polished bronze cuirass over a red tunic, bronze greaves, leather sandals, a crimson cloak pinned at one shoulder. Full body, standing upright, head to toe, T-pose, arms straight out to the sides, empty open hands, no weapons, Final Fantasy XIV stylized realism.",
+        "style": "stylized"
+      },
+      "tool_use_id": "toolu_019qhgx13XA2pXZTcHogTESq",
+      "updated_at": "2026-08-10T13:36:23.404965"
+    },
+    "assets/audio/sfx/player/player_footstep_dirt.mp3": {
+      "tool": "mcp__game-audio__generate_audio_batch",
+      "primary_prompt": "A single soft footstep on dry dusty dirt and gravel, light scuff of a leather sandal, close and dry, no reverb, no music",
+      "raw_input": {
+        "type": "sfx",
+        "name": "footstep_dirt",
+        "category": "player",
+        "description": "A single soft footstep on dry dusty dirt and gravel, light scuff of a leather sandal, close and dry, no reverb, no music",
+        "duration": 0.5
+      },
+      "tool_use_id": "toolu_01V2Cx5d3xDv1NEu7iBRx3Cc",
+      "updated_at": "2026-08-10T13:36:34.220978"
+    },
+    "assets/audio/sfx/player/player_footstep_stone.mp3": {
+      "tool": "mcp__game-audio__generate_audio_batch",
+      "primary_prompt": "A single crisp footstep of a leather sandal on polished marble paving stone, slight scuff, small bright tap, no reverb, no music",
+      "raw_input": {
+        "type": "sfx",
+        "name": "footstep_stone",
+        "category": "player",
+        "description": "A single crisp footstep of a leather sandal on polished marble paving stone, slight scuff, small bright tap, no reverb, no music",
+        "duration": 0.5
+      },
+      "tool_use_id": "toolu_01V2Cx5d3xDv1NEu7iBRx3Cc",
+      "updated_at": "2026-08-10T13:36:34.220978"
+    },
+    "assets/audio/sfx/player/player_footstep_grass.mp3": {
+      "tool": "mcp__game-audio__generate_audio_batch",
+      "primary_prompt": "A single soft footstep through dry grass and light brush, gentle rustle, close and dry, no music",
+      "raw_input": {
+        "type": "sfx",
+        "name": "footstep_grass",
+        "category": "player",
+        "description": "A single soft footstep through dry grass and light brush, gentle rustle, close and dry, no music",
+        "duration": 0.5
+      },
+      "tool_use_id": "toolu_01V2Cx5d3xDv1NEu7iBRx3Cc",
+      "updated_at": "2026-08-10T13:36:34.220978"
+    },
+    "assets/audio/music/music_exploration_city_agora_theme.mp3": {
+      "tool": "mcp__game-audio__generate_audio_batch",
+      "primary_prompt": "warm Mediterranean orchestral with lyre, kithara, aulos flute, hand drums and soft strings, in the style of a grand MMORPG town theme, welcoming, bustling, sunlit, majestic, moderate 95 BPM",
+      "raw_input": {
+        "type": "music",
+        "name": "city_agora_theme",
+        "gameState": "exploration",
+        "style": "warm Mediterranean orchestral with lyre, kithara, aulos flute, hand drums and soft strings, in the style of a grand MMORPG town theme",
+        "mood": "welcoming, bustling, sunlit, majestic",
+        "tempo": "moderate 95 BPM",
+        "instruments": "lyre, harp, aulos flute, tambourine, warm strings, distant choir",
+        "durationSeconds": 75
+      },
+      "tool_use_id": "toolu_01V2Cx5d3xDv1NEu7iBRx3Cc",
+      "updated_at": "2026-08-10T13:36:34.220978"
+    },
+    "assets/audio/ambient/ambient_ancient_greek_city_plaza_city_crowd.mp3": {
+      "tool": "mcp__game-audio__generate_audio_batch",
+      "primary_prompt": "Gentle ancient marketplace ambience: distant murmuring crowd chatter, occasional wooden cart creak, clay pot clinks, a fountain trickling, birds, no music, loopable",
+      "raw_input": {
+        "type": "ambient",
+        "name": "city_crowd",
+        "environment": "ancient greek city plaza",
+        "description": "Gentle ancient marketplace ambience: distant murmuring crowd chatter, occasional wooden cart creak, clay pot clinks, a fountain trickling, birds, no music, loopable",
+        "duration": 25
+      },
+      "tool_use_id": "toolu_01V2Cx5d3xDv1NEu7iBRx3Cc",
+      "updated_at": "2026-08-10T13:36:34.220978"
+    },
+    "assets/audio/sfx/ui/ui_quest_complete.mp3": {
+      "tool": "mcp__game-audio__generate_audio_batch",
+      "primary_prompt": "A short triumphant divine chime: bright golden bell shimmer with a soft harp flourish, holy and rewarding, no voice",
+      "raw_input": {
+        "type": "sfx",
+        "name": "quest_complete",
+        "category": "ui",
+        "description": "A short triumphant divine chime: bright golden bell shimmer with a soft harp flourish, holy and rewarding, no voice",
+        "duration": 2.5
+      },
+      "tool_use_id": "toolu_01V2Cx5d3xDv1NEu7iBRx3Cc",
+      "updated_at": "2026-08-10T13:36:34.220978"
+    },
+    "assets/audio/sfx/enemy/enemy_enemy_growl.mp3": {
+      "tool": "mcp__game-audio__generate_audio_batch",
+      "primary_prompt": "A low threatening beast growl building to a short snarl, wet and animalistic, aggressive, close range",
+      "raw_input": {
+        "type": "sfx",
+        "name": "enemy_growl",
+        "category": "enemy",
+        "description": "A low threatening beast growl building to a short snarl, wet and animalistic, aggressive, close range",
+        "duration": 1.5
+      },
+      "tool_use_id": "toolu_01V2Cx5d3xDv1NEu7iBRx3Cc",
+      "updated_at": "2026-08-10T13:36:34.220978"
+    }
+  }
+}
