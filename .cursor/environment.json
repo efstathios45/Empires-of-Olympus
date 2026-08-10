@@ -1,0 +1,8 @@
+{
+  "name": "Empires of Olympus (Godot 4.3)",
+  "user": "ubuntu",
+  "build": {
+    "dockerfile": "Dockerfile"
+  },
+  "install": "bash .cursor/install.sh"
+}
