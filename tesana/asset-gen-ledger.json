@@ -1,0 +1,197 @@
+{
+  "version": 1,
+  "entries": {
+    "86a5a55fdc235b981017b9953b5ea587": {
+      "relPath": "assets/characters/blacksmith_npc/blacksmith_npc.glb",
+      "taskId": "library:a762335a12a640c0fe6732cf6b7d95c58ce7b3a710fc02dd0a7973d837843f19",
+      "label": "character:blacksmith_npc",
+      "completedAt": "2026-08-10T10:39:05.109Z"
+    },
+    "93abfae630bea1fafffc45c42e125bd4": {
+      "relPath": "assets/characters/boar_enemy/boar_enemy.glb",
+      "taskId": "library:aed6226ce3f388c049cbcff933ba68c1b19526bc21b247aec2e32f70b690685f",
+      "label": "character:boar_enemy",
+      "completedAt": "2026-08-10T10:40:09.358Z"
+    },
+    "041136a68b9b624ad00e8ceb54b502c1": {
+      "relPath": "assets/characters/wolf_enemy/wolf_enemy.glb",
+      "taskId": "library:72cbfd0041abc599ead4cf06516f6575de629a1bb9e61614d2ad0785bff09276",
+      "label": "character:wolf_enemy",
+      "completedAt": "2026-08-10T10:40:09.849Z"
+    },
+    "70d89a85629186da7d474b09bc2055a3": {
+      "relPath": "assets/characters/centaur_enemy/centaur_enemy.glb",
+      "taskId": "a4898817-f19f-41a1-a3cd-789d2d76a586",
+      "label": "character:centaur_enemy",
+      "completedAt": "2026-08-10T10:41:37.384Z"
+    },
+    "ea0f2d0f4c52a99c417b97678cdbefd8": {
+      "relPath": "assets/characters/oracle_priestess/oracle_priestess.glb",
+      "taskId": "9d60fef6-bd2f-47b6-86ec-d4608f9434d4",
+      "label": "character:oracle_priestess",
+      "completedAt": "2026-08-10T10:41:48.687Z"
+    },
+    "d751b43cfde09bcf4e0e7476f873e29c": {
+      "relPath": "assets/characters/satyr_enemy/satyr_enemy.glb",
+      "taskId": "da72aedd-9de4-4c0e-8c77-b5e9a0a78aaf",
+      "label": "character:satyr_enemy",
+      "completedAt": "2026-08-10T10:41:53.153Z"
+    },
+    "c6b8b8468fc7b710ab84b7d12d9b7c8c": {
+      "relPath": "assets/characters/gorgon_enemy/gorgon_enemy.glb",
+      "taskId": "3a973468-2060-431c-9aa0-c83abfa5110d",
+      "label": "character:gorgon_enemy",
+      "completedAt": "2026-08-10T10:42:25.777Z"
+    },
+    "c4ab6f3e763deefe28783f6ec3714abc": {
+      "relPath": "assets/props/weapons/cretan_bow.glb",
+      "taskId": "bcdb05d1-06f7-44e4-b022-afd128e27003",
+      "label": "weapon:melee/cretan_bow",
+      "completedAt": "2026-08-10T10:45:58.324Z"
+    },
+    "f939850a0834d7c635294310544f2ead": {
+      "relPath": "assets/environment/structures/marble_column.glb",
+      "taskId": "8753500d-284e-4b9b-8099-4d8e7fc71598",
+      "label": "environment:structures/marble_column",
+      "completedAt": "2026-08-10T10:49:51.236Z"
+    },
+    "6477cdf9f19125acd59beb64155aa163": {
+      "relPath": "assets/environment/buildings/spartan_barracks.glb",
+      "taskId": "b5db0dd1-b354-4885-9c5e-339da1076fe1",
+      "label": "environment:buildings/spartan_barracks",
+      "completedAt": "2026-08-10T10:50:19.021Z"
+    },
+    "3ff7319e3da982725cd74b88f4bae724": {
+      "relPath": "assets/environment/structures/arena_gate.glb",
+      "taskId": "d52b2027-ab08-4178-9c2c-2534bb59ff42",
+      "label": "environment:structures/arena_gate",
+      "completedAt": "2026-08-10T10:50:22.251Z"
+    },
+    "dc38398941258e43099ba5fc897142c2": {
+      "relPath": "assets/environment/structures/broken_ruins.glb",
+      "taskId": "72174fb0-3fff-4a65-8d27-c950b9caa7cd",
+      "label": "environment:structures/broken_ruins",
+      "completedAt": "2026-08-10T10:50:30.373Z"
+    },
+    "b2be1295a3003e8fc6d0305067b22a6f": {
+      "relPath": "assets/environment/buildings/greek_temple.glb",
+      "taskId": "50c86464-4c4f-455a-9490-3972fbc74767",
+      "label": "environment:buildings/greek_temple",
+      "completedAt": "2026-08-10T10:50:37.763Z"
+    },
+    "eeca414b00d0acdaac80f3a6cca37ba3": {
+      "relPath": "assets/environment/rocks/cliff_rock.glb",
+      "taskId": "86563b9a-d0ff-462b-b60a-12c469e1b4c9",
+      "label": "environment:rocks/cliff_rock",
+      "completedAt": "2026-08-10T10:51:26.994Z"
+    },
+    "6a8e12d5f9acace15b33a836c9cbf55a": {
+      "relPath": "assets/props/items/health_potion.glb",
+      "taskId": "84a45f9e-7b89-44ce-8b65-ebac1544ed80",
+      "label": "prop:items/health_potion",
+      "completedAt": "2026-08-10T10:54:52.480Z"
+    },
+    "7eb4a3b3053d60ae9dbecd4ee5e87fa8": {
+      "relPath": "assets/props/decorations/greek_statue.glb",
+      "taskId": "4700ce85-a4f4-4b8c-81e9-f7b969c73b84",
+      "label": "prop:decorations/greek_statue",
+      "completedAt": "2026-08-10T10:55:06.039Z"
+    },
+    "efee99bb3de1e28e73bd59a8857ac64a": {
+      "relPath": "assets/props/containers/treasure_chest.glb",
+      "taskId": "3ea0fe0c-6bbb-42d6-bc56-d6f567c94bc2",
+      "label": "prop:containers/treasure_chest",
+      "completedAt": "2026-08-10T10:55:34.704Z"
+    },
+    "48270231bf25a0d1f40facdb2b147a76": {
+      "relPath": "assets/props/furniture/marble_altar.glb",
+      "taskId": "f398ed0e-b69a-488a-8cf1-3fc849d42c83",
+      "label": "prop:furniture/marble_altar",
+      "completedAt": "2026-08-10T10:55:50.174Z"
+    },
+    "61dd98dba811fb9fc9a45a6b67a4e1f3": {
+      "relPath": "assets/props/tools/blacksmith_anvil.glb",
+      "taskId": "0b355bf2-d867-4e72-ae9e-91fa2bb68248",
+      "label": "prop:tools/blacksmith_anvil",
+      "completedAt": "2026-08-10T10:56:04.286Z"
+    },
+    "76c712ae139e54d62d8e251043061615": {
+      "relPath": "assets/props/items/oracle_stone.glb",
+      "taskId": "cd4a1552-85a4-4286-a351-77b6991ba8bd",
+      "label": "prop:items/oracle_stone",
+      "completedAt": "2026-08-10T10:56:07.048Z"
+    },
+    "c0af4741ddf34f5fd0ed5ec180dd186c": {
+      "relPath": "assets/props/containers/amphora.glb",
+      "taskId": "6872bfcd-ae04-483a-98c8-f55437534790",
+      "label": "prop:containers/amphora",
+      "completedAt": "2026-08-10T10:56:09.755Z"
+    },
+    "1825acc007037028b6601a1b7fac27fa": {
+      "relPath": "assets/environment/obstacles/training_dummy.glb",
+      "taskId": "a2de654c-c0fa-4c6f-b920-2d7efa5917d5",
+      "label": "environment:obstacles/training_dummy",
+      "completedAt": "2026-08-10T13:32:44.076Z"
+    },
+    "137574f831a72bb9abdd4f7d963a4fe9": {
+      "relPath": "assets/environment/buildings/greek_stoa_colonnade.glb",
+      "taskId": "5588c520-0f7a-4d97-ba17-426ba459a4e9",
+      "label": "environment:buildings/greek_stoa_colonnade",
+      "completedAt": "2026-08-10T13:32:58.512Z"
+    },
+    "f9ee9408be4e8b710b07428c7800225e": {
+      "relPath": "assets/environment/structures/city_gate_arch.glb",
+      "taskId": "771d8759-ea37-4b9e-bf25-24c047b75277",
+      "label": "environment:structures/city_gate_arch",
+      "completedAt": "2026-08-10T13:33:18.671Z"
+    },
+    "f40ba284361e7df5bcf3a298fe317235": {
+      "relPath": "assets/environment/obstacles/olive_cart.glb",
+      "taskId": "87f30123-d668-4e22-9d75-3f0a339b7a7c",
+      "label": "environment:obstacles/olive_cart",
+      "completedAt": "2026-08-10T13:33:19.613Z"
+    },
+    "ebd0881199242e97fd115edd05a94e51": {
+      "relPath": "assets/environment/structures/brazier_flame.glb",
+      "taskId": "c46f52f0-2b64-4770-a4c3-160acf1de465",
+      "label": "environment:structures/brazier_flame",
+      "completedAt": "2026-08-10T13:33:22.056Z"
+    },
+    "8d358ab4bf5463de3aba7e4567902688": {
+      "relPath": "assets/environment/structures/marble_fountain.glb",
+      "taskId": "44a69b10-21af-4be6-a18c-c6218dd38501",
+      "label": "environment:structures/marble_fountain",
+      "completedAt": "2026-08-10T13:33:23.763Z"
+    },
+    "d577e2bc289470962ff58f793e3544aa": {
+      "relPath": "assets/environment/buildings/greek_townhouse.glb",
+      "taskId": "4db90b3a-1a98-4244-8c10-0f7c77b924a6",
+      "label": "environment:buildings/greek_townhouse",
+      "completedAt": "2026-08-10T13:33:25.726Z"
+    },
+    "76a1b242326b5571e998aabed2ed241a": {
+      "relPath": "assets/environment/buildings/agora_market_stall.glb",
+      "taskId": "ce7ccbee-c4b3-4fa4-8dab-265009853334",
+      "label": "environment:buildings/agora_market_stall",
+      "completedAt": "2026-08-10T13:33:43.127Z"
+    },
+    "74b69193deb61a9ee53af1dbe3857500": {
+      "relPath": "assets/characters/city_guard/city_guard.glb",
+      "taskId": "library:6d3b7f914a70f52c0839d581b95931ee6a1d17814f4aa451c8f5578aa1cf069e",
+      "label": "character:city_guard",
+      "completedAt": "2026-08-10T13:34:00.761Z"
+    },
+    "57e7c16d483847fb2dd68e7df4775c84": {
+      "relPath": "assets/characters/citizen_woman/citizen_woman.glb",
+      "taskId": "aea80a00-b7b5-4474-80bc-ef9975eb7b80",
+      "label": "character:citizen_woman",
+      "completedAt": "2026-08-10T13:36:23.142Z"
+    },
+    "d5efa1fd995defae458a886971ec6c95": {
+      "relPath": "assets/characters/citizen_merchant/citizen_merchant.glb",
+      "taskId": "e2432927-ac1b-46e4-830f-6367c418a9c1",
+      "label": "character:citizen_merchant",
+      "completedAt": "2026-08-10T13:36:23.394Z"
+    }
+  }
+}

@@ -1,0 +1,14 @@
+{
+  "ok": true,
+  "run_id": "20260810T121044-e195bbff",
+  "screenshots": [],
+  "play_paths": [],
+  "console_errors": 1,
+  "error_lines": [
+    "ERROR: 1 resources still in use at exit (run with --verbose for details)."
+  ],
+  "duration_s": 48.3,
+  "notes": [
+    "smoke probe: headless console-error scan (no renderer, no screenshots by design)"
+  ]
+}
