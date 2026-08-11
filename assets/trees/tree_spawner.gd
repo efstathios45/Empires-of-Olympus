@@ -124,6 +124,8 @@ var lod_distance: float = 55.0
 var lod_blend_band: float = 24.0
 var cast_leaf_shadows: bool = true
 var seed: int = 1337
+## Optional Callable(local_x, local_z) -> local_y so trunks sit on uneven terrain.
+var height_sampler: Callable = Callable()
 
 var _variants: Array = []         # {xforms, near_wood, far_wood, near, far}
 var _lod_accum: float = 0.0
@@ -148,6 +150,8 @@ func setup(
 	lod_blend_band = opts.get("lod_blend_band", lod_blend_band)
 	cast_leaf_shadows = opts.get("cast_leaf_shadows", cast_leaf_shadows)
 	seed = int(opts.get("seed", params.get("seed", seed)))
+	if opts.has("height_sampler") and opts["height_sampler"] is Callable:
+		height_sampler = opts["height_sampler"]
 	return self
 
 
@@ -220,12 +224,17 @@ func _scatter_positions(rng: RandomNumberGenerator) -> Array[Vector3]:
 		attempts += 1
 		var a: float = rng.randf() * TAU
 		var r: float = forest_radius * sqrt(rng.randf())
-		var pos := Vector3(cos(a) * r, 0.0, sin(a) * r)
-		if pos.length() < CLEARING_RADIUS:
+		var lx: float = cos(a) * r
+		var lz: float = sin(a) * r
+		var ly: float = 0.0
+		if height_sampler.is_valid():
+			ly = float(height_sampler.call(lx, lz))
+		var pos := Vector3(lx, ly, lz)
+		if Vector2(lx, lz).length() < CLEARING_RADIUS:
 			continue
 		var ok := true
 		for q in positions:
-			if q.distance_squared_to(pos) < min_sq:
+			if Vector2(q.x, q.z).distance_squared_to(Vector2(lx, lz)) < min_sq:
 				ok = false
 				break
 		if ok:

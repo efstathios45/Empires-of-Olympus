@@ -5,7 +5,9 @@ extends Control
 
 const Kit = preload("res://scripts/ui/ui_kit.gd")
 
-const TEXT_W := 640
+const TEXT_W := 620
+const PANEL_W := 840
+const PANEL_H := 620
 
 var hud: CanvasLayer
 
@@ -26,69 +28,88 @@ func _ready() -> void:
 	center.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
 
 	var panel := Kit.make_panel(false)
-	panel.custom_minimum_size = Vector2(820, 560)
+	panel.custom_minimum_size = Vector2(PANEL_W, PANEL_H)
 	center.add_child(panel)
 
-	var margin := Kit.make_margin(34)
+	var margin := Kit.make_margin(28)
 	panel.add_child(margin)
-	var v := VBoxContainer.new()
-	v.add_theme_constant_override("separation", 8)
-	margin.add_child(v)
+	var root_v := VBoxContainer.new()
+	root_v.add_theme_constant_override("separation", 10)
+	root_v.size_flags_vertical = Control.SIZE_EXPAND_FILL
+	margin.add_child(root_v)
 
 	# ── Speaker ──
 	var speaker := HBoxContainer.new()
 	speaker.alignment = BoxContainer.ALIGNMENT_CENTER
 	speaker.add_theme_constant_override("separation", 12)
-	v.add_child(speaker)
+	root_v.add_child(speaker)
 	speaker.add_child(Kit.make_icon("icon_laurel", 38))
-	speaker.add_child(Kit.make_label("Priestess Melite", 30, Kit.INK_TITLE))
+	speaker.add_child(Kit.make_label("Priestess Melite", 28, Kit.INK_TITLE))
 
 	var quote := Kit.make_label(
 		"\"The gods watch you, champion. Hellas bleeds — will you answer?\"",
-		17, Kit.INK_SOFT, HORIZONTAL_ALIGNMENT_CENTER)
+		16, Kit.INK_SOFT, HORIZONTAL_ALIGNMENT_CENTER)
 	quote.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
 	quote.custom_minimum_size = Vector2(TEXT_W, 0)
-	v.add_child(quote)
-	v.add_child(_divider())
+	quote.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	root_v.add_child(quote)
+	root_v.add_child(_divider())
+
+	# Scrollable body so long briefs never clip out of the marble card.
+	var scroll := ScrollContainer.new()
+	scroll.size_flags_vertical = Control.SIZE_EXPAND_FILL
+	scroll.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	scroll.horizontal_scroll_mode = ScrollContainer.SCROLL_MODE_DISABLED
+	scroll.custom_minimum_size = Vector2(0, 280)
+	root_v.add_child(scroll)
+
+	var body := VBoxContainer.new()
+	body.add_theme_constant_override("separation", 8)
+	body.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	scroll.add_child(body)
 
 	# ── Trial ──
-	_quest_title = Kit.make_label("", 24, Kit.INK_TITLE)
+	_quest_title = Kit.make_label("", 22, Kit.INK_TITLE)
 	_quest_title.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
 	_quest_title.custom_minimum_size = Vector2(TEXT_W, 0)
-	v.add_child(_quest_title)
+	_quest_title.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	body.add_child(_quest_title)
 
-	_quest_brief = Kit.make_label("", 18, Kit.INK)
+	_quest_brief = Kit.make_label("", 17, Kit.INK)
 	_quest_brief.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
 	_quest_brief.custom_minimum_size = Vector2(TEXT_W, 0)
-	_quest_brief.add_theme_constant_override("line_spacing", 8)
-	v.add_child(_quest_brief)
-	v.add_child(Kit.spacer(4))
+	_quest_brief.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	_quest_brief.add_theme_constant_override("line_spacing", 4)
+	body.add_child(_quest_brief)
 
-	_progress = Kit.make_label("", 17, Kit.INK_SOFT)
+	_progress = Kit.make_label("", 16, Kit.INK_SOFT)
 	_progress.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
 	_progress.custom_minimum_size = Vector2(TEXT_W, 0)
-	_progress.add_theme_constant_override("line_spacing", 5)
-	v.add_child(_progress)
+	_progress.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	_progress.add_theme_constant_override("line_spacing", 3)
+	body.add_child(_progress)
 
-	_reward = Kit.make_label("", 18, Kit.INK_GOLD)
+	_reward = Kit.make_label("", 17, Kit.INK_GOLD)
 	_reward.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
 	_reward.custom_minimum_size = Vector2(TEXT_W, 0)
-	v.add_child(_reward)
+	_reward.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	body.add_child(_reward)
 
 	# ── Choices ──
-	v.add_child(Kit.spacer(6))
 	var row := HBoxContainer.new()
 	row.alignment = BoxContainer.ALIGNMENT_CENTER
-	row.add_theme_constant_override("separation", 20)
-	v.add_child(row)
+	row.add_theme_constant_override("separation", 18)
+	root_v.add_child(row)
 
 	_complete_btn = Kit.make_button("Complete Trial", true)
-	_complete_btn.custom_minimum_size = Vector2(280, 64)
+	_complete_btn.custom_minimum_size = Vector2(280, 58)
+	_complete_btn.clip_text = true
 	_complete_btn.pressed.connect(_on_complete)
 	row.add_child(_complete_btn)
 
 	var close_btn := Kit.make_button("Farewell", false)
-	close_btn.custom_minimum_size = Vector2(260, 62)
+	close_btn.custom_minimum_size = Vector2(240, 56)
+	close_btn.clip_text = true
 	close_btn.pressed.connect(func() -> void: hud.close_panel_from_click())
 	row.add_child(close_btn)
 
@@ -99,6 +120,7 @@ func _divider() -> ColorRect:
 	d.color = Color(0.42, 0.32, 0.14, 0.30)
 	d.custom_minimum_size = Vector2(TEXT_W, 2)
 	d.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	d.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	return d
 
 func _refresh() -> void:

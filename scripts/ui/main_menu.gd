@@ -56,6 +56,8 @@ var _shade: ColorRect
 var _content: Control
 var _overlay: Control
 var _bg_tween: Tween
+var _empire_map: Control = null
+var _empire_map_big: Control = null
 
 
 func _ready() -> void:
@@ -153,6 +155,34 @@ func _image(path: String, size: Vector2, cover: bool) -> TextureRect:
 	return t
 
 
+## Map texture + red frontier barriers + selected-empire glow.
+func _empire_map_board(size: Vector2) -> Control:
+	if not ResourceLoader.exists(MAP):
+		return null
+	var board := Control.new()
+	board.custom_minimum_size = size
+	board.size_flags_horizontal = Control.SIZE_SHRINK_CENTER
+	board.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	board.clip_contents = true
+
+	var tex := TextureRect.new()
+	tex.texture = load(MAP)
+	tex.expand_mode = TextureRect.EXPAND_IGNORE_SIZE
+	tex.stretch_mode = TextureRect.STRETCH_KEEP_ASPECT_CENTERED
+	tex.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	board.add_child(tex)
+	tex.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
+
+	var overlay: Control = (load("res://scripts/ui/empire_map_overlay.gd") as GDScript).new()
+	overlay.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	board.add_child(overlay)
+	overlay.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
+	if overlay.has_method("set_selected"):
+		overlay.call("set_selected", _empire)
+	board.set_meta("overlay", overlay)
+	return board
+
+
 func _centered(c: Control) -> CenterContainer:
 	var cc := CenterContainer.new()
 	cc.mouse_filter = Control.MOUSE_FILTER_IGNORE
@@ -173,6 +203,8 @@ func _wrapped(text: String, size: int, color: Color, width: int) -> Label:
 	var l := Kit.make_label(text, size, color, HORIZONTAL_ALIGNMENT_CENTER)
 	l.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
 	l.custom_minimum_size = Vector2(width, 0)
+	l.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	l.add_theme_constant_override("line_spacing", 2)
 	return l
 
 
@@ -286,8 +318,9 @@ func _build_empire_step() -> void:
 	page.add_child(_sub_line(
 		"Three realms share one peninsula, and their borders are drawn in gold."))
 
-	var map := _image(MAP, Vector2(560, 240), false)
+	var map := _empire_map_board(Vector2(560, 240))
 	if map != null:
+		_empire_map = map
 		map.size_flags_vertical = Control.SIZE_EXPAND_FILL
 		page.add_child(map)
 
@@ -340,8 +373,8 @@ func _make_empire_card(id: String, data: Dictionary) -> PanelContainer:
 
 	var empire_name: String = data.get("name", id.capitalize())
 	v.add_child(Kit.make_label(empire_name, 30, Kit.INK_TITLE, HORIZONTAL_ALIGNMENT_CENTER))
-	v.add_child(_wrapped(String(EMPIRE_REGION.get(id, "")), 14, Kit.INK_SOFT, TEXT_W))
-	v.add_child(_wrapped(String(EMPIRE_LORE.get(id, data.get("desc", ""))), 15, Kit.INK_SOFT, TEXT_W))
+	v.add_child(_wrapped(String(EMPIRE_REGION.get(id, "")), 13, Kit.INK_SOFT, TEXT_W))
+	v.add_child(_wrapped(String(EMPIRE_LORE.get(id, data.get("desc", ""))), 14, Kit.INK_SOFT, TEXT_W))
 	v.add_child(_icon_line("icon_laurel", String(data.get("bonus_desc", "")), Kit.INK_GOLD, TEXT_W - 40))
 
 	var pledge := _card_button("Pledge")
@@ -360,7 +393,21 @@ func _on_pick_empire(id: String) -> void:
 func _refresh_empire_selection() -> void:
 	for key in _empire_cards:
 		var card: Control = _empire_cards[key]
-		card.modulate = Color(1, 1, 1, 1) if key == _empire else Color(0.72, 0.7, 0.66, 0.62)
+		var on: bool = key == _empire
+		card.modulate = Color(1, 1, 1, 1) if on else Color(0.72, 0.7, 0.66, 0.62)
+		# Stronger selected-card rim via modulate punch.
+		if on:
+			card.scale = Vector2(1.02, 1.02)
+		else:
+			card.scale = Vector2.ONE
+	if _empire_map != null:
+		var ov = _empire_map.get_meta("overlay", null)
+		if ov != null and ov.has_method("set_selected"):
+			ov.call("set_selected", _empire)
+	if _empire_map_big != null:
+		var ovb = _empire_map_big.get_meta("overlay", null)
+		if ovb != null and ovb.has_method("set_selected"):
+			ovb.call("set_selected", _empire)
 	if _continue_btn != null:
 		var data: Dictionary = GameState.EMPIRES.get(_empire, {})
 		_continue_btn.text = "Continue as %s" % String(data.get("name", "Sparta"))
@@ -467,12 +514,13 @@ func _show_map_overlay() -> void:
 	m.add_child(v)
 
 	v.add_child(_title_line("The Realms of Hellas"))
-	var big := _image(MAP, Vector2(900, 400), false)
+	var big := _empire_map_board(Vector2(900, 400))
 	if big != null:
+		_empire_map_big = big
 		big.size_flags_vertical = Control.SIZE_EXPAND_FILL
 		v.add_child(big)
 	v.add_child(_sub_line(
-		"Crimson: Sparta  ·  Blue: Athens  ·  Gold: Corinth"))
+		"Red barriers mark the frontiers  ·  Chosen realm glows on the map"))
 
 	var close := Kit.make_button("Close", false)
 	close.custom_minimum_size = Vector2(260, 62)

@@ -603,15 +603,17 @@ func _build_forests() -> void:
 		var forest := TreeForest.new()
 		add_child(forest)
 		var c: Vector2 = g["c"]
-		forest.global_position = Vector3(c.x, sample_height(c.x, c.y), c.y)
+		var base_y: float = sample_height(c.x, c.y)
+		forest.global_position = Vector3(c.x, base_y, c.y)
+		# Per-tree terrain snap — stops trunks floating on slopes at grove edges.
+		var height_fn := func(lx: float, lz: float) -> float:
+			return sample_height(c.x + lx, c.y + lz) - base_y
 		forest.setup(params, 2, leaf_mat, bark_mat, int(g["count"]), float(g["r"]), {
 			"seed": int(g["seed"]), "scale_jitter": 0.3,
 			"variant_jitter": {"trunk_height": 0.2, "leaf_card_size": 0.15},
-			# Collapse to the cheap impostor tier close in, and let the groves
-			# skip the leaf shadow pass — they are wilderness, far from the sun's
-			# 80 m shadow range anyway.
 			"lod_distance": 34.0, "lod_blend_band": 14.0,
 			"cast_leaf_shadows": false,
+			"height_sampler": height_fn,
 		})
 		forest.build()
 

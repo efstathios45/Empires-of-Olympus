@@ -1,16 +1,18 @@
 Empires of Olympus — Windows builds
 ===================================
 
-HOTFIX V6 — boar death anim + all enemies verified
---------------------------------------------------
-Boars use Gobkit again with skeleton-only scale (skin binds already
-include Maya ×100 — MI×100 was what flung giants into the sky).
-Death clips bind and play for wolf, boar, satyr, harpy, centaur,
-gorgon, and minotaur.
+HOTFIX V7 — plaza walk, trees, boars, NPCs, empire map
+------------------------------------------------------
+- Realistic boar hide texture
+- Trees snap to terrain (no more floating trunks)
+- Tighter plaza colliders (walkable lanes, no wallhack)
+- NPCs hold facing; turn to you only on E (local)
+- Dialogue/menu text fits panels
+- Empire select: red frontier barriers + glow on chosen realm
 
 DELETE old game.exe + game.pck:
 
-  EXE: https://gofile.io/d/OFLpAp
-  PCK: https://gofile.io/d/Hwit5G
+  EXE: https://gofile.io/d/6wJcB2
+  PCK: https://gofile.io/d/YfLucW
 
 Expected: game.exe = 97520128 bytes

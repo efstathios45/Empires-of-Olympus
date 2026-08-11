@@ -28,6 +28,7 @@ const ENEMY_CONFIGS := {
 		"glb": "res://assets/characters/_free_cc0/gobkit_boar.glb",
 		"lib": "",
 		"maya_cm": true,
+		"realistic_hide": true,
 		"height": 0.95, "hp": 70, "dmg": 11.0, "speed": 4.2,
 		"xp": 34, "gold": [6, 14], "aggro": 9.5, "reach": 2.0,
 		"attack_cd": 1.7, "material": "Boar Tusk",
@@ -217,6 +218,8 @@ func _build_body() -> void:
 		else:
 			ModelUtils.setup_character_for_movement(model, cfg["height"])
 		ModelUtils.clamp_world_height(model, maxf(cfg["height"] * 2.5, 4.0), cfg["height"])
+		if cfg.get("realistic_hide", false):
+			_apply_realistic_boar_hide(model)
 		anim = model.find_child("AnimationPlayer", true) as AnimationPlayer
 		if anim == null:
 			anim = AnimationPlayer.new()
@@ -345,6 +348,22 @@ func _force_oneshot_clips(names: Array) -> void:
 		var a := anim.get_animation(clip)
 		if a:
 			a.loop_mode = Animation.LOOP_NONE
+
+
+## Replace Gobkit's flat palette atlas with a bristly brown hide.
+func _apply_realistic_boar_hide(model: Node3D) -> void:
+	const HIDE := "res://assets/textures/creatures/boar_hide_realistic.png"
+	var mat := StandardMaterial3D.new()
+	mat.albedo_color = Color(0.72, 0.58, 0.42)
+	if ResourceLoader.exists(HIDE):
+		mat.albedo_texture = load(HIDE)
+	mat.roughness = 0.92
+	mat.metallic = 0.0
+	mat.texture_filter = BaseMaterial3D.TEXTURE_FILTER_LINEAR_WITH_MIPMAPS
+	for child in model.find_children("*", "MeshInstance3D"):
+		var mi := child as MeshInstance3D
+		if mi:
+			mi.material_override = mat
 
 # ── Nameplate, health bar, boss beacon ───────────────────────────────────
 func _build_plate() -> void:

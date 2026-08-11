@@ -152,9 +152,10 @@ static func _temple_precinct(world) -> void:
 			Vector3(0.0, gy + 0.02, front_z + 4.7),
 			Vector3(0.0, gy + TEMPLE_STEP_TOP, front_z + 0.05), 4.4)
 
-	# The altar of offerings, off the temple axis so the steps stay clear (and
-	# clear of the west plaza column at (-5.25, -9.09)).
-	world._place_glb(ALTAR, -4.6, -6.6, 2.2, 20.0, 1)
+	# The altar of offerings — tight box only (no inflated AABB).
+	var altar = world._place_glb(ALTAR, -4.6, -6.6, 2.2, 20.0, 0)
+	if altar != null:
+		world._add_box_collider(altar, Vector3(1.4, 1.1, 1.4), Vector3(0.0, 0.55, 0.0))
 	# Bronze braziers flanking the steps.
 	_brazier(world, -6.4, -10.6)
 	_brazier(world, 6.4, -10.6)
@@ -191,37 +192,38 @@ static func _fountain_court(world) -> void:
 	_brazier(world, -8.6, 4.6)
 	_brazier(world, 8.6, 4.6)
 
-	# Free CC0 Poly Haven props — ceramic vase by the east stalls approach,
-	# marble bust on the west edge of the court (see assets/ASSETS_CC0.md).
-	world._place_glb(FREE_VASE, 6.8, -3.2, 0.95, 25.0, 1)
-	world._place_glb(FREE_BUST, -7.2, 2.4, 1.15, 140.0, 1)
+	# Free CC0 Poly Haven props — tiny colliders so they don't wall the court.
+	var vase = world._place_glb(FREE_VASE, 6.8, -3.2, 0.95, 25.0, 0)
+	if vase != null:
+		world._add_pillar_collider(vase, 0.22, 0.95, Vector3.ZERO)
+	var bust = world._place_glb(FREE_BUST, -7.2, 2.4, 1.15, 140.0, 0)
+	if bust != null:
+		world._add_pillar_collider(bust, 0.28, 1.15, Vector3.ZERO)
 
 
 # ── East: the market row ─────────────────────────────────────────────────
 static func _market_row(world) -> void:
-	# Four awninged stalls facing west into the plaza (yaw 90 aims model -Z at -X).
+	# Four stalls facing west — footplate boxes only (no awning AABB walls).
 	for z in [-6.2, -1.6, 3.0, 7.6]:
-		world._place_glb(STALL, 15.6, float(z), 3.0, 90.0, 1)
-	# Loaded carts and stacked amphorae make it read as a working agora.
-	world._place_glb(CART, 12.9, -9.2, 1.4, 25.0, 1)
-	world._place_glb(CART, 17.4, 0.8, 1.4, 200.0, 1)
+		var stall = world._place_glb(STALL, 15.6, float(z), 3.0, 90.0, 0)
+		if stall != null:
+			world._add_box_collider(stall, Vector3(2.0, 2.2, 2.4), Vector3(0.0, 1.1, 0.0))
+	_cart(world, 12.9, -9.2, 25.0)
+	_cart(world, 17.4, 0.8, 200.0)
 	for p in [Vector2(13.1, -6.6), Vector2(13.8, -5.5), Vector2(17.2, -4.4),
 			Vector2(13.3, 7.6), Vector2(17.4, 6.4), Vector2(13.6, 2.2)]:
-		world._place_glb(AMPHORA, p.x, p.y, 0.9, randf() * 360.0, 1)
+		_amphora(world, p.x, p.y)
 
 
 # ── West & perimeter: the stoa and the street edge ───────────────────────
 static func _stoa_and_houses(world) -> void:
-	# The stoa runs north-south along the west edge, its gallery facing the plaza.
+	# Stoa gallery faces the plaza — shallow footprint so walking lanes stay open.
 	var stoa = world._place_glb(STOA, -17.6, 0.0, 7.0, 90.0, 0)
 	if stoa != null:
-		# One box on the visible footprint (14.3 x 5.6 m) — no interior hulls, so
-		# nothing invisible reaches into the plaza.
-		world._add_box_collider(stoa, Vector3(14.3, 7.0, 5.5),
-			Vector3(0.0, 3.5, 0.0))
+		world._add_box_collider(stoa, Vector3(12.0, 6.5, 3.2),
+			Vector3(0.0, 3.25, 0.0))
 
-	# Five townhouses close the plaza off like a real street front. A townhouse
-	# is a solid block, so the automatic tight box (tier 1) is exactly right.
+	# Townhouses: solid street wall with a tight footprint (not roof AABB).
 	var houses := [
 		[-25.5, -12.5, 8.0, 115.0],
 		[-24.5, 12.2, 7.6, 65.0],
@@ -230,31 +232,37 @@ static func _stoa_and_houses(world) -> void:
 		[-9.6, 22.2, 8.0, 355.0],
 	]
 	for h in houses:
-		world._place_glb(TOWNHOUSE, float(h[0]), float(h[1]), float(h[2]), float(h[3]), 1)
-	world._place_glb(CART, -13.2, -9.4, 1.4, 160.0, 1)
-	world._place_glb(AMPHORA, -13.4, 5.6, 0.9, 40.0, 1)
-	world._place_glb(AMPHORA, -12.9, 6.5, 0.9, 210.0, 1)
+		var house = world._place_glb(TOWNHOUSE, float(h[0]), float(h[1]), float(h[2]), float(h[3]), 0)
+		if house != null:
+			# Footprint only — about half a street-front; roof/eaves don't block.
+			world._add_box_collider(house, Vector3(5.2, 5.5, 4.4),
+				Vector3(0.0, 2.75, 0.0))
+	_cart(world, -13.2, -9.4, 160.0)
+	_amphora(world, -13.4, 5.6)
+	_amphora(world, -12.9, 6.5)
 
 
 # ── South: the city gate ─────────────────────────────────────────────────
 static func _south_gate(world) -> void:
 	var gate = world._place_glb(GATE_ARCH, 0.0, 26.0, 9.0, 0.0, 0)
 	if gate != null:
-		# Two piers only — the archway stays walkable (3.1 m clear opening).
-		world._add_box_collider(gate, Vector3(3.1, 9.0, 2.8), Vector3(3.15, 4.5, 0.0))
-		world._add_box_collider(gate, Vector3(3.1, 9.0, 2.8), Vector3(-3.15, 4.5, 0.0))
+		# Two piers only — archway stays walkable (~3.4 m clear).
+		world._add_box_collider(gate, Vector3(2.6, 8.5, 2.2), Vector3(3.2, 4.25, 0.0))
+		world._add_box_collider(gate, Vector3(2.6, 8.5, 2.2), Vector3(-3.2, 4.25, 0.0))
 	_brazier(world, -4.8, 24.4)
 	_brazier(world, 4.8, 24.4)
 
 
 # ── South-east: the smith's yard ─────────────────────────────────────────
 static func _smith_yard(world) -> void:
-	world._place_glb(ANVIL, 10.6, 15.6, 1.1, 110.0, 1)
+	var anvil = world._place_glb(ANVIL, 10.6, 15.6, 1.1, 110.0, 0)
+	if anvil != null:
+		world._add_box_collider(anvil, Vector3(1.1, 0.9, 0.7), Vector3(0.0, 0.45, 0.0))
 	_dummy(world, 13.4, 17.6, 15.0)
 	_dummy(world, 12.2, 20.2, -25.0)
-	world._place_glb(CART, 8.3, 19.4, 1.4, 40.0, 1)
-	world._place_glb(AMPHORA, 9.0, 17.3, 0.9, 90.0, 1)
-	world._place_glb(AMPHORA, 11.9, 19.8, 0.9, 300.0, 1)
+	_cart(world, 8.3, 19.4, 40.0)
+	_amphora(world, 9.0, 17.3)
+	_amphora(world, 11.9, 19.8)
 
 	# Brontes the smith — refinement and wares.
 	var smith = NpcScript.create("smith", "Brontes the Smith",
@@ -280,6 +288,16 @@ static func _dummy(world, x: float, z: float, yaw: float) -> void:
 	var d = world._place_glb(DUMMY, x, z, 2.0, yaw, 0)
 	if d != null:
 		world._add_pillar_collider(d, 0.3, 2.0, Vector3.ZERO)
+
+static func _cart(world, x: float, z: float, yaw: float) -> void:
+	var c = world._place_glb(CART, x, z, 1.4, yaw, 0)
+	if c != null:
+		world._add_box_collider(c, Vector3(1.6, 1.2, 2.2), Vector3(0.0, 0.6, 0.0))
+
+static func _amphora(world, x: float, z: float) -> void:
+	var a = world._place_glb(AMPHORA, x, z, 0.9, randf() * 360.0, 0)
+	if a != null:
+		world._add_pillar_collider(a, 0.22, 0.9, Vector3.ZERO)
 
 
 # ── Townsfolk ────────────────────────────────────────────────────────────
