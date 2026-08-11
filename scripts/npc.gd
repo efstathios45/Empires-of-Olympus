@@ -23,6 +23,9 @@ const TURN_INTERVAL := 0.12   # NPC turning/anim polls at ~8 Hz, not per frame
 const NOTICE_RANGE := 4.5
 const TALK_RANGE := 3.2
 const BUBBLE_SECONDS := 4.5
+## The game's display face — used for the speech bubble so townsfolk chatter
+## matches the rest of the UI instead of the raw engine default font.
+const SPEECH_FONT := "res://assets/fonts/cinzel.ttf"
 
 var _model: Node3D
 var _anim: AnimationPlayer
@@ -135,17 +138,15 @@ func interact() -> void:
 
 # ── Flavour chatter ──────────────────────────────────────────────────────
 
-## Show a one-off remark above this NPC's head (and in the HUD if it takes one).
+## Show a one-off remark above this NPC's head. Just the floating bubble — the
+## line used to be mirrored to the HUD too, which read as a doubled message.
 func _say(line: String) -> void:
-	var hud := get_tree().get_first_node_in_group("hud")
-	if hud != null:
-		for m in ["show_announcement", "announce", "show_toast", "show_message",
-				"show_notification"]:
-			if hud.has_method(m):
-				hud.call(m, "%s: %s" % [display_name, line])
-				break
 	if _bubble == null or not is_instance_valid(_bubble):
 		_bubble = Label3D.new()
+		if ResourceLoader.exists(SPEECH_FONT):
+			var f: Font = load(SPEECH_FONT)
+			if f:
+				_bubble.font = f
 		_bubble.billboard = BaseMaterial3D.BILLBOARD_ENABLED
 		_bubble.shaded = false
 		_bubble.double_sided = true
@@ -154,7 +155,7 @@ func _say(line: String) -> void:
 		_bubble.font_size = 96
 		_bubble.outline_size = 26
 		_bubble.outline_modulate = Color(0.05, 0.04, 0.03, 0.95)
-		_bubble.modulate = Color(1.0, 0.96, 0.85)
+		_bubble.modulate = Color(1.0, 0.98, 0.92)
 		_bubble.width = 900.0
 		_bubble.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
 		_bubble.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
