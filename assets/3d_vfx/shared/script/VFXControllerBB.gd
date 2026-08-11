@@ -52,10 +52,8 @@ var anim : AnimationPlayer:
 	set(v):
 		play();
 
-@export_tool_button("Play", "Play") var play_button = func(): 
-	play()
-@export_tool_button("Stop", "Stop") var stop_button = func(): 
-	stop()
+# Editor-only Play/Stop buttons used Godot 4.4+ @export_tool_button.
+# Removed for Godot 4.3 compatibility (parse error otherwise).
 
 signal finished
 signal stopped
