@@ -72,16 +72,16 @@ static func build(world) -> void:
 static func _paving(world) -> void:
 	var court_mat := StandardMaterial3D.new()
 	# Warm, muted tint — never the old blown-out white marble.
-	court_mat.albedo_color = Color(0.72, 0.64, 0.52)
+	court_mat.albedo_color = Color(0.78, 0.70, 0.58)
 	if ResourceLoader.exists(MOSAIC_TEX):
 		court_mat.albedo_texture = load(MOSAIC_TEX)
-	# One medallion across the disc (planar UVs from _make_disc_mesh).
-	court_mat.uv1_scale = Vector3(1.0, 1.0, 1.0)
+	# Tile as courtyard pavement (not one giant shield-like medallion).
+	court_mat.uv1_scale = Vector3(4.5, 4.5, 1.0)
 	court_mat.roughness = 0.92
 	court_mat.metallic = 0.0
 
 	var road_mat := StandardMaterial3D.new()
-	road_mat.albedo_color = Color(0.68, 0.60, 0.50)
+	road_mat.albedo_color = Color(0.70, 0.62, 0.52)
 	if ResourceLoader.exists(MOSAIC_TILE_TEX):
 		road_mat.albedo_texture = load(MOSAIC_TILE_TEX)
 	elif ResourceLoader.exists(MOSAIC_TEX):

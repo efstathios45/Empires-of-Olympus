@@ -1,19 +1,32 @@
 class_name ModelUtils
 
-## Ground a model so its mesh bottom sits at the given y_offset in world space.
+## Ground a model so its mesh bottom sits at y_offset above its parent origin.
+##
+## Adjusts via global Y so uniform / non-uniform scale on `node` cannot bury or
+## float the mesh (enemies spawn at terrain height before this runs).
 static func ground_model(node: Node3D, y_offset: float = 0.0) -> void:
+	if not node.is_inside_tree():
+		return
+	node.force_update_transform()
 	var min_y := INF
 	for child in node.find_children("*", "MeshInstance3D"):
 		var mi = child as MeshInstance3D
 		if mi and mi.mesh:
+			if mi.is_inside_tree():
+				mi.force_update_transform()
 			var aabb = mi.get_aabb()
 			for corner_idx in 8:
-				var corner = aabb.get_endpoint(corner_idx)
-				var world_y = mi.to_global(corner).y
+				var world_y: float = mi.to_global(aabb.get_endpoint(corner_idx)).y
 				if world_y < min_y:
 					min_y = world_y
-	if min_y != INF and abs(min_y) > 0.001:
-		node.position.y -= min_y - y_offset
+	if min_y == INF:
+		return
+	var parent_y := 0.0
+	var parent := node.get_parent()
+	if parent is Node3D:
+		parent_y = (parent as Node3D).global_position.y
+	var target_y: float = parent_y + y_offset
+	node.global_position.y += target_y - min_y
 
 ## Tier 1: single AABB box collision for a model (static only).
 static func add_collision(node: Node3D, collision_layer: int = 1) -> void:
@@ -129,13 +142,44 @@ static func subclip_animation(src: Animation, start_s: float, end_s: float, loop
 					out.track_insert_key(new_ti, 0.0, src.value_track_interpolate(ti, start_s))
 	return out
 
-## World-space height of a node's combined mesh AABB.
+## World-space visual height. Prefer skeleton bone extents when the bind-pose
+## mesh AABB is tiny (common with Maya-cm packs like Gobkit whose authored
+## MeshInstance scale of 100 is dropped on import — mesh ~5cm, bones ~3m).
 static func measure_height(node: Node3D) -> float:
+	_restore_maya_cm_mesh_scales(node)
+	if node.is_inside_tree():
+		node.force_update_transform()
+	var mesh_h := _measure_mesh_height(node)
+	var bone_h := _measure_skeleton_height(node)
+	if bone_h > 0.05 and (mesh_h < 0.05 or bone_h > mesh_h * 4.0):
+		return bone_h
+	return mesh_h
+
+
+## Gobkit / Maya exports often author MeshInstance scale=100 with cm meshes.
+## Godot GLB import can drop that scale, leaving a centimetre bind AABB and a
+## metre skeleton. Restore ×100 when we detect that mismatch.
+static func _restore_maya_cm_mesh_scales(node: Node3D) -> void:
+	var bone_h := _measure_skeleton_height(node)
+	if bone_h < 0.5:
+		return
+	for child in node.find_children("*", "MeshInstance3D"):
+		var mi := child as MeshInstance3D
+		if mi == null or mi.mesh == null:
+			continue
+		var local_h: float = mi.get_aabb().size.y
+		if local_h > 0.0 and local_h < 0.15 and mi.scale.y < 10.0:
+			mi.scale = Vector3(100.0, 100.0, 100.0)
+
+
+static func _measure_mesh_height(node: Node3D) -> float:
 	var min_y := INF
 	var max_y := -INF
 	for child in node.find_children("*", "MeshInstance3D"):
 		var mi = child as MeshInstance3D
 		if mi and mi.mesh:
+			if mi.is_inside_tree():
+				mi.force_update_transform()
 			for corner_idx in 8:
 				var corner = mi.get_aabb().get_endpoint(corner_idx)
 				var world_y = mi.to_global(corner).y
@@ -143,17 +187,41 @@ static func measure_height(node: Node3D) -> float:
 				max_y = max(max_y, world_y)
 	return max_y - min_y if min_y != INF else 0.0
 
+
+static func _measure_skeleton_height(node: Node3D) -> float:
+	var min_y := INF
+	var max_y := -INF
+	for child in node.find_children("*", "Skeleton3D"):
+		var skel := child as Skeleton3D
+		if skel == null:
+			continue
+		if skel.is_inside_tree():
+			skel.force_update_transform()
+		for bi in skel.get_bone_count():
+			var gt := skel.global_transform * skel.get_bone_global_pose(bi)
+			var y: float = gt.origin.y
+			min_y = min(min_y, y)
+			max_y = max(max_y, y)
+	return max_y - min_y if min_y != INF else 0.0
+
+
 ## Scale a node so its world-space height matches target_meters.
 static func scale_to_height(node: Node3D, target_meters: float) -> void:
 	var current = measure_height(node)
 	if current < 0.001:
 		return
 	var factor = target_meters / current
+	# Guard against runaway scales from bad centimetre/metre mismatches.
+	if factor > 20.0 or factor < 0.02:
+		push_warning("ModelUtils.scale_to_height: extreme factor %.3f (h=%.3f → %.3f) on %s" % [factor, current, target_meters, node.name])
+		return
 	node.scale *= factor
 
 ## One-call setup for movement-driven characters.
 static func setup_character_for_movement(node: Node3D, target_height: float = 1.8) -> void:
 	scale_to_height(node, target_height)
+	if node.is_inside_tree():
+		node.force_update_transform()
 	ground_model(node)
 
 ## Return the Godot yaw that aims canonical MODEL_FRONT (-Z) along direction.
