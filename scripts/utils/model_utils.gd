@@ -1,19 +1,29 @@
 class_name ModelUtils
 
-## Ground a model so its mesh bottom sits at the given y_offset in world space.
+## Ground a model so its mesh bottom sits at y_offset in its PARENT's frame.
+##
+## The lowest mesh point is measured in `node`'s OWN local frame, so the result
+## is independent of where `node` currently sits in the world. Measuring in
+## global space and subtracting from a local offset (the old approach) only
+## worked when the parent chain was at the world origin — characters spawned
+## directly at their terrain height before this runs (the enemies) got buried
+## by exactly that height and rendered underground.
 static func ground_model(node: Node3D, y_offset: float = 0.0) -> void:
+	var to_local = node.global_transform.affine_inverse()
 	var min_y := INF
 	for child in node.find_children("*", "MeshInstance3D"):
 		var mi = child as MeshInstance3D
 		if mi and mi.mesh:
+			# mi relative to `node` — cancels node's own transform, so this is
+			# unaffected by node.position / where the character was spawned.
+			var rel = to_local * mi.global_transform
 			var aabb = mi.get_aabb()
 			for corner_idx in 8:
-				var corner = aabb.get_endpoint(corner_idx)
-				var world_y = mi.to_global(corner).y
-				if world_y < min_y:
-					min_y = world_y
-	if min_y != INF and abs(min_y) > 0.001:
-		node.position.y -= min_y - y_offset
+				var local_y = (rel * aabb.get_endpoint(corner_idx)).y
+				if local_y < min_y:
+					min_y = local_y
+	if min_y != INF:
+		node.position.y = y_offset - min_y
 
 ## Tier 1: single AABB box collision for a model (static only).
 static func add_collision(node: Node3D, collision_layer: int = 1) -> void:
