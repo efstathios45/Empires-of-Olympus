@@ -1,32 +1,23 @@
-Empires of Olympus — Windows build
-=================================
+Empires of Olympus — Windows build (Godot 4.4.1)
+================================================
+
+This is the SAME engine .exe style that worked before on GitHub
+(Godot 4.4.1 x86_64). Do not use the older Godot 4.3 builds.
 
 REQUIREMENTS
-- 64-bit Windows (x86_64). Will NOT run on macOS, Linux, or ARM Windows.
+- 64-bit Windows 10/11 (x86_64). Not macOS / Linux / 32-bit / ARM-only.
 
-HOW TO RUN (THIS FOLDER)
-1. Keep ALL of these files in the SAME folder:
+HOW TO RUN
+1. Put BOTH files in the SAME folder:
      game.exe
      game.pck
-     game.console.exe   (optional — shows error text)
 2. Double-click game.exe
-3. If the window closes instantly, run game.console.exe instead and read the message.
+3. If Windows complains about an unknown publisher, click More info → Run anyway
 
-COMMON "CRASH" CAUSE
-If game.pck is missing or renamed, Godot exits immediately with:
-  "Is the .pck file missing?"
-That looks like a crash when you only open game.exe.
-Download BOTH game.exe AND game.pck (or use the single-file zip from the agent artifacts).
-
-BETTER DOWNLOAD
-Prefer EmpiresOfOlympus-Windows.zip (single EmpiresOfOlympus.exe with data embedded).
-No separate .pck needed. Use EmpiresOfOlympus.console.exe if it fails.
-
-IF IT STILL CRASHES
-1. Run game.console.exe / EmpiresOfOlympus.console.exe and copy the text.
-2. Or open: %APPDATA%\Godot\app_userdata\Empires of Olympus\logs\godot.log
-3. Allow the exe through SmartScreen / antivirus.
-4. Update GPU drivers (this build uses OpenGL Compatibility + ANGLE/D3D11).
+DO NOT
+- Open game.exe with WinRAR (it is not a zip)
+- Run game.exe without game.pck next to it
+- Use EmpiresOfOlympus.exe from older agent zips (those were Godot 4.3)
 
 CONTROLS
-WASD move, mouse look, click attack, Q god-skill, E interact, F block, C dodge
+WASD move, mouse look, click attack, Q skill, E interact, F block, C dodge
