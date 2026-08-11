@@ -335,6 +335,7 @@ func _place_glb(path: String, wx: float, wz: float, height_m: float, yaw_deg: fl
 	var y := sample_height(wx, wz)
 	obj.global_position = Vector3(wx, y, wz)
 	obj.rotation.y = deg_to_rad(yaw_deg)
+	# World-root parent is at y=0, so pass terrain height as the offset above parent.
 	ModelUtils.ground_model(obj, y)
 	if tier == 1:
 		ModelUtils.add_collision(obj)

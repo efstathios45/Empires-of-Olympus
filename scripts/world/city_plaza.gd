@@ -66,17 +66,18 @@ static func build(world) -> void:
 
 
 # ── Paving ───────────────────────────────────────────────────────────────
-## ψηφιδωτό (pebble mosaic): circular court medallion + tiled road to the gate.
+## ψηφιδωτό tessera pavement on the fountain court + tiled road to the gate.
 ## Purely decorative, so no collider and no shadow casting; the top sits 2 cm
 ## over the (flattened) pad so it can never z-fight the terrain.
 static func _paving(world) -> void:
 	var court_mat := StandardMaterial3D.new()
 	# Warm, muted tint — never the old blown-out white marble.
-	court_mat.albedo_color = Color(0.78, 0.70, 0.58)
+	court_mat.albedo_color = Color(0.82, 0.74, 0.62)
 	if ResourceLoader.exists(MOSAIC_TEX):
 		court_mat.albedo_texture = load(MOSAIC_TEX)
-	# Tile as courtyard pavement (not one giant shield-like medallion).
-	court_mat.uv1_scale = Vector3(4.5, 4.5, 1.0)
+	# Planar metres→UV on the disc; ~1.8 m per tile repeat reads as pavement.
+	court_mat.uv1_scale = Vector3(1.0, 1.0, 1.0)
+	court_mat.texture_filter = BaseMaterial3D.TEXTURE_FILTER_LINEAR_WITH_MIPMAPS
 	court_mat.roughness = 0.92
 	court_mat.metallic = 0.0
 
@@ -86,14 +87,15 @@ static func _paving(world) -> void:
 		road_mat.albedo_texture = load(MOSAIC_TILE_TEX)
 	elif ResourceLoader.exists(MOSAIC_TEX):
 		road_mat.albedo_texture = load(MOSAIC_TEX)
-	road_mat.uv1_scale = Vector3(3.5, 6.5, 1.0)
+	road_mat.uv1_scale = Vector3(2.5, 5.0, 1.0)
 	road_mat.roughness = 0.94
 	road_mat.metallic = 0.0
 
 	var gy: float = world.sample_height(0.0, 0.0)
 
 	var disc := MeshInstance3D.new()
-	disc.mesh = _make_disc_mesh(PAVE_R, 64)
+	# Planar XZ UVs (metres) — NOT radial UVs (those turn any tile into a shield).
+	disc.mesh = _make_disc_mesh(PAVE_R, 64, 1.8)
 	disc.material_override = court_mat
 	disc.cast_shadow = GeometryInstance3D.SHADOW_CASTING_SETTING_OFF
 	world.add_child(disc)
@@ -109,19 +111,21 @@ static func _paving(world) -> void:
 	road.global_position = Vector3(0.0, gy + 0.02, 19.0)
 
 
-## Flat circular mesh with planar UVs so a radial mosaic maps 1:1 onto the court.
-static func _make_disc_mesh(radius: float, segments: int) -> ArrayMesh:
+## Flat circular mesh with planar XZ UVs so a tessera texture tiles as pavement.
+## `metres_per_tile` controls how many world metres one texture repeat covers.
+static func _make_disc_mesh(radius: float, segments: int, metres_per_tile: float = 2.0) -> ArrayMesh:
 	var st := SurfaceTool.new()
 	st.begin(Mesh.PRIMITIVE_TRIANGLES)
 	st.set_normal(Vector3.UP)
-	st.set_uv(Vector2(0.5, 0.5))
+	st.set_uv(Vector2(0.0, 0.0))
 	st.add_vertex(Vector3.ZERO)
+	var inv: float = 1.0 / maxf(0.01, metres_per_tile)
 	for i in range(segments + 1):
 		var a: float = TAU * float(i) / float(segments)
 		var x: float = cos(a) * radius
 		var z: float = sin(a) * radius
 		st.set_normal(Vector3.UP)
-		st.set_uv(Vector2(0.5 + cos(a) * 0.5, 0.5 + sin(a) * 0.5))
+		st.set_uv(Vector2(x * inv, z * inv))
 		st.add_vertex(Vector3(x, 0.0, z))
 	for i in range(segments):
 		st.add_index(0)

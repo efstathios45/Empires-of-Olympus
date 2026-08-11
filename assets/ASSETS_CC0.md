@@ -10,8 +10,10 @@ Imported for Empires of Olympus. All entries below are **CC0** (public domain).
 | `textures/stone/old_mosaic_floor_cc0_rough.png` | same | Amal Kumar | CC0 |
 
 `textures/stone/greek_pebble_mosaic.png` is an original procedural ψηφιδωτό
-(pebble mosaic) generated for this project (meander / wave / star medallion),
-inspired by classical Greek pebble mosaics (Pella, Olynthos).
+(tessera / pebble pavement) generated for this project — cream stone chips with
+seamless Greek-key borders and a running-wave band, meant to TILE across the
+plaza courtyard (not a circular shield medallion). Inspired by classical Greek
+pebble floors (Pella, Olynthos).
 
 ## Models
 

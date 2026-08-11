@@ -1,24 +1,31 @@
 class_name ModelUtils
 
+## Baked into exports so we can verify the PCK actually contains this revision.
+const BUILD_FIX_TOKEN := "EOO_FIX_VISIBLE_ENEMIES_V3"
+
 ## Ground a model so its mesh bottom sits at y_offset above its parent origin.
 ##
-## Adjusts via global Y so uniform / non-uniform scale on `node` cannot bury or
-## float the mesh (enemies spawn at terrain height before this runs).
+## Uses world-space mesh bounds, then moves via global_position.y so nested
+## uniform scales (Gobkit Maya ×100 meshes, scale_to_height) cannot bury or
+## float the mesh. `y_offset` is metres above the parent Node3D origin — for
+## characters parented under a MeshRoot at terrain height pass 0; for props
+## parented under the world root pass the terrain height (same as global Y).
 static func ground_model(node: Node3D, y_offset: float = 0.0) -> void:
 	if not node.is_inside_tree():
 		return
 	node.force_update_transform()
 	var min_y := INF
 	for child in node.find_children("*", "MeshInstance3D"):
-		var mi = child as MeshInstance3D
-		if mi and mi.mesh:
-			if mi.is_inside_tree():
-				mi.force_update_transform()
-			var aabb = mi.get_aabb()
-			for corner_idx in 8:
-				var world_y: float = mi.to_global(aabb.get_endpoint(corner_idx)).y
-				if world_y < min_y:
-					min_y = world_y
+		var mi := child as MeshInstance3D
+		if mi == null or mi.mesh == null:
+			continue
+		if mi.is_inside_tree():
+			mi.force_update_transform()
+		var aabb: AABB = mi.get_aabb()
+		for corner_idx in 8:
+			var world_y: float = mi.to_global(aabb.get_endpoint(corner_idx)).y
+			if world_y < min_y:
+				min_y = world_y
 	if min_y == INF:
 		return
 	var parent_y := 0.0
@@ -151,6 +158,10 @@ static func measure_height(node: Node3D) -> float:
 		node.force_update_transform()
 	var mesh_h := _measure_mesh_height(node)
 	var bone_h := _measure_skeleton_height(node)
+	# Skinned Gobkit-style: bind mesh can still disagree with the skeleton.
+	# Prefer the larger trustworthy reading so we never over-scale.
+	if bone_h > 0.5 and mesh_h > 0.01:
+		return maxf(mesh_h, bone_h)
 	if bone_h > 0.05 and (mesh_h < 0.05 or bone_h > mesh_h * 4.0):
 		return bone_h
 	return mesh_h
@@ -211,14 +222,18 @@ static func scale_to_height(node: Node3D, target_meters: float) -> void:
 	if current < 0.001:
 		return
 	var factor = target_meters / current
-	# Guard against runaway scales from bad centimetre/metre mismatches.
-	if factor > 20.0 or factor < 0.02:
-		push_warning("ModelUtils.scale_to_height: extreme factor %.3f (h=%.3f → %.3f) on %s" % [factor, current, target_meters, node.name])
-		return
+	# Clamp runaway scales from cm/m mismatches instead of skipping (skip left
+	# Gobkit boars at skeleton size ~3m+ — "giant pigs").
+	if factor > 12.0 or factor < 0.04:
+		push_warning("ModelUtils.scale_to_height: clamping factor %.3f (h=%.3f → %.3f) on %s" % [factor, current, target_meters, node.name])
+		factor = clampf(factor, 0.04, 12.0)
 	node.scale *= factor
 
 ## One-call setup for movement-driven characters.
 static func setup_character_for_movement(node: Node3D, target_height: float = 1.8) -> void:
+	# Keep BUILD_FIX_TOKEN live in exported bytecode (unused consts are stripped).
+	if node == null and BUILD_FIX_TOKEN.is_empty():
+		return
 	scale_to_height(node, target_height)
 	if node.is_inside_tree():
 		node.force_update_transform()
