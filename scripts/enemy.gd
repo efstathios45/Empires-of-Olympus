@@ -21,6 +21,8 @@ const ENEMY_CONFIGS := {
 		"facing_plus_z": true,
 		"tint": Color(0.78, 0.78, 0.82),
 		"sfx_attack": "wolf_attack", "sfx_death": "wolf_death",
+		"sfx_aggro": "wolf_aggro",
+		"sfx_attack_alt": "wolf_bite",
 		"clips": {
 			"idle": "Idle", "walk": "Walk", "sprint": "Gallop",
 			"attack": "Attack", "hit": "Idle_HitReact1", "death": "Death",
@@ -39,6 +41,8 @@ const ENEMY_CONFIGS := {
 		"facing_plus_z": true,
 		"tint": Color(0.28, 0.26, 0.30),
 		"sfx_attack": "wolf_black_attack", "sfx_death": "wolf_black_death",
+		"sfx_aggro": "wolf_aggro",
+		"sfx_attack_alt": "wolf_black_bite",
 		"clips": {
 			"idle": "Idle", "walk": "Walk", "sprint": "Gallop",
 			"attack": "Attack", "hit": "Idle_HitReact1", "death": "Death",
@@ -57,6 +61,8 @@ const ENEMY_CONFIGS := {
 		"facing_plus_z": true,
 		"tint": Color(0.55, 0.42, 0.34),
 		"sfx_attack": "wolf_dire_attack", "sfx_death": "wolf_dire_death",
+		"sfx_aggro": "wolf_aggro",
+		"sfx_attack_alt": "wolf_dire_bite",
 		"clips": {
 			"idle": "Idle", "walk": "Walk", "sprint": "Gallop",
 			"attack": "Attack", "hit": "Idle_HitReact1", "death": "Death",
@@ -75,6 +81,8 @@ const ENEMY_CONFIGS := {
 		"attack_cd": 1.7, "material": "Boar Tusk",
 		"facing_plus_z": true,
 		"sfx_attack": "boar_attack", "sfx_death": "boar_death",
+		"sfx_aggro": "boar_idle",
+		"sfx_attack_alt": "boar_attack_b",
 		"slice_master": "Take 001",
 		"slice_fps": 24.0,
 		"slices": {
@@ -598,13 +606,12 @@ func set_targeted(on: bool) -> void:
 	_plate_timer = 0.0
 
 func _telegraph_aggro() -> void:
-	## Fires once on IDLE→CHASE: the creature announces itself with ITS voice.
+	## IDLE→CHASE: notice growl/howl (not the bite/lunge attack sample).
 	if _telegraph_cd > 0.0:
 		return
 	_telegraph_cd = 5.0
-	var growl: String = String(cfg.get("sfx_attack", "enemy_growl"))
-	AudioManager.play_sfx(growl, -3.0, randf_range(0.94, 1.06))
-	# Boss also bellows the dedicated roar sample.
+	var notice: String = String(cfg.get("sfx_aggro", cfg.get("sfx_death", "enemy_growl")))
+	AudioManager.play_sfx(notice, -5.0, randf_range(0.94, 1.06))
 	if is_boss:
 		AudioManager.play_sfx("minotaur_roar", -1.0)
 	_flash_plate()
@@ -700,19 +707,33 @@ func _process_chase(delta: float) -> void:
 		velocity.z = 0
 		_face(to_player, 1.0)
 		_play(_attack_clip(), false)
-		var atk: String = String(cfg.get("sfx_attack", "enemy_growl"))
-		AudioManager.play_sfx(atk, -2.0, randf_range(0.95, 1.05))
+		# Snarl / charge cry at the start of the lunge.
+		_play_attack_sfx()
 	else:
 		velocity.x = to_player.normalized().x * cfg["speed"]
 		velocity.z = to_player.normalized().z * cfg["speed"]
 		_face(to_player, delta)
 		_play(_clip("sprint"))
 
+func _play_attack_sfx() -> void:
+	## Windup: wolf snarl / boar squeal (primary attack sample).
+	var key: String = String(cfg.get("sfx_attack", "enemy_growl"))
+	AudioManager.play_sfx(key, -2.0, randf_range(0.94, 1.08))
+
+func _play_attack_hit_sfx() -> void:
+	## Impact: wolf bite / boar charge thud (alt), falls back to primary.
+	var key: String = String(cfg.get("sfx_attack_alt", ""))
+	if key.is_empty():
+		return
+	AudioManager.play_sfx(key, -5.0, randf_range(0.96, 1.06))
+
 func _process_attack(_delta: float) -> void:
 	velocity.x = 0
 	velocity.z = 0
 	if not attack_hit_done and state_timer <= 0.25:
 		attack_hit_done = true
+		# Bite / impact cry on the frame the attack lands.
+		_play_attack_hit_sfx()
 		if _player_distance() <= cfg["reach"] + 0.7:
 			if player.has_method("take_damage"):
 				player.take_damage(cfg["dmg"], global_position)
