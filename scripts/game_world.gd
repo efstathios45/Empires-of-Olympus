@@ -26,6 +26,8 @@ const HUB_H := 0.45
 ## Paved/bare radius of the plaza: drives the splatmap, the grass mask, footstep
 ## surface and the town music zone. One number, one source of truth.
 const PLAZA_R := HUB_RADIUS * 0.55
+## Sanctuary radius — enemies will not enter; chasing foes turn home here.
+const SANCTUARY_R := PLAZA_R
 const ARENA_POS := Vector2(0.0, 105.0)
 const ARENA_RADIUS := 26.0
 const ARENA_H := 0.42
@@ -284,6 +286,21 @@ func ground_kind(x: float, z: float) -> String:
 
 func get_respawn_point() -> Vector3:
 	return Vector3(0.0, sample_height(0.0, 7.0) + 1.0, 7.0)
+
+
+## City plaza sanctuary — no hunting. Enemies must turn back to their sectors.
+func is_sanctuary(pos: Vector3) -> bool:
+	var d2 := Vector2(pos.x, pos.z).distance_squared_to(HUB_POS)
+	return d2 < SANCTUARY_R * SANCTUARY_R
+
+
+## True if moving from `from` toward `to` would cross into the sanctuary.
+func would_enter_sanctuary(from: Vector3, to: Vector3) -> bool:
+	if is_sanctuary(to):
+		return true
+	# Block steps that clip the ring even if the destination is just outside.
+	var mid := (from + to) * 0.5
+	return is_sanctuary(mid)
 
 # ── Bounds ───────────────────────────────────────────────────────────────
 

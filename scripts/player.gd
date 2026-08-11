@@ -463,11 +463,24 @@ func _try_light_attack() -> void:
 		_start_attack(COMBO_CLIPS[combo_index], 0.5)
 		combo_index = (combo_index + 1) % COMBO_CLIPS.size()
 		combo_window = 1.1
-	AudioManager.play_sfx("sword_swing", -4.0, randf_range(0.95, 1.1))
+	_play_attack_swing_sfx(false)
 
 func _try_heavy_attack() -> void:
 	_start_attack(HEAVY_CLIP, 0.85)
-	AudioManager.play_sfx("sword_swing", -2.0, 0.85)
+	_play_attack_swing_sfx(true)
+
+func _play_attack_swing_sfx(heavy: bool) -> void:
+	## Greek soldier swings: spear whoosh + effort grunt (not the old weird stubs).
+	match GameState.player_class:
+		"hoplite":
+			AudioManager.play_sfx("spear_thrust" if heavy else "sword_swing", -3.0 if heavy else -5.0, randf_range(0.92, 1.08))
+			AudioManager.play_sfx("attack_grunt", -7.0, randf_range(0.9, 1.1))
+		"toxotes":
+			AudioManager.play_sfx("sword_swing", -6.0, randf_range(1.05, 1.2))
+		_:
+			AudioManager.play_sfx("sword_swing", -4.0, randf_range(0.95, 1.1))
+			if heavy:
+				AudioManager.play_sfx("attack_grunt", -8.0, randf_range(0.85, 1.0))
 
 func _start_attack(clip: String, duration: float) -> void:
 	state = State.ATTACK
@@ -511,8 +524,13 @@ func _melee_hit(dmg: float, reach: float, arc: float) -> void:
 		VfxHelper.spawn_hit(enemy.global_position + Vector3(0, 1.2, 0), self)
 		hit_any = true
 	if hit_any:
-		AudioManager.play_sfx("hit_flesh", -2.0, randf_range(0.9, 1.1))
-		AudioManager.play_sfx("spear_clash", -8.0)
+		# One clean bronze impact for hoplites; dry hit for others (no muddy double-layer).
+		if GameState.player_class == "hoplite":
+			AudioManager.play_sfx("spear_clash", -1.5, randf_range(0.94, 1.06))
+			if randf() < 0.45:
+				AudioManager.play_sfx("bronze_hit", -6.0, randf_range(0.9, 1.1))
+		else:
+			AudioManager.play_sfx("hit_flesh", -2.0, randf_range(0.9, 1.1))
 		add_camera_shake(0.055, 0.15)
 
 func _fire_projectile(dmg: float, speed: float) -> void:

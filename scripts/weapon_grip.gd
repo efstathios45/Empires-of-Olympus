@@ -9,7 +9,7 @@ const CLASS_LENGTH := {
 	"gun": 0.80,
 	"pistol": 0.26,
 	"melee": 0.95,
-	"shield": 0.70,
+	"shield": 0.58,
 }
 
 # Raw GLB axes are guaranteed by the current P1 driver-image + align_image
@@ -20,7 +20,8 @@ const CLASS_FRAME := {
 	"gun":    {"aim_axis": 0, "aim_sign": -1.0, "up_axis": 1, "up_sign": 1.0, "grip_mode": "rear_lower"},
 	"pistol": {"aim_axis": 0, "aim_sign": -1.0, "up_axis": 1, "up_sign": 1.0, "grip_mode": "rear_lower"},
 	"melee":  {"aim_axis": 1, "aim_sign": 1.0,  "up_axis": 0, "up_sign": 1.0, "grip_mode": "low_end", "grip_axis": 1, "grip_fraction": 0.15},
-	"shield": {"aim_axis": 1, "aim_sign": 1.0,  "up_axis": 0, "up_sign": 1.0, "grip_mode": "low_end", "grip_axis": 1, "grip_fraction": 0.15},
+	# Aspis: face along Z (disc plane XY), grip at center (porpax), not rim.
+	"shield": {"aim_axis": 2, "aim_sign": 1.0,  "up_axis": 1, "up_sign": 1.0, "grip_mode": "center"},
 }
 
 # Position is metres in bone space. Rotation is Euler degrees applied to the
@@ -29,7 +30,8 @@ const CLASS_GRIP := {
 	"gun":    {"bone": "RightHand",    "position": Vector3(-0.1, 0.0, 0.0),    "rotation_deg": Vector3(-79, 0, -90), "scale": 1.0},
 	"pistol": {"bone": "RightHand",    "position": Vector3(-0.035, 0.0, 0.0),  "rotation_deg": Vector3(-90, 0, -90), "scale": 1.0},
 	"melee":  {"bone": "RightHand",    "position": Vector3(0.003, -0.134, -0.0005), "rotation_deg": Vector3(-90, -90, 0), "scale": 1.0},
-	"shield": {"bone": "LeftHand",     "position": Vector3(0.04, 0.02, 0.06),       "rotation_deg": Vector3(10, 90, 15),  "scale": 1.15},
+	# Aspis strapped to the left forearm — face out, rim upright.
+	"shield": {"bone": "LeftLowerArm", "position": Vector3(0.05, 0.12, 0.02), "rotation_deg": Vector3(-90, 0, 90), "scale": 1.0},
 }
 
 
@@ -134,7 +136,8 @@ static func normalize(prop: Node3D, weapon_class: String = "gun") -> Node3D:
 	var up_axis_index := int(frame["up_axis"])
 	var up_sign := float(frame["up_sign"])
 	var grip: Vector3
-	if String(frame["grip_mode"]) == "rear_lower":
+	var grip_mode := String(frame.get("grip_mode", "low_end"))
+	if grip_mode == "rear_lower":
 		grip = _rear_lower_grip_centroid(
 			verts,
 			min_bounds,
@@ -142,13 +145,15 @@ static func normalize(prop: Node3D, weapon_class: String = "gun") -> Node3D:
 			aim_axis_index,
 			up_axis_index
 		)
+	elif grip_mode == "center":
+		grip = (min_bounds + max_bounds) * 0.5
 	else:
 		grip = _low_end_centroid(
 			verts,
 			min_bounds,
 			max_bounds,
-			int(frame["grip_axis"]),
-			float(frame["grip_fraction"])
+			int(frame.get("grip_axis", aim_axis_index)),
+			float(frame.get("grip_fraction", 0.15))
 		)
 
 	var aim := _unit(aim_axis_index) * aim_sign

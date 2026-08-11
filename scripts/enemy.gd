@@ -650,7 +650,10 @@ func _physics_process(delta: float) -> void:
 			_process_attack(delta)
 		State.HIT:
 			if state_timer <= 0.0:
-				state = State.CHASE
+				if player != null and is_instance_valid(player) and _world_is_sanctuary(player.global_position):
+					_abandon_to_home()
+				else:
+					state = State.CHASE
 
 	_apply_gravity(delta)
 	move_and_slide()
@@ -672,17 +675,25 @@ func _process_idle(delta: float) -> void:
 		_face(to_target, delta)
 		_play(_clip("walk"))
 
+	# Never aggro a hero who has reached the city sanctuary.
+	if player != null and is_instance_valid(player) and _world_is_sanctuary(player.global_position):
+		return
 	if _player_distance() < float(cfg["aggro"]):
 		state = State.CHASE
 		_telegraph_aggro()
 
 func _process_chase(delta: float) -> void:
 	var dist := _player_distance()
+	# Sanctuary: if the hero flees into the plaza, or we somehow entered it,
+	# abandon the hunt and march home to our sector spawn.
+	if player != null and is_instance_valid(player):
+		if _world_is_sanctuary(player.global_position) or _world_is_sanctuary(global_position):
+			_abandon_to_home()
+			return
 	# Leash: tighter aggro radii would otherwise make creatures give up
 	# almost instantly, so the chase reaches a little further than the notice.
 	if dist > maxf(float(cfg["aggro"]) * 2.0, 16.0):
-		state = State.IDLE
-		state_timer = 0.0
+		_abandon_to_home()
 		return
 	var to_player: Vector3 = player.global_position - global_position
 	to_player.y = 0
@@ -698,10 +709,31 @@ func _process_chase(delta: float) -> void:
 		# Snarl / charge cry at the start of the lunge.
 		_play_attack_sfx()
 	else:
+		var next_pos := global_position + to_player.normalized() * cfg["speed"] * delta
+		if world != null and world.has_method("would_enter_sanctuary") \
+				and world.would_enter_sanctuary(global_position, next_pos):
+			_abandon_to_home()
+			return
 		velocity.x = to_player.normalized().x * cfg["speed"]
 		velocity.z = to_player.normalized().z * cfg["speed"]
 		_face(to_player, delta)
 		_play(_clip("sprint"))
+
+
+func _abandon_to_home() -> void:
+	state = State.IDLE
+	state_timer = 0.25
+	wander_target = spawn_point
+	velocity.x = 0.0
+	velocity.z = 0.0
+
+
+func _world_is_sanctuary(pos: Vector3) -> bool:
+	if world == null:
+		world = get_tree().get_first_node_in_group("game_world")
+	if world != null and world.has_method("is_sanctuary"):
+		return bool(world.is_sanctuary(pos))
+	return false
 
 func _play_attack_sfx() -> void:
 	## Windup: wolf snarl / boar squeal (primary attack sample).
@@ -718,6 +750,10 @@ func _play_attack_hit_sfx() -> void:
 func _process_attack(_delta: float) -> void:
 	velocity.x = 0
 	velocity.z = 0
+	# If the hero slips into the plaza mid-swing, break off and go home.
+	if player != null and is_instance_valid(player) and _world_is_sanctuary(player.global_position):
+		_abandon_to_home()
+		return
 	if not attack_hit_done and state_timer <= 0.25:
 		attack_hit_done = true
 		# Bite / impact cry on the frame the attack lands.

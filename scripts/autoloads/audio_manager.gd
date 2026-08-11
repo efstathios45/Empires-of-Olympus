@@ -19,7 +19,10 @@ const MUSIC := {
 const SFX := {
 	"spear_clash": "res://assets/audio/sfx/weapon/weapon_spear_clash.mp3",
 	"sword_swing": "res://assets/audio/sfx/weapon/weapon_sword_swing.mp3",
+	"spear_thrust": "res://assets/audio/sfx/weapon/weapon_spear_thrust.mp3",
+	"bronze_hit": "res://assets/audio/sfx/weapon/weapon_bronze_hit.mp3",
 	"hit_flesh": "res://assets/audio/sfx/player/player_hit_flesh.mp3",
+	"attack_grunt": "res://assets/audio/sfx/player/player_attack_grunt.mp3",
 	"level_up": "res://assets/audio/sfx/player/player_level_up.mp3",
 	"refine_success": "res://assets/audio/sfx/ui/ui_refine_success.mp3",
 	"refine_fail": "res://assets/audio/sfx/ui/ui_refine_fail.mp3",
