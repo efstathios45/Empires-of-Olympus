@@ -23,13 +23,29 @@ const ENEMY_CONFIGS := {
 	},
 	"boar_enemy": {
 		"name": "Wild Boar",
-		# Stable tripo boar + UAL clips (Death/Idle/Walk/Attack). Gobkit Maya-cm
-		# pack left skinned meshes floating ~50 m up / invisible at the body.
-		"glb": "res://assets/characters/boar_enemy/boar_enemy.glb",
-		"lib": "res://assets/characters/boar_enemy/boar_enemy_animations.tres",
-		"height": 1.0, "hp": 70, "dmg": 11.0, "speed": 4.2,
+		# Gobkit Free Animal Pack Vol.2 — real dead/idle/walk/attack timeline.
+		# Skin binds already encode Maya ×100; scale by skeleton only (never MI×100).
+		"glb": "res://assets/characters/_free_cc0/gobkit_boar.glb",
+		"lib": "",
+		"maya_cm": true,
+		"height": 0.95, "hp": 70, "dmg": 11.0, "speed": 4.2,
 		"xp": 34, "gold": [6, 14], "aggro": 9.5, "reach": 2.0,
 		"attack_cd": 1.7, "material": "Boar Tusk",
+		"facing_plus_z": true,
+		"slice_master": "Take 001",
+		"slice_fps": 24.0,
+		"slices": {
+			"idle": [0, 29, true],
+			"attack": [30, 59, false],
+			"death": [60, 89, false],
+			"walk": [90, 119, true],
+			"sprint": [90, 119, true],
+			"hit": [30, 45, false],
+		},
+		"clips": {
+			"idle": "idle", "walk": "walk", "sprint": "sprint",
+			"attack": "attack", "hit": "hit", "death": "death",
+		},
 	},
 	"satyr_enemy": {
 		"name": "Satyr Raider",
@@ -196,9 +212,11 @@ func _build_body() -> void:
 		# Free animal packs are authored facing +Z; the rest of the game aims -Z.
 		if cfg.get("facing_plus_z", false):
 			model.rotation.y = PI
-		ModelUtils.setup_character_for_movement(model, cfg["height"])
-		# Hard stop for runaway skinned meshes (e.g. broken Maya-cm imports).
-		ModelUtils.clamp_world_height(model, cfg["height"] * 1.4, cfg["height"])
+		if cfg.get("maya_cm", false):
+			ModelUtils.setup_maya_cm_animal(model, cfg["height"])
+		else:
+			ModelUtils.setup_character_for_movement(model, cfg["height"])
+		ModelUtils.clamp_world_height(model, maxf(cfg["height"] * 2.5, 4.0), cfg["height"])
 		anim = model.find_child("AnimationPlayer", true) as AnimationPlayer
 		if anim == null:
 			anim = AnimationPlayer.new()
@@ -263,32 +281,58 @@ func _install_sliced_clips(master_name: String, fps: float, slices: Dictionary) 
 		lib.add_animation(clip_name, sliced)
 
 
-## Humanoid UAL rigs need GeneralSkeleton+Hips. Free animal packs already ship
-## matching Death/Idle clips on their own skeleton — accept those too.
+## Humanoid UAL rigs need GeneralSkeleton+Hips. Free animal packs need a Death
+## clip whose tracks actually address bones on THIS skeleton. Having a UAL
+## library loaded is not enough — tripo boars had ual1_Death01 but no Hips, so
+## death "played" with zero motion and skipped the tumble fallback.
 func _prepare_skeleton_for_anims(model: Node3D) -> bool:
-	if anim != null:
-		if anim.has_animation(_death_clip):
-			return true
-		if anim.has_animation("Death"):
-			_death_clip = "Death"
-			_clips["death"] = "Death"
-			return true
-		if anim.has_animation("death"):
-			_death_clip = "death"
-			_clips["death"] = "death"
-			return true
+	if anim == null:
+		return false
 	var skel: Skeleton3D = null
 	for node in model.find_children("*", "Skeleton3D", true, false):
 		skel = node as Skeleton3D
 		break
 	if skel == null:
 		return false
+
+	# Native animal Death/death clips (Quaternius / Gobkit slices).
+	for candidate in [_death_clip, "Death", "death"]:
+		var cname := String(candidate)
+		if cname == "" or not anim.has_animation(cname):
+			continue
+		if _anim_binds_to_skeleton(anim.get_animation(cname), skel):
+			_death_clip = cname
+			_clips["death"] = cname
+			return true
+
+	# UAL humanoid library on a matching Hips rig.
 	if skel.find_bone("Hips") < 0:
 		return false
 	if skel.name != "GeneralSkeleton":
 		skel.name = "GeneralSkeleton"
 	skel.unique_name_in_owner = true
-	return true
+	if anim.has_animation("ual1_Death01"):
+		_death_clip = "ual1_Death01"
+		_clips["death"] = "ual1_Death01"
+		return true
+	if anim.has_animation(_death_clip):
+		return true
+	return false
+
+
+## True when at least one animation track targets a bone that exists on `skel`.
+func _anim_binds_to_skeleton(animation: Animation, skel: Skeleton3D) -> bool:
+	if animation == null or skel == null:
+		return false
+	for ti in animation.get_track_count():
+		var path := String(animation.track_get_path(ti))
+		var colon := path.rfind(":")
+		if colon < 0:
+			continue
+		var bone := path.substr(colon + 1)
+		if skel.find_bone(bone) >= 0:
+			return true
+	return false
 
 
 func _force_oneshot_clips(names: Array) -> void:

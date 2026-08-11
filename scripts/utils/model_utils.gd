@@ -167,31 +167,26 @@ static func measure_height(node: Node3D) -> float:
 	return mesh_h if mesh_h >= 0.001 else bone_h
 
 
-## Gobkit / Maya exports often author MeshInstance scale=100 with cm meshes.
-## Godot GLB import can drop that scale, leaving a centimetre bind AABB and a
-## metre skeleton. Restore ×100 when we detect that mismatch.
+## Gobkit / Maya cm packs: do NOT set MeshInstance.scale=100 when the Skin
+## bind poses already encode that scale (common after glTF import). Doing both
+## doubles the deform and flings giant meshes into the sky while the body
+## hitbox stays on the ground.
 static func _restore_maya_cm_mesh_scales(node: Node3D) -> void:
-	var bone_h := _measure_skeleton_height(node)
-	var any_tiny := false
 	for child in node.find_children("*", "MeshInstance3D"):
 		var mi := child as MeshInstance3D
 		if mi == null or mi.mesh == null:
 			continue
 		var local_h: float = mi.get_aabb().size.y
-		if local_h > 0.0 and local_h < 0.15:
-			any_tiny = true
-			break
-	# Restore whenever bind mesh is centimetre-scale OR skeleton is metre-scale
-	# with tiny meshes (don't require bone_h first — that raced on some imports).
-	if not any_tiny and bone_h < 0.5:
-		return
-	for child in node.find_children("*", "MeshInstance3D"):
-		var mi := child as MeshInstance3D
-		if mi == null or mi.mesh == null:
+		if local_h <= 0.0 or local_h >= 0.15:
 			continue
-		var local_h: float = mi.get_aabb().size.y
-		if local_h > 0.0 and local_h < 0.15 and mi.scale.y < 50.0:
-			mi.scale = Vector3(100.0, 100.0, 100.0)
+		if mi.scale.y >= 50.0:
+			continue
+		# Skin bind pose already carries ~×100 → leave MI scale at 1.
+		if mi.skin != null and mi.skin.get_bind_count() > 0:
+			var bind_s: Vector3 = mi.skin.get_bind_pose(0).basis.get_scale()
+			if bind_s.length() > 50.0:
+				continue
+		mi.scale = Vector3(100.0, 100.0, 100.0)
 
 
 static func _measure_mesh_height(node: Node3D) -> float:
@@ -272,14 +267,10 @@ static func clamp_world_height(node: Node3D, max_height: float, target_height: f
 	push_warning("ModelUtils.clamp_world_height: shrank %s from %.2fm to ~%.2fm" % [node.name, h, want])
 
 
-## Setup for Maya-cm animals (Gobkit): force mesh ×100, scale by skeleton, ground.
-## Prefer not using this for gameplay spawns — Compatibility skinning + MI scale
-## 100 has produced invisible bodies with giant meshes floating overhead.
+## Setup for Maya-cm animals (Gobkit): scale by skeleton only.
+## Skin bind poses already include the authored ×100 — never set MI.scale=100.
 static func setup_maya_cm_animal(node: Node3D, target_height: float) -> void:
-	for child in node.find_children("*", "MeshInstance3D"):
-		var mi := child as MeshInstance3D
-		if mi and mi.mesh and mi.get_aabb().size.y < 0.2:
-			mi.scale = Vector3(100.0, 100.0, 100.0)
+	_restore_maya_cm_mesh_scales(node)  # no-op when binds already encode ×100
 	if node.is_inside_tree():
 		node.force_update_transform()
 	var bone_h := _measure_skeleton_height(node)
@@ -289,12 +280,7 @@ static func setup_maya_cm_animal(node: Node3D, target_height: float) -> void:
 		node.scale *= target_height / bone_h
 	if node.is_inside_tree():
 		node.force_update_transform()
-		var final_h := _measure_mesh_height(node)
-		if final_h > 0.01 and absf(final_h - target_height) > 0.08:
-			node.scale *= target_height / final_h
-		node.force_update_transform()
 	ground_model(node)
-	clamp_world_height(node, target_height * 1.35, target_height)
 
 ## One-call setup for movement-driven characters.
 static func setup_character_for_movement(node: Node3D, target_height: float = 1.8) -> void:
