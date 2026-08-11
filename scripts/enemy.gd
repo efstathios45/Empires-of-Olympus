@@ -23,10 +23,12 @@ const ENEMY_CONFIGS := {
 	},
 	"boar_enemy": {
 		"name": "Wild Boar",
-		# Gobkit Free Animal Pack Vol.2 (CC0) — boar with dead/idle/walk/attack timeline.
+		# Gobkit Free Animal Pack Vol.2 (CC0) — Maya-cm mesh; use setup_maya_cm_animal.
 		"glb": "res://assets/characters/_free_cc0/gobkit_boar.glb",
 		"lib": "",
-		"height": 1.15, "hp": 70, "dmg": 11.0, "speed": 4.2,
+		"maya_cm": true,
+		# Shoulder ~0.9 m — a real boar, not a horse-sized pig.
+		"height": 0.9, "hp": 70, "dmg": 11.0, "speed": 4.2,
 		"xp": 34, "gold": [6, 14], "aggro": 9.5, "reach": 2.0,
 		"attack_cd": 1.7, "material": "Boar Tusk",
 		"facing_plus_z": true,
@@ -211,7 +213,10 @@ func _build_body() -> void:
 		# Free animal packs are authored facing +Z; the rest of the game aims -Z.
 		if cfg.get("facing_plus_z", false):
 			model.rotation.y = PI
-		ModelUtils.setup_character_for_movement(model, cfg["height"])
+		if cfg.get("maya_cm", false):
+			ModelUtils.setup_maya_cm_animal(model, cfg["height"])
+		else:
+			ModelUtils.setup_character_for_movement(model, cfg["height"])
 		anim = model.find_child("AnimationPlayer", true) as AnimationPlayer
 		if anim == null:
 			anim = AnimationPlayer.new()

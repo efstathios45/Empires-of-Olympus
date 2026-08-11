@@ -158,13 +158,13 @@ static func measure_height(node: Node3D) -> float:
 		node.force_update_transform()
 	var mesh_h := _measure_mesh_height(node)
 	var bone_h := _measure_skeleton_height(node)
-	# Skinned Gobkit-style: bind mesh can still disagree with the skeleton.
-	# Prefer the larger trustworthy reading so we never over-scale.
-	if bone_h > 0.5 and mesh_h > 0.01:
-		return maxf(mesh_h, bone_h)
-	if bone_h > 0.05 and (mesh_h < 0.05 or bone_h > mesh_h * 4.0):
+	if bone_h > 0.4:
+		# Skeleton is the ground truth for skinned Maya-cm packs.
+		if mesh_h < 0.05 or absf(mesh_h - bone_h) / bone_h > 0.45:
+			return bone_h
+	if bone_h > 0.05 and mesh_h < 0.05:
 		return bone_h
-	return mesh_h
+	return mesh_h if mesh_h >= 0.001 else bone_h
 
 
 ## Gobkit / Maya exports often author MeshInstance scale=100 with cm meshes.
@@ -172,14 +172,25 @@ static func measure_height(node: Node3D) -> float:
 ## metre skeleton. Restore ×100 when we detect that mismatch.
 static func _restore_maya_cm_mesh_scales(node: Node3D) -> void:
 	var bone_h := _measure_skeleton_height(node)
-	if bone_h < 0.5:
+	var any_tiny := false
+	for child in node.find_children("*", "MeshInstance3D"):
+		var mi := child as MeshInstance3D
+		if mi == null or mi.mesh == null:
+			continue
+		var local_h: float = mi.get_aabb().size.y
+		if local_h > 0.0 and local_h < 0.15:
+			any_tiny = true
+			break
+	# Restore whenever bind mesh is centimetre-scale OR skeleton is metre-scale
+	# with tiny meshes (don't require bone_h first — that raced on some imports).
+	if not any_tiny and bone_h < 0.5:
 		return
 	for child in node.find_children("*", "MeshInstance3D"):
 		var mi := child as MeshInstance3D
 		if mi == null or mi.mesh == null:
 			continue
 		var local_h: float = mi.get_aabb().size.y
-		if local_h > 0.0 and local_h < 0.15 and mi.scale.y < 10.0:
+		if local_h > 0.0 and local_h < 0.15 and mi.scale.y < 50.0:
 			mi.scale = Vector3(100.0, 100.0, 100.0)
 
 
@@ -218,16 +229,53 @@ static func _measure_skeleton_height(node: Node3D) -> float:
 
 ## Scale a node so its world-space height matches target_meters.
 static func scale_to_height(node: Node3D, target_meters: float) -> void:
-	var current = measure_height(node)
+	_restore_maya_cm_mesh_scales(node)
+	if node.is_inside_tree():
+		node.force_update_transform()
+	# Prefer skeleton for Maya-cm skinned packs — mesh AABB alone over-scales.
+	var bone_h := _measure_skeleton_height(node)
+	var mesh_h := _measure_mesh_height(node)
+	var current: float = mesh_h
+	if bone_h > 0.4:
+		current = bone_h
+	elif mesh_h >= 0.001:
+		current = mesh_h
 	if current < 0.001:
 		return
-	var factor = target_meters / current
-	# Clamp runaway scales from cm/m mismatches instead of skipping (skip left
-	# Gobkit boars at skeleton size ~3m+ — "giant pigs").
-	if factor > 12.0 or factor < 0.04:
+	var factor := target_meters / current
+	# Hard clamp: never amplify more than 4× (prevents giant skinned animals).
+	if factor > 4.0 or factor < 0.05:
 		push_warning("ModelUtils.scale_to_height: clamping factor %.3f (h=%.3f → %.3f) on %s" % [factor, current, target_meters, node.name])
-		factor = clampf(factor, 0.04, 12.0)
+		factor = clampf(factor, 0.05, 4.0)
 	node.scale *= factor
+	# Final safety: if the skinned mesh is still oversized, shrink to target.
+	if node.is_inside_tree():
+		node.force_update_transform()
+		var final_h := _measure_mesh_height(node)
+		if final_h > target_meters * 1.35 and final_h > 0.01:
+			node.scale *= target_meters / final_h
+
+
+## Setup for Maya-cm animals (Gobkit): force mesh ×100, scale by skeleton, ground.
+static func setup_maya_cm_animal(node: Node3D, target_height: float) -> void:
+	for child in node.find_children("*", "MeshInstance3D"):
+		var mi := child as MeshInstance3D
+		if mi and mi.mesh and mi.get_aabb().size.y < 0.2:
+			mi.scale = Vector3(100.0, 100.0, 100.0)
+	if node.is_inside_tree():
+		node.force_update_transform()
+	var bone_h := _measure_skeleton_height(node)
+	if bone_h < 0.05:
+		bone_h = _measure_mesh_height(node)
+	if bone_h >= 0.05:
+		node.scale *= target_height / bone_h
+	if node.is_inside_tree():
+		node.force_update_transform()
+		var final_h := _measure_mesh_height(node)
+		if final_h > 0.01 and absf(final_h - target_height) > 0.08:
+			node.scale *= target_height / final_h
+		node.force_update_transform()
+	ground_model(node)
 
 ## One-call setup for movement-driven characters.
 static func setup_character_for_movement(node: Node3D, target_height: float = 1.8) -> void:

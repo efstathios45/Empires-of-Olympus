@@ -26,9 +26,12 @@ const COMBO_CLIPS := ["ual2_Sword_Light_A", "ual2_Sword_Light_B", "ual2_Sword_Li
 const HEAVY_CLIP := "ual2_Sword_Heavy_A"
 
 # Footsteps are driven by distance travelled, so they always match the stride
-# no matter how the move speed is tuned.
-const STEP_DIST_WALK := 2.2
-const STEP_DIST_SPRINT := 2.8
+# no matter how the move speed is tuned. Longer spacing + a cooldown keeps
+# multi-hit grass samples from stacking into a stampede.
+const STEP_DIST_WALK := 2.8
+const STEP_DIST_SPRINT := 3.4
+const STEP_COOLDOWN_WALK := 0.34
+const STEP_COOLDOWN_SPRINT := 0.26
 
 # Soft lock-on: widest cone/range the target highlight considers.
 const TARGET_RANGE := 24.0
@@ -54,6 +57,7 @@ var cam_pitch: float = -0.28
 
 # Feedback state: footstep accumulator, camera shake, soft lock-on target.
 var _step_accum: float = 0.0
+var _step_cooldown: float = 0.0
 var _shake_time: float = 0.0
 var _shake_dur: float = 0.15
 var _shake_mag: float = 0.0
@@ -247,13 +251,18 @@ func _ui_open() -> bool:
 func _tick_footsteps(delta: float, sprinting: bool) -> void:
 	if not is_on_floor():
 		return
+	_step_cooldown = maxf(0.0, _step_cooldown - delta)
 	_step_accum += Vector2(velocity.x, velocity.z).length() * delta
 	var step_len: float = STEP_DIST_SPRINT if sprinting else STEP_DIST_WALK
 	if _step_accum < step_len:
 		return
+	if _step_cooldown > 0.0:
+		return
 	_step_accum -= step_len
+	_step_cooldown = STEP_COOLDOWN_SPRINT if sprinting else STEP_COOLDOWN_WALK
 	var vol: float = -10.0 if sprinting else -13.0
-	AudioManager.play_sfx("footstep_" + _ground_kind(), vol, randf_range(0.92, 1.09))
+	# Dedicated channel — never stack overlapping multi-crunch grass samples.
+	AudioManager.play_footstep("footstep_" + _ground_kind(), vol, randf_range(0.94, 1.06))
 
 func _ground_kind() -> String:
 	## The world tells us what we're standing on; grass is the safe default.

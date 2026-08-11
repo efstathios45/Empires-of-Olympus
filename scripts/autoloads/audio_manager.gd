@@ -3,6 +3,7 @@ extends Node
 
 var music_player: AudioStreamPlayer
 var ambient_player: AudioStreamPlayer
+var footstep_player: AudioStreamPlayer
 var sfx_players: Array[AudioStreamPlayer] = []
 const MAX_SFX_PLAYERS := 10
 
@@ -57,6 +58,12 @@ func _ready() -> void:
 	ambient_player.volume_db = -14.0
 	ambient_player.playback_type = AudioServer.PLAYBACK_TYPE_STREAM
 	add_child(ambient_player)
+	# One dedicated footstep voice so grass/dirt samples never stack into a
+	# stampede when stride timing overlaps a long multi-hit WAV/MP3.
+	footstep_player = AudioStreamPlayer.new()
+	footstep_player.bus = "Master"
+	footstep_player.playback_type = AudioServer.PLAYBACK_TYPE_STREAM
+	add_child(footstep_player)
 	for i in MAX_SFX_PLAYERS:
 		var p := AudioStreamPlayer.new()
 		p.bus = "Master"
@@ -124,3 +131,20 @@ func play_sfx(key: String, volume_db: float = 0.0, pitch: float = 1.0) -> void:
 			p.pitch_scale = pitch
 			p.play()
 			return
+
+## Footsteps use a single voice — restart instead of stacking overlaps.
+func play_footstep(key: String, volume_db: float = 0.0, pitch: float = 1.0) -> void:
+	var path: String = SFX.get(key, "")
+	if path == "" or not ResourceLoader.exists(path):
+		return
+	var stream := load(path) as AudioStream
+	if stream == null:
+		return
+	if footstep_player == null:
+		play_sfx(key, volume_db, pitch)
+		return
+	footstep_player.stop()
+	footstep_player.stream = stream
+	footstep_player.volume_db = volume_db
+	footstep_player.pitch_scale = pitch
+	footstep_player.play()

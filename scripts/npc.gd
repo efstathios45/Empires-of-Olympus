@@ -135,15 +135,9 @@ func interact() -> void:
 
 # ── Flavour chatter ──────────────────────────────────────────────────────
 
-## Show a one-off remark above this NPC's head (and in the HUD if it takes one).
+## Show a one-off remark above this NPC's head (speech bubble only — no HUD
+## duplicate toast; that was reading as a "double message" on E).
 func _say(line: String) -> void:
-	var hud := get_tree().get_first_node_in_group("hud")
-	if hud != null:
-		for m in ["show_announcement", "announce", "show_toast", "show_message",
-				"show_notification"]:
-			if hud.has_method(m):
-				hud.call(m, "%s: %s" % [display_name, line])
-				break
 	if _bubble == null or not is_instance_valid(_bubble):
 		_bubble = Label3D.new()
 		_bubble.billboard = BaseMaterial3D.BILLBOARD_ENABLED

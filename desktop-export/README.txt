@@ -1,23 +1,16 @@
 Empires of Olympus — Windows builds
 ===================================
 
-HOTFIX V3 — visible enemies, normal-size boars, Greek tessera plaza
-------------------------------------------------------------------
-You MUST download a FRESH game.exe + matching game.pck together.
-Older builds bury enemies underground, spawn giant boars, and show
-a shield-like plaza medallion instead of tiled pavement.
+HOTFIX V4 — normal boars, single NPC line, clean footsteps
+----------------------------------------------------------
+Delete old game.exe + game.pck, then download BOTH fresh files.
 
-If game.exe is under ~1 MB, the download failed — delete it.
-Real game.exe is about 93 MB (97520128 bytes). Real game.pck ~39–40 MB.
+  EXE: https://gofile.io/d/SW1sf4
+  PCK: https://gofile.io/d/fG3i1S
 
-Fresh GoFile (this hotfix):
-  EXE: https://gofile.io/d/YOTaAn
-  PCK: https://gofile.io/d/syOeIq
+Expected sizes:
+  game.exe = 97520128 bytes
+  game.pck = 41361696 bytes
 
-x64 (most PCs):  game.exe + game.pck
-ARM64:           game-arm64.exe + game-arm64.pck
-
-Prefer Cursor artifacts / GoFile — not GitHub Raw on this private repo.
-Put BOTH matching files in the SAME folder, then run the .exe.
-
-Controls: WASD move, mouse look, click attack, Q god-skill, E interact, F block, C dodge.
+x64: game.exe + game.pck | ARM64: game-arm64.exe + game-arm64.pck
+Put both in the same folder and run the exe.
