@@ -25,48 +25,6 @@ const TEXT_W := CARD_W - 96 - CARD_PAD * 2
 
 const DIM := Color(0.86, 0.82, 0.72)
 
-## The exported project lost its res://assets/ art, but the repo still ships the
-## orientation renders in prop_orient/ and weapon_orient/. The menu dresses
-## itself from those catalog images so the screen is never empty.
-const ORIENT := "res://prop_orient/"
-const ORIENT_WEAPON := "res://weapon_orient/"
-
-const EMPIRE_ART := {
-	"sparta": ORIENT + "env_spartan_barracks.png",
-	"athens": ORIENT + "env_greek_temple.png",
-	"corinth": ORIENT + "env_agora_market_stall.png",
-}
-const CLASS_ART := {
-	"hoplite": ORIENT + "env_training_dummy.png",
-	"toxotes": ORIENT_WEAPON + "cretan_bow.png",
-	"magos": ORIENT + "oracle_stone.png",
-}
-## Every render in the repo, shown in the "Wonders of Hellas" gallery.
-const GALLERY := [
-	ORIENT + "env_greek_temple.png",
-	ORIENT + "env_greek_stoa_colonnade.png",
-	ORIENT + "env_spartan_barracks.png",
-	ORIENT + "env_greek_townhouse.png",
-	ORIENT + "env_agora_market_stall.png",
-	ORIENT + "env_arena_gate.png",
-	ORIENT + "env_city_gate_arch.png",
-	ORIENT + "env_broken_ruins.png",
-	ORIENT + "env_marble_column.png",
-	ORIENT + "env_marble_fountain.png",
-	ORIENT + "marble_altar.png",
-	ORIENT + "greek_statue.png",
-	ORIENT + "oracle_stone.png",
-	ORIENT + "env_brazier_flame.png",
-	ORIENT + "env_olive_cart.png",
-	ORIENT + "env_training_dummy.png",
-	ORIENT + "blacksmith_anvil.png",
-	ORIENT + "amphora.png",
-	ORIENT + "treasure_chest.png",
-	ORIENT + "health_potion.png",
-	ORIENT + "env_cliff_rock.png",
-	ORIENT_WEAPON + "cretan_bow.png",
-]
-
 ## In-fiction lore, written for the pledge screen.
 const EMPIRE_LORE := {
 	"sparta": "Born upon the shield, buried beneath it. In Laconia the phalanx moves as one beast of bronze, and it never breaks.",
@@ -195,54 +153,6 @@ func _image(path: String, size: Vector2, cover: bool) -> TextureRect:
 	return t
 
 
-## A catalog render framed like a hanging picture. The source art sits on a
-## white sweep, so a cream mat + gold border makes it read as a deliberate plate
-## rather than a stray cut-out.
-func _framed_image(path: String, size: Vector2) -> Control:
-	if not ResourceLoader.exists(path):
-		return null
-	var frame := PanelContainer.new()
-	frame.mouse_filter = Control.MOUSE_FILTER_IGNORE
-	var sb := StyleBoxFlat.new()
-	sb.bg_color = Color(0.94, 0.91, 0.83)
-	sb.set_border_width_all(2)
-	sb.border_color = Color(0.72, 0.58, 0.24, 0.95)
-	sb.set_corner_radius_all(4)
-	sb.set_content_margin_all(6)
-	frame.add_theme_stylebox_override("panel", sb)
-	var tr := TextureRect.new()
-	tr.texture = load(path)
-	tr.custom_minimum_size = size
-	tr.expand_mode = TextureRect.EXPAND_IGNORE_SIZE
-	tr.stretch_mode = TextureRect.STRETCH_KEEP_ASPECT_CENTERED
-	tr.mouse_filter = Control.MOUSE_FILTER_IGNORE
-	frame.add_child(tr)
-	return frame
-
-## The selection cards were authored for a cream marble frame (panel_card.tres)
-## that the export dropped, which left dark body ink on a dark void. Restore the
-## intended parchment so the lore reads, but only when that art is missing.
-func _card_fallback_style() -> StyleBoxFlat:
-	var sb := StyleBoxFlat.new()
-	sb.bg_color = Color(0.93, 0.90, 0.82)
-	sb.set_border_width_all(2)
-	sb.border_color = Color(0.72, 0.58, 0.24, 0.9)
-	sb.set_corner_radius_all(6)
-	sb.set_content_margin_all(10)
-	return sb
-
-func _dress_card(card: PanelContainer) -> void:
-	if not ResourceLoader.exists("res://assets/ui/panel_card.tres"):
-		card.add_theme_stylebox_override("panel", _card_fallback_style())
-
-## "env_greek_temple" -> "Greek Temple".
-func _pretty_name(path: String) -> String:
-	var base := path.get_file().get_basename()
-	if base.begins_with("env_"):
-		base = base.substr(4)
-	return base.replace("_", " ").capitalize()
-
-
 func _centered(c: Control) -> CenterContainer:
 	var cc := CenterContainer.new()
 	cc.mouse_filter = Control.MOUSE_FILTER_IGNORE
@@ -331,14 +241,11 @@ func _build_title_step() -> void:
 	_set_backdrop(POSTER, 0.35)
 	var page := _page(10)
 
-	var top := CenterContainer.new()
+	var top := Control.new()
 	top.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	top.size_flags_vertical = Control.SIZE_EXPAND_FILL
 	top.size_flags_stretch_ratio = 0.55
 	page.add_child(top)
-	var featured := _framed_image(ORIENT + "env_greek_temple.png", Vector2(560, 300))
-	if featured != null:
-		top.add_child(featured)
 
 	var mark := _image(WORDMARK, Vector2(620, 200), false)
 	if mark != null:
@@ -362,12 +269,6 @@ func _build_title_step() -> void:
 		"WASD move  ·  Mouse look  ·  Click to strike  ·  Q god-skill"))
 	page.add_child(_sub_line(
 		"E speak  ·  I spoils  ·  M map"))
-
-	page.add_child(Kit.spacer(12))
-	var wonders := Kit.make_button("Wonders of Hellas", false)
-	wonders.custom_minimum_size = Vector2(320, 58)
-	wonders.pressed.connect(_show_gallery_overlay)
-	page.add_child(_centered(wonders))
 
 	var bottom := Control.new()
 	bottom.mouse_filter = Control.MOUSE_FILTER_IGNORE
@@ -425,13 +326,12 @@ func _build_empire_step() -> void:
 
 func _make_empire_card(id: String, data: Dictionary) -> PanelContainer:
 	var card := Kit.make_card_panel()
-	_dress_card(card)
 	card.custom_minimum_size = Vector2(CARD_W, EMPIRE_CARD_H)
 	card.size_flags_vertical = Control.SIZE_SHRINK_CENTER
 	card.mouse_filter = Control.MOUSE_FILTER_PASS
 	var v := _card_body(card)
 
-	var art := _framed_image(String(EMPIRE_ART.get(id, "")), Vector2(TEXT_W, 150))
+	var art := _image(BG + "empire_" + id + ".png", Vector2(TEXT_W, 110), true)
 	if art != null:
 		v.add_child(art)
 
@@ -507,13 +407,12 @@ func _build_class_step() -> void:
 
 func _make_class_card(id: String, data: Dictionary) -> PanelContainer:
 	var card := Kit.make_card_panel()
-	_dress_card(card)
 	card.custom_minimum_size = Vector2(CARD_W, CLASS_CARD_H)
 	card.size_flags_vertical = Control.SIZE_SHRINK_CENTER
 	card.mouse_filter = Control.MOUSE_FILTER_PASS
 	var v := _card_body(card)
 
-	var art := _framed_image(String(CLASS_ART.get(id, "")), Vector2(TEXT_W, 200))
+	var art := _image(BG + "class_" + id + ".png", Vector2(TEXT_W, 190), true)
 	if art != null:
 		v.add_child(art)
 
@@ -579,64 +478,6 @@ func _show_map_overlay() -> void:
 	close.custom_minimum_size = Vector2(260, 62)
 	close.pressed.connect(_close_overlay)
 	v.add_child(_centered(close))
-
-
-# ── Wonders of Hellas: every render in the repo ──────────────────────────
-
-func _show_gallery_overlay() -> void:
-	if _overlay != null:
-		return
-	_overlay = Control.new()
-	_overlay.mouse_filter = Control.MOUSE_FILTER_STOP
-	add_child(_overlay)
-	_overlay.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
-
-	var dim := Kit.make_dimmer()
-	dim.color = Color(0.03, 0.02, 0.04, 1.0)
-	_overlay.add_child(dim)
-	dim.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
-
-	var m := Kit.make_margin(34)
-	_overlay.add_child(m)
-	m.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
-
-	var v := VBoxContainer.new()
-	v.add_theme_constant_override("separation", 12)
-	m.add_child(v)
-
-	v.add_child(_title_line("Wonders of Hellas"))
-	v.add_child(_sub_line(
-		"The monuments, relics and arms of the age — %d in all." % GALLERY.size()))
-
-	var scroll := ScrollContainer.new()
-	scroll.size_flags_vertical = Control.SIZE_EXPAND_FILL
-	scroll.horizontal_scroll_mode = ScrollContainer.SCROLL_MODE_DISABLED
-	v.add_child(scroll)
-
-	var grid := GridContainer.new()
-	grid.columns = 6
-	grid.add_theme_constant_override("h_separation", 14)
-	grid.add_theme_constant_override("v_separation", 14)
-	grid.size_flags_horizontal = Control.SIZE_SHRINK_CENTER
-	scroll.add_child(grid)
-	for path in GALLERY:
-		grid.add_child(_gallery_tile(path))
-
-	var close := Kit.make_button("Close", false)
-	close.custom_minimum_size = Vector2(260, 60)
-	close.pressed.connect(_close_overlay)
-	v.add_child(_centered(close))
-
-
-func _gallery_tile(path: String) -> Control:
-	var col := VBoxContainer.new()
-	col.add_theme_constant_override("separation", 4)
-	var img := _framed_image(path, Vector2(150, 150))
-	if img != null:
-		col.add_child(img)
-	col.add_child(Kit.make_hud_label(
-		_pretty_name(path), 15, Color(1.0, 0.94, 0.8), HORIZONTAL_ALIGNMENT_CENTER))
-	return col
 
 
 func _close_overlay() -> void:
