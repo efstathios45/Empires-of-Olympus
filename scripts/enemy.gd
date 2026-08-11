@@ -63,12 +63,13 @@ const ENEMY_CONFIGS := {
 		},
 	},
 	"boar_enemy": {
-		# Gobkit original atlas + sliced death (Take 001) — no remapped hide.
+		# Gobkit mesh + new Poly Haven leather/fur bristle hide (not prior skins).
 		"name": "Erymanthian Boar",
 		"level": 3,
 		"glb": "res://assets/characters/_free_cc0/gobkit_boar.glb",
 		"lib": "",
 		"maya_cm": true,
+		"bristle_hide": true,
 		"height": 0.95, "hp": 110, "dmg": 14.0, "speed": 4.2,
 		"xp": 48, "gold": [8, 16], "aggro": 9.5, "reach": 2.0,
 		"attack_cd": 1.7, "material": "Boar Tusk",
@@ -273,8 +274,9 @@ func _build_body() -> void:
 		else:
 			ModelUtils.setup_character_for_movement(model, cfg["height"])
 		ModelUtils.clamp_world_height(model, maxf(cfg["height"] * 2.5, 4.0), cfg["height"])
-		# Boar keeps Gobkit's authored atlas (death clips intact). Wolves tint only.
-		if cfg.has("tint"):
+		if cfg.get("bristle_hide", false):
+			_apply_bristle_boar_hide(model)
+		elif cfg.has("tint"):
 			_apply_tint(model, cfg["tint"])
 		anim = model.find_child("AnimationPlayer", true) as AnimationPlayer
 		if anim == null:
@@ -404,6 +406,22 @@ func _force_oneshot_clips(names: Array) -> void:
 		var a := anim.get_animation(clip)
 		if a:
 			a.loop_mode = Animation.LOOP_NONE
+
+
+## Dark bristly wild-boar hide (Poly Haven leather+fur remaster — new file).
+func _apply_bristle_boar_hide(model: Node3D) -> void:
+	const HIDE := "res://assets/textures/creatures/boar_hide_bristle.png"
+	var mat := StandardMaterial3D.new()
+	mat.albedo_color = Color(0.95, 0.92, 0.88)
+	if ResourceLoader.exists(HIDE):
+		mat.albedo_texture = load(HIDE)
+	mat.roughness = 0.96
+	mat.metallic = 0.0
+	mat.texture_filter = BaseMaterial3D.TEXTURE_FILTER_LINEAR_WITH_MIPMAPS
+	for child in model.find_children("*", "MeshInstance3D"):
+		var mi := child as MeshInstance3D
+		if mi:
+			mi.material_override = mat
 
 
 ## Tint Quaternius wolf variants without new meshes.
@@ -580,16 +598,15 @@ func set_targeted(on: bool) -> void:
 	_plate_timer = 0.0
 
 func _telegraph_aggro() -> void:
-	## Fires once on IDLE→CHASE: the creature announces itself.
+	## Fires once on IDLE→CHASE: the creature announces itself with ITS voice.
 	if _telegraph_cd > 0.0:
 		return
 	_telegraph_cd = 5.0
 	var growl: String = String(cfg.get("sfx_attack", "enemy_growl"))
-	AudioManager.play_sfx(growl, -4.0, randf_range(0.92, 1.08))
-	if cfg.get("screech"):
-		AudioManager.play_sfx("harpy_screech", -6.0)
+	AudioManager.play_sfx(growl, -3.0, randf_range(0.94, 1.06))
+	# Boss also bellows the dedicated roar sample.
 	if is_boss:
-		AudioManager.play_sfx("minotaur_roar", -2.0)
+		AudioManager.play_sfx("minotaur_roar", -1.0)
 	_flash_plate()
 
 func _flash_plate() -> void:

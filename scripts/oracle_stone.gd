@@ -7,9 +7,6 @@ const VfxHelper = preload("res://scripts/vfx_helper.gd")
 const EnemyScript = preload("res://scripts/enemy.gd")
 
 const NAME_FONT := "res://assets/fonts/cinzel.ttf"
-const ROCK_GLB := "res://assets/props/stones/kenney_rocks.glb"
-const STONES_GLB := "res://assets/props/stones/kenney_stones.glb"
-const ROCK_LG_GLB := "res://assets/props/stones/kenney_rocks_large.glb"
 
 const TIER_CFG := {
 	1: {
@@ -109,33 +106,39 @@ func _build_body() -> void:
 	_body.name = "StoneBody"
 	add_child(_body)
 
-	# Pedestal rocks (Kenney CC0) — earthy cracked stone, not a pink orb.
-	_add_prop(ROCK_LG_GLB if ResourceLoader.exists(ROCK_LG_GLB) else ROCK_GLB,
-		Vector3(0.0, 0.35, 0.0), 1.8, Color(0.45, 0.4, 0.35))
-	_add_prop(ROCK_GLB, Vector3(0.35, 0.85, -0.2), 1.1, Color(0.5, 0.42, 0.36))
-	_add_prop(STONES_GLB, Vector3(-0.25, 1.15, 0.15), 1.35, col.lerp(Color(0.55, 0.5, 0.42), 0.45))
+	# Kenney Nature Kit rocks (CC0) — cracked cliff stone, not cartoon orbs.
+	const ROCK_A := "res://assets/props/stones/nature_rock_large_a.glb"
+	const ROCK_C := "res://assets/props/stones/nature_rock_large_c.glb"
+	const ROCK_E := "res://assets/props/stones/nature_rock_large_e.glb"
+	const ROCK_S := "res://assets/props/stones/nature_rock_small_b.glb"
+	const CLIFF := "res://assets/props/stones/nature_cliff_rock.glb"
+	_add_prop(ROCK_A, Vector3(0.0, 0.45, 0.0), 1.9, Color(0.38, 0.34, 0.30))
+	_add_prop(ROCK_C, Vector3(0.4, 0.95, -0.25), 1.25, Color(0.42, 0.36, 0.30))
+	_add_prop(ROCK_E, Vector3(-0.35, 0.85, 0.2), 1.15, Color(0.34, 0.32, 0.28))
+	_add_prop(ROCK_S, Vector3(0.15, 1.35, 0.1), 0.7, col.lerp(Color(0.45, 0.4, 0.35), 0.5))
+	_add_prop(CLIFF, Vector3(0.0, 0.15, 0.35), 1.4, Color(0.32, 0.3, 0.28))
 
-	# Soft cursed heart — small emissive core nestled in the rocks.
+	# Cursed vein — thin glowing crack, not a big pink sphere.
 	_glow = MeshInstance3D.new()
-	var core := SphereMesh.new()
-	core.radius = 0.28
-	core.height = 0.55
+	var core := BoxMesh.new()
+	core.size = Vector3(0.22, 1.1, 0.22)
 	_glow.mesh = core
-	_glow.position = Vector3(0.0, 1.35, 0.0)
+	_glow.position = Vector3(0.0, 1.25, 0.0)
+	_glow.rotation_degrees = Vector3(8, 25, 12)
 	var gm := StandardMaterial3D.new()
-	gm.albedo_color = Color(col.r, col.g, col.b, 0.55)
+	gm.albedo_color = Color(col.r, col.g, col.b, 0.65)
 	gm.transparency = BaseMaterial3D.TRANSPARENCY_ALPHA
 	gm.emission_enabled = true
 	gm.emission = col
-	gm.emission_energy_multiplier = 1.6
-	gm.roughness = 0.35
+	gm.emission_energy_multiplier = 2.2
+	gm.roughness = 0.25
 	_glow.material_override = gm
 	_body.add_child(_glow)
 
 	_light = OmniLight3D.new()
 	_light.light_color = col
-	_light.light_energy = 0.9
-	_light.omni_range = 6.5
+	_light.light_energy = 0.75
+	_light.omni_range = 5.5
 	_light.position = Vector3(0.0, 1.4, 0.0)
 	_body.add_child(_light)
 
@@ -148,14 +151,20 @@ func _add_prop(path: String, at: Vector3, height: float, tint: Color) -> void:
 	n.position = at
 	n.rotation.y = randf() * TAU
 	ModelUtils.scale_to_height(n, height)
+	var rock_tex: Texture2D = null
+	const ROCK_DIFF := "res://assets/textures/stone/dark_rock_diff.jpg"
+	if ResourceLoader.exists(ROCK_DIFF):
+		rock_tex = load(ROCK_DIFF)
 	for child in n.find_children("*", "MeshInstance3D"):
 		var mi := child as MeshInstance3D
 		if mi == null:
 			continue
 		var mat := StandardMaterial3D.new()
 		mat.albedo_color = tint
-		mat.roughness = 0.92
-		mat.metallic = 0.05
+		if rock_tex:
+			mat.albedo_texture = rock_tex
+		mat.roughness = 0.95
+		mat.metallic = 0.02
 		mi.material_override = mat
 
 
@@ -255,13 +264,12 @@ func _process(delta: float) -> void:
 	if emerging:
 		return
 	if _glow:
-		_glow.rotation.y += delta * 0.8
-		_glow.position.y = 1.35 + sin(_glow_time * 1.8) * 0.12
+		_glow.rotation.y += delta * 0.35
 		var mat := _glow.material_override as StandardMaterial3D
 		if mat:
-			mat.emission_energy_multiplier = 1.3 + sin(_glow_time * 3.0) * 0.5
+			mat.emission_energy_multiplier = 1.8 + sin(_glow_time * 2.6) * 0.7
 	if _light:
-		_light.light_energy = 0.7 + sin(_glow_time * 2.2) * 0.35
+		_light.light_energy = 0.55 + sin(_glow_time * 2.0) * 0.3
 
 
 func get_prompt() -> String:
