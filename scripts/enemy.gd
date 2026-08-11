@@ -69,33 +69,22 @@ const ENEMY_CONFIGS := {
 		},
 	},
 	"boar_enemy": {
-		# Gobkit mesh + new Poly Haven leather/fur bristle hide (not prior skins).
+		# OpenGameArt CC0 wild boar (Teh_Bucket) — walk/attack + authored Death.
+		# Replaces Gobkit (looked like a hedgehog) and Tripo (no death bones).
 		"name": "Erymanthian Boar",
 		"level": 3,
-		"glb": "res://assets/characters/_free_cc0/gobkit_boar.glb",
+		"glb": "res://assets/characters/_free_cc0/oga_wild_boar.glb",
 		"lib": "",
-		"maya_cm": true,
-		"bristle_hide": true,
-		"height": 0.95, "hp": 110, "dmg": 14.0, "speed": 4.2,
+		"height": 1.05, "hp": 110, "dmg": 14.0, "speed": 4.2,
 		"xp": 48, "gold": [8, 16], "aggro": 9.5, "reach": 2.0,
 		"attack_cd": 1.7, "material": "Boar Tusk",
 		"facing_plus_z": true,
 		"sfx_attack": "boar_attack", "sfx_death": "boar_death",
 		"sfx_aggro": "boar_idle",
 		"sfx_attack_alt": "boar_attack_b",
-		"slice_master": "Take 001",
-		"slice_fps": 24.0,
-		"slices": {
-			"idle": [0, 29, true],
-			"attack": [30, 59, false],
-			"death": [60, 89, false],
-			"walk": [90, 119, true],
-			"sprint": [90, 119, true],
-			"hit": [30, 45, false],
-		},
 		"clips": {
-			"idle": "idle", "walk": "walk", "sprint": "sprint",
-			"attack": "attack", "hit": "hit", "death": "death",
+			"idle": "Idle", "walk": "Walk", "sprint": "Gallop",
+			"attack": "Attack", "hit": "Idle_HitReact1", "death": "Death",
 		},
 	},
 	"satyr_enemy": {
