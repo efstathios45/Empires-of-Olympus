@@ -132,10 +132,28 @@ const SHOP_ITEMS := {
 		"armor": 0.18,
 	},
 	"xiphos": {
-		"name": "Xiphos", "desc": "Short leaf-blade sword. Replaces spear (melee).",
+		"name": "Xiphos", "desc": "Short leaf-blade sword. +4 damage.",
 		"price": 240, "icon": "res://assets/ui/icon_sword.png", "kind": "gear",
 		"slot": "sidearm", "glb": "res://assets/props/gear/xiphos_sword.glb",
 		"dmg_bonus": 4.0,
+	},
+	"bronze_knife": {
+		"name": "Bronze Machaira", "desc": "Curved fighting knife. +2 damage.",
+		"price": 90, "icon": "res://assets/ui/icon_sword.png", "kind": "gear",
+		"slot": "sidearm", "glb": "res://assets/props/gear/xiphos_sword.glb",
+		"dmg_bonus": 2.0,
+	},
+	"kontos": {
+		"name": "Kontos Lance", "desc": "Long cavalry spear. +6 damage.",
+		"price": 280, "icon": "res://assets/ui/icon_sword.png", "kind": "gear",
+		"slot": "sidearm", "glb": "res://assets/props/gear/kontos_spear.glb",
+		"dmg_bonus": 6.0,
+	},
+	"hunting_bow": {
+		"name": "Cretan Bow", "desc": "Hunting bow. +3 damage (ranged feel).",
+		"price": 210, "icon": "res://assets/ui/icon_sword.png", "kind": "gear",
+		"slot": "sidearm", "glb": "res://assets/props/weapons/cretan_bow.glb",
+		"dmg_bonus": 3.0,
 	},
 	"corinthian_helm": {
 		"name": "Corinthian Helmet", "desc": "Bronze helm with crest. +25 max HP.",
@@ -143,14 +161,41 @@ const SHOP_ITEMS := {
 		"slot": "helmet", "glb": "res://assets/props/gear/corinthian_helmet.glb",
 		"hp_bonus": 25,
 	},
+	"leather_cuirass": {
+		"name": "Leather Cuirass", "desc": "Boiled-leather torso armor. −8% damage taken.",
+		"price": 160, "icon": "res://assets/ui/icon_boot.png", "kind": "gear",
+		"slot": "armor", "glb": "",
+		"armor": 0.08,
+	},
+	"bronze_thorax": {
+		"name": "Bronze Thorax", "desc": "Muscle cuirass. −15% damage taken, +15 HP.",
+		"price": 380, "icon": "res://assets/ui/icon_boot.png", "kind": "gear",
+		"slot": "armor", "glb": "",
+		"armor": 0.15, "hp_bonus": 15,
+	},
 }
 
-## Owned gear ids (bought from Brontes). Equipped ids per slot.
+## Random world-drop table: {id, weight}. Higher weight = more common.
+## Rolled on enemy death; bosses roll twice with better odds.
+const LOOT_TABLE := [
+	{"id": "bronze_knife", "weight": 28},
+	{"id": "aspis", "weight": 18},
+	{"id": "xiphos", "weight": 14},
+	{"id": "leather_cuirass", "weight": 14},
+	{"id": "corinthian_helm", "weight": 10},
+	{"id": "hunting_bow", "weight": 10},
+	{"id": "kontos", "weight": 8},
+	{"id": "tower_shield", "weight": 6},
+	{"id": "bronze_thorax", "weight": 4},
+]
+
+## Owned gear ids (bought or looted). Equipped ids per slot.
 var owned_gear: Array = []
 var equipped: Dictionary = {
 	"shield": "aspis",   # Hoplites start with aspis; cleared for other classes on start
 	"helmet": "",
 	"sidearm": "",
+	"armor": "",
 }
 
 # ── Runtime state ────────────────────────────────────────────────────────
@@ -199,7 +244,7 @@ func reset_run() -> void:
 	clan_name = ""
 	clan_rank = ""
 	owned_gear = []
-	equipped = {"shield": "", "helmet": "", "sidearm": ""}
+	equipped = {"shield": "", "helmet": "", "sidearm": "", "armor": ""}
 	# Hoplites always march with spear + aspis.
 	if player_class == "hoplite":
 		owned_gear.append("aspis")
@@ -235,16 +280,18 @@ func skill_damage() -> float:
 
 func armor_mitigation() -> float:
 	var total := 0.0
-	var sh: String = String(equipped.get("shield", ""))
-	if sh != "" and SHOP_ITEMS.has(sh):
-		total += float(SHOP_ITEMS[sh].get("armor", 0.0))
-	return clampf(total, 0.0, 0.45)
+	for slot in ["shield", "armor"]:
+		var id: String = String(equipped.get(slot, ""))
+		if id != "" and SHOP_ITEMS.has(id):
+			total += float(SHOP_ITEMS[id].get("armor", 0.0))
+	return clampf(total, 0.0, 0.55)
 
 func max_hp() -> int:
 	var hp: int = int(class_data()["base_hp"] + (level - 1) * 14)
-	var helm: String = String(equipped.get("helmet", ""))
-	if helm != "" and SHOP_ITEMS.has(helm):
-		hp += int(SHOP_ITEMS[helm].get("hp_bonus", 0))
+	for slot in ["helmet", "armor"]:
+		var id: String = String(equipped.get(slot, ""))
+		if id != "" and SHOP_ITEMS.has(id):
+			hp += int(SHOP_ITEMS[id].get("hp_bonus", 0))
 	return hp
 
 func max_mp() -> int:
@@ -328,6 +375,44 @@ func equip_gear(item_id: String) -> void:
 	equipped[slot] = item_id
 	inventory_changed.emit()
 	stats_changed.emit()
+
+
+## Grant gear from a world drop / chest. Returns true if newly owned.
+func grant_gear(item_id: String) -> bool:
+	if not SHOP_ITEMS.has(item_id):
+		return false
+	var item: Dictionary = SHOP_ITEMS[item_id]
+	if String(item.get("kind", "")) != "gear":
+		return false
+	if owned_gear.has(item_id):
+		return false
+	owned_gear.append(item_id)
+	var slot: String = String(item.get("slot", ""))
+	# Auto-equip into an empty slot so the first drop feels useful.
+	if slot != "" and String(equipped.get(slot, "")) == "":
+		equipped[slot] = item_id
+	inventory_changed.emit()
+	stats_changed.emit()
+	return true
+
+
+## Roll one loot id from LOOT_TABLE, or "" if the roll missed.
+func roll_loot_drop(chance: float = 0.42, boss: bool = false) -> String:
+	var c := chance * (1.55 if boss else 1.0)
+	if randf() > clampf(c, 0.0, 0.95):
+		return ""
+	var total := 0.0
+	for row in LOOT_TABLE:
+		total += float(row.get("weight", 1))
+	if total <= 0.0:
+		return ""
+	var pick := randf() * total
+	var acc := 0.0
+	for row in LOOT_TABLE:
+		acc += float(row.get("weight", 1))
+		if pick <= acc:
+			return String(row.get("id", ""))
+	return String(LOOT_TABLE.back().get("id", ""))
 
 
 func equipped_glb(slot: String) -> String:

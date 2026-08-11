@@ -69,8 +69,7 @@ const ENEMY_CONFIGS := {
 		},
 	},
 	"boar_enemy": {
-		# OpenGameArt CC0 wild boar (Teh_Bucket) — walk/attack + authored Death.
-		# Replaces Gobkit (looked like a hedgehog) and Tripo (no death bones).
+		# OpenGameArt CC0 wild boar (Teh_Bucket) — textured hide + Death clip.
 		"name": "Erymanthian Boar",
 		"level": 3,
 		"glb": "res://assets/characters/_free_cc0/oga_wild_boar.glb",
@@ -810,7 +809,7 @@ func _die() -> void:
 	if beacon != null:
 		beacon.visible = false
 
-	# Loot: gold, xp, crafting material.
+	# Loot: gold, xp, crafting material, chance of ground gear drop.
 	var gold_range: Array = cfg["gold"]
 	var gold_amount := randi_range(int(gold_range[0]), int(gold_range[1]))
 	GameState.add_gold(gold_amount)
@@ -819,6 +818,7 @@ func _die() -> void:
 	if randf() < 0.12:
 		GameState.health_potions += 1
 		GameState.potions_changed.emit()
+	_spawn_gear_drops()
 	GameState.register_kill(String(cfg.get("quest_id", enemy_id)))
 	if is_boss:
 		GameState.register_minotaur_kill()
@@ -833,6 +833,28 @@ func _die() -> void:
 	if tree:
 		var t := tree.create_timer(settle_s)
 		t.timeout.connect(_fade_out)
+
+
+## Pop 0–2 gear pickups onto the ground (MMORPG-style world loot).
+func _spawn_gear_drops() -> void:
+	var rolls := 2 if is_boss else 1
+	var chance := 0.55 if is_boss else 0.38
+	# Higher-level foes drop more often.
+	chance += clampf(float(cfg.get("level", 1)) * 0.03, 0.0, 0.2)
+	var parent := get_parent()
+	if parent == null:
+		return
+	var LootPickup := load("res://scripts/loot_pickup.gd")
+	if LootPickup == null:
+		return
+	for _i in rolls:
+		var loot_id: String = GameState.roll_loot_drop(chance, is_boss)
+		if loot_id == "":
+			continue
+		var drop: Node = LootPickup.new()
+		parent.add_child(drop)
+		if drop.has_method("setup"):
+			drop.setup(loot_id, global_position + Vector3(0, 0.2, 0))
 
 
 ## Plays the death clip and/or a mesh tumble. Returns how long to leave the

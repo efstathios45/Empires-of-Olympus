@@ -12,6 +12,7 @@ signal combo_performed
 const CharacterGLB := "res://assets/characters/spartan_hoplite/spartan_hoplite.glb"
 const CharacterLib := "res://assets/characters/spartan_hoplite/spartan_hoplite_animations.tres"
 const WeaponGrip = preload("res://scripts/weapon_grip.gd")
+const GearPaint = preload("res://scripts/gear_paint.gd")
 const ProjectileScript = preload("res://scripts/projectile.gd")
 const VfxHelper = preload("res://scripts/vfx_helper.gd")
 
@@ -68,6 +69,7 @@ var mesh_root: Node3D
 var anim: AnimationPlayer
 var weapon_node: Node3D
 var shield_node: Node3D
+var helmet_node: Node3D
 var camera_pivot: Node3D
 var spring_arm: SpringArm3D
 var camera: Camera3D
@@ -125,6 +127,8 @@ func _build_body() -> void:
 	if ResourceLoader.exists(weapon_path):
 		var grip_class := "melee"
 		weapon_node = WeaponGrip.attach(model, weapon_path, grip_class, {}, "WeaponMount")
+		if weapon_node:
+			GearPaint.paint_attached(weapon_node, weapon_path)
 		_update_weapon_glow()
 
 	# Hoplites always carry an aspis (or upgraded shield) on the left arm.
@@ -134,6 +138,10 @@ func _build_body() -> void:
 			shield_path = String(GameState.class_data().get("shield", ""))
 		if shield_path != "" and ResourceLoader.exists(shield_path):
 			shield_node = WeaponGrip.attach(model, shield_path, "shield", {}, "ShieldMount")
+			if shield_node:
+				GearPaint.paint_attached(shield_node, shield_path)
+
+	_attach_helmet(model)
 
 	anim.play("ual1_Idle")
 	if not GameState.inventory_changed.is_connected(_on_gear_changed):
@@ -156,6 +164,9 @@ func _refresh_held_gear() -> void:
 	if shield_node != null and is_instance_valid(shield_node):
 		shield_node.queue_free()
 		shield_node = null
+	if helmet_node != null and is_instance_valid(helmet_node):
+		helmet_node.queue_free()
+		helmet_node = null
 	var weapon_path: String = GameState.class_data()["weapon"]
 	if GameState.player_class == "hoplite":
 		var side_glb: String = GameState.equipped_glb("sidearm")
@@ -163,6 +174,8 @@ func _refresh_held_gear() -> void:
 			weapon_path = side_glb
 	if ResourceLoader.exists(weapon_path):
 		weapon_node = WeaponGrip.attach(model, weapon_path, "melee", {}, "WeaponMount")
+		if weapon_node:
+			GearPaint.paint_attached(weapon_node, weapon_path)
 		_update_weapon_glow()
 	if GameState.player_class == "hoplite":
 		var shield_path: String = GameState.equipped_glb("shield")
@@ -170,6 +183,38 @@ func _refresh_held_gear() -> void:
 			shield_path = String(GameState.class_data().get("shield", ""))
 		if shield_path != "" and ResourceLoader.exists(shield_path):
 			shield_node = WeaponGrip.attach(model, shield_path, "shield", {}, "ShieldMount")
+			if shield_node:
+				GearPaint.paint_attached(shield_node, shield_path)
+	_attach_helmet(model)
+
+
+func _attach_helmet(model: Node3D) -> void:
+	var helm_path: String = GameState.equipped_glb("helmet")
+	if helm_path == "" or not ResourceLoader.exists(helm_path):
+		return
+	# Prefer head bone; fall back to a tall offset on the mesh root.
+	var skel: Skeleton3D = null
+	for node in model.find_children("*", "Skeleton3D", true, false):
+		skel = node as Skeleton3D
+		break
+	var holder := Node3D.new()
+	holder.name = "HelmetMount"
+	if skel != null and skel.find_bone("Head") >= 0:
+		var att := BoneAttachment3D.new()
+		att.name = "HelmetBone"
+		att.bone_name = "Head"
+		skel.add_child(att)
+		att.add_child(holder)
+		helmet_node = att
+	else:
+		model.add_child(holder)
+		holder.position = Vector3(0, 1.72, 0)
+		helmet_node = holder
+	var inst: Node3D = load(helm_path).instantiate()
+	holder.add_child(inst)
+	inst.scale = Vector3.ONE * 0.55
+	inst.position = Vector3(0, 0.05, 0)
+	GearPaint.paint_attached(inst, helm_path)
 
 
 func _build_camera() -> void:
