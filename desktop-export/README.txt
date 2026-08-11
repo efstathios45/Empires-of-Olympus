@@ -1,27 +1,30 @@
-Empires of Olympus — Windows (Godot 4.4.1)
-=========================================
+Empires of Olympus — Windows builds
+===================================
 
-DO NOT open anything with WinRAR.
-There is no archive you need to extract for the agent artifacts.
+"This app cannot run on your PC" is NOT code signing.
+Unsigned apps show SmartScreen ("Windows protected your PC").
+"Cannot run" = wrong CPU type, OR a fake/corrupt download.
 
-REAL FILE SIZES (check before running)
---------------------------------------
-game.exe  = 97520128 bytes (~93 MB)   starts with MZ
-game.pck  = 41299552 bytes (~39 MB)
+CHECK FILE SIZE FIRST
+---------------------
+Real .exe files are ~90–110 MB.
+If yours is ~300 KB, delete it (GitHub HTML error page).
 
-If game.exe is ~300 KB, it is a fake GitHub HTML page. Delete it.
+PICK YOUR BUILD (Settings → System → About → System type)
+---------------------------------------------------------
+x64-based processor (most PCs):
+  game.exe + game.pck
+  (same as game-x64.* in agent artifacts)
 
-FROM CURSOR AGENT ARTIFACTS (recommended)
------------------------------------------
-Option A: download game.exe + game.pck directly (no zip).
-Option B: if big downloads fail, download all *.part-* files + JOIN-ALL.bat,
-          run JOIN-ALL.bat, then run game.exe.
+ARM-based processor (Snapdragon / Surface Pro X / many Copilot+ PCs):
+  game-arm64.exe + game-arm64.pck
 
-FROM GITHUB (private repo — must be logged in)
-----------------------------------------------
-Open desktop-export/ → each file → "Download raw file"
-(Do NOT use raw.githubusercontent.com / Save-link-as — that saves HTML.)
+32-bit Windows (rare):
+  get game-x86.exe + game-x86.pck from Cursor agent artifacts
+  (too large for GitHub file limit)
 
-Put game.exe and game.pck in the SAME folder, then run game.exe.
+Put BOTH matching files in the SAME folder, then run the .exe.
+Do NOT use WinRAR. Download the files directly.
 
-REQUIREMENTS: 64-bit Windows 10/11 (x86_64)
+Private GitHub tip: while logged in, use each file's "Download raw file"
+button — not raw.githubusercontent.com / Save-link-as.
