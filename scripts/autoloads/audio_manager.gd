@@ -23,6 +23,12 @@ const SFX := {
 	"bronze_hit": "res://assets/audio/sfx/weapon/weapon_bronze_hit.mp3",
 	"hit_flesh": "res://assets/audio/sfx/player/player_hit_flesh.mp3",
 	"attack_grunt": "res://assets/audio/sfx/player/player_attack_grunt.mp3",
+	# Skyrim-style male combat vocals ("ah!" / "ha!" / pain).
+	"male_attack_a": "res://assets/audio/sfx/player/voice/male_attack_a.mp3",
+	"male_attack_b": "res://assets/audio/sfx/player/voice/male_attack_b.mp3",
+	"male_hurt_a": "res://assets/audio/sfx/player/voice/male_hurt_a.mp3",
+	"male_hurt_b": "res://assets/audio/sfx/player/voice/male_hurt_b.mp3",
+	"male_hurt_c": "res://assets/audio/sfx/player/voice/male_hurt_c.mp3",
 	"level_up": "res://assets/audio/sfx/player/player_level_up.mp3",
 	"refine_success": "res://assets/audio/sfx/ui/ui_refine_success.mp3",
 	"refine_fail": "res://assets/audio/sfx/ui/ui_refine_fail.mp3",

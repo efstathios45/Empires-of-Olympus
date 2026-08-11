@@ -45,6 +45,7 @@ const CLASSES := {
 	"hoplite": {
 		"name": "Hoplite",
 		"desc": "Spear and shield. A wall of bronze that strikes back.",
+		"character": "res://assets/characters/spartan_hoplite/spartan_hoplite.glb",
 		"weapon": "res://assets/props/weapons/dory_spear.glb",
 		"weapon_name": "Dory Spear",
 		"shield": "res://assets/props/gear/aspis_shield.glb",
@@ -59,6 +60,8 @@ const CLASSES := {
 	"toxotes": {
 		"name": "Toxotes",
 		"desc": "Cretan bow. Death arrives before the whisper of the string.",
+		# Same UAL skeleton as the hoplite — city_guard mesh reads as a lean archer.
+		"character": "res://assets/characters/city_guard/city_guard.glb",
 		"weapon": "res://assets/props/weapons/cretan_bow.glb",
 		"weapon_name": "Cretan Bow",
 		"shield": "",
@@ -69,10 +72,13 @@ const CLASSES := {
 		"skill_desc": "Loose a fan of five arrows blessed by the Huntress.",
 		"skill_mp": 30, "skill_mult": 1.4, "skill_cd": 9.0,
 		"ranged": true, "projectile_speed": 26.0,
+		"tint": Color(0.72, 0.78, 0.62),
 	},
 	"magos": {
 		"name": "Magos",
 		"desc": "Theurgist of storm and shadow. Olympus answers his call.",
+		# Robed mystic mesh (UAL-compatible GeneralSkeleton) + theurgist staff.
+		"character": "res://assets/characters/oracle_priestess/oracle_priestess.glb",
 		"weapon": "res://assets/props/weapons/theurgist_staff.glb",
 		"weapon_name": "Theurgist Staff",
 		"shield": "",
@@ -83,6 +89,7 @@ const CLASSES := {
 		"skill_desc": "Call down heaven's wrath in a burst of divine lightning.",
 		"skill_mp": 35, "skill_mult": 3.0, "skill_cd": 10.0,
 		"ranged": true, "projectile_speed": 20.0,
+		"tint": Color(0.55, 0.48, 0.85),
 	},
 }
 
@@ -155,6 +162,12 @@ const SHOP_ITEMS := {
 		"slot": "sidearm", "glb": "res://assets/props/weapons/cretan_bow.glb",
 		"dmg_bonus": 3.0,
 	},
+	"sling": {
+		"name": "Shepherd's Sling", "desc": "Simple leather sling. +1 damage.",
+		"price": 45, "icon": "res://assets/ui/icon_sword.png", "kind": "gear",
+		"slot": "sidearm", "glb": "res://assets/props/gear/kontos_spear.glb",
+		"dmg_bonus": 1.0,
+	},
 	"corinthian_helm": {
 		"name": "Corinthian Helmet", "desc": "Bronze helm with crest. +25 max HP.",
 		"price": 200, "icon": "res://assets/ui/icon_boot.png", "kind": "gear",
@@ -178,12 +191,13 @@ const SHOP_ITEMS := {
 ## Random world-drop table: {id, weight}. Higher weight = more common.
 ## Rolled on enemy death; bosses roll twice with better odds.
 const LOOT_TABLE := [
-	{"id": "bronze_knife", "weight": 28},
-	{"id": "aspis", "weight": 18},
+	{"id": "bronze_knife", "weight": 26},
+	{"id": "sling", "weight": 18},
+	{"id": "aspis", "weight": 16},
 	{"id": "xiphos", "weight": 14},
-	{"id": "leather_cuirass", "weight": 14},
-	{"id": "corinthian_helm", "weight": 10},
+	{"id": "leather_cuirass", "weight": 12},
 	{"id": "hunting_bow", "weight": 10},
+	{"id": "corinthian_helm", "weight": 10},
 	{"id": "kontos", "weight": 8},
 	{"id": "tower_shield", "weight": 6},
 	{"id": "bronze_thorax", "weight": 4},

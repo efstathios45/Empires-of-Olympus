@@ -16,6 +16,9 @@ const GearPaint = preload("res://scripts/gear_paint.gd")
 const ProjectileScript = preload("res://scripts/projectile.gd")
 const VfxHelper = preload("res://scripts/vfx_helper.gd")
 
+const MALE_ATTACK_VOICES := ["male_attack_a", "male_attack_b", "attack_grunt"]
+const MALE_HURT_VOICES := ["male_hurt_a", "male_hurt_b", "male_hurt_c"]
+
 const WALK_SPEED := 3.4
 const SPRINT_SPEED := 6.4
 const JUMP_VELOCITY := 7.0
@@ -103,17 +106,25 @@ func _build_body() -> void:
 	mesh_root = Node3D.new()
 	mesh_root.name = "MeshRoot"
 	add_child(mesh_root)
-	var model: Node3D = load(CharacterGLB).instantiate()
+	var cd0: Dictionary = GameState.class_data()
+	var char_path: String = String(cd0.get("character", CharacterGLB))
+	if not ResourceLoader.exists(char_path):
+		char_path = CharacterGLB
+	var model: Node3D = load(char_path).instantiate()
 	mesh_root.add_child(model)
 	ModelUtils.setup_character_for_movement(model, 1.85)
+	_apply_class_tint(model, cd0)
 
 	anim = model.find_child("AnimationPlayer", true) as AnimationPlayer
 	if anim == null:
 		anim = AnimationPlayer.new()
 		model.add_child(anim)
+	# Always use the full combat UAL library (shared GeneralSkeleton across class meshes).
 	if ResourceLoader.exists(CharacterLib):
 		var lib := load(CharacterLib) as AnimationLibrary
 		if lib:
+			if anim.has_animation_library(""):
+				anim.remove_animation_library("")
 			anim.add_animation_library("", lib)
 	ModelUtils.set_animation_loops(anim)
 
@@ -146,6 +157,33 @@ func _build_body() -> void:
 	anim.play("ual1_Idle")
 	if not GameState.inventory_changed.is_connected(_on_gear_changed):
 		GameState.inventory_changed.connect(_on_gear_changed)
+
+
+func _apply_class_tint(model: Node3D, cd: Dictionary) -> void:
+	if not cd.has("tint"):
+		return
+	var tint: Color = cd["tint"]
+	for node in model.find_children("*", "MeshInstance3D", true, false):
+		var mi := node as MeshInstance3D
+		if mi == null:
+			continue
+		var base: Material = mi.get_active_material(0)
+		var mat: StandardMaterial3D
+		if base is StandardMaterial3D:
+			mat = (base as StandardMaterial3D).duplicate() as StandardMaterial3D
+		else:
+			mat = StandardMaterial3D.new()
+			if base != null and base is BaseMaterial3D:
+				mat.albedo_texture = (base as BaseMaterial3D).albedo_texture
+		mat.albedo_color = tint
+		mi.material_override = mat
+
+
+func _play_male_voice(pool: Array, volume_db: float = -4.0) -> void:
+	if pool.is_empty():
+		return
+	var key: String = String(pool[randi() % pool.size()])
+	AudioManager.play_sfx(key, volume_db, randf_range(0.92, 1.08))
 
 
 func _on_gear_changed() -> void:
@@ -212,8 +250,8 @@ func _attach_helmet(model: Node3D) -> void:
 		helmet_node = holder
 	var inst: Node3D = load(helm_path).instantiate()
 	holder.add_child(inst)
-	inst.scale = Vector3.ONE * 0.55
-	inst.position = Vector3(0, 0.05, 0)
+	inst.scale = Vector3.ONE * 0.42
+	inst.position = Vector3(0, 0.04, 0)
 	GearPaint.paint_attached(inst, helm_path)
 
 
@@ -470,17 +508,15 @@ func _try_heavy_attack() -> void:
 	_play_attack_swing_sfx(true)
 
 func _play_attack_swing_sfx(heavy: bool) -> void:
-	## Greek soldier swings: spear whoosh + effort grunt (not the old weird stubs).
+	## Weapon whoosh + Skyrim-style male "ah/ha" effort.
 	match GameState.player_class:
 		"hoplite":
 			AudioManager.play_sfx("spear_thrust" if heavy else "sword_swing", -3.0 if heavy else -5.0, randf_range(0.92, 1.08))
-			AudioManager.play_sfx("attack_grunt", -7.0, randf_range(0.9, 1.1))
 		"toxotes":
 			AudioManager.play_sfx("sword_swing", -6.0, randf_range(1.05, 1.2))
 		_:
 			AudioManager.play_sfx("sword_swing", -4.0, randf_range(0.95, 1.1))
-			if heavy:
-				AudioManager.play_sfx("attack_grunt", -8.0, randf_range(0.85, 1.0))
+	_play_male_voice(MALE_ATTACK_VOICES, -5.5 if heavy else -7.0)
 
 func _start_attack(clip: String, duration: float) -> void:
 	state = State.ATTACK
@@ -659,6 +695,7 @@ func take_damage(amount: float, from_position: Vector3) -> void:
 		if state == State.FREE:
 			anim.play("ual1_Hit_Chest")
 		AudioManager.play_sfx("hit_flesh", -4.0, 0.8)
+		_play_male_voice(MALE_HURT_VOICES, -3.5)
 
 func _die() -> void:
 	state = State.DEAD
