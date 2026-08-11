@@ -216,6 +216,10 @@ const PRELOAD_PATHS: PackedStringArray = [
 	"res://assets/textures/skyboxes/olympus_sky_skybox.png",
 	"res://assets/textures/stone/terrain_rock.png",
 	"res://assets/textures/stone/white_marble.png",
+	"res://assets/textures/stone/greek_pebble_mosaic.png",
+	"res://assets/textures/stone/old_mosaic_floor_cc0.png",
+	"res://assets/props/decorations/free_antique_ceramic_vase_01/antique_ceramic_vase_01.glb",
+	"res://assets/props/decorations/free_marble_bust_01/marble_bust_01.glb",
 	"res://assets/trees/bark/acacia_bark.png",
 	"res://assets/trees/foliage/savanna_dry.png",
 	# -- Audio (music, SFX, ambient) --
