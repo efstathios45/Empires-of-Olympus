@@ -2,10 +2,13 @@ Empires of Olympus — Windows build
 ==================================
 
 ONE FILE — download EmpiresOfOlympus.exe and run it.
-(PCK is embedded; no second file needed.)
 
-HOTFIX V11.1 — single EXE + brown boar, painted aspis, ground loot
+HOTFIX V12 — aspis grip, plaza sanctuary, soldier combat SFX
 
-  https://gofile.io/d/63HsXH
+  https://gofile.io/d/dLjrxg
+
+- Aspis strapped to the left forearm (not floating on the hand)
+- City plaza is a sanctuary: enemies won't enter; chase breaks and they go home
+- Greek soldier spear whoosh / bronze clash / attack grunt
 
 Delete any old game.exe / game.pck first.
