@@ -25,8 +25,10 @@ pebble floors (Pella, Olynthos).
 More CC0 props/textures can be dropped under `assets/` the same way (GLB or
 PNG) and referenced from layout scripts such as `scripts/world/city_plaza.gd`.
 
-## Kenney Mini Dungeon / Castle (CC0) — gear & titan stones
-- `assets/props/gear/` — aspis, tower shield, xiphos, kontos (Mini Dungeon)
+## Greek gear (CC0) — aspis, xiphos, kontos
+- `assets/props/gear/aspis_shield.glb` — [ninelionar Aspis](https://opengameart.org/content/aspis-hoplite-shield) CC0 (~1 m Greek hoplon)
+- `assets/props/gear/xiphos_sword.glb`, `kontos_spear.glb` — [gamekorp Greek Weapons Set](https://opengameart.org/content/3d-greek-weapons-set) CC0
+- `assets/props/gear/tower_shield.glb` — Kenney Mini Dungeon (CC0) rectangular fallback
 - `assets/props/gear/corinthian_helmet.glb` — authored bronze helm (original)
-- `assets/props/stones/` — rocks / stones used for Titan Seed visuals
-Source: https://kenney.nl — License CC0 1.0
+- `assets/props/stones/` — Kenney rocks / stones used for Titan Seed visuals
+Kenney source: https://kenney.nl — License CC0 1.0
