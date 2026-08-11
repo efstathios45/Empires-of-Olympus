@@ -1,0 +1,646 @@
+{
+  "characters": {
+    "minotaur_boss": {
+      "baseModel": "/var/games/game-20260807-c19d20fd/assets/characters/minotaur_boss/minotaur_boss.glb",
+      "rigTaskId": "library:2b849454c8408e9fdb9cac4a1b9252bd95f5d4d616347f34160be4f92b038572",
+      "animations": {
+        "ual1_Idle": "/var/games/game-20260807-c19d20fd/assets/characters/minotaur_boss/minotaur_boss_animations.tres",
+        "ual1_Walk": "/var/games/game-20260807-c19d20fd/assets/characters/minotaur_boss/minotaur_boss_animations.tres",
+        "ual1_Sprint": "/var/games/game-20260807-c19d20fd/assets/characters/minotaur_boss/minotaur_boss_animations.tres",
+        "ual1_Death01": "/var/games/game-20260807-c19d20fd/assets/characters/minotaur_boss/minotaur_boss_animations.tres",
+        "ual1_Sword_Attack": "/var/games/game-20260807-c19d20fd/assets/characters/minotaur_boss/minotaur_boss_animations.tres",
+        "ual2_Sword_Heavy_A": "/var/games/game-20260807-c19d20fd/assets/characters/minotaur_boss/minotaur_boss_animations.tres",
+        "ual2_Sword_Heavy_B": "/var/games/game-20260807-c19d20fd/assets/characters/minotaur_boss/minotaur_boss_animations.tres",
+        "ual1_Hit_Chest": "/var/games/game-20260807-c19d20fd/assets/characters/minotaur_boss/minotaur_boss_animations.tres"
+      }
+    },
+    "spartan_hoplite": {
+      "baseModel": "/var/games/game-20260807-c19d20fd/assets/characters/spartan_hoplite/spartan_hoplite.glb",
+      "rigTaskId": "library:6d3b7f914a70f52c0839d581b95931ee6a1d17814f4aa451c8f5578aa1cf069e",
+      "animations": {
+        "ual1_Idle": "/var/games/game-20260807-c19d20fd/assets/characters/spartan_hoplite/spartan_hoplite_animations.tres",
+        "ual1_Walk": "/var/games/game-20260807-c19d20fd/assets/characters/spartan_hoplite/spartan_hoplite_animations.tres",
+        "ual1_Sprint": "/var/games/game-20260807-c19d20fd/assets/characters/spartan_hoplite/spartan_hoplite_animations.tres",
+        "ual1_Jump": "/var/games/game-20260807-c19d20fd/assets/characters/spartan_hoplite/spartan_hoplite_animations.tres",
+        "ual1_Death01": "/var/games/game-20260807-c19d20fd/assets/characters/spartan_hoplite/spartan_hoplite_animations.tres",
+        "ual1_Roll": "/var/games/game-20260807-c19d20fd/assets/characters/spartan_hoplite/spartan_hoplite_animations.tres",
+        "ual1_Sword_Idle": "/var/games/game-20260807-c19d20fd/assets/characters/spartan_hoplite/spartan_hoplite_animations.tres",
+        "ual1_Sword_Attack": "/var/games/game-20260807-c19d20fd/assets/characters/spartan_hoplite/spartan_hoplite_animations.tres",
+        "ual1_Sword_Attack_Standing": "/var/games/game-20260807-c19d20fd/assets/characters/spartan_hoplite/spartan_hoplite_animations.tres",
+        "ual2_Sword_Light_A": "/var/games/game-20260807-c19d20fd/assets/characters/spartan_hoplite/spartan_hoplite_animations.tres",
+        "ual2_Sword_Light_B": "/var/games/game-20260807-c19d20fd/assets/characters/spartan_hoplite/spartan_hoplite_animations.tres",
+        "ual2_Sword_Light_C": "/var/games/game-20260807-c19d20fd/assets/characters/spartan_hoplite/spartan_hoplite_animations.tres",
+        "ual2_Sword_Heavy_A": "/var/games/game-20260807-c19d20fd/assets/characters/spartan_hoplite/spartan_hoplite_animations.tres",
+        "ual2_Sword_Block": "/var/games/game-20260807-c19d20fd/assets/characters/spartan_hoplite/spartan_hoplite_animations.tres",
+        "ual1_Hit_Chest": "/var/games/game-20260807-c19d20fd/assets/characters/spartan_hoplite/spartan_hoplite_animations.tres",
+        "ual1_Hit_Head": "/var/games/game-20260807-c19d20fd/assets/characters/spartan_hoplite/spartan_hoplite_animations.tres",
+        "ual1_Dodge_Left": "/var/games/game-20260807-c19d20fd/assets/characters/spartan_hoplite/spartan_hoplite_animations.tres",
+        "ual1_Dodge_Right": "/var/games/game-20260807-c19d20fd/assets/characters/spartan_hoplite/spartan_hoplite_animations.tres"
+      }
+    },
+    "harpy_enemy": {
+      "baseModel": "/var/games/game-20260807-c19d20fd/assets/characters/harpy_enemy/harpy_enemy.glb",
+      "rigTaskId": "library:e0dccb55cf8cd528c1a8e9a36614158f1ce393f53c0c7da1c18fcf6c4a4ad838",
+      "animations": {
+        "ual1_Idle": "/var/games/game-20260807-c19d20fd/assets/characters/harpy_enemy/harpy_enemy_animations.tres",
+        "ual1_Walk": "/var/games/game-20260807-c19d20fd/assets/characters/harpy_enemy/harpy_enemy_animations.tres",
+        "ual1_Sprint": "/var/games/game-20260807-c19d20fd/assets/characters/harpy_enemy/harpy_enemy_animations.tres",
+        "ual1_Death01": "/var/games/game-20260807-c19d20fd/assets/characters/harpy_enemy/harpy_enemy_animations.tres",
+        "ual1_Punch_Jab": "/var/games/game-20260807-c19d20fd/assets/characters/harpy_enemy/harpy_enemy_animations.tres",
+        "ual1_Sword_Attack": "/var/games/game-20260807-c19d20fd/assets/characters/harpy_enemy/harpy_enemy_animations.tres",
+        "ual1_Hit_Chest": "/var/games/game-20260807-c19d20fd/assets/characters/harpy_enemy/harpy_enemy_animations.tres"
+      }
+    },
+    "blacksmith_npc": {
+      "baseModel": "/var/games/game-20260807-c19d20fd/assets/characters/blacksmith_npc/blacksmith_npc.glb",
+      "rigTaskId": "library:a762335a12a640c0fe6732cf6b7d95c58ce7b3a710fc02dd0a7973d837843f19",
+      "animations": {
+        "ual1_Idle": "/var/games/game-20260807-c19d20fd/assets/characters/blacksmith_npc/blacksmith_npc_animations.tres",
+        "ual1_Idle_Talking": "/var/games/game-20260807-c19d20fd/assets/characters/blacksmith_npc/blacksmith_npc_animations.tres"
+      }
+    },
+    "boar_enemy": {
+      "baseModel": "/var/games/game-20260807-c19d20fd/assets/characters/boar_enemy/boar_enemy.glb",
+      "rigTaskId": "library:aed6226ce3f388c049cbcff933ba68c1b19526bc21b247aec2e32f70b690685f",
+      "animations": {
+        "ual1_Idle": "/var/games/game-20260807-c19d20fd/assets/characters/boar_enemy/boar_enemy_animations.tres",
+        "ual1_Walk": "/var/games/game-20260807-c19d20fd/assets/characters/boar_enemy/boar_enemy_animations.tres",
+        "ual1_Sprint": "/var/games/game-20260807-c19d20fd/assets/characters/boar_enemy/boar_enemy_animations.tres",
+        "ual1_Sword_Attack": "/var/games/game-20260807-c19d20fd/assets/characters/boar_enemy/boar_enemy_animations.tres",
+        "ual1_Hit_Chest": "/var/games/game-20260807-c19d20fd/assets/characters/boar_enemy/boar_enemy_animations.tres",
+        "ual1_Death01": "/var/games/game-20260807-c19d20fd/assets/characters/boar_enemy/boar_enemy_animations.tres"
+      }
+    },
+    "wolf_enemy": {
+      "baseModel": "/var/games/game-20260807-c19d20fd/assets/characters/wolf_enemy/wolf_enemy.glb",
+      "rigTaskId": "library:72cbfd0041abc599ead4cf06516f6575de629a1bb9e61614d2ad0785bff09276",
+      "animations": {
+        "ual1_Idle": "/var/games/game-20260807-c19d20fd/assets/characters/wolf_enemy/wolf_enemy_animations.tres",
+        "ual1_Walk": "/var/games/game-20260807-c19d20fd/assets/characters/wolf_enemy/wolf_enemy_animations.tres",
+        "ual1_Sprint": "/var/games/game-20260807-c19d20fd/assets/characters/wolf_enemy/wolf_enemy_animations.tres",
+        "ual1_Sword_Attack": "/var/games/game-20260807-c19d20fd/assets/characters/wolf_enemy/wolf_enemy_animations.tres",
+        "ual1_Hit_Chest": "/var/games/game-20260807-c19d20fd/assets/characters/wolf_enemy/wolf_enemy_animations.tres",
+        "ual1_Death01": "/var/games/game-20260807-c19d20fd/assets/characters/wolf_enemy/wolf_enemy_animations.tres"
+      }
+    },
+    "centaur_enemy": {
+      "baseModel": "/var/games/game-20260807-c19d20fd/assets/characters/centaur_enemy/centaur_enemy.glb",
+      "rigTaskId": "a4898817-f19f-41a1-a3cd-789d2d76a586",
+      "animations": {
+        "ual1_Idle": "/var/games/game-20260807-c19d20fd/assets/characters/centaur_enemy/centaur_enemy_animations.tres",
+        "ual1_Walk": "/var/games/game-20260807-c19d20fd/assets/characters/centaur_enemy/centaur_enemy_animations.tres",
+        "ual1_Sprint": "/var/games/game-20260807-c19d20fd/assets/characters/centaur_enemy/centaur_enemy_animations.tres",
+        "ual1_Sword_Attack": "/var/games/game-20260807-c19d20fd/assets/characters/centaur_enemy/centaur_enemy_animations.tres",
+        "ual2_Sword_Heavy_A": "/var/games/game-20260807-c19d20fd/assets/characters/centaur_enemy/centaur_enemy_animations.tres",
+        "ual1_Hit_Chest": "/var/games/game-20260807-c19d20fd/assets/characters/centaur_enemy/centaur_enemy_animations.tres",
+        "ual1_Death01": "/var/games/game-20260807-c19d20fd/assets/characters/centaur_enemy/centaur_enemy_animations.tres"
+      }
+    },
+    "oracle_priestess": {
+      "baseModel": "/var/games/game-20260807-c19d20fd/assets/characters/oracle_priestess/oracle_priestess.glb",
+      "rigTaskId": "9d60fef6-bd2f-47b6-86ec-d4608f9434d4",
+      "animations": {
+        "ual1_Idle": "/var/games/game-20260807-c19d20fd/assets/characters/oracle_priestess/oracle_priestess_animations.tres",
+        "ual1_Idle_Talking": "/var/games/game-20260807-c19d20fd/assets/characters/oracle_priestess/oracle_priestess_animations.tres"
+      }
+    },
+    "satyr_enemy": {
+      "baseModel": "/var/games/game-20260807-c19d20fd/assets/characters/satyr_enemy/satyr_enemy.glb",
+      "rigTaskId": "da72aedd-9de4-4c0e-8c77-b5e9a0a78aaf",
+      "animations": {
+        "ual1_Idle": "/var/games/game-20260807-c19d20fd/assets/characters/satyr_enemy/satyr_enemy_animations.tres",
+        "ual1_Walk": "/var/games/game-20260807-c19d20fd/assets/characters/satyr_enemy/satyr_enemy_animations.tres",
+        "ual1_Sprint": "/var/games/game-20260807-c19d20fd/assets/characters/satyr_enemy/satyr_enemy_animations.tres",
+        "ual1_Punch_Jab": "/var/games/game-20260807-c19d20fd/assets/characters/satyr_enemy/satyr_enemy_animations.tres",
+        "ual1_Sword_Attack": "/var/games/game-20260807-c19d20fd/assets/characters/satyr_enemy/satyr_enemy_animations.tres",
+        "ual1_Hit_Chest": "/var/games/game-20260807-c19d20fd/assets/characters/satyr_enemy/satyr_enemy_animations.tres",
+        "ual1_Death01": "/var/games/game-20260807-c19d20fd/assets/characters/satyr_enemy/satyr_enemy_animations.tres"
+      }
+    },
+    "gorgon_enemy": {
+      "baseModel": "/var/games/game-20260807-c19d20fd/assets/characters/gorgon_enemy/gorgon_enemy.glb",
+      "rigTaskId": "3a973468-2060-431c-9aa0-c83abfa5110d",
+      "animations": {
+        "ual1_Idle": "/var/games/game-20260807-c19d20fd/assets/characters/gorgon_enemy/gorgon_enemy_animations.tres",
+        "ual1_Walk": "/var/games/game-20260807-c19d20fd/assets/characters/gorgon_enemy/gorgon_enemy_animations.tres",
+        "ual1_Sprint": "/var/games/game-20260807-c19d20fd/assets/characters/gorgon_enemy/gorgon_enemy_animations.tres",
+        "ual1_Sword_Attack": "/var/games/game-20260807-c19d20fd/assets/characters/gorgon_enemy/gorgon_enemy_animations.tres",
+        "ual1_Hit_Chest": "/var/games/game-20260807-c19d20fd/assets/characters/gorgon_enemy/gorgon_enemy_animations.tres",
+        "ual1_Death01": "/var/games/game-20260807-c19d20fd/assets/characters/gorgon_enemy/gorgon_enemy_animations.tres"
+      }
+    },
+    "city_guard": {
+      "baseModel": "/var/games/game-20260807-c19d20fd/assets/characters/city_guard/city_guard.glb",
+      "rigTaskId": "library:6d3b7f914a70f52c0839d581b95931ee6a1d17814f4aa451c8f5578aa1cf069e",
+      "animations": {
+        "ual1_Idle": "/var/games/game-20260807-c19d20fd/assets/characters/city_guard/city_guard_animations.tres",
+        "ual1_Idle_Talking": "/var/games/game-20260807-c19d20fd/assets/characters/city_guard/city_guard_animations.tres",
+        "ual1_Walk": "/var/games/game-20260807-c19d20fd/assets/characters/city_guard/city_guard_animations.tres",
+        "ual2_Idle_Rail": "/var/games/game-20260807-c19d20fd/assets/characters/city_guard/city_guard_animations.tres"
+      }
+    },
+    "citizen_woman": {
+      "baseModel": "/var/games/game-20260807-c19d20fd/assets/characters/citizen_woman/citizen_woman.glb",
+      "rigTaskId": "aea80a00-b7b5-4474-80bc-ef9975eb7b80",
+      "animations": {
+        "ual1_Idle": "/var/games/game-20260807-c19d20fd/assets/characters/citizen_woman/citizen_woman_animations.tres",
+        "ual1_Idle_Talking": "/var/games/game-20260807-c19d20fd/assets/characters/citizen_woman/citizen_woman_animations.tres",
+        "ual1_Walk": "/var/games/game-20260807-c19d20fd/assets/characters/citizen_woman/citizen_woman_animations.tres",
+        "ual1_Idle_LookAround": "/var/games/game-20260807-c19d20fd/assets/characters/citizen_woman/citizen_woman_animations.tres"
+      }
+    },
+    "citizen_merchant": {
+      "baseModel": "/var/games/game-20260807-c19d20fd/assets/characters/citizen_merchant/citizen_merchant.glb",
+      "rigTaskId": "e2432927-ac1b-46e4-830f-6367c418a9c1",
+      "animations": {
+        "ual1_Idle": "/var/games/game-20260807-c19d20fd/assets/characters/citizen_merchant/citizen_merchant_animations.tres",
+        "ual1_Idle_Talking": "/var/games/game-20260807-c19d20fd/assets/characters/citizen_merchant/citizen_merchant_animations.tres",
+        "ual1_Walk": "/var/games/game-20260807-c19d20fd/assets/characters/citizen_merchant/citizen_merchant_animations.tres",
+        "ual2_Idle_FoldArms": "/var/games/game-20260807-c19d20fd/assets/characters/citizen_merchant/citizen_merchant_animations.tres"
+      }
+    }
+  },
+  "props": {
+    "xiphos_sword": {
+      "model": "/var/games/game-20260807-c19d20fd/assets/props/weapons/xiphos_sword.glb",
+      "taskId": "cbd1e2f0-d84f-497c-9824-4325daee2ef5"
+    },
+    "dory_spear": {
+      "model": "/var/games/game-20260807-c19d20fd/assets/props/weapons/dory_spear.glb",
+      "taskId": "6de692ea-95df-4c95-92b5-0ded6ede24b4"
+    },
+    "theurgist_staff": {
+      "model": "/var/games/game-20260807-c19d20fd/assets/props/weapons/theurgist_staff.glb",
+      "taskId": "5f5c8f0e-673f-451b-ab2b-be059f96c1ae"
+    },
+    "cretan_bow": {
+      "model": "/var/games/game-20260807-c19d20fd/assets/props/weapons/cretan_bow.glb",
+      "taskId": "bcdb05d1-06f7-44e4-b022-afd128e27003"
+    },
+    "health_potion": {
+      "model": "/var/games/game-20260807-c19d20fd/assets/props/items/health_potion.glb",
+      "taskId": "84a45f9e-7b89-44ce-8b65-ebac1544ed80"
+    },
+    "greek_statue": {
+      "model": "/var/games/game-20260807-c19d20fd/assets/props/decorations/greek_statue.glb",
+      "taskId": "4700ce85-a4f4-4b8c-81e9-f7b969c73b84"
+    },
+    "treasure_chest": {
+      "model": "/var/games/game-20260807-c19d20fd/assets/props/containers/treasure_chest.glb",
+      "taskId": "3ea0fe0c-6bbb-42d6-bc56-d6f567c94bc2"
+    },
+    "marble_altar": {
+      "model": "/var/games/game-20260807-c19d20fd/assets/props/furniture/marble_altar.glb",
+      "taskId": "f398ed0e-b69a-488a-8cf1-3fc849d42c83"
+    },
+    "blacksmith_anvil": {
+      "model": "/var/games/game-20260807-c19d20fd/assets/props/tools/blacksmith_anvil.glb",
+      "taskId": "0b355bf2-d867-4e72-ae9e-91fa2bb68248"
+    },
+    "oracle_stone": {
+      "model": "/var/games/game-20260807-c19d20fd/assets/props/items/oracle_stone.glb",
+      "taskId": "cd4a1552-85a4-4286-a351-77b6991ba8bd"
+    },
+    "amphora": {
+      "model": "/var/games/game-20260807-c19d20fd/assets/props/containers/amphora.glb",
+      "taskId": "6872bfcd-ae04-483a-98c8-f55437534790"
+    }
+  },
+  "environment": {
+    "marble_column": {
+      "model": "/var/games/game-20260807-c19d20fd/assets/environment/structures/marble_column.glb",
+      "taskId": "8753500d-284e-4b9b-8099-4d8e7fc71598"
+    },
+    "spartan_barracks": {
+      "model": "/var/games/game-20260807-c19d20fd/assets/environment/buildings/spartan_barracks.glb",
+      "taskId": "b5db0dd1-b354-4885-9c5e-339da1076fe1"
+    },
+    "arena_gate": {
+      "model": "/var/games/game-20260807-c19d20fd/assets/environment/structures/arena_gate.glb",
+      "taskId": "d52b2027-ab08-4178-9c2c-2534bb59ff42"
+    },
+    "broken_ruins": {
+      "model": "/var/games/game-20260807-c19d20fd/assets/environment/structures/broken_ruins.glb",
+      "taskId": "72174fb0-3fff-4a65-8d27-c950b9caa7cd"
+    },
+    "greek_temple": {
+      "model": "/var/games/game-20260807-c19d20fd/assets/environment/buildings/greek_temple.glb",
+      "taskId": "50c86464-4c4f-455a-9490-3972fbc74767"
+    },
+    "cliff_rock": {
+      "model": "/var/games/game-20260807-c19d20fd/assets/environment/rocks/cliff_rock.glb",
+      "taskId": "86563b9a-d0ff-462b-b60a-12c469e1b4c9"
+    },
+    "training_dummy": {
+      "model": "/var/games/game-20260807-c19d20fd/assets/environment/obstacles/training_dummy.glb",
+      "taskId": "a2de654c-c0fa-4c6f-b920-2d7efa5917d5"
+    },
+    "greek_stoa_colonnade": {
+      "model": "/var/games/game-20260807-c19d20fd/assets/environment/buildings/greek_stoa_colonnade.glb",
+      "taskId": "5588c520-0f7a-4d97-ba17-426ba459a4e9"
+    },
+    "city_gate_arch": {
+      "model": "/var/games/game-20260807-c19d20fd/assets/environment/structures/city_gate_arch.glb",
+      "taskId": "771d8759-ea37-4b9e-bf25-24c047b75277"
+    },
+    "olive_cart": {
+      "model": "/var/games/game-20260807-c19d20fd/assets/environment/obstacles/olive_cart.glb",
+      "taskId": "87f30123-d668-4e22-9d75-3f0a339b7a7c"
+    },
+    "brazier_flame": {
+      "model": "/var/games/game-20260807-c19d20fd/assets/environment/structures/brazier_flame.glb",
+      "taskId": "c46f52f0-2b64-4770-a4c3-160acf1de465"
+    },
+    "marble_fountain": {
+      "model": "/var/games/game-20260807-c19d20fd/assets/environment/structures/marble_fountain.glb",
+      "taskId": "44a69b10-21af-4be6-a18c-c6218dd38501"
+    },
+    "greek_townhouse": {
+      "model": "/var/games/game-20260807-c19d20fd/assets/environment/buildings/greek_townhouse.glb",
+      "taskId": "4db90b3a-1a98-4244-8c10-0f7c77b924a6"
+    },
+    "agora_market_stall": {
+      "model": "/var/games/game-20260807-c19d20fd/assets/environment/buildings/agora_market_stall.glb",
+      "taskId": "ce7ccbee-c4b3-4fa4-8dab-265009853334"
+    }
+  },
+  "weapons": {
+    "xiphos_sword": {
+      "model": "/var/games/game-20260807-c19d20fd/assets/props/weapons/xiphos_sword.glb",
+      "sha256": "b25322abb72a417fa3a104d23fe17b08891a6c153952ee9294e7fd9397619fc8",
+      "driver_image_sha256": "ac34cf73dd0a9b05cc5752591b72d8dd6fec9b3d547b79c87fc343a09a2e908e",
+      "weapon_type": "melee",
+      "weapon_class": "melee",
+      "pipeline_version": 1,
+      "pipeline_contract": "tesana-held-weapon-canonical-v1",
+      "tripo_model_version": "P1-20260311",
+      "model_task_id": "b563673c-ff0d-4a02-9133-cd5a57e92c73",
+      "convert_task_id": "cbd1e2f0-d84f-497c-9824-4325daee2ef5",
+      "orientation_contract": "tripo-p1-align-image-axes-v1",
+      "grip_version": 3,
+      "grip_sha256": "66609f4ca70c456730989e1caf45d706ca50ac2382ce833ffea7c87f9f04ffcb"
+    },
+    "dory_spear": {
+      "model": "/var/games/game-20260807-c19d20fd/assets/props/weapons/dory_spear.glb",
+      "sha256": "6097ae03a8f6f9f2a38966ca76eba19b0cb2219ef0ff7627e1c272fc44cf4946",
+      "driver_image_sha256": "02c464f9b24199ac0a6d444ab1b30d87439fdd55f84bac8d741e018f7f6739ef",
+      "weapon_type": "melee",
+      "weapon_class": "melee",
+      "pipeline_version": 1,
+      "pipeline_contract": "tesana-held-weapon-canonical-v1",
+      "tripo_model_version": "P1-20260311",
+      "model_task_id": "0bb933e3-70cc-40e6-9b83-70fba4faea9c",
+      "convert_task_id": "6de692ea-95df-4c95-92b5-0ded6ede24b4",
+      "orientation_contract": "tripo-p1-align-image-axes-v1",
+      "grip_version": 3,
+      "grip_sha256": "66609f4ca70c456730989e1caf45d706ca50ac2382ce833ffea7c87f9f04ffcb"
+    },
+    "theurgist_staff": {
+      "model": "/var/games/game-20260807-c19d20fd/assets/props/weapons/theurgist_staff.glb",
+      "sha256": "9de69450047dcb43a1a8ae286beffa18d342354caabca357d7f56582fda54961",
+      "driver_image_sha256": "31aa3f6d7f2648c63f3d9b360ecac7f8c4aad5f3bbd2eb27887a0f189b0790d5",
+      "weapon_type": "melee",
+      "weapon_class": "melee",
+      "pipeline_version": 1,
+      "pipeline_contract": "tesana-held-weapon-canonical-v1",
+      "tripo_model_version": "P1-20260311",
+      "model_task_id": "329bdb46-4567-4626-bd62-fee7e87085dc",
+      "convert_task_id": "5f5c8f0e-673f-451b-ab2b-be059f96c1ae",
+      "orientation_contract": "tripo-p1-align-image-axes-v1",
+      "grip_version": 3,
+      "grip_sha256": "66609f4ca70c456730989e1caf45d706ca50ac2382ce833ffea7c87f9f04ffcb"
+    },
+    "cretan_bow": {
+      "model": "/var/games/game-20260807-c19d20fd/assets/props/weapons/cretan_bow.glb",
+      "sha256": "f174d1d5f9116cfefd1ecfa663d6112cb4a2761c03042ef28e7229fbfe6cf1dc",
+      "driver_image_sha256": "8f003012b3d832ef631ec3383619ccf42f1cb8434787a8c696112fe89f5d1471",
+      "weapon_type": "melee",
+      "weapon_class": "melee",
+      "pipeline_version": 1,
+      "pipeline_contract": "tesana-held-weapon-canonical-v1",
+      "tripo_model_version": "P1-20260311",
+      "model_task_id": "22ac120b-141d-4afc-ab02-38904657025b",
+      "convert_task_id": "bcdb05d1-06f7-44e4-b022-afd128e27003",
+      "orientation_contract": "tripo-p1-align-image-axes-v1",
+      "grip_version": 3,
+      "grip_sha256": "66609f4ca70c456730989e1caf45d706ca50ac2382ce833ffea7c87f9f04ffcb"
+    }
+  },
+  "oriented": {
+    "marble_column": {
+      "model": "/var/games/game-20260807-c19d20fd/assets/environment/structures/marble_column.glb",
+      "sha256": "7653e5c9fe789b2186f0c81a663b1519a5e87f83bff36e80c595d90bb5110738",
+      "driver_image_sha256": "4c96962e94854b8c5c174b08afbea4c54787b9ccbc32a1add99888bea1130efb",
+      "kind": "environment",
+      "category": "structures",
+      "orient_class": "fronted",
+      "pipeline_version": 2,
+      "pipeline_contract": "tesana-oriented-prop-canonical-v1",
+      "tripo_model_version": "P1-20260311",
+      "model_task_id": "c775bba9-00cb-4882-9c92-d08f4416472b",
+      "convert_task_id": "8753500d-284e-4b9b-8099-4d8e7fc71598",
+      "orientation_contract": "tripo-p1-align-image-prop-front-v2",
+      "bake_y_deg": 0
+    },
+    "spartan_barracks": {
+      "model": "/var/games/game-20260807-c19d20fd/assets/environment/buildings/spartan_barracks.glb",
+      "sha256": "43d41d5574318da24dfe8f63b8773a1f5b887ae6c8dd761f8c9a022b1db6b19e",
+      "driver_image_sha256": "2bafb644b78ee877a61e4e9a31c277bc9266ed05d829f118c8790d2a015b6725",
+      "kind": "environment",
+      "category": "buildings",
+      "orient_class": "fronted",
+      "pipeline_version": 2,
+      "pipeline_contract": "tesana-oriented-prop-canonical-v1",
+      "tripo_model_version": "P1-20260311",
+      "model_task_id": "f2ab5572-7ec8-499b-907b-fa8fe232f8d0",
+      "convert_task_id": "b5db0dd1-b354-4885-9c5e-339da1076fe1",
+      "orientation_contract": "tripo-p1-align-image-prop-front-v2",
+      "bake_y_deg": 0
+    },
+    "arena_gate": {
+      "model": "/var/games/game-20260807-c19d20fd/assets/environment/structures/arena_gate.glb",
+      "sha256": "b97c1b52144a567cc3ba55c8ade054b2b9db6f2528c15a66c4564b04afeb1e5c",
+      "driver_image_sha256": "ea5350bf7604f0e1e6dbe8c9bea378ef4a3dcbea46b9fc7e907f8c29d9244227",
+      "kind": "environment",
+      "category": "structures",
+      "orient_class": "fronted",
+      "pipeline_version": 2,
+      "pipeline_contract": "tesana-oriented-prop-canonical-v1",
+      "tripo_model_version": "P1-20260311",
+      "model_task_id": "9cac5f5b-2635-407a-bd4f-08a3d7391ec7",
+      "convert_task_id": "d52b2027-ab08-4178-9c2c-2534bb59ff42",
+      "orientation_contract": "tripo-p1-align-image-prop-front-v2",
+      "bake_y_deg": 0
+    },
+    "broken_ruins": {
+      "model": "/var/games/game-20260807-c19d20fd/assets/environment/structures/broken_ruins.glb",
+      "sha256": "a02074530b7415898315cb8068bd22cf97c1cef4ca99c7d268bd71f0a0c89283",
+      "driver_image_sha256": "9976c6998abd5f964d2cb45359ea2d6272a7bfc3d38b9d3646086a4bc55116ca",
+      "kind": "environment",
+      "category": "structures",
+      "orient_class": "fronted",
+      "pipeline_version": 2,
+      "pipeline_contract": "tesana-oriented-prop-canonical-v1",
+      "tripo_model_version": "P1-20260311",
+      "model_task_id": "f7b31b60-35ad-43f2-a902-51d6e9592dbd",
+      "convert_task_id": "72174fb0-3fff-4a65-8d27-c950b9caa7cd",
+      "orientation_contract": "tripo-p1-align-image-prop-front-v2",
+      "bake_y_deg": 0
+    },
+    "greek_temple": {
+      "model": "/var/games/game-20260807-c19d20fd/assets/environment/buildings/greek_temple.glb",
+      "sha256": "e1dacd720ef16be54163abed9e6aaabfd75d6170474402e352a1ecf4d8bab6ba",
+      "driver_image_sha256": "9136ebffcf51566101c2e9153d3a28d67ccbce9d388f933143d054137e2a6c94",
+      "kind": "environment",
+      "category": "buildings",
+      "orient_class": "fronted",
+      "pipeline_version": 2,
+      "pipeline_contract": "tesana-oriented-prop-canonical-v1",
+      "tripo_model_version": "P1-20260311",
+      "model_task_id": "474b6886-e854-420a-a9c5-86e74af29215",
+      "convert_task_id": "50c86464-4c4f-455a-9490-3972fbc74767",
+      "orientation_contract": "tripo-p1-align-image-prop-front-v2",
+      "bake_y_deg": 0
+    },
+    "cliff_rock": {
+      "model": "/var/games/game-20260807-c19d20fd/assets/environment/rocks/cliff_rock.glb",
+      "sha256": "7117cde8bd46590560ecfefe07d7bdf909b32c5ce4dcfd8feac61b4fed6d8c92",
+      "driver_image_sha256": "5043ace04a26b27a13a5965c0bab57a21d0cf60a1fa13abda146eb7b8e7d4743",
+      "kind": "environment",
+      "category": "rocks",
+      "orient_class": "upright_neutral",
+      "pipeline_version": 2,
+      "pipeline_contract": "tesana-oriented-prop-canonical-v1",
+      "tripo_model_version": "P1-20260311",
+      "model_task_id": "0f639ca5-b053-44c5-80c2-9c78b79108da",
+      "convert_task_id": "86563b9a-d0ff-462b-b60a-12c469e1b4c9",
+      "orientation_contract": "tripo-p1-align-image-prop-front-v2",
+      "bake_y_deg": 0
+    },
+    "health_potion": {
+      "model": "/var/games/game-20260807-c19d20fd/assets/props/items/health_potion.glb",
+      "sha256": "802b6039ae3fcbd5ec022f4739a6c68dcd15ca4595e48c842144cfae041215c7",
+      "driver_image_sha256": "885032e95d0716eb67693e573bffab5dc3a461daaa336e84f54c614dee18f980",
+      "kind": "prop",
+      "category": "items",
+      "orient_class": "fronted",
+      "pipeline_version": 2,
+      "pipeline_contract": "tesana-oriented-prop-canonical-v1",
+      "tripo_model_version": "P1-20260311",
+      "model_task_id": "2e91c0db-3cfb-4d07-947b-b1300487081c",
+      "convert_task_id": "84a45f9e-7b89-44ce-8b65-ebac1544ed80",
+      "orientation_contract": "tripo-p1-align-image-prop-front-v2",
+      "bake_y_deg": 0
+    },
+    "greek_statue": {
+      "model": "/var/games/game-20260807-c19d20fd/assets/props/decorations/greek_statue.glb",
+      "sha256": "dbbf8f20b1275e7ff21b98faa69b56f98647b56895c992f66b17acbc84b47caa",
+      "driver_image_sha256": "007e402b7724ac95b65d585d223df69df30a7b7cdae2772649ac6b6a494688dc",
+      "kind": "prop",
+      "category": "decorations",
+      "orient_class": "fronted",
+      "pipeline_version": 2,
+      "pipeline_contract": "tesana-oriented-prop-canonical-v1",
+      "tripo_model_version": "P1-20260311",
+      "model_task_id": "4b33c170-dd7b-4e09-8d2d-7e6b1c8d5b2b",
+      "convert_task_id": "4700ce85-a4f4-4b8c-81e9-f7b969c73b84",
+      "orientation_contract": "tripo-p1-align-image-prop-front-v2",
+      "bake_y_deg": 0
+    },
+    "treasure_chest": {
+      "model": "/var/games/game-20260807-c19d20fd/assets/props/containers/treasure_chest.glb",
+      "sha256": "5afa42366aab59f5656c70d5a25264dbc8908d82e1900f1b197f0e91f59536e3",
+      "driver_image_sha256": "070f3c9432e9af0d16bce65e500bc94e0bb0dd533e633debf2ad8bac7710ac6b",
+      "kind": "prop",
+      "category": "containers",
+      "orient_class": "fronted",
+      "pipeline_version": 2,
+      "pipeline_contract": "tesana-oriented-prop-canonical-v1",
+      "tripo_model_version": "P1-20260311",
+      "model_task_id": "acc0bee9-dbf8-4589-93bf-2d4b9cf5a49e",
+      "convert_task_id": "3ea0fe0c-6bbb-42d6-bc56-d6f567c94bc2",
+      "orientation_contract": "tripo-p1-align-image-prop-front-v2",
+      "bake_y_deg": 0
+    },
+    "marble_altar": {
+      "model": "/var/games/game-20260807-c19d20fd/assets/props/furniture/marble_altar.glb",
+      "sha256": "ece83d7f44601cf86ba0c38285bfd229418ec9dc6fa3a2ab52309cf22dfa1317",
+      "driver_image_sha256": "d5c0974c0635713b7330c3b38174b0589b93ed161f3395b9b0d18e9ff2e97d5e",
+      "kind": "prop",
+      "category": "furniture",
+      "orient_class": "fronted",
+      "pipeline_version": 2,
+      "pipeline_contract": "tesana-oriented-prop-canonical-v1",
+      "tripo_model_version": "P1-20260311",
+      "model_task_id": "dafa3d86-7c29-44ee-9ba7-516946bf84c2",
+      "convert_task_id": "f398ed0e-b69a-488a-8cf1-3fc849d42c83",
+      "orientation_contract": "tripo-p1-align-image-prop-front-v2",
+      "bake_y_deg": 0
+    },
+    "blacksmith_anvil": {
+      "model": "/var/games/game-20260807-c19d20fd/assets/props/tools/blacksmith_anvil.glb",
+      "sha256": "8182715277a543548893d2bdd03616a150749af30ddbf0ef0ac824d965571909",
+      "driver_image_sha256": "ea6964511f72863efa168a7eec6ce5ae76dc196143c0b7ba0e76e041a18d8480",
+      "kind": "prop",
+      "category": "tools",
+      "orient_class": "profile",
+      "pipeline_version": 2,
+      "pipeline_contract": "tesana-oriented-prop-canonical-v1",
+      "tripo_model_version": "P1-20260311",
+      "model_task_id": "914726ae-9b00-48bd-bb54-73bd9a2dd317",
+      "convert_task_id": "0b355bf2-d867-4e72-ae9e-91fa2bb68248",
+      "orientation_contract": "tripo-p1-align-image-prop-front-v2",
+      "bake_y_deg": -90
+    },
+    "oracle_stone": {
+      "model": "/var/games/game-20260807-c19d20fd/assets/props/items/oracle_stone.glb",
+      "sha256": "1e232efb859106a8ddf165f0a246f604db1a1abec51728212b17e14cb3c824c1",
+      "driver_image_sha256": "81854c53972ba8c08453dd63984b959e1c94fe42e02315947bff03ec56b90c1c",
+      "kind": "prop",
+      "category": "items",
+      "orient_class": "fronted",
+      "pipeline_version": 2,
+      "pipeline_contract": "tesana-oriented-prop-canonical-v1",
+      "tripo_model_version": "P1-20260311",
+      "model_task_id": "8a2957e6-73a7-4561-b559-b301f4a974de",
+      "convert_task_id": "cd4a1552-85a4-4286-a351-77b6991ba8bd",
+      "orientation_contract": "tripo-p1-align-image-prop-front-v2",
+      "bake_y_deg": 0
+    },
+    "amphora": {
+      "model": "/var/games/game-20260807-c19d20fd/assets/props/containers/amphora.glb",
+      "sha256": "0314c4667e3b2b26ab5f3518381e6c65f79b1f57e7232f43e106dd0d367e054d",
+      "driver_image_sha256": "b3fddac8bd68f33002f36cb188c72d917cbf87b2ccdd909d030ef15c58be9ee7",
+      "kind": "prop",
+      "category": "containers",
+      "orient_class": "fronted",
+      "pipeline_version": 2,
+      "pipeline_contract": "tesana-oriented-prop-canonical-v1",
+      "tripo_model_version": "P1-20260311",
+      "model_task_id": "7afb44bb-e8a0-4ff5-8dc4-f676b0277e34",
+      "convert_task_id": "6872bfcd-ae04-483a-98c8-f55437534790",
+      "orientation_contract": "tripo-p1-align-image-prop-front-v2",
+      "bake_y_deg": 0
+    },
+    "training_dummy": {
+      "model": "/var/games/game-20260807-c19d20fd/assets/environment/obstacles/training_dummy.glb",
+      "sha256": "c455bce201d2c060bb911943b6e5bc4a1c75ea49b428f39fd0754c40a65331d2",
+      "driver_image_sha256": "1f574e98cbc068b1ee1460bcc2235db7e6bcabc6fb474fddc6a27323c06c79c5",
+      "kind": "environment",
+      "category": "obstacles",
+      "orient_class": "fronted",
+      "pipeline_version": 2,
+      "pipeline_contract": "tesana-oriented-prop-canonical-v1",
+      "tripo_model_version": "P1-20260311",
+      "model_task_id": "e0e8d79c-9f6c-4d88-8560-03c94775199d",
+      "convert_task_id": "a2de654c-c0fa-4c6f-b920-2d7efa5917d5",
+      "orientation_contract": "tripo-p1-align-image-prop-front-v2",
+      "bake_y_deg": 0
+    },
+    "greek_stoa_colonnade": {
+      "model": "/var/games/game-20260807-c19d20fd/assets/environment/buildings/greek_stoa_colonnade.glb",
+      "sha256": "f714bf114005f4b337ed3cdef96c8d06d1c4f301ff69abdd88dcf10014f98f85",
+      "driver_image_sha256": "cd1d753f94c24d90b4309502549a10e08535a3dba48b29bcbb03877ca657fba1",
+      "kind": "environment",
+      "category": "buildings",
+      "orient_class": "fronted",
+      "pipeline_version": 2,
+      "pipeline_contract": "tesana-oriented-prop-canonical-v1",
+      "tripo_model_version": "P1-20260311",
+      "model_task_id": "06714cfb-b516-4f60-a748-c7d0f779d4f9",
+      "convert_task_id": "5588c520-0f7a-4d97-ba17-426ba459a4e9",
+      "orientation_contract": "tripo-p1-align-image-prop-front-v2",
+      "bake_y_deg": 0
+    },
+    "city_gate_arch": {
+      "model": "/var/games/game-20260807-c19d20fd/assets/environment/structures/city_gate_arch.glb",
+      "sha256": "0e1eddfb7867971b1920b51c3a9595223c3e35756e0d881c62c672203f23fc73",
+      "driver_image_sha256": "838b840d6479a791c312d6347a4d36b4c05abbd9b19232deee0e5b5c28e9be66",
+      "kind": "environment",
+      "category": "structures",
+      "orient_class": "fronted",
+      "pipeline_version": 2,
+      "pipeline_contract": "tesana-oriented-prop-canonical-v1",
+      "tripo_model_version": "P1-20260311",
+      "model_task_id": "ddd5dc11-a93d-405a-8f9f-daecf2295fd9",
+      "convert_task_id": "771d8759-ea37-4b9e-bf25-24c047b75277",
+      "orientation_contract": "tripo-p1-align-image-prop-front-v2",
+      "bake_y_deg": 0
+    },
+    "olive_cart": {
+      "model": "/var/games/game-20260807-c19d20fd/assets/environment/obstacles/olive_cart.glb",
+      "sha256": "1e6e7c0b356ebfc5b05a2013104c3624062d4006d7bbbd8dfd008b0f71893963",
+      "driver_image_sha256": "e05c895c83a7dc8dcf7e7332e2381c12b98d52aceb292bc59e1c601ddea0ac73",
+      "kind": "environment",
+      "category": "obstacles",
+      "orient_class": "fronted",
+      "pipeline_version": 2,
+      "pipeline_contract": "tesana-oriented-prop-canonical-v1",
+      "tripo_model_version": "P1-20260311",
+      "model_task_id": "0a7e820d-025a-486d-948f-08fcc19b5be5",
+      "convert_task_id": "87f30123-d668-4e22-9d75-3f0a339b7a7c",
+      "orientation_contract": "tripo-p1-align-image-prop-front-v2",
+      "bake_y_deg": 0
+    },
+    "brazier_flame": {
+      "model": "/var/games/game-20260807-c19d20fd/assets/environment/structures/brazier_flame.glb",
+      "sha256": "b3b75d35249386e8dfa61310ec0d725d4996196633d32cb4435518cfdf825d86",
+      "driver_image_sha256": "0203e4460babf6e834e11488406ec3ca47ccc96f9219d265a7b52c00f48e8567",
+      "kind": "environment",
+      "category": "structures",
+      "orient_class": "fronted",
+      "pipeline_version": 2,
+      "pipeline_contract": "tesana-oriented-prop-canonical-v1",
+      "tripo_model_version": "P1-20260311",
+      "model_task_id": "1c6b27ef-f5f3-4214-9841-8b485e1e21b9",
+      "convert_task_id": "c46f52f0-2b64-4770-a4c3-160acf1de465",
+      "orientation_contract": "tripo-p1-align-image-prop-front-v2",
+      "bake_y_deg": 0
+    },
+    "marble_fountain": {
+      "model": "/var/games/game-20260807-c19d20fd/assets/environment/structures/marble_fountain.glb",
+      "sha256": "69db3ec7340563d73db7a3f0afbadc696abf7f3197390cf4788a72f0bca398ce",
+      "driver_image_sha256": "3d6309774e907851b08ac8e7bb35ef8d8a2acd0ad208e952c6c7f09f22531af4",
+      "kind": "environment",
+      "category": "structures",
+      "orient_class": "fronted",
+      "pipeline_version": 2,
+      "pipeline_contract": "tesana-oriented-prop-canonical-v1",
+      "tripo_model_version": "P1-20260311",
+      "model_task_id": "c0a02813-ab30-4efe-8103-608fc875d356",
+      "convert_task_id": "44a69b10-21af-4be6-a18c-c6218dd38501",
+      "orientation_contract": "tripo-p1-align-image-prop-front-v2",
+      "bake_y_deg": 0
+    },
+    "greek_townhouse": {
+      "model": "/var/games/game-20260807-c19d20fd/assets/environment/buildings/greek_townhouse.glb",
+      "sha256": "5bc43a8069ce4fed953ba46e0787b85e4a3b42ce0dd4cf331efbc45f4ac0665b",
+      "driver_image_sha256": "d7928e4fdb87001f2bf52dc9a99a21770b2ec8f57e68f16849309d13bde64c6c",
+      "kind": "environment",
+      "category": "buildings",
+      "orient_class": "fronted",
+      "pipeline_version": 2,
+      "pipeline_contract": "tesana-oriented-prop-canonical-v1",
+      "tripo_model_version": "P1-20260311",
+      "model_task_id": "cc4405de-5424-4475-a9af-1f652578fc69",
+      "convert_task_id": "4db90b3a-1a98-4244-8c10-0f7c77b924a6",
+      "orientation_contract": "tripo-p1-align-image-prop-front-v2",
+      "bake_y_deg": 0
+    },
+    "agora_market_stall": {
+      "model": "/var/games/game-20260807-c19d20fd/assets/environment/buildings/agora_market_stall.glb",
+      "sha256": "3e0af2d3b498ad3752e7adb0aec435ced5e3a8411da737875cc590f73bee4a12",
+      "driver_image_sha256": "6fe4007e32307974ba0b5a7f7854c19427dbc24bb7699a1fc424f77b790c2272",
+      "kind": "environment",
+      "category": "buildings",
+      "orient_class": "fronted",
+      "pipeline_version": 2,
+      "pipeline_contract": "tesana-oriented-prop-canonical-v1",
+      "tripo_model_version": "P1-20260311",
+      "model_task_id": "43fe6b37-c5e7-4c78-b04f-f0f99e2811c0",
+      "convert_task_id": "ce7ccbee-c4b3-4fa4-8dab-265009853334",
+      "orientation_contract": "tripo-p1-align-image-prop-front-v2",
+      "bake_y_deg": 0
+    }
+  }
+}
