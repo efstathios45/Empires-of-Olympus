@@ -1,0 +1,37 @@
+[remap]
+
+importer="texture"
+type="CompressedTexture2D"
+uid="uid://ds0mtbbkid68u"
+path="res://.godot/imported/antique_ceramic_vase_01_antique_ceramic_vase_01_nor_gl.jpg-dbe57009c1c7c31e092397a1880308cc.ctex"
+metadata={
+"vram_texture": false
+}
+generator_parameters={
+"md5": "4aa6537701b08a621175cfa4bbdbd2ee"
+}
+
+[deps]
+
+source_file="res://assets/props/decorations/free_antique_ceramic_vase_01/antique_ceramic_vase_01_antique_ceramic_vase_01_nor_gl.jpg"
+dest_files=["res://.godot/imported/antique_ceramic_vase_01_antique_ceramic_vase_01_nor_gl.jpg-dbe57009c1c7c31e092397a1880308cc.ctex"]
+
+[params]
+
+compress/mode=1
+compress/high_quality=false
+compress/lossy_quality=0.75
+compress/hdr_compression=1
+compress/normal_map=0
+compress/channel_pack=0
+mipmaps/generate=false
+mipmaps/limit=-1
+roughness/mode=0
+roughness/src_normal=""
+process/fix_alpha_border=true
+process/premult_alpha=false
+process/normal_map_invert_y=false
+process/hdr_as_srgb=false
+process/hdr_clamp_exposure=false
+process/size_limit=1024
+detect_3d/compress_to=1
