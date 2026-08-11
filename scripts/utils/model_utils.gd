@@ -256,7 +256,25 @@ static func scale_to_height(node: Node3D, target_meters: float) -> void:
 			node.scale *= target_meters / final_h
 
 
+## If the skinned mesh is still absurdly tall after setup, force it down.
+## Catches Maya-cm / import failures that leave giants floating above the body.
+static func clamp_world_height(node: Node3D, max_height: float, target_height: float = -1.0) -> void:
+	if not node.is_inside_tree():
+		return
+	node.force_update_transform()
+	var h := _measure_mesh_height(node)
+	if h <= max_height or h < 0.001:
+		return
+	var want: float = target_height if target_height > 0.0 else max_height
+	node.scale *= want / h
+	node.force_update_transform()
+	ground_model(node)
+	push_warning("ModelUtils.clamp_world_height: shrank %s from %.2fm to ~%.2fm" % [node.name, h, want])
+
+
 ## Setup for Maya-cm animals (Gobkit): force mesh ×100, scale by skeleton, ground.
+## Prefer not using this for gameplay spawns — Compatibility skinning + MI scale
+## 100 has produced invisible bodies with giant meshes floating overhead.
 static func setup_maya_cm_animal(node: Node3D, target_height: float) -> void:
 	for child in node.find_children("*", "MeshInstance3D"):
 		var mi := child as MeshInstance3D
@@ -276,6 +294,7 @@ static func setup_maya_cm_animal(node: Node3D, target_height: float) -> void:
 			node.scale *= target_height / final_h
 		node.force_update_transform()
 	ground_model(node)
+	clamp_world_height(node, target_height * 1.35, target_height)
 
 ## One-call setup for movement-driven characters.
 static func setup_character_for_movement(node: Node3D, target_height: float = 1.8) -> void:

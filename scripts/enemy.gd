@@ -23,30 +23,13 @@ const ENEMY_CONFIGS := {
 	},
 	"boar_enemy": {
 		"name": "Wild Boar",
-		# Gobkit Free Animal Pack Vol.2 (CC0) — Maya-cm mesh; use setup_maya_cm_animal.
-		"glb": "res://assets/characters/_free_cc0/gobkit_boar.glb",
-		"lib": "",
-		"maya_cm": true,
-		# Shoulder ~0.9 m — a real boar, not a horse-sized pig.
-		"height": 0.9, "hp": 70, "dmg": 11.0, "speed": 4.2,
+		# Stable tripo boar + UAL clips (Death/Idle/Walk/Attack). Gobkit Maya-cm
+		# pack left skinned meshes floating ~50 m up / invisible at the body.
+		"glb": "res://assets/characters/boar_enemy/boar_enemy.glb",
+		"lib": "res://assets/characters/boar_enemy/boar_enemy_animations.tres",
+		"height": 1.0, "hp": 70, "dmg": 11.0, "speed": 4.2,
 		"xp": 34, "gold": [6, 14], "aggro": 9.5, "reach": 2.0,
 		"attack_cd": 1.7, "material": "Boar Tusk",
-		"facing_plus_z": true,
-		# Master timeline sliced at 24 fps (idle/attack/dead/walk).
-		"slice_master": "Take 001",
-		"slice_fps": 24.0,
-		"slices": {
-			"idle": [0, 29, true],
-			"attack": [30, 59, false],
-			"death": [60, 89, false],
-			"walk": [90, 119, true],
-			"sprint": [90, 119, true],
-			"hit": [30, 45, false],
-		},
-		"clips": {
-			"idle": "idle", "walk": "walk", "sprint": "sprint",
-			"attack": "attack", "hit": "hit", "death": "death",
-		},
 	},
 	"satyr_enemy": {
 		"name": "Satyr Raider",
@@ -213,10 +196,9 @@ func _build_body() -> void:
 		# Free animal packs are authored facing +Z; the rest of the game aims -Z.
 		if cfg.get("facing_plus_z", false):
 			model.rotation.y = PI
-		if cfg.get("maya_cm", false):
-			ModelUtils.setup_maya_cm_animal(model, cfg["height"])
-		else:
-			ModelUtils.setup_character_for_movement(model, cfg["height"])
+		ModelUtils.setup_character_for_movement(model, cfg["height"])
+		# Hard stop for runaway skinned meshes (e.g. broken Maya-cm imports).
+		ModelUtils.clamp_world_height(model, cfg["height"] * 1.4, cfg["height"])
 		anim = model.find_child("AnimationPlayer", true) as AnimationPlayer
 		if anim == null:
 			anim = AnimationPlayer.new()
