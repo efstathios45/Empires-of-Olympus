@@ -1,14 +1,13 @@
 Empires of Olympus — Windows builds
 ===================================
 
-HOTFIX V10 — real creature SFX, new boar/stone skins
+HOTFIX V10.1 — wolf/boar ATTACK sounds (snarl + bite)
 ----------------------------------------------------
-- Free OpenGameArt sounds: wolf howls/growls, pig/boar, minotaur, goat/donkey satyr,
-  bird-of-prey harpy, horse/zebra centaur, snake hiss gorgon
-- Boar: new dark bristle hide (Poly Haven leather+fur) — not the old skins
-- Titan Seeds: Kenney Nature Kit rocks + dark rock albedo + thin cursed vein
+- Wolves: snarl on lunge, bite on hit; separate howl on aggro
+- Boars: squeal/charge on attack; grunt on notice
+- Free OpenGameArt attack/snarl samples (not reused death howls)
 
-DELETE old game.exe + game.pck:
+DELETE old game.exe + game.pck before replacing:
 
-  EXE: https://gofile.io/d/qwhLsr
-  PCK: https://gofile.io/d/uSYO1Q
+  EXE: https://gofile.io/d/if6VkR
+  PCK: https://gofile.io/d/0UTjqC
