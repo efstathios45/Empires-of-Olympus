@@ -91,8 +91,48 @@ func _build_gear() -> void:
 	_add_line("Glory: %d / %d to the next level" % [GameState.xp, GameState.xp_needed()], 17)
 	_add_line("Weapon: %s +%d   •   Damage %d" % [
 		cd["weapon_name"], GameState.weapon_refine, int(GameState.attack_damage())], 17)
+	_add_line("Shield: %s   (−%d%% taken)" % [
+		GameState.equipped_name("shield"),
+		int(GameState.armor_mitigation() * 100.0)], 17)
+	_add_line("Helmet: %s" % GameState.equipped_name("helmet"), 17)
+	_add_line("Armor: %s" % GameState.equipped_name("armor"), 17)
+	if String(GameState.equipped.get("sidearm", "")) != "":
+		_add_line("Sidearm: %s" % GameState.equipped_name("sidearm"), 17)
 	_add_line("Skill: %s" % cd["skill_name"], 17)
 	_add_line("Health %d   •   Spirit %d" % [GameState.max_hp(), GameState.max_mp()], 17)
+	_content.add_child(Kit.spacer(8))
+
+	_add_line("Bag — click Equip on looted gear", 20, Kit.INK_TITLE)
+	if GameState.owned_gear.is_empty():
+		_add_line("Slay foes for ground loot, or buy bronze at Brontes.", 16, Kit.INK_SOFT)
+	else:
+		for gid in GameState.owned_gear:
+			var gitem: Dictionary = GameState.SHOP_ITEMS.get(gid, {})
+			var slot: String = String(gitem.get("slot", ""))
+			var on: bool = String(GameState.equipped.get(slot, "")) == String(gid)
+			var row := HBoxContainer.new()
+			row.add_theme_constant_override("separation", 12)
+			_content.add_child(row)
+			var name_l := Kit.make_label(String(gitem.get("name", gid)), 16, Kit.INK_GOOD if on else Kit.INK)
+			name_l.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+			name_l.custom_minimum_size = Vector2(280, 0)
+			row.add_child(name_l)
+			var slot_l := Kit.make_label(slot.capitalize(), 14, Kit.INK_SOFT)
+			slot_l.custom_minimum_size = Vector2(90, 0)
+			row.add_child(slot_l)
+			if on:
+				var eq := Kit.make_label("Equipped", 14, Kit.INK_GOLD)
+				row.add_child(eq)
+			else:
+				var btn := Kit.make_button("Equip", false)
+				btn.custom_minimum_size = Vector2(120, 44)
+				btn.add_theme_font_size_override("font_size", 16)
+				btn.pressed.connect(_on_equip.bind(String(gid)))
+				row.add_child(btn)
+			var desc := Kit.make_label(String(gitem.get("desc", "")), 13, Kit.INK_SOFT)
+			desc.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
+			desc.custom_minimum_size = Vector2(TEXT_W, 0)
+			_content.add_child(desc)
 	_content.add_child(Kit.spacer(8))
 
 	_add_line("Potions", 20, Kit.INK_TITLE)
@@ -118,6 +158,12 @@ func _add_line(text: String, size: int, color: Color = Kit.INK) -> void:
 	l.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
 	l.custom_minimum_size = Vector2(TEXT_W, 0)
 	_content.add_child(l)
+
+
+func _on_equip(item_id: String) -> void:
+	GameState.equip_gear(item_id)
+	AudioManager.play_sfx("ui_confirm")
+	_show("gear")
 
 # ── Clan ─────────────────────────────────────────────────────────────────
 

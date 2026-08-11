@@ -62,7 +62,8 @@ static func make_button(text: String, primary: bool = true) -> Button:
 	b.text = text
 	b.custom_minimum_size = Vector2(240, 60)
 	b.focus_mode = Control.FOCUS_NONE
-	b.clip_text = false
+	b.clip_text = true
+	b.text_overrun_behavior = TextServer.OVERRUN_TRIM_ELLIPSIS
 	b.autowrap_mode = TextServer.AUTOWRAP_OFF
 	var sb: StyleBox = style("res://assets/ui/btn_blank.tres" if primary else "res://assets/ui/btn_blank_alt.tres")
 	if sb:

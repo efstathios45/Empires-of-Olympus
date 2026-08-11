@@ -5,8 +5,11 @@ extends StaticBody3D
 ##   • SERVICE npcs ("priestess", "smith") — created with create(); E opens the
 ##     matching HUD panel.
 ##   • TOWNSFOLK — created with create_flavour(); E shows one short spoken line
-##     above their head (and mirrors it to the HUD if the HUD offers a
-##     notification method). No AI, no pathfinding — pure decoration.
+##     above their head. No AI, no pathfinding — pure decoration.
+##
+## Facing: NPCs stay on their authored spawn yaw. On E they turn toward the
+## local player only (client-side) — ready for multiplayer where other clients
+## should not see that turn.
 
 var npc_id: String = "priestess"
 var display_name: String = "Villager"
@@ -19,16 +22,14 @@ var idle_clip: String = "ual1_Idle"
 ## Non-empty = this NPC is townsfolk: E shows this remark instead of a panel.
 var flavour_line: String = ""
 
-const TURN_INTERVAL := 0.12   # NPC turning/anim polls at ~8 Hz, not per frame
-const NOTICE_RANGE := 4.5
-const TALK_RANGE := 3.2
 const BUBBLE_SECONDS := 4.5
+const FACE_SECONDS := 4.0
 
 var _model: Node3D
 var _anim: AnimationPlayer
 var _player: Node3D
-var _turn_accum: float = 0.0
 var _bubble: Label3D = null
+var _face_tween: Tween = null
 
 static func create(p_id: String, p_name: String, p_glb: String, p_lib: String,
 		at: Vector3, p_height: float, yaw_deg: float) -> StaticBody3D:
@@ -90,38 +91,12 @@ func _ready() -> void:
 	if world and world.has_method("sample_height"):
 		global_position.y = world.sample_height(global_position.x, global_position.z)
 
-func _process(delta: float) -> void:
-	# Face the player when they come close; talk-idle while engaged. Polled at
-	# ~8 Hz so a crowded plaza costs almost nothing per frame.
-	_turn_accum += delta
-	if _turn_accum < TURN_INTERVAL:
-		return
-	var step: float = _turn_accum
-	_turn_accum = 0.0
-	if _player == null or not is_instance_valid(_player):
-		_player = get_tree().get_first_node_in_group("player")
-		return
-	if _model == null:
-		return
-	var d: float = global_position.distance_to(_player.global_position)
-	if d < NOTICE_RANGE:
-		var dir: Vector3 = _player.global_position - global_position
-		dir.y = 0
-		if dir.length_squared() > 0.01:
-			_model.rotation.y = lerp_angle(_model.rotation.y,
-				ModelUtils.yaw_from_direction(dir.normalized()), minf(1.0, step * 6.0))
-		if _anim and d < TALK_RANGE and _anim.has_animation("ual1_Idle_Talking"):
-			if _anim.current_animation != "ual1_Idle_Talking":
-				_anim.play("ual1_Idle_Talking")
-	else:
-		_model.rotation.y = lerp_angle(_model.rotation.y, spawn_yaw, minf(1.0, step * 2.5))
-		if _anim and _anim.has_animation(idle_clip) and _anim.current_animation != idle_clip:
-			_anim.play(idle_clip)
-
 func get_prompt() -> String:
 	return "Speak with %s" % display_name
 
 func interact() -> void:
+	# Local-only face toward the interacting player (multiplayer-safe later).
+	_face_local_player()
 	if flavour_line != "":
 		_say(flavour_line)
 		return
@@ -133,17 +108,36 @@ func interact() -> void:
 	elif npc_id == "smith" and hud.has_method("open_smith"):
 		hud.open_smith(self)
 
+
+## Client-side turn toward the local player, then ease back to spawn facing.
+func _face_local_player() -> void:
+	if _model == null:
+		return
+	if _player == null or not is_instance_valid(_player):
+		_player = get_tree().get_first_node_in_group("player")
+	if _player == null or not is_instance_valid(_player):
+		return
+	var dir: Vector3 = _player.global_position - global_position
+	dir.y = 0.0
+	if dir.length_squared() < 0.0001:
+		return
+	# Humanoid UAL rigs face +Z in these GLBs; yaw_from_direction aims -Z.
+	# Without the PI flip, E turns them so the player sees the back of the head.
+	var target_yaw: float = ModelUtils.yaw_from_direction(dir.normalized()) + PI
+	if _face_tween != null and _face_tween.is_valid():
+		_face_tween.kill()
+	_face_tween = create_tween()
+	_face_tween.tween_property(_model, "rotation:y", target_yaw, 0.28) \
+		.set_trans(Tween.TRANS_SINE).set_ease(Tween.EASE_OUT)
+	_face_tween.tween_interval(FACE_SECONDS)
+	_face_tween.tween_property(_model, "rotation:y", spawn_yaw, 0.45) \
+		.set_trans(Tween.TRANS_SINE).set_ease(Tween.EASE_IN_OUT)
+
 # ── Flavour chatter ──────────────────────────────────────────────────────
 
-## Show a one-off remark above this NPC's head (and in the HUD if it takes one).
+## Show a one-off remark above this NPC's head (speech bubble only — no HUD
+## duplicate toast; that was reading as a "double message" on E).
 func _say(line: String) -> void:
-	var hud := get_tree().get_first_node_in_group("hud")
-	if hud != null:
-		for m in ["show_announcement", "announce", "show_toast", "show_message",
-				"show_notification"]:
-			if hud.has_method(m):
-				hud.call(m, "%s: %s" % [display_name, line])
-				break
 	if _bubble == null or not is_instance_valid(_bubble):
 		_bubble = Label3D.new()
 		_bubble.billboard = BaseMaterial3D.BILLBOARD_ENABLED

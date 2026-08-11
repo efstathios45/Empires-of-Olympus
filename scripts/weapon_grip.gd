@@ -9,7 +9,8 @@ const CLASS_LENGTH := {
 	"gun": 0.80,
 	"pistol": 0.26,
 	"melee": 0.95,
-	"shield": 0.55,
+	# Real Greek aspis / hoplon ~1 m; slight oversize for readable game silhouette.
+	"shield": 1.12,
 }
 
 # Raw GLB axes are guaranteed by the current P1 driver-image + align_image
@@ -20,7 +21,9 @@ const CLASS_FRAME := {
 	"gun":    {"aim_axis": 0, "aim_sign": -1.0, "up_axis": 1, "up_sign": 1.0, "grip_mode": "rear_lower"},
 	"pistol": {"aim_axis": 0, "aim_sign": -1.0, "up_axis": 1, "up_sign": 1.0, "grip_mode": "rear_lower"},
 	"melee":  {"aim_axis": 1, "aim_sign": 1.0,  "up_axis": 0, "up_sign": 1.0, "grip_mode": "low_end", "grip_axis": 1, "grip_fraction": 0.15},
-	"shield": {"aim_axis": 1, "aim_sign": 1.0,  "up_axis": 0, "up_sign": 1.0, "grip_mode": "low_end", "grip_axis": 1, "grip_fraction": 0.15},
+	# Aspis disc: scale by DIAMETER (Y), never thickness (Z).
+	# After normalize: face normal ≈ ±X, disc in YZ. CLASS_GRIP rotates face outward.
+	"shield": {"aim_axis": 1, "aim_sign": 1.0,  "up_axis": 0, "up_sign": 1.0, "grip_mode": "center"},
 }
 
 # Position is metres in bone space. Rotation is Euler degrees applied to the
@@ -29,7 +32,9 @@ const CLASS_GRIP := {
 	"gun":    {"bone": "RightHand",    "position": Vector3(-0.1, 0.0, 0.0),    "rotation_deg": Vector3(-79, 0, -90), "scale": 1.0},
 	"pistol": {"bone": "RightHand",    "position": Vector3(-0.035, 0.0, 0.0),  "rotation_deg": Vector3(-90, 0, -90), "scale": 1.0},
 	"melee":  {"bone": "RightHand",    "position": Vector3(0.003, -0.134, -0.0005), "rotation_deg": Vector3(-90, -90, 0), "scale": 1.0},
-	"shield": {"bone": "LeftLowerArm", "position": Vector3(0.0, 0.0, 0.0),     "rotation_deg": Vector3(0, 0, 0),     "scale": 1.0},
+	# Aspis on left forearm (porpax): arm lies in the bowl (offset on -normal),
+	# disc plane contains the forearm axis — not skewered through the face.
+	"shield": {"bone": "LeftLowerArm", "position": Vector3(-0.06, 0.13, 0.0), "rotation_deg": Vector3(0, 0, 0), "scale": 1.0},
 }
 
 
@@ -40,7 +45,8 @@ static func attach(
 	model: Node3D,
 	weapon_glb_path: String,
 	weapon_class: String = "gun",
-	grip: Dictionary = {}
+	grip: Dictionary = {},
+	mount_name: String = "WeaponMount"
 ) -> Node3D:
 	var skel := _find_skeleton(model)
 	if skel == null:
@@ -68,7 +74,7 @@ static func attach(
 	# so class lengths and grip offsets stay in real-world metres.
 	var comp := 1.0 / maxf(0.0001, model.scale.x)
 	var attachment := BoneAttachment3D.new()
-	attachment.name = "WeaponMount"
+	attachment.name = mount_name
 	attachment.bone_name = String(g.get("bone", "RightHand"))
 	skel.add_child(attachment)
 
@@ -133,7 +139,8 @@ static func normalize(prop: Node3D, weapon_class: String = "gun") -> Node3D:
 	var up_axis_index := int(frame["up_axis"])
 	var up_sign := float(frame["up_sign"])
 	var grip: Vector3
-	if String(frame["grip_mode"]) == "rear_lower":
+	var grip_mode := String(frame.get("grip_mode", "low_end"))
+	if grip_mode == "rear_lower":
 		grip = _rear_lower_grip_centroid(
 			verts,
 			min_bounds,
@@ -141,13 +148,15 @@ static func normalize(prop: Node3D, weapon_class: String = "gun") -> Node3D:
 			aim_axis_index,
 			up_axis_index
 		)
+	elif grip_mode == "center":
+		grip = (min_bounds + max_bounds) * 0.5
 	else:
 		grip = _low_end_centroid(
 			verts,
 			min_bounds,
 			max_bounds,
-			int(frame["grip_axis"]),
-			float(frame["grip_fraction"])
+			int(frame.get("grip_axis", aim_axis_index)),
+			float(frame.get("grip_fraction", 0.15))
 		)
 
 	var aim := _unit(aim_axis_index) * aim_sign

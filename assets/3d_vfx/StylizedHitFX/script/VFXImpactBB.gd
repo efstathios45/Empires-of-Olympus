@@ -201,6 +201,4 @@ var hit_core : GPUParticles3D:
 
 @export_group("About")
 
-@export_tool_button("Documentation", "ExternalLink") var docs_button : Callable:
-	get():
-		return func(): OS.shell_open("https://bun3d.com/assets/vfx/godot_hit_fx/#usage")
+# Documentation button used Godot 4.4+ @export_tool_button — removed for 4.3.
