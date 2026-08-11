@@ -97,6 +97,10 @@ var mesh_root: Node3D
 var anim: AnimationPlayer
 var player: Node3D
 var world: Node3D
+## True when the mesh uses a humanoid GeneralSkeleton that can play UAL clips
+## (Death / Hit / Walk). Wolves & boars ship with auto-rigs that cannot.
+var _skeletal_anims: bool = false
+var _death_clip := "ual1_Death01"
 
 # Nameplate / threat readability.
 var plate: Node3D
@@ -165,6 +169,7 @@ func _build_body() -> void:
 		var model: Node3D = load(glb_path).instantiate()
 		mesh_root.add_child(model)
 		ModelUtils.setup_character_for_movement(model, cfg["height"])
+		_skeletal_anims = _prepare_skeleton_for_anims(model)
 		anim = model.find_child("AnimationPlayer", true) as AnimationPlayer
 		if anim == null:
 			anim = AnimationPlayer.new()
@@ -173,10 +178,45 @@ func _build_body() -> void:
 		if ResourceLoader.exists(lib_path):
 			var lib := load(lib_path) as AnimationLibrary
 			if lib:
+				if anim.has_animation_library(""):
+					anim.remove_animation_library("")
 				anim.add_animation_library("", lib)
 		ModelUtils.set_animation_loops(anim)
-	if anim:
+		# Death / hit / attack must never loop, even if the .tres says otherwise.
+		_force_oneshot_clips(["ual1_Death01", "ual1_Hit_Chest", "ual1_Sword_Attack",
+			"ual1_Punch_Jab", "ual2_Sword_Heavy_A", "ual2_Sword_Heavy_B"])
+	if anim and _skeletal_anims:
 		_play("ual1_Idle")
+
+
+## Make sure %GeneralSkeleton paths in UAL clips resolve, and report whether
+## the rig has the humanoid bones those clips need (Hips at minimum).
+func _prepare_skeleton_for_anims(model: Node3D) -> bool:
+	var skel: Skeleton3D = null
+	for node in model.find_children("*", "Skeleton3D", true, false):
+		skel = node as Skeleton3D
+		break
+	if skel == null:
+		return false
+	if skel.find_bone("Hips") < 0:
+		return false
+	# Animation tracks address "%GeneralSkeleton:Bone".
+	if skel.name != "GeneralSkeleton":
+		skel.name = "GeneralSkeleton"
+	skel.unique_name_in_owner = true
+	return true
+
+
+func _force_oneshot_clips(names: Array) -> void:
+	if anim == null:
+		return
+	for n in names:
+		var clip := String(n)
+		if not anim.has_animation(clip):
+			continue
+		var a := anim.get_animation(clip)
+		if a:
+			a.loop_mode = Animation.LOOP_NONE
 
 # ── Nameplate, health bar, boss beacon ───────────────────────────────────
 func _build_plate() -> void:
@@ -523,7 +563,6 @@ func _die() -> void:
 	state = State.DEAD
 	targeted = false
 	velocity = Vector3.ZERO
-	_play("ual1_Death01", false)
 	collision_layer = 0
 	collision_mask = 1
 	AudioManager.play_sfx("hit_flesh", 0.0, 0.7)
@@ -549,15 +588,73 @@ func _die() -> void:
 		GameState.register_minotaur_kill()
 	enemy_died.emit(enemy_id, global_position)
 
-	# Sink and fade after the corpse has settled.
+	# Death performance: skeletal UAL clip when the rig supports it (satyr,
+	# harpy, centaur, gorgon, minotaur…); wolves/boars get a procedural tumble
+	# because their auto-rig bones do not match the animation library.
+	var settle_s: float = _start_death_performance()
 	var tree := get_tree()
 	if tree:
-		var t := tree.create_timer(3.5)
+		var t := tree.create_timer(settle_s)
 		t.timeout.connect(_fade_out)
+
+
+## Plays the death clip and/or a mesh tumble. Returns how long to leave the
+## corpse on the ground before sinking it.
+func _start_death_performance() -> float:
+	var skeletal_len := 0.0
+	if _skeletal_anims and anim != null and anim.has_animation(_death_clip):
+		var clip := anim.get_animation(_death_clip)
+		if clip:
+			clip.loop_mode = Animation.LOOP_NONE
+			skeletal_len = clip.length
+		anim.stop()
+		anim.play(_death_clip)
+		# Hold the final pose after the clip ends.
+		anim.animation_finished.connect(_on_death_anim_finished, CONNECT_ONE_SHOT)
+		# Bosses get a longer corpse beat; trash packs clear faster.
+		return maxf(skeletal_len, 1.2) + (2.4 if is_boss else 1.4)
+
+	# Auto-rig animals (wolf, boar): tumble the whole mesh onto its side.
+	return _play_procedural_death()
+
+
+func _on_death_anim_finished(anim_name: StringName) -> void:
+	if String(anim_name) != _death_clip or anim == null:
+		return
+	# Freeze on the last frame so the corpse doesn't pop back to rest pose.
+	anim.pause()
+	anim.seek(anim.current_animation_length, true)
+
+
+## Tip the mesh over when skeletal death cannot play (mismatched animal rigs).
+func _play_procedural_death() -> float:
+	if mesh_root == null:
+		return 1.6
+	var fall_sign := 1.0 if randf() < 0.5 else -1.0
+	# Tip onto the side (Z) with a little forward pitch so it reads as a collapse.
+	var target_z: float = mesh_root.rotation.z + fall_sign * (PI * 0.5)
+	var target_x: float = mesh_root.rotation.x - 0.35
+	var start_y: float = mesh_root.position.y
+	var tween := create_tween()
+	tween.set_parallel(true)
+	tween.tween_property(mesh_root, "rotation:z", target_z, 0.75).set_trans(Tween.TRANS_QUAD).set_ease(Tween.EASE_IN)
+	tween.tween_property(mesh_root, "rotation:x", target_x, 0.75).set_trans(Tween.TRANS_QUAD).set_ease(Tween.EASE_IN)
+	# Small hop then settle onto the dirt.
+	tween.tween_property(mesh_root, "position:y", start_y + 0.35, 0.22).set_trans(Tween.TRANS_SINE).set_ease(Tween.EASE_OUT)
+	tween.chain().tween_property(mesh_root, "position:y", start_y - 0.08, 0.55).set_trans(Tween.TRANS_QUAD).set_ease(Tween.EASE_OUT)
+	return 2.2
+
 
 func _fade_out() -> void:
 	if not is_instance_valid(self):
 		return
 	var tween := create_tween()
+	tween.set_parallel(true)
 	tween.tween_property(self, "position:y", position.y - 1.6, 1.2)
-	tween.tween_callback(queue_free)
+	# Softly vanish meshes so the sink doesn't look like a hard cut.
+	for mi in find_children("*", "MeshInstance3D", true, false):
+		var mesh_i := mi as MeshInstance3D
+		if mesh_i == null:
+			continue
+		tween.tween_property(mesh_i, "transparency", 1.0, 1.0)
+	tween.chain().tween_callback(queue_free)
