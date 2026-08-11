@@ -1,13 +1,14 @@
-# Cloud Agent base image for the "Empires of Olympus" Godot 4.3 project.
+# Cloud Agent base image for the "Empires of Olympus" Godot project.
 #
-# The Godot 4.3 Linux binary only hard-links glibc; every windowing/GL library
-# is loaded via dlopen at runtime. We install exactly the shared libraries the
-# engine opens for headless work and for software-GL (llvmpipe) rendering under
-# Xvfb, plus the editor/export toolchain (git, curl, unzip).
+# Godot 4.4 is required: the bundled VFX scripts use the `@export_tool_button`
+# annotation, which only exists in 4.4+. The Linux binary only hard-links glibc;
+# every windowing/GL library is loaded via dlopen at runtime, so we install
+# exactly the shared libraries the engine opens for headless work and for
+# software-GL (llvmpipe) rendering under Xvfb, plus git/curl/unzip.
 FROM ubuntu:24.04
 
-ARG GODOT_VERSION=4.3-stable
-ARG GODOT_ZIP=Godot_v4.3-stable_linux.x86_64
+ARG GODOT_VERSION=4.4.1-stable
+ARG GODOT_ZIP=Godot_v4.4.1-stable_linux.x86_64
 
 ENV DEBIAN_FRONTEND=noninteractive
 

@@ -1,5 +1,5 @@
 {
-  "name": "Empires of Olympus (Godot 4.3)",
+  "name": "Empires of Olympus (Godot 4.4)",
   "user": "ubuntu",
   "build": {
     "dockerfile": "Dockerfile"
