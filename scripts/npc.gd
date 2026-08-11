@@ -121,7 +121,9 @@ func _face_local_player() -> void:
 	dir.y = 0.0
 	if dir.length_squared() < 0.0001:
 		return
-	var target_yaw: float = ModelUtils.yaw_from_direction(dir.normalized())
+	# Humanoid UAL rigs face +Z in these GLBs; yaw_from_direction aims -Z.
+	# Without the PI flip, E turns them so the player sees the back of the head.
+	var target_yaw: float = ModelUtils.yaw_from_direction(dir.normalized()) + PI
 	if _face_tween != null and _face_tween.is_valid():
 		_face_tween.kill()
 	_face_tween = create_tween()

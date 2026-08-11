@@ -1,14 +1,14 @@
 extends Control
-## Hellas map with red territorial barriers and a glow over the selected empire.
-## Coordinates are normalized 0–1 over the drawn map rect (approx. of the art).
+## Hellas map with red territorial barriers and a circular magnifier glow
+## over the selected empire (Metin/map-lens style, not a rectangle).
 
 var selected: String = "sparta"
 
-## Approximate region boxes on the painted map (x, y, w, h) in 0–1 space.
+## Approximate region centres + radius on the painted map (normalized 0–1).
 const REGIONS := {
-	"sparta": Rect2(0.10, 0.42, 0.34, 0.42),   # SW crimson Peloponnese
-	"corinth": Rect2(0.34, 0.18, 0.30, 0.40),  # central gold isthmus
-	"athens": Rect2(0.58, 0.22, 0.32, 0.48),   # east blue coasts / isles
+	"sparta": {"c": Vector2(0.27, 0.63), "r": 0.20},
+	"corinth": {"c": Vector2(0.49, 0.38), "r": 0.17},
+	"athens": {"c": Vector2(0.74, 0.46), "r": 0.19},
 }
 
 ## Red barrier polylines between empires (normalized points).
@@ -34,22 +34,37 @@ func _draw() -> void:
 	var r := get_rect().size
 	if r.x < 8.0 or r.y < 8.0:
 		return
-	# Soft glow over the chosen realm.
+	# Circular magnifying-glass glow over the chosen realm.
 	if REGIONS.has(selected):
-		var nr: Rect2 = REGIONS[selected]
-		var gr := Rect2(nr.position * r, nr.size * r)
+		var info: Dictionary = REGIONS[selected]
+		var centre: Vector2 = Vector2(info["c"].x, info["c"].y) * r
+		# Radius scales with the shorter map axis so the lens stays round.
+		var rad: float = float(info["r"]) * minf(r.x, r.y)
 		var col := Color(1.0, 0.82, 0.35, 0.22)
 		if selected == "sparta":
-			col = Color(1.0, 0.28, 0.18, 0.26)
+			col = Color(1.0, 0.28, 0.18, 0.28)
 		elif selected == "athens":
-			col = Color(0.25, 0.55, 1.0, 0.26)
+			col = Color(0.25, 0.55, 1.0, 0.28)
 		elif selected == "corinth":
-			col = Color(1.0, 0.82, 0.2, 0.26)
-		draw_rect(gr, col, true)
-		# Bright rim
+			col = Color(1.0, 0.82, 0.2, 0.28)
+		# Soft filled lens.
+		draw_circle(centre, rad, col)
+		# Brighter inner wash (magnifier glass).
+		var inner := col
+		inner.a = col.a * 0.55
+		draw_circle(centre, rad * 0.62, inner)
+		# Glass rim.
 		var rim := col
-		rim.a = 0.85
-		draw_rect(gr.grow(2.0), rim, false, 3.0)
+		rim.a = 0.92
+		draw_arc(centre, rad, 0.0, TAU, 64, rim, 3.5, true)
+		# Outer ring (metal frame of the loupe).
+		var frame := Color(0.95, 0.9, 0.75, 0.75)
+		draw_arc(centre, rad + 4.0, 0.0, TAU, 64, frame, 2.0, true)
+		# Magnifier handle — short stem pointing bottom-right.
+		var handle_a: Vector2 = centre + Vector2(rad * 0.72, rad * 0.72)
+		var handle_b: Vector2 = handle_a + Vector2(rad * 0.55, rad * 0.55)
+		draw_line(handle_a, handle_b, Color(0.92, 0.85, 0.55, 0.9), 5.0, true)
+		draw_line(handle_a, handle_b, Color(0.55, 0.35, 0.12, 0.85), 2.5, true)
 
 	# Crimson barriers between empires.
 	for line in BARRIERS:

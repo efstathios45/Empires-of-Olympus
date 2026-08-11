@@ -17,10 +17,10 @@ const MAP := BG + "empire_map_hellas.png"
 ## margin only needs to add breathing room on top of that.
 ## Card heights are floors — a card grows to fit its lore, so the map below
 ## the title is the element that absorbs whatever height is left over.
-const CARD_W := 520
+const CARD_W := 480
 const EMPIRE_CARD_H := 440
-const CLASS_CARD_H := 520
-const CARD_PAD := 16
+const CLASS_CARD_H := 560
+const CARD_PAD := 14
 const TEXT_W := CARD_W - 96 - CARD_PAD * 2
 
 const DIM := Color(0.86, 0.82, 0.72)
@@ -40,9 +40,9 @@ const EMPIRE_REGION := {
 }
 
 const CLASS_LORE := {
-	"hoplite": "Drilled until the shield became an arm and the arm became bronze. Where you plant your feet the line holds; where you thrust, the line advances.",
-	"toxotes": "You learned the Cretan bow on goat-paths and cliff winds, loosing at shadows until the shadows fell. Nothing reaches you; you reach everything.",
-	"magos": "The oracles at Dodona found the storm already living in your hands. You read the thunderhead, and you answer it in kind.",
+	"hoplite": "Shield and spear as one. Where you plant your feet the line holds.",
+	"toxotes": "Cretan bow on cliff winds. Nothing reaches you; you reach everything.",
+	"magos": "Storm already living in your hands. You answer the thunderhead in kind.",
 }
 
 var _step: int = 1
@@ -204,19 +204,24 @@ func _wrapped(text: String, size: int, color: Color, width: int) -> Label:
 	l.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
 	l.custom_minimum_size = Vector2(width, 0)
 	l.size_flags_horizontal = Control.SIZE_EXPAND_FILL
-	l.add_theme_constant_override("line_spacing", 2)
+	l.size_flags_vertical = Control.SIZE_SHRINK_BEGIN
+	l.add_theme_constant_override("line_spacing", 1)
+	l.clip_text = false
 	return l
 
 
 ## Icon + one line of gold ink, e.g. a weapon or a realm bonus.
 func _icon_line(icon: String, text: String, color: Color, width: int) -> HBoxContainer:
 	var h := _row(8)
-	var ico := Kit.make_icon(icon, 28)
+	h.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	var ico := Kit.make_icon(icon, 24)
 	if ico != null and ico.texture != null:
 		h.add_child(ico)
-	var l := Kit.make_label(text, 16, color, HORIZONTAL_ALIGNMENT_CENTER)
+	var l := Kit.make_label(text, 14, color, HORIZONTAL_ALIGNMENT_CENTER)
 	l.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
-	l.custom_minimum_size = Vector2(width, 0)
+	l.custom_minimum_size = Vector2(maxi(40, width - 32), 0)
+	l.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	l.clip_text = true
 	h.add_child(l)
 	return h
 
@@ -457,17 +462,18 @@ func _make_class_card(id: String, data: Dictionary) -> PanelContainer:
 	card.custom_minimum_size = Vector2(CARD_W, CLASS_CARD_H)
 	card.size_flags_vertical = Control.SIZE_SHRINK_CENTER
 	card.mouse_filter = Control.MOUSE_FILTER_PASS
+	card.clip_contents = true
 	var v := _card_body(card)
 
-	var art := _image(BG + "class_" + id + ".png", Vector2(TEXT_W, 190), true)
+	var art := _image(BG + "class_" + id + ".png", Vector2(TEXT_W, 150), true)
 	if art != null:
 		v.add_child(art)
 
 	var class_name_text: String = data.get("name", id.capitalize())
-	v.add_child(Kit.make_label(class_name_text, 30, Kit.INK_TITLE, HORIZONTAL_ALIGNMENT_CENTER))
-	v.add_child(_wrapped(String(CLASS_LORE.get(id, data.get("desc", ""))), 15, Kit.INK_SOFT, TEXT_W))
-	v.add_child(_icon_line("icon_sword", String(data.get("weapon_name", "")), Kit.INK, TEXT_W - 40))
-	v.add_child(_icon_line("icon_mana", String(data.get("skill_name", "")), Kit.INK_GOLD, TEXT_W - 40))
+	v.add_child(Kit.make_label(class_name_text, 26, Kit.INK_TITLE, HORIZONTAL_ALIGNMENT_CENTER))
+	v.add_child(_wrapped(String(CLASS_LORE.get(id, data.get("desc", ""))), 13, Kit.INK_SOFT, TEXT_W))
+	v.add_child(_icon_line("icon_sword", String(data.get("weapon_name", "")), Kit.INK, TEXT_W - 36))
+	v.add_child(_icon_line("icon_mana", String(data.get("skill_name", "")), Kit.INK_GOLD, TEXT_W - 36))
 
 	var walk := _card_button("Walk this Path")
 	walk.pressed.connect(_on_pick_class.bind(id))
@@ -520,7 +526,7 @@ func _show_map_overlay() -> void:
 		big.size_flags_vertical = Control.SIZE_EXPAND_FILL
 		v.add_child(big)
 	v.add_child(_sub_line(
-		"Red barriers mark the frontiers  ·  Chosen realm glows on the map"))
+		"Red barriers mark the frontiers  ·  Chosen realm glows in the loupe"))
 
 	var close := Kit.make_button("Close", false)
 	close.custom_minimum_size = Vector2(260, 62)

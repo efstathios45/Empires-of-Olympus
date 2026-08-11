@@ -43,8 +43,8 @@ const GROVES := [
 # 40 s respawn tops the hunting grounds back up as the player clears them.
 const ZONES := [
 	{"c": Vector2(0.0, -80.0), "r": 17.0,
-		"ids": ["wolf_enemy", "wolf_enemy", "wolf_enemy",
-				"boar_enemy", "boar_enemy"]},
+		"ids": ["wolf_enemy", "wolf_enemy", "wolf_black_enemy",
+				"wolf_dire_enemy", "boar_enemy", "boar_enemy"]},
 	{"c": Vector2(80.0, -20.0), "r": 17.0,
 		"ids": ["satyr_enemy", "satyr_enemy", "satyr_enemy",
 				"harpy_enemy", "harpy_enemy"]},
@@ -463,11 +463,20 @@ func _build_wilds() -> void:
 			rng.randf_range(1.8, 4.2), rng.randf() * 360.0, 2)
 		placed += 1
 
-	# The three cursed Oracle Stones.
-	for pos in [Vector2(40.0, -70.0), Vector2(-70.0, -25.0), Vector2(35.0, 55.0)]:
-		var stone := OracleStoneScript.create(Vector3(pos.x, sample_height(pos.x, pos.y), pos.y))
+	# Metin-style Oracle Stones — one of each tier across the wilds.
+	var stone_spots: Array = [
+		[Vector2(40.0, -70.0), 1],
+		[Vector2(-70.0, -25.0), 5],
+		[Vector2(35.0, 55.0), 10],
+		[Vector2(-45.0, 70.0), 15],
+	]
+	for entry in stone_spots:
+		var pos: Vector2 = entry[0]
+		var tier: int = int(entry[1])
+		var stone := OracleStoneScript.create(
+			Vector3(pos.x, sample_height(pos.x, pos.y), pos.y), tier)
 		add_child(stone)
-		add_interactable(stone)
+		# Combat-only (hit to chip HP) — not an E-interact prop.
 
 	# Hidden treasure.
 	for pos in [Vector2(30.0, -58.0), Vector2(-62.0, 10.0), Vector2(18.0, 88.0)]:

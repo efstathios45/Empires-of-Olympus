@@ -6,16 +6,52 @@ signal enemy_died(enemy_id: String, position: Vector3)
 
 const VfxHelper = preload("res://scripts/vfx_helper.gd")
 
+## Creature tiers: wolves 1 · boars 3 · satyrs 5 · mythics 8 · bosses 15.
+## Stats below are authored for that level (already scaled — not raw L1).
 const ENEMY_CONFIGS := {
 	"wolf_enemy": {
-		"name": "Wild Wolf",
+		"name": "Grey Wolf",
+		"level": 1,
 		# Quaternius Ultimate Animated Animals (CC0) — includes a real Death clip.
 		"glb": "res://assets/characters/_free_cc0/quaternius_wolf.glb",
 		"lib": "",
-		"height": 1.1, "hp": 45, "dmg": 8.0, "speed": 4.6,
-		"xp": 26, "gold": [4, 10], "aggro": 9.0, "reach": 1.9,
+		"height": 1.05, "hp": 42, "dmg": 7.0, "speed": 4.6,
+		"xp": 18, "gold": [3, 8], "aggro": 9.0, "reach": 1.9,
 		"attack_cd": 1.4, "material": "Wolf Pelt",
 		"facing_plus_z": true,
+		"tint": Color(0.78, 0.78, 0.82),
+		"clips": {
+			"idle": "Idle", "walk": "Walk", "sprint": "Gallop",
+			"attack": "Attack", "hit": "Idle_HitReact1", "death": "Death",
+		},
+	},
+	"wolf_black_enemy": {
+		"name": "Shadow Wolf",
+		"level": 1,
+		"quest_id": "wolf_enemy",
+		"glb": "res://assets/characters/_free_cc0/quaternius_wolf.glb",
+		"lib": "",
+		"height": 1.12, "hp": 48, "dmg": 8.5, "speed": 4.8,
+		"xp": 22, "gold": [4, 9], "aggro": 9.5, "reach": 1.95,
+		"attack_cd": 1.35, "material": "Wolf Pelt",
+		"facing_plus_z": true,
+		"tint": Color(0.28, 0.26, 0.30),
+		"clips": {
+			"idle": "Idle", "walk": "Walk", "sprint": "Gallop",
+			"attack": "Attack", "hit": "Idle_HitReact1", "death": "Death",
+		},
+	},
+	"wolf_dire_enemy": {
+		"name": "Dire Wolf",
+		"level": 1,
+		"quest_id": "wolf_enemy",
+		"glb": "res://assets/characters/_free_cc0/quaternius_wolf.glb",
+		"lib": "",
+		"height": 1.28, "hp": 58, "dmg": 10.0, "speed": 4.4,
+		"xp": 28, "gold": [5, 11], "aggro": 10.0, "reach": 2.1,
+		"attack_cd": 1.5, "material": "Wolf Pelt",
+		"facing_plus_z": true,
+		"tint": Color(0.55, 0.42, 0.34),
 		"clips": {
 			"idle": "Idle", "walk": "Walk", "sprint": "Gallop",
 			"attack": "Attack", "hit": "Idle_HitReact1", "death": "Death",
@@ -23,14 +59,15 @@ const ENEMY_CONFIGS := {
 	},
 	"boar_enemy": {
 		"name": "Wild Boar",
+		"level": 3,
 		# Gobkit Free Animal Pack Vol.2 — real dead/idle/walk/attack timeline.
 		# Skin binds already encode Maya ×100; scale by skeleton only (never MI×100).
 		"glb": "res://assets/characters/_free_cc0/gobkit_boar.glb",
 		"lib": "",
 		"maya_cm": true,
-		"realistic_hide": true,
-		"height": 0.95, "hp": 70, "dmg": 11.0, "speed": 4.2,
-		"xp": 34, "gold": [6, 14], "aggro": 9.5, "reach": 2.0,
+		"natural_hide": true,
+		"height": 0.95, "hp": 110, "dmg": 14.0, "speed": 4.2,
+		"xp": 48, "gold": [8, 16], "aggro": 9.5, "reach": 2.0,
 		"attack_cd": 1.7, "material": "Boar Tusk",
 		"facing_plus_z": true,
 		"slice_master": "Take 001",
@@ -50,42 +87,47 @@ const ENEMY_CONFIGS := {
 	},
 	"satyr_enemy": {
 		"name": "Satyr Raider",
+		"level": 5,
 		"glb": "res://assets/characters/satyr_enemy/satyr_enemy.glb",
 		"lib": "res://assets/characters/satyr_enemy/satyr_enemy_animations.tres",
-		"height": 1.7, "hp": 95, "dmg": 14.0, "speed": 5.2,
-		"xp": 52, "gold": [10, 20], "aggro": 10.5, "reach": 2.1,
+		"height": 1.7, "hp": 160, "dmg": 18.0, "speed": 5.2,
+		"xp": 78, "gold": [14, 26], "aggro": 10.5, "reach": 2.1,
 		"attack_cd": 1.3, "material": "Satyr Horn",
 	},
 	"harpy_enemy": {
 		"name": "Harpy",
+		"level": 8,
 		"glb": "res://assets/characters/harpy_enemy/harpy_enemy.glb",
 		"lib": "res://assets/characters/harpy_enemy/harpy_enemy_animations.tres",
-		"height": 1.75, "hp": 105, "dmg": 15.0, "speed": 5.6,
-		"xp": 60, "gold": [12, 22], "aggro": 11.5, "reach": 2.1,
+		"height": 1.75, "hp": 240, "dmg": 24.0, "speed": 5.6,
+		"xp": 120, "gold": [20, 36], "aggro": 11.5, "reach": 2.1,
 		"attack_cd": 1.2, "material": "Harpy Feather", "screech": true,
 	},
 	"centaur_enemy": {
 		"name": "Centaur Warrior",
+		"level": 8,
 		"glb": "res://assets/characters/centaur_enemy/centaur_enemy.glb",
 		"lib": "res://assets/characters/centaur_enemy/centaur_enemy_animations.tres",
-		"height": 2.3, "hp": 185, "dmg": 21.0, "speed": 6.0,
-		"xp": 115, "gold": [22, 40], "aggro": 11.0, "reach": 2.6,
+		"height": 2.3, "hp": 320, "dmg": 28.0, "speed": 6.0,
+		"xp": 145, "gold": [28, 48], "aggro": 11.0, "reach": 2.6,
 		"attack_cd": 1.6, "material": "Centaur Hoof",
 	},
 	"gorgon_enemy": {
 		"name": "Gorgon",
+		"level": 8,
 		"glb": "res://assets/characters/gorgon_enemy/gorgon_enemy.glb",
 		"lib": "res://assets/characters/gorgon_enemy/gorgon_enemy_animations.tres",
-		"height": 2.0, "hp": 230, "dmg": 25.0, "speed": 4.4,
-		"xp": 145, "gold": [28, 48], "aggro": 10.0, "reach": 2.4,
+		"height": 2.0, "hp": 360, "dmg": 30.0, "speed": 4.4,
+		"xp": 160, "gold": [32, 55], "aggro": 10.0, "reach": 2.4,
 		"attack_cd": 1.8, "material": "Gorgon Venom",
 	},
 	"minotaur_boss": {
 		"name": "The Minotaur",
+		"level": 15,
 		"glb": "res://assets/characters/minotaur_boss/minotaur_boss.glb",
 		"lib": "res://assets/characters/minotaur_boss/minotaur_boss_animations.tres",
-		"height": 3.4, "hp": 1400, "dmg": 38.0, "speed": 5.0,
-		"xp": 1200, "gold": [280, 420], "aggro": 14.0, "reach": 3.4,
+		"height": 3.4, "hp": 2800, "dmg": 55.0, "speed": 5.0,
+		"xp": 2200, "gold": [400, 600], "aggro": 14.0, "reach": 3.4,
 		"attack_cd": 2.2, "material": "Minotaur Horn", "boss": true,
 	},
 }
@@ -117,6 +159,8 @@ enum State { IDLE, CHASE, ATTACK, HIT, DEAD }
 var enemy_id: String = "wolf_enemy"
 var cfg: Dictionary = {}
 var hp: float = 50.0
+var max_hp: float = 50.0
+var level: int = 1
 var dead: bool = false
 var is_boss: bool = false
 
@@ -173,7 +217,9 @@ func _ready() -> void:
 	collision_layer = 4
 	collision_mask = 1 | 2
 	cfg = ENEMY_CONFIGS.get(enemy_id, ENEMY_CONFIGS["wolf_enemy"])
-	hp = cfg["hp"]
+	level = int(cfg.get("level", 1))
+	max_hp = float(cfg["hp"])
+	hp = max_hp
 	is_boss = cfg.get("boss", false)
 	spawn_point = global_position
 	wander_target = spawn_point
@@ -218,8 +264,10 @@ func _build_body() -> void:
 		else:
 			ModelUtils.setup_character_for_movement(model, cfg["height"])
 		ModelUtils.clamp_world_height(model, maxf(cfg["height"] * 2.5, 4.0), cfg["height"])
-		if cfg.get("realistic_hide", false):
-			_apply_realistic_boar_hide(model)
+		if cfg.get("natural_hide", false):
+			_apply_natural_boar_hide(model)
+		elif cfg.has("tint"):
+			_apply_tint(model, cfg["tint"])
 		anim = model.find_child("AnimationPlayer", true) as AnimationPlayer
 		if anim == null:
 			anim = AnimationPlayer.new()
@@ -350,20 +398,45 @@ func _force_oneshot_clips(names: Array) -> void:
 			a.loop_mode = Animation.LOOP_NONE
 
 
-## Replace Gobkit's flat palette atlas with a bristly brown hide.
-func _apply_realistic_boar_hide(model: Node3D) -> void:
-	const HIDE := "res://assets/textures/creatures/boar_hide_realistic.png"
+## Remap Gobkit's cartoon palette atlas to natural wild-boar browns (same UVs).
+func _apply_natural_boar_hide(model: Node3D) -> void:
+	const HIDE := "res://assets/textures/creatures/boar_hide_natural.png"
 	var mat := StandardMaterial3D.new()
-	mat.albedo_color = Color(0.72, 0.58, 0.42)
+	mat.albedo_color = Color(0.92, 0.88, 0.82)
 	if ResourceLoader.exists(HIDE):
 		mat.albedo_texture = load(HIDE)
-	mat.roughness = 0.92
+	else:
+		# Fallback: original atlas, browned.
+		const ATLAS := "res://assets/characters/_free_cc0/gobkit_boar_0.png"
+		if ResourceLoader.exists(ATLAS):
+			mat.albedo_texture = load(ATLAS)
+		mat.albedo_color = Color(0.55, 0.42, 0.30)
+	mat.roughness = 0.94
 	mat.metallic = 0.0
 	mat.texture_filter = BaseMaterial3D.TEXTURE_FILTER_LINEAR_WITH_MIPMAPS
 	for child in model.find_children("*", "MeshInstance3D"):
 		var mi := child as MeshInstance3D
 		if mi:
 			mi.material_override = mat
+
+
+## Tint Quaternius wolf variants (grey / shadow / dire) without new meshes.
+func _apply_tint(model: Node3D, tint: Color) -> void:
+	for child in model.find_children("*", "MeshInstance3D"):
+		var mi := child as MeshInstance3D
+		if mi == null:
+			continue
+		var base: Material = mi.get_active_material(0)
+		var mat: StandardMaterial3D
+		if base is StandardMaterial3D:
+			mat = (base as StandardMaterial3D).duplicate() as StandardMaterial3D
+		else:
+			mat = StandardMaterial3D.new()
+			if base != null:
+				mi.set_surface_override_material(0, mat)
+		mat.albedo_color = tint
+		mat.roughness = 0.85
+		mi.material_override = mat
 
 # ── Nameplate, health bar, boss beacon ───────────────────────────────────
 func _build_plate() -> void:
@@ -380,7 +453,7 @@ func _build_plate() -> void:
 	add_child(plate)
 
 	name_label = Label3D.new()
-	name_label.text = str(cfg["name"])
+	name_label.text = "%s  Lv.%d" % [str(cfg["name"]), level]
 	if ResourceLoader.exists(NAME_FONT):
 		var f: Font = load(NAME_FONT)
 		if f:
@@ -729,7 +802,7 @@ func _die() -> void:
 	if randf() < 0.12:
 		GameState.health_potions += 1
 		GameState.potions_changed.emit()
-	GameState.register_kill(enemy_id)
+	GameState.register_kill(String(cfg.get("quest_id", enemy_id)))
 	if is_boss:
 		GameState.register_minotaur_kill()
 	enemy_died.emit(enemy_id, global_position)

@@ -338,8 +338,8 @@ const QUESTS := [
 	{
 		"id": "stones",
 		"title": "Shatter the Curse",
-		"brief": "Three cursed Oracle Stones poison the land. Destroy them all.",
-		"stones": 3,
+		"brief": "Four cursed Metin stones poison the land. Shatter them all.",
+		"stones": 4,
 		"reward_gold": 350, "reward_xp": 380,
 		"turn_in": "The whispers fade. But something ancient stirs below...",
 	},
@@ -377,7 +377,8 @@ func quest_progress_text() -> String:
 			var have: int = quest_kills.get(enemy_id, 0)
 			lines.append("  %s: %d/%d" % [prettify_enemy(enemy_id), mini(have, need), need])
 	if q.has("stones"):
-		lines.append("  Oracle Stones: %d/3" % mini(oracle_stones_destroyed, 3))
+		lines.append("  Oracle Stones: %d/%d" % [
+			mini(oracle_stones_destroyed, int(q["stones"])), int(q["stones"])])
 	if q.has("boss"):
 		lines.append("  Minotaur: %s" % ("slain" if minotaur_slain else "alive"))
 	return "\n".join(lines)
