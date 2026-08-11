@@ -709,13 +709,14 @@ func _process_chase(delta: float) -> void:
 		# Snarl / charge cry at the start of the lunge.
 		_play_attack_sfx()
 	else:
-		var next_pos := global_position + to_player.normalized() * cfg["speed"] * delta
+		var step: Vector3 = to_player.normalized() * float(cfg["speed"]) * delta
+		var next_pos: Vector3 = global_position + step
 		if world != null and world.has_method("would_enter_sanctuary") \
 				and world.would_enter_sanctuary(global_position, next_pos):
 			_abandon_to_home()
 			return
-		velocity.x = to_player.normalized().x * cfg["speed"]
-		velocity.z = to_player.normalized().z * cfg["speed"]
+		velocity.x = to_player.normalized().x * float(cfg["speed"])
+		velocity.z = to_player.normalized().z * float(cfg["speed"])
 		_face(to_player, delta)
 		_play(_clip("sprint"))
 
