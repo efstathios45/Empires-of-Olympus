@@ -1,15 +1,15 @@
 Empires of Olympus — Windows builds
 ===================================
 
-HOTFIX V10.2 — real wild boar model (with Death)
------------------------------------------------
-- Replaced hedgehog-looking Gobkit boar with OpenGameArt CC0 wild boar
-- Has Idle / Walk / Attack / Death (dies properly — not the old Tripo mesh)
-- Quaternius animal pack has no boar; Sketchfab AnimalMesh is personal-use only
-
-Also includes V10.1 attack SFX (wolf snarl/bite, boar squeal/charge).
+HOTFIX V11 — brown boar, painted aspis, ground loot
+---------------------------------------------------
+- Wild boar: original brown hide (no longer white)
+- Aspis: bronze rim + crimson Spartan Λ face (not white Kenney stub)
+- Enemies drop gear on the ground: knives, swords, bows, shields, helms, armor
+- Inventory bag with Equip buttons; helmet mounts on head
+- Chests also spit out a gear drop
 
 DELETE old game.exe + game.pck before replacing:
 
-  EXE: https://gofile.io/d/tbZgJ9
-  PCK: https://gofile.io/d/Yi6Xtw
+  EXE: https://gofile.io/d/pcKrKh
+  PCK: https://gofile.io/d/nvyaRf
