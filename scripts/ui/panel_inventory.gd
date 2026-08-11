@@ -91,8 +91,26 @@ func _build_gear() -> void:
 	_add_line("Glory: %d / %d to the next level" % [GameState.xp, GameState.xp_needed()], 17)
 	_add_line("Weapon: %s +%d   •   Damage %d" % [
 		cd["weapon_name"], GameState.weapon_refine, int(GameState.attack_damage())], 17)
+	_add_line("Shield: %s   (−%d%% taken)" % [
+		GameState.equipped_name("shield"),
+		int(GameState.armor_mitigation() * 100.0)], 17)
+	_add_line("Helmet: %s" % GameState.equipped_name("helmet"), 17)
+	if String(GameState.equipped.get("sidearm", "")) != "":
+		_add_line("Sidearm: %s" % GameState.equipped_name("sidearm"), 17)
 	_add_line("Skill: %s" % cd["skill_name"], 17)
 	_add_line("Health %d   •   Spirit %d" % [GameState.max_hp(), GameState.max_mp()], 17)
+	_content.add_child(Kit.spacer(8))
+
+	_add_line("Owned Gear", 20, Kit.INK_TITLE)
+	if GameState.owned_gear.is_empty():
+		_add_line("Buy bronze at Brontes' forge.", 16, Kit.INK_SOFT)
+	else:
+		for gid in GameState.owned_gear:
+			var gitem: Dictionary = GameState.SHOP_ITEMS.get(gid, {})
+			var slot: String = String(gitem.get("slot", ""))
+			var on: bool = String(GameState.equipped.get(slot, "")) == String(gid)
+			var mark := "  [equipped]" if on else ""
+			_add_line("%s%s" % [String(gitem.get("name", gid)), mark], 16)
 	_content.add_child(Kit.spacer(8))
 
 	_add_line("Potions", 20, Kit.INK_TITLE)

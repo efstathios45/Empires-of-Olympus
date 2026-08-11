@@ -38,6 +38,27 @@ const SFX := {
 	"potion_drink": "res://assets/audio/sfx/pickup/pickup_potion_drink.mp3",
 	"ui_click": "res://assets/audio/sfx/ui/ui_ui_click.mp3",
 	"ui_confirm": "res://assets/audio/sfx/ui/ui_ui_confirm.mp3",
+	# Per-creature attack / death (unique timbres).
+	"wolf_attack": "res://assets/audio/sfx/enemy/generated/wolf_attack.mp3",
+	"wolf_death": "res://assets/audio/sfx/enemy/generated/wolf_death.mp3",
+	"wolf_black_attack": "res://assets/audio/sfx/enemy/generated/wolf_black_attack.mp3",
+	"wolf_black_death": "res://assets/audio/sfx/enemy/generated/wolf_black_death.mp3",
+	"wolf_dire_attack": "res://assets/audio/sfx/enemy/generated/wolf_dire_attack.mp3",
+	"wolf_dire_death": "res://assets/audio/sfx/enemy/generated/wolf_dire_death.mp3",
+	"boar_attack": "res://assets/audio/sfx/enemy/generated/boar_attack.mp3",
+	"boar_death": "res://assets/audio/sfx/enemy/generated/boar_death.mp3",
+	"satyr_attack": "res://assets/audio/sfx/enemy/generated/satyr_attack.mp3",
+	"satyr_death": "res://assets/audio/sfx/enemy/generated/satyr_death.mp3",
+	"harpy_attack": "res://assets/audio/sfx/enemy/generated/harpy_attack.mp3",
+	"harpy_death": "res://assets/audio/sfx/enemy/generated/harpy_death.mp3",
+	"centaur_attack": "res://assets/audio/sfx/enemy/generated/centaur_attack.mp3",
+	"centaur_death": "res://assets/audio/sfx/enemy/generated/centaur_death.mp3",
+	"gorgon_attack": "res://assets/audio/sfx/enemy/generated/gorgon_attack.mp3",
+	"gorgon_death": "res://assets/audio/sfx/enemy/generated/gorgon_death.mp3",
+	"minotaur_attack": "res://assets/audio/sfx/enemy/generated/minotaur_attack.mp3",
+	"minotaur_death": "res://assets/audio/sfx/enemy/generated/minotaur_death.mp3",
+	"stone_rise": "res://assets/audio/sfx/enemy/generated/stone_rise_attack.mp3",
+	"stone_shatter": "res://assets/audio/sfx/enemy/generated/stone_rise_death.mp3",
 }
 
 const AMBIENT := {

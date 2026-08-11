@@ -9,7 +9,7 @@ const CLASS_LENGTH := {
 	"gun": 0.80,
 	"pistol": 0.26,
 	"melee": 0.95,
-	"shield": 0.55,
+	"shield": 0.70,
 }
 
 # Raw GLB axes are guaranteed by the current P1 driver-image + align_image
@@ -29,7 +29,7 @@ const CLASS_GRIP := {
 	"gun":    {"bone": "RightHand",    "position": Vector3(-0.1, 0.0, 0.0),    "rotation_deg": Vector3(-79, 0, -90), "scale": 1.0},
 	"pistol": {"bone": "RightHand",    "position": Vector3(-0.035, 0.0, 0.0),  "rotation_deg": Vector3(-90, 0, -90), "scale": 1.0},
 	"melee":  {"bone": "RightHand",    "position": Vector3(0.003, -0.134, -0.0005), "rotation_deg": Vector3(-90, -90, 0), "scale": 1.0},
-	"shield": {"bone": "LeftLowerArm", "position": Vector3(0.0, 0.0, 0.0),     "rotation_deg": Vector3(0, 0, 0),     "scale": 1.0},
+	"shield": {"bone": "LeftHand",     "position": Vector3(0.04, 0.02, 0.06),       "rotation_deg": Vector3(10, 90, 15),  "scale": 1.15},
 }
 
 
@@ -40,7 +40,8 @@ static func attach(
 	model: Node3D,
 	weapon_glb_path: String,
 	weapon_class: String = "gun",
-	grip: Dictionary = {}
+	grip: Dictionary = {},
+	mount_name: String = "WeaponMount"
 ) -> Node3D:
 	var skel := _find_skeleton(model)
 	if skel == null:
@@ -68,7 +69,7 @@ static func attach(
 	# so class lengths and grip offsets stay in real-world metres.
 	var comp := 1.0 / maxf(0.0001, model.scale.x)
 	var attachment := BoneAttachment3D.new()
-	attachment.name = "WeaponMount"
+	attachment.name = mount_name
 	attachment.bone_name = String(g.get("bone", "RightHand"))
 	skel.add_child(attachment)
 

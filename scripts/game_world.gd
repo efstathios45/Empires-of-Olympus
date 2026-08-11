@@ -57,6 +57,11 @@ const RESPAWN_DELAY := 40.0
 const BOSS_MUSIC_RANGE := 34.0
 ## Inside this radius of the plaza the town theme + market crowd take over.
 const CITY_AUDIO_RANGE := 44.0
+## Titan Seeds: random crawl-from-earth spawns (chance checked on this interval).
+const STONE_SPAWN_INTERVAL := 22.0
+const STONE_SPAWN_CHANCE := 0.38
+const STONE_MAX_ALIVE := 5
+const STONE_TIERS := [1, 1, 5, 5, 10, 15]
 
 var _terrain: HTerrain = null
 var _splatmap: Image = null
@@ -66,6 +71,7 @@ var player: Node3D = null
 var interactables: Array[Node3D] = []
 var _music_timer: float = 0.0
 var _boss_node: Node3D = null
+var _stone_timer: float = 8.0
 
 ## Adapter the grass field samples: heights as Vector3, plus a grass mask.
 class GrassTerrain extends RefCounted:
@@ -463,20 +469,13 @@ func _build_wilds() -> void:
 			rng.randf_range(1.8, 4.2), rng.randf() * 360.0, 2)
 		placed += 1
 
-	# Metin-style Oracle Stones — one of each tier across the wilds.
-	var stone_spots: Array = [
+	# Seed the wilds with a few Titan Seeds; more crawl up at random over time.
+	for entry in [
 		[Vector2(40.0, -70.0), 1],
 		[Vector2(-70.0, -25.0), 5],
 		[Vector2(35.0, 55.0), 10],
-		[Vector2(-45.0, 70.0), 15],
-	]
-	for entry in stone_spots:
-		var pos: Vector2 = entry[0]
-		var tier: int = int(entry[1])
-		var stone := OracleStoneScript.create(
-			Vector3(pos.x, sample_height(pos.x, pos.y), pos.y), tier)
-		add_child(stone)
-		# Combat-only (hit to chip HP) — not an E-interact prop.
+	]:
+		_spawn_oracle_stone(entry[0] as Vector2, int(entry[1]))
 
 	# Hidden treasure.
 	for pos in [Vector2(30.0, -58.0), Vector2(-62.0, 10.0), Vector2(18.0, 88.0)]:
@@ -665,6 +664,43 @@ func _process(delta: float) -> void:
 	if _music_timer <= 0.0:
 		_music_timer = 0.6
 		_update_music()
+
+	_stone_timer -= delta
+	if _stone_timer <= 0.0:
+		_stone_timer = STONE_SPAWN_INTERVAL
+		if randf() < STONE_SPAWN_CHANCE:
+			_try_random_stone_spawn()
+
+
+func _alive_oracle_stones() -> int:
+	var n := 0
+	for s in get_tree().get_nodes_in_group("oracle_stones"):
+		if is_instance_valid(s) and not s.get("dead"):
+			n += 1
+	return n
+
+
+func _spawn_oracle_stone(pos: Vector2, tier: int) -> void:
+	var stone := OracleStoneScript.create(
+		Vector3(pos.x, sample_height(pos.x, pos.y), pos.y), tier)
+	add_child(stone)
+
+
+func _try_random_stone_spawn() -> void:
+	if _alive_oracle_stones() >= STONE_MAX_ALIVE:
+		return
+	# Prefer wilds away from the plaza and arena.
+	for _i in 12:
+		var wx := randf_range(-95.0, 95.0)
+		var wz := randf_range(-95.0, 95.0)
+		if Vector2(wx, wz).distance_to(HUB_POS) < HUB_RADIUS + 18.0:
+			continue
+		if Vector2(wx, wz).distance_to(ARENA_POS) < 28.0:
+			continue
+		var tier: int = int(STONE_TIERS[randi() % STONE_TIERS.size()])
+		_spawn_oracle_stone(Vector2(wx, wz), tier)
+		return
+
 
 ## Zone soundtrack, polled every 0.6 s from _process. Priority: the Minotaur
 ## first, then the city, then the open country. AudioManager.play_music /

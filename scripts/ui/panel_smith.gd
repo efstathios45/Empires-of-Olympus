@@ -217,10 +217,13 @@ func _rebuild_shop() -> void:
 		desc.custom_minimum_size = Vector2(400, 0)
 		text.add_child(desc)
 
-		var btn := Kit.make_button("%d gold" % item["price"], false)
+		var owned: bool = String(item.get("kind", "")) == "gear" and GameState.owned_gear.has(item_id)
+		var btn := Kit.make_button("Owned" if owned else "%d gold" % item["price"], false)
 		btn.custom_minimum_size = Vector2(190, 58)
 		btn.add_theme_font_size_override("font_size", 18)
-		btn.pressed.connect(_on_buy.bind(item_id))
+		btn.disabled = owned
+		if not owned:
+			btn.pressed.connect(_on_buy.bind(item_id))
 		row.add_child(btn)
 
 # ── Actions ──────────────────────────────────────────────────────────────

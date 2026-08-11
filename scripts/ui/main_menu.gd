@@ -546,9 +546,9 @@ func _close_overlay() -> void:
 # ── Into the world ───────────────────────────────────────────────────────
 
 func _on_play() -> void:
-	GameState.reset_run()
 	GameState.empire = _empire
 	GameState.player_class = _class
+	GameState.reset_run()
 	AudioManager.play_sfx("ui_confirm")
 	Input.mouse_mode = Input.MOUSE_MODE_CAPTURED
 	LoadingScreen.preload_and_change_scene("res://scenes/game_world.tscn", 1.5)

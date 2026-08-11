@@ -67,6 +67,7 @@ var _target_timer: float = 0.0
 var mesh_root: Node3D
 var anim: AnimationPlayer
 var weapon_node: Node3D
+var shield_node: Node3D
 var camera_pivot: Node3D
 var spring_arm: SpringArm3D
 var camera: Camera3D
@@ -116,12 +117,60 @@ func _build_body() -> void:
 
 	# Class weapon in the right hand.
 	var weapon_path: String = GameState.class_data()["weapon"]
+	# Hoplite with xiphos sidearm swaps the spear mesh.
+	if GameState.player_class == "hoplite":
+		var side_glb: String = GameState.equipped_glb("sidearm")
+		if side_glb != "" and ResourceLoader.exists(side_glb):
+			weapon_path = side_glb
 	if ResourceLoader.exists(weapon_path):
 		var grip_class := "melee"
-		weapon_node = WeaponGrip.attach(model, weapon_path, grip_class)
+		weapon_node = WeaponGrip.attach(model, weapon_path, grip_class, {}, "WeaponMount")
 		_update_weapon_glow()
 
+	# Hoplites always carry an aspis (or upgraded shield) on the left arm.
+	if GameState.player_class == "hoplite":
+		var shield_path: String = GameState.equipped_glb("shield")
+		if shield_path == "":
+			shield_path = String(GameState.class_data().get("shield", ""))
+		if shield_path != "" and ResourceLoader.exists(shield_path):
+			shield_node = WeaponGrip.attach(model, shield_path, "shield", {}, "ShieldMount")
+
 	anim.play("ual1_Idle")
+	if not GameState.inventory_changed.is_connected(_on_gear_changed):
+		GameState.inventory_changed.connect(_on_gear_changed)
+
+
+func _on_gear_changed() -> void:
+	_refresh_held_gear()
+
+
+func _refresh_held_gear() -> void:
+	if mesh_root == null or mesh_root.get_child_count() == 0:
+		return
+	var model: Node3D = mesh_root.get_child(0) as Node3D
+	if model == null:
+		return
+	if weapon_node != null and is_instance_valid(weapon_node):
+		weapon_node.queue_free()
+		weapon_node = null
+	if shield_node != null and is_instance_valid(shield_node):
+		shield_node.queue_free()
+		shield_node = null
+	var weapon_path: String = GameState.class_data()["weapon"]
+	if GameState.player_class == "hoplite":
+		var side_glb: String = GameState.equipped_glb("sidearm")
+		if side_glb != "" and ResourceLoader.exists(side_glb):
+			weapon_path = side_glb
+	if ResourceLoader.exists(weapon_path):
+		weapon_node = WeaponGrip.attach(model, weapon_path, "melee", {}, "WeaponMount")
+		_update_weapon_glow()
+	if GameState.player_class == "hoplite":
+		var shield_path: String = GameState.equipped_glb("shield")
+		if shield_path == "":
+			shield_path = String(GameState.class_data().get("shield", ""))
+		if shield_path != "" and ResourceLoader.exists(shield_path):
+			shield_node = WeaponGrip.attach(model, shield_path, "shield", {}, "ShieldMount")
+
 
 func _build_camera() -> void:
 	camera_pivot = Node3D.new()

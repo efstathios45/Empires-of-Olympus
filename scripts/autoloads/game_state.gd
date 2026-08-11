@@ -47,6 +47,8 @@ const CLASSES := {
 		"desc": "Spear and shield. A wall of bronze that strikes back.",
 		"weapon": "res://assets/props/weapons/dory_spear.glb",
 		"weapon_name": "Dory Spear",
+		"shield": "res://assets/props/gear/aspis_shield.glb",
+		"shield_name": "Aspis",
 		"base_dmg": 14.0, "base_hp": 130, "base_mp": 60,
 		"attack_range": 3.2, "attack_arc": 1.9,
 		"skill_name": "Spear of Achilles",
@@ -59,6 +61,8 @@ const CLASSES := {
 		"desc": "Cretan bow. Death arrives before the whisper of the string.",
 		"weapon": "res://assets/props/weapons/cretan_bow.glb",
 		"weapon_name": "Cretan Bow",
+		"shield": "",
+		"shield_name": "",
 		"base_dmg": 11.0, "base_hp": 100, "base_mp": 80,
 		"attack_range": 22.0, "attack_arc": 0.5,
 		"skill_name": "Artemis Volley",
@@ -71,6 +75,8 @@ const CLASSES := {
 		"desc": "Theurgist of storm and shadow. Olympus answers his call.",
 		"weapon": "res://assets/props/weapons/theurgist_staff.glb",
 		"weapon_name": "Theurgist Staff",
+		"shield": "",
+		"shield_name": "",
 		"base_dmg": 12.0, "base_hp": 90, "base_mp": 110,
 		"attack_range": 18.0, "attack_arc": 0.6,
 		"skill_name": "Zeus's Thunderbolt",
@@ -107,11 +113,44 @@ const SCROLLS := {
 }
 
 const SHOP_ITEMS := {
-	"health_potion": {"name": "Health Potion", "desc": "Restores 60 HP.", "price": 25, "icon": "res://assets/ui/icon_potion.png"},
-	"mana_potion": {"name": "Mana Potion", "desc": "Restores 40 MP.", "price": 25, "icon": "res://assets/ui/icon_mana.png"},
-	"hephaestus": {"name": "Scroll of Hephaestus's Blessing", "desc": "Refine at base rate.", "price": 60, "icon": "res://assets/ui/icon_scroll.png"},
-	"titan": {"name": "Titan's Forging Stone", "desc": "Refine at fixed 75%.", "price": 150, "icon": "res://assets/ui/icon_gem.png"},
-	"oracle": {"name": "Oracle's Ritual Stone", "desc": "Refine with no downgrade risk.", "price": 220, "icon": "res://assets/ui/icon_scroll.png"},
+	"health_potion": {"name": "Health Potion", "desc": "Restores 60 HP.", "price": 25, "icon": "res://assets/ui/icon_potion.png", "kind": "consumable"},
+	"mana_potion": {"name": "Mana Potion", "desc": "Restores 40 MP.", "price": 25, "icon": "res://assets/ui/icon_mana.png", "kind": "consumable"},
+	"hephaestus": {"name": "Scroll of Hephaestus's Blessing", "desc": "Refine at base rate.", "price": 60, "icon": "res://assets/ui/icon_scroll.png", "kind": "scroll"},
+	"titan": {"name": "Titan's Forging Stone", "desc": "Refine at fixed 75%.", "price": 150, "icon": "res://assets/ui/icon_gem.png", "kind": "scroll"},
+	"oracle": {"name": "Oracle's Ritual Stone", "desc": "Refine with no downgrade risk.", "price": 220, "icon": "res://assets/ui/icon_scroll.png", "kind": "scroll"},
+	# Gear — Kenney Mini Dungeon CC0 (aspis/xiphos) + procedural Corinthian helm.
+	"aspis": {
+		"name": "Aspis (Hoplon)", "desc": "Round bronze-rimmed shield. −12% damage taken.",
+		"price": 180, "icon": "res://assets/ui/icon_shield.png", "kind": "gear",
+		"slot": "shield", "glb": "res://assets/props/gear/aspis_shield.glb",
+		"armor": 0.12,
+	},
+	"tower_shield": {
+		"name": "Tower Aspis", "desc": "Heavy rectangular shield. −18% damage taken.",
+		"price": 320, "icon": "res://assets/ui/icon_shield.png", "kind": "gear",
+		"slot": "shield", "glb": "res://assets/props/gear/tower_shield.glb",
+		"armor": 0.18,
+	},
+	"xiphos": {
+		"name": "Xiphos", "desc": "Short leaf-blade sword. Replaces spear (melee).",
+		"price": 240, "icon": "res://assets/ui/icon_sword.png", "kind": "gear",
+		"slot": "sidearm", "glb": "res://assets/props/gear/xiphos_sword.glb",
+		"dmg_bonus": 4.0,
+	},
+	"corinthian_helm": {
+		"name": "Corinthian Helmet", "desc": "Bronze helm with crest. +25 max HP.",
+		"price": 200, "icon": "res://assets/ui/icon_boot.png", "kind": "gear",
+		"slot": "helmet", "glb": "res://assets/props/gear/corinthian_helmet.glb",
+		"hp_bonus": 25,
+	},
+}
+
+## Owned gear ids (bought from Brontes). Equipped ids per slot.
+var owned_gear: Array = []
+var equipped: Dictionary = {
+	"shield": "aspis",   # Hoplites start with aspis; cleared for other classes on start
+	"helmet": "",
+	"sidearm": "",
 }
 
 # ── Runtime state ────────────────────────────────────────────────────────
@@ -159,7 +198,14 @@ func reset_run() -> void:
 	minotaur_slain = false
 	clan_name = ""
 	clan_rank = ""
+	owned_gear = []
+	equipped = {"shield": "", "helmet": "", "sidearm": ""}
+	# Hoplites always march with spear + aspis.
+	if player_class == "hoplite":
+		owned_gear.append("aspis")
+		equipped["shield"] = "aspis"
 	stats_changed.emit()
+	inventory_changed.emit()
 
 func empire_data() -> Dictionary:
 	return EMPIRES.get(empire, EMPIRES["sparta"])
@@ -176,6 +222,10 @@ func attack_damage() -> float:
 		base *= empire_data().get("spell_mult", 1.0)
 	else:
 		base *= empire_data().get("dmg_mult", 1.0)
+	# Sidearm (xiphos) bonus when equipped.
+	var side: String = String(equipped.get("sidearm", ""))
+	if side != "" and SHOP_ITEMS.has(side):
+		base += float(SHOP_ITEMS[side].get("dmg_bonus", 0.0))
 	return base
 
 func skill_damage() -> float:
@@ -183,14 +233,27 @@ func skill_damage() -> float:
 	var d: float = attack_damage() * cd["skill_mult"] * empire_data().get("spell_mult", 1.0)
 	return d
 
+func armor_mitigation() -> float:
+	var total := 0.0
+	var sh: String = String(equipped.get("shield", ""))
+	if sh != "" and SHOP_ITEMS.has(sh):
+		total += float(SHOP_ITEMS[sh].get("armor", 0.0))
+	return clampf(total, 0.0, 0.45)
+
 func max_hp() -> int:
-	return int(class_data()["base_hp"] + (level - 1) * 14)
+	var hp: int = int(class_data()["base_hp"] + (level - 1) * 14)
+	var helm: String = String(equipped.get("helmet", ""))
+	if helm != "" and SHOP_ITEMS.has(helm):
+		hp += int(SHOP_ITEMS[helm].get("hp_bonus", 0))
+	return hp
 
 func max_mp() -> int:
 	return int(class_data()["base_mp"] + (level - 1) * 8)
 
 func damage_taken_mult() -> float:
-	return 1.0 / empire_data().get("def_mult", 1.0)
+	var m: float = 1.0 / empire_data().get("def_mult", 1.0)
+	m *= (1.0 - armor_mitigation())
+	return m
 
 func move_speed_mult() -> float:
 	return empire_data().get("speed_mult", 1.0)
@@ -228,6 +291,9 @@ func buy_item(item_id: String) -> bool:
 	var item: Dictionary = SHOP_ITEMS.get(item_id, {})
 	if item.is_empty():
 		return false
+	# Already own unique gear — refuse double-buy.
+	if String(item.get("kind", "")) == "gear" and owned_gear.has(item_id):
+		return false
 	if not spend_gold(item["price"]):
 		return false
 	match item_id:
@@ -240,7 +306,47 @@ func buy_item(item_id: String) -> bool:
 		"hephaestus", "titan", "oracle":
 			scrolls[item_id] = scrolls.get(item_id, 0) + 1
 			inventory_changed.emit()
+		_:
+			if String(item.get("kind", "")) == "gear":
+				if not owned_gear.has(item_id):
+					owned_gear.append(item_id)
+				equip_gear(item_id)
+				inventory_changed.emit()
+				stats_changed.emit()
 	return true
+
+
+func equip_gear(item_id: String) -> void:
+	if not SHOP_ITEMS.has(item_id):
+		return
+	if not owned_gear.has(item_id):
+		return
+	var item: Dictionary = SHOP_ITEMS[item_id]
+	var slot: String = String(item.get("slot", ""))
+	if slot == "":
+		return
+	equipped[slot] = item_id
+	inventory_changed.emit()
+	stats_changed.emit()
+
+
+func equipped_glb(slot: String) -> String:
+	var id: String = String(equipped.get(slot, ""))
+	if id == "" or not SHOP_ITEMS.has(id):
+		# Class default shield for hoplites.
+		if slot == "shield":
+			return String(class_data().get("shield", ""))
+		return ""
+	return String(SHOP_ITEMS[id].get("glb", ""))
+
+
+func equipped_name(slot: String) -> String:
+	var id: String = String(equipped.get(slot, ""))
+	if id != "" and SHOP_ITEMS.has(id):
+		return String(SHOP_ITEMS[id]["name"])
+	if slot == "shield":
+		return String(class_data().get("shield_name", "—"))
+	return "—"
 
 func use_health_potion() -> bool:
 	if health_potions <= 0:

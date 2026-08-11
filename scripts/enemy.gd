@@ -10,9 +10,9 @@ const VfxHelper = preload("res://scripts/vfx_helper.gd")
 ## Stats below are authored for that level (already scaled — not raw L1).
 const ENEMY_CONFIGS := {
 	"wolf_enemy": {
-		"name": "Grey Wolf",
+		# Lykaon — the Arcadian king Zeus turned into a wolf.
+		"name": "Lykaon Wolf",
 		"level": 1,
-		# Quaternius Ultimate Animated Animals (CC0) — includes a real Death clip.
 		"glb": "res://assets/characters/_free_cc0/quaternius_wolf.glb",
 		"lib": "",
 		"height": 1.05, "hp": 42, "dmg": 7.0, "speed": 4.6,
@@ -20,13 +20,15 @@ const ENEMY_CONFIGS := {
 		"attack_cd": 1.4, "material": "Wolf Pelt",
 		"facing_plus_z": true,
 		"tint": Color(0.78, 0.78, 0.82),
+		"sfx_attack": "wolf_attack", "sfx_death": "wolf_death",
 		"clips": {
 			"idle": "Idle", "walk": "Walk", "sprint": "Gallop",
 			"attack": "Attack", "hit": "Idle_HitReact1", "death": "Death",
 		},
 	},
 	"wolf_black_enemy": {
-		"name": "Shadow Wolf",
+		# Stygian — from the underworld river Styx.
+		"name": "Stygian Wolf",
 		"level": 1,
 		"quest_id": "wolf_enemy",
 		"glb": "res://assets/characters/_free_cc0/quaternius_wolf.glb",
@@ -36,13 +38,15 @@ const ENEMY_CONFIGS := {
 		"attack_cd": 1.35, "material": "Wolf Pelt",
 		"facing_plus_z": true,
 		"tint": Color(0.28, 0.26, 0.30),
+		"sfx_attack": "wolf_black_attack", "sfx_death": "wolf_black_death",
 		"clips": {
 			"idle": "Idle", "walk": "Walk", "sprint": "Gallop",
 			"attack": "Attack", "hit": "Idle_HitReact1", "death": "Death",
 		},
 	},
 	"wolf_dire_enemy": {
-		"name": "Dire Wolf",
+		# Erymanthian — kin of the famous boar of the Fourth Labour.
+		"name": "Erymanthian Wolf",
 		"level": 1,
 		"quest_id": "wolf_enemy",
 		"glb": "res://assets/characters/_free_cc0/quaternius_wolf.glb",
@@ -52,24 +56,24 @@ const ENEMY_CONFIGS := {
 		"attack_cd": 1.5, "material": "Wolf Pelt",
 		"facing_plus_z": true,
 		"tint": Color(0.55, 0.42, 0.34),
+		"sfx_attack": "wolf_dire_attack", "sfx_death": "wolf_dire_death",
 		"clips": {
 			"idle": "Idle", "walk": "Walk", "sprint": "Gallop",
 			"attack": "Attack", "hit": "Idle_HitReact1", "death": "Death",
 		},
 	},
 	"boar_enemy": {
-		"name": "Wild Boar",
+		# Gobkit original atlas + sliced death (Take 001) — no remapped hide.
+		"name": "Erymanthian Boar",
 		"level": 3,
-		# Gobkit Free Animal Pack Vol.2 — real dead/idle/walk/attack timeline.
-		# Skin binds already encode Maya ×100; scale by skeleton only (never MI×100).
 		"glb": "res://assets/characters/_free_cc0/gobkit_boar.glb",
 		"lib": "",
 		"maya_cm": true,
-		"natural_hide": true,
 		"height": 0.95, "hp": 110, "dmg": 14.0, "speed": 4.2,
 		"xp": 48, "gold": [8, 16], "aggro": 9.5, "reach": 2.0,
 		"attack_cd": 1.7, "material": "Boar Tusk",
 		"facing_plus_z": true,
+		"sfx_attack": "boar_attack", "sfx_death": "boar_death",
 		"slice_master": "Take 001",
 		"slice_fps": 24.0,
 		"slices": {
@@ -93,6 +97,7 @@ const ENEMY_CONFIGS := {
 		"height": 1.7, "hp": 160, "dmg": 18.0, "speed": 5.2,
 		"xp": 78, "gold": [14, 26], "aggro": 10.5, "reach": 2.1,
 		"attack_cd": 1.3, "material": "Satyr Horn",
+		"sfx_attack": "satyr_attack", "sfx_death": "satyr_death",
 	},
 	"harpy_enemy": {
 		"name": "Harpy",
@@ -102,6 +107,7 @@ const ENEMY_CONFIGS := {
 		"height": 1.75, "hp": 240, "dmg": 24.0, "speed": 5.6,
 		"xp": 120, "gold": [20, 36], "aggro": 11.5, "reach": 2.1,
 		"attack_cd": 1.2, "material": "Harpy Feather", "screech": true,
+		"sfx_attack": "harpy_attack", "sfx_death": "harpy_death",
 	},
 	"centaur_enemy": {
 		"name": "Centaur Warrior",
@@ -111,6 +117,7 @@ const ENEMY_CONFIGS := {
 		"height": 2.3, "hp": 320, "dmg": 28.0, "speed": 6.0,
 		"xp": 145, "gold": [28, 48], "aggro": 11.0, "reach": 2.6,
 		"attack_cd": 1.6, "material": "Centaur Hoof",
+		"sfx_attack": "centaur_attack", "sfx_death": "centaur_death",
 	},
 	"gorgon_enemy": {
 		"name": "Gorgon",
@@ -120,6 +127,7 @@ const ENEMY_CONFIGS := {
 		"height": 2.0, "hp": 360, "dmg": 30.0, "speed": 4.4,
 		"xp": 160, "gold": [32, 55], "aggro": 10.0, "reach": 2.4,
 		"attack_cd": 1.8, "material": "Gorgon Venom",
+		"sfx_attack": "gorgon_attack", "sfx_death": "gorgon_death",
 	},
 	"minotaur_boss": {
 		"name": "The Minotaur",
@@ -129,6 +137,7 @@ const ENEMY_CONFIGS := {
 		"height": 3.4, "hp": 2800, "dmg": 55.0, "speed": 5.0,
 		"xp": 2200, "gold": [400, 600], "aggro": 14.0, "reach": 3.4,
 		"attack_cd": 2.2, "material": "Minotaur Horn", "boss": true,
+		"sfx_attack": "minotaur_attack", "sfx_death": "minotaur_death",
 	},
 }
 
@@ -264,9 +273,8 @@ func _build_body() -> void:
 		else:
 			ModelUtils.setup_character_for_movement(model, cfg["height"])
 		ModelUtils.clamp_world_height(model, maxf(cfg["height"] * 2.5, 4.0), cfg["height"])
-		if cfg.get("natural_hide", false):
-			_apply_natural_boar_hide(model)
-		elif cfg.has("tint"):
+		# Boar keeps Gobkit's authored atlas (death clips intact). Wolves tint only.
+		if cfg.has("tint"):
 			_apply_tint(model, cfg["tint"])
 		anim = model.find_child("AnimationPlayer", true) as AnimationPlayer
 		if anim == null:
@@ -398,29 +406,7 @@ func _force_oneshot_clips(names: Array) -> void:
 			a.loop_mode = Animation.LOOP_NONE
 
 
-## Remap Gobkit's cartoon palette atlas to natural wild-boar browns (same UVs).
-func _apply_natural_boar_hide(model: Node3D) -> void:
-	const HIDE := "res://assets/textures/creatures/boar_hide_natural.png"
-	var mat := StandardMaterial3D.new()
-	mat.albedo_color = Color(0.92, 0.88, 0.82)
-	if ResourceLoader.exists(HIDE):
-		mat.albedo_texture = load(HIDE)
-	else:
-		# Fallback: original atlas, browned.
-		const ATLAS := "res://assets/characters/_free_cc0/gobkit_boar_0.png"
-		if ResourceLoader.exists(ATLAS):
-			mat.albedo_texture = load(ATLAS)
-		mat.albedo_color = Color(0.55, 0.42, 0.30)
-	mat.roughness = 0.94
-	mat.metallic = 0.0
-	mat.texture_filter = BaseMaterial3D.TEXTURE_FILTER_LINEAR_WITH_MIPMAPS
-	for child in model.find_children("*", "MeshInstance3D"):
-		var mi := child as MeshInstance3D
-		if mi:
-			mi.material_override = mat
-
-
-## Tint Quaternius wolf variants (grey / shadow / dire) without new meshes.
+## Tint Quaternius wolf variants without new meshes.
 func _apply_tint(model: Node3D, tint: Color) -> void:
 	for child in model.find_children("*", "MeshInstance3D"):
 		var mi := child as MeshInstance3D
@@ -598,11 +584,12 @@ func _telegraph_aggro() -> void:
 	if _telegraph_cd > 0.0:
 		return
 	_telegraph_cd = 5.0
-	AudioManager.play_sfx("enemy_growl", -4.0, randf_range(0.9, 1.12))
+	var growl: String = String(cfg.get("sfx_attack", "enemy_growl"))
+	AudioManager.play_sfx(growl, -4.0, randf_range(0.92, 1.08))
 	if cfg.get("screech"):
-		AudioManager.play_sfx("harpy_screech", -2.0)
+		AudioManager.play_sfx("harpy_screech", -6.0)
 	if is_boss:
-		AudioManager.play_sfx("minotaur_roar", 0.0)
+		AudioManager.play_sfx("minotaur_roar", -2.0)
 	_flash_plate()
 
 func _flash_plate() -> void:
@@ -696,6 +683,8 @@ func _process_chase(delta: float) -> void:
 		velocity.z = 0
 		_face(to_player, 1.0)
 		_play(_attack_clip(), false)
+		var atk: String = String(cfg.get("sfx_attack", "enemy_growl"))
+		AudioManager.play_sfx(atk, -2.0, randf_range(0.95, 1.05))
 	else:
 		velocity.x = to_player.normalized().x * cfg["speed"]
 		velocity.z = to_player.normalized().z * cfg["speed"]
@@ -784,7 +773,8 @@ func _die() -> void:
 	velocity = Vector3.ZERO
 	collision_layer = 0
 	collision_mask = 1
-	AudioManager.play_sfx("hit_flesh", 0.0, 0.7)
+	var death_sfx: String = String(cfg.get("sfx_death", "hit_flesh"))
+	AudioManager.play_sfx(death_sfx, -1.0, randf_range(0.92, 1.05))
 	# Nameplate, bar and beacon all go with the creature.
 	if _flash_tween != null and _flash_tween.is_valid():
 		_flash_tween.kill()
