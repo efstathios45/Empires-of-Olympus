@@ -79,6 +79,56 @@ static func set_animation_loops(anim_player: AnimationPlayer) -> void:
 		else:
 			anim.loop_mode = Animation.LOOP_LINEAR
 
+
+## Copy keys from `src` that fall in [start_s, end_s) into a new Animation,
+## shifted so the slice starts at t=0. Used to carve Gobkit master timelines
+## into idle / attack / dead / walk clips.
+static func subclip_animation(src: Animation, start_s: float, end_s: float, loop: bool = false) -> Animation:
+	var out := Animation.new()
+	var length: float = maxf(0.05, end_s - start_s)
+	out.length = length
+	out.loop_mode = Animation.LOOP_LINEAR if loop else Animation.LOOP_NONE
+	if src == null:
+		return out
+	for ti in src.get_track_count():
+		var path := src.track_get_path(ti)
+		var type := src.track_get_type(ti)
+		var new_ti := out.add_track(type)
+		out.track_set_path(new_ti, path)
+		out.track_set_interpolation_type(new_ti, src.track_get_interpolation_type(ti))
+		out.track_set_enabled(new_ti, src.track_is_enabled(ti))
+		var kc: int = src.track_get_key_count(ti)
+		for ki in kc:
+			var t: float = src.track_get_key_time(ti, ki)
+			if t < start_s - 0.0001 or t > end_s + 0.0001:
+				continue
+			var local_t: float = clampf(t - start_s, 0.0, length)
+			var trans: float = src.track_get_key_transition(ti, ki)
+			match type:
+				Animation.TYPE_VALUE, Animation.TYPE_BLEND_SHAPE:
+					out.track_insert_key(new_ti, local_t, src.track_get_key_value(ti, ki), trans)
+				Animation.TYPE_POSITION_3D:
+					out.position_track_insert_key(new_ti, local_t, src.position_track_interpolate(ti, t))
+				Animation.TYPE_ROTATION_3D:
+					out.rotation_track_insert_key(new_ti, local_t, src.rotation_track_interpolate(ti, t))
+				Animation.TYPE_SCALE_3D:
+					out.scale_track_insert_key(new_ti, local_t, src.scale_track_interpolate(ti, t))
+				_:
+					# Best-effort for other track types.
+					out.track_insert_key(new_ti, local_t, src.track_get_key_value(ti, ki), trans)
+		# Guarantee a key at the slice start/end so the pose doesn't pop.
+		if out.track_get_key_count(new_ti) == 0:
+			match type:
+				Animation.TYPE_POSITION_3D:
+					out.position_track_insert_key(new_ti, 0.0, src.position_track_interpolate(ti, start_s))
+				Animation.TYPE_ROTATION_3D:
+					out.rotation_track_insert_key(new_ti, 0.0, src.rotation_track_interpolate(ti, start_s))
+				Animation.TYPE_SCALE_3D:
+					out.scale_track_insert_key(new_ti, 0.0, src.scale_track_interpolate(ti, start_s))
+				Animation.TYPE_VALUE, Animation.TYPE_BLEND_SHAPE:
+					out.track_insert_key(new_ti, 0.0, src.value_track_interpolate(ti, start_s))
+	return out
+
 ## World-space height of a node's combined mesh AABB.
 static func measure_height(node: Node3D) -> float:
 	var min_y := INF

@@ -9,19 +9,42 @@ const VfxHelper = preload("res://scripts/vfx_helper.gd")
 const ENEMY_CONFIGS := {
 	"wolf_enemy": {
 		"name": "Wild Wolf",
-		"glb": "res://assets/characters/wolf_enemy/wolf_enemy.glb",
-		"lib": "res://assets/characters/wolf_enemy/wolf_enemy_animations.tres",
+		# Quaternius Ultimate Animated Animals (CC0) — includes a real Death clip.
+		"glb": "res://assets/characters/_free_cc0/quaternius_wolf.glb",
+		"lib": "",
 		"height": 1.1, "hp": 45, "dmg": 8.0, "speed": 4.6,
 		"xp": 26, "gold": [4, 10], "aggro": 9.0, "reach": 1.9,
 		"attack_cd": 1.4, "material": "Wolf Pelt",
+		"facing_plus_z": true,
+		"clips": {
+			"idle": "Idle", "walk": "Walk", "sprint": "Gallop",
+			"attack": "Attack", "hit": "Idle_HitReact1", "death": "Death",
+		},
 	},
 	"boar_enemy": {
 		"name": "Wild Boar",
-		"glb": "res://assets/characters/boar_enemy/boar_enemy.glb",
-		"lib": "res://assets/characters/boar_enemy/boar_enemy_animations.tres",
+		# Gobkit Free Animal Pack Vol.2 (CC0) — boar with dead/idle/walk/attack timeline.
+		"glb": "res://assets/characters/_free_cc0/gobkit_boar.glb",
+		"lib": "",
 		"height": 1.15, "hp": 70, "dmg": 11.0, "speed": 4.2,
 		"xp": 34, "gold": [6, 14], "aggro": 9.5, "reach": 2.0,
 		"attack_cd": 1.7, "material": "Boar Tusk",
+		"facing_plus_z": true,
+		# Master timeline sliced at 24 fps (idle/attack/dead/walk).
+		"slice_master": "Take 001",
+		"slice_fps": 24.0,
+		"slices": {
+			"idle": [0, 29, true],
+			"attack": [30, 59, false],
+			"death": [60, 89, false],
+			"walk": [90, 119, true],
+			"sprint": [90, 119, true],
+			"hit": [30, 45, false],
+		},
+		"clips": {
+			"idle": "idle", "walk": "walk", "sprint": "sprint",
+			"attack": "attack", "hit": "hit", "death": "death",
+		},
 	},
 	"satyr_enemy": {
 		"name": "Satyr Raider",
@@ -65,6 +88,16 @@ const ENEMY_CONFIGS := {
 	},
 }
 
+## Default UAL clip names used by humanoid enemies.
+const DEFAULT_CLIPS := {
+	"idle": "ual1_Idle",
+	"walk": "ual1_Walk",
+	"sprint": "ual1_Sprint",
+	"attack": "ual1_Sword_Attack",
+	"hit": "ual1_Hit_Chest",
+	"death": "ual1_Death01",
+}
+
 const GRAVITY := 22.0
 const WANDER_RADIUS := 7.0
 
@@ -97,10 +130,10 @@ var mesh_root: Node3D
 var anim: AnimationPlayer
 var player: Node3D
 var world: Node3D
-## True when the mesh uses a humanoid GeneralSkeleton that can play UAL clips
-## (Death / Hit / Walk). Wolves & boars ship with auto-rigs that cannot.
+## True when this foe can play skeletal clips (UAL humanoid OR free animal pack).
 var _skeletal_anims: bool = false
 var _death_clip := "ual1_Death01"
+var _clips: Dictionary = {}
 
 # Nameplate / threat readability.
 var plate: Node3D
@@ -164,34 +197,99 @@ func _build_body() -> void:
 	mesh_root = Node3D.new()
 	mesh_root.name = "MeshRoot"
 	add_child(mesh_root)
+
+	_clips = DEFAULT_CLIPS.duplicate()
+	if cfg.has("clips"):
+		for k in cfg["clips"]:
+			_clips[k] = cfg["clips"][k]
+	_death_clip = String(_clips.get("death", "ual1_Death01"))
+
 	var glb_path: String = cfg["glb"]
 	if ResourceLoader.exists(glb_path):
 		var model: Node3D = load(glb_path).instantiate()
 		mesh_root.add_child(model)
+		# Free animal packs are authored facing +Z; the rest of the game aims -Z.
+		if cfg.get("facing_plus_z", false):
+			model.rotation.y = PI
 		ModelUtils.setup_character_for_movement(model, cfg["height"])
-		_skeletal_anims = _prepare_skeleton_for_anims(model)
 		anim = model.find_child("AnimationPlayer", true) as AnimationPlayer
 		if anim == null:
 			anim = AnimationPlayer.new()
 			model.add_child(anim)
-		var lib_path: String = cfg["lib"]
-		if ResourceLoader.exists(lib_path):
+		var lib_path: String = String(cfg.get("lib", ""))
+		if lib_path != "" and ResourceLoader.exists(lib_path):
 			var lib := load(lib_path) as AnimationLibrary
 			if lib:
 				if anim.has_animation_library(""):
 					anim.remove_animation_library("")
 				anim.add_animation_library("", lib)
+		# Gobkit-style packs: one master timeline → slice into named clips.
+		if cfg.has("slices") and cfg.has("slice_master"):
+			_install_sliced_clips(String(cfg["slice_master"]), float(cfg.get("slice_fps", 24.0)), cfg["slices"])
+		_skeletal_anims = _prepare_skeleton_for_anims(model)
 		ModelUtils.set_animation_loops(anim)
-		# Death / hit / attack must never loop, even if the .tres says otherwise.
-		_force_oneshot_clips(["ual1_Death01", "ual1_Hit_Chest", "ual1_Sword_Attack",
-			"ual1_Punch_Jab", "ual2_Sword_Heavy_A", "ual2_Sword_Heavy_B"])
+		_force_oneshot_clips([
+			_clip("death"), _clip("hit"), _clip("attack"),
+			"ual1_Death01", "ual1_Hit_Chest", "ual1_Sword_Attack",
+			"ual1_Punch_Jab", "ual2_Sword_Heavy_A", "ual2_Sword_Heavy_B",
+			"Death", "Attack", "Attack_Headbutt", "Idle_HitReact1", "Idle_HitReact2",
+		])
+		# Locomotion loops on free packs.
+		for role in ["idle", "walk", "sprint"]:
+			var n := _clip(role)
+			if anim.has_animation(n):
+				var a := anim.get_animation(n)
+				if a:
+					a.loop_mode = Animation.LOOP_LINEAR
 	if anim and _skeletal_anims:
-		_play("ual1_Idle")
+		_play(_clip("idle"))
 
 
-## Make sure %GeneralSkeleton paths in UAL clips resolve, and report whether
-## the rig has the humanoid bones those clips need (Hips at minimum).
+func _clip(role: String) -> String:
+	return String(_clips.get(role, DEFAULT_CLIPS.get(role, role)))
+
+
+## Slice a master timeline (Gobkit) into named one-shot / loop clips.
+func _install_sliced_clips(master_name: String, fps: float, slices: Dictionary) -> void:
+	if anim == null or not anim.has_animation(master_name):
+		return
+	var master := anim.get_animation(master_name)
+	if master == null:
+		return
+	var lib: AnimationLibrary
+	if anim.has_animation_library(""):
+		lib = anim.get_animation_library("")
+	else:
+		lib = AnimationLibrary.new()
+		anim.add_animation_library("", lib)
+	for role in slices.keys():
+		var spec: Array = slices[role]
+		var from_f: float = float(spec[0])
+		var to_f: float = float(spec[1])
+		var do_loop: bool = bool(spec[2]) if spec.size() > 2 else false
+		var start_s: float = from_f / fps
+		var end_s: float = (to_f + 1.0) / fps
+		var sliced := ModelUtils.subclip_animation(master, start_s, end_s, do_loop)
+		var clip_name := String(_clips.get(role, role))
+		if lib.has_animation(clip_name):
+			lib.remove_animation(clip_name)
+		lib.add_animation(clip_name, sliced)
+
+
+## Humanoid UAL rigs need GeneralSkeleton+Hips. Free animal packs already ship
+## matching Death/Idle clips on their own skeleton — accept those too.
 func _prepare_skeleton_for_anims(model: Node3D) -> bool:
+	if anim != null:
+		if anim.has_animation(_death_clip):
+			return true
+		if anim.has_animation("Death"):
+			_death_clip = "Death"
+			_clips["death"] = "Death"
+			return true
+		if anim.has_animation("death"):
+			_death_clip = "death"
+			_clips["death"] = "death"
+			return true
 	var skel: Skeleton3D = null
 	for node in model.find_children("*", "Skeleton3D", true, false):
 		skel = node as Skeleton3D
@@ -200,7 +298,6 @@ func _prepare_skeleton_for_anims(model: Node3D) -> bool:
 		return false
 	if skel.find_bone("Hips") < 0:
 		return false
-	# Animation tracks address "%GeneralSkeleton:Bone".
 	if skel.name != "GeneralSkeleton":
 		skel.name = "GeneralSkeleton"
 	skel.unique_name_in_owner = true
@@ -212,7 +309,7 @@ func _force_oneshot_clips(names: Array) -> void:
 		return
 	for n in names:
 		var clip := String(n)
-		if not anim.has_animation(clip):
+		if clip == "" or not anim.has_animation(clip):
 			continue
 		var a := anim.get_animation(clip)
 		if a:
@@ -447,12 +544,12 @@ func _process_idle(delta: float) -> void:
 		wander_target = spawn_point + offset
 		velocity.x = 0
 		velocity.z = 0
-		_play("ual1_Idle")
+		_play(_clip("idle"))
 	else:
 		velocity.x = to_target.normalized().x * cfg["speed"] * 0.35
 		velocity.z = to_target.normalized().z * cfg["speed"] * 0.35
 		_face(to_target, delta)
-		_play("ual1_Walk")
+		_play(_clip("walk"))
 
 	if _player_distance() < float(cfg["aggro"]):
 		state = State.CHASE
@@ -481,7 +578,7 @@ func _process_chase(delta: float) -> void:
 		velocity.x = to_player.normalized().x * cfg["speed"]
 		velocity.z = to_player.normalized().z * cfg["speed"]
 		_face(to_player, delta)
-		_play("ual1_Sprint")
+		_play(_clip("sprint"))
 
 func _process_attack(_delta: float) -> void:
 	velocity.x = 0
@@ -500,11 +597,11 @@ func _process_attack(_delta: float) -> void:
 func _attack_clip() -> String:
 	match enemy_id:
 		"minotaur_boss":
-			return "ual2_Sword_Heavy_A" if randf() < 0.5 else "ual1_Sword_Attack"
+			return "ual2_Sword_Heavy_A" if randf() < 0.5 else _clip("attack")
 		"centaur_enemy":
-			return "ual2_Sword_Heavy_A" if randf() < 0.4 else "ual1_Sword_Attack"
+			return "ual2_Sword_Heavy_A" if randf() < 0.4 else _clip("attack")
 		_:
-			return "ual1_Sword_Attack"
+			return _clip("attack")
 
 func _player_distance() -> float:
 	if player == null:
@@ -555,7 +652,7 @@ func take_damage(amount: float, from_position: Vector3) -> void:
 	if not is_boss and state != State.ATTACK:
 		state = State.HIT
 		state_timer = 0.35
-		_play("ual1_Hit_Chest", false)
+		_play(_clip("hit"), false)
 	velocity += (global_position - from_position).normalized() * 2.2
 
 func _die() -> void:
