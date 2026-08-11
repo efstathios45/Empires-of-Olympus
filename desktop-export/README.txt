@@ -1,23 +1,24 @@
-Empires of Olympus — Windows build (Godot 4.4.1)
-================================================
+Empires of Olympus — Windows (Godot 4.4.1)
+=========================================
 
-This is the SAME engine .exe style that worked before on GitHub
-(Godot 4.4.1 x86_64). Do not use the older Godot 4.3 builds.
+CRITICAL — how to know you have the REAL files
+----------------------------------------------
+game.exe  MUST be about 93 MB (97520128 bytes)
+game.pck  MUST be about 39 MB
 
-REQUIREMENTS
-- 64-bit Windows 10/11 (x86_64). Not macOS / Linux / 32-bit / ARM-only.
+If game.exe is only ~300 KB, you downloaded a GitHub HTML error page
+(not the game). Windows then says "not for your version of Windows".
+Delete that fake file.
 
-HOW TO RUN
-1. Put BOTH files in the SAME folder:
-     game.exe
-     game.pck
-2. Double-click game.exe
-3. If Windows complains about an unknown publisher, click More info → Run anyway
+This GitHub repo is PRIVATE. Do NOT use raw.githubusercontent.com or
+"Save link as" on Raw — those return a login/404 HTML page.
 
-DO NOT
-- Open game.exe with WinRAR (it is not a zip)
-- Run game.exe without game.pck next to it
-- Use EmpiresOfOlympus.exe from older agent zips (those were Godot 4.3)
+HOW TO DOWNLOAD FROM GITHUB (while logged into GitHub)
+1. Open folder desktop-export/ on this PR branch
+2. Open game.exe → click "Download raw file"
+3. Open game.pck → click "Download raw file"
+4. Put BOTH in the same folder → run game.exe
 
-CONTROLS
-WASD move, mouse look, click attack, Q skill, E interact, F block, C dodge
+EASIER: use EmpiresOfOlympus-Windows.zip from Cursor agent artifacts.
+
+REQUIREMENTS: 64-bit Windows 10/11 (x86_64)

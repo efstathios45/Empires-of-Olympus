@@ -504,10 +504,9 @@ func _physics_process(delta: float) -> void:
 	_telegraph_cd = maxf(0.0, _telegraph_cd - delta)
 
 	if dead:
-		velocity.x = 0
-		velocity.z = 0
-		_apply_gravity(delta)
-		move_and_slide()
+		# Freeze in place. Applying gravity after clearing collision_layer
+		# lets corpses fall through the terrain and look like an instant pop.
+		velocity = Vector3.ZERO
 		return
 
 	if player == null or not is_instance_valid(player):
@@ -685,10 +684,11 @@ func _die() -> void:
 		GameState.register_minotaur_kill()
 	enemy_died.emit(enemy_id, global_position)
 
-	# Death performance: skeletal UAL clip when the rig supports it (satyr,
-	# harpy, centaur, gorgon, minotaur…); wolves/boars get a procedural tumble
-	# because their auto-rig bones do not match the animation library.
+	# Death performance: skeletal clip when available (UAL humanoids + free
+	# Quaternius/Gobkit animal packs); otherwise a procedural tumble.
 	var settle_s: float = _start_death_performance()
+	print("[enemy] death id=", enemy_id, " skeletal=", _skeletal_anims,
+		" clip=", _death_clip, " settle_s=", settle_s)
 	var tree := get_tree()
 	if tree:
 		var t := tree.create_timer(settle_s)
@@ -708,10 +708,12 @@ func _start_death_performance() -> float:
 		anim.play(_death_clip)
 		# Hold the final pose after the clip ends.
 		anim.animation_finished.connect(_on_death_anim_finished, CONNECT_ONE_SHOT)
-		# Bosses get a longer corpse beat; trash packs clear faster.
-		return maxf(skeletal_len, 1.2) + (2.4 if is_boss else 1.4)
+		# Bosses get a longer corpse beat; animals need a clear readable hold
+		# so the Death clip is not mistaken for an instant despawn.
+		var hold := 2.4 if is_boss else 2.0
+		return maxf(skeletal_len, 1.2) + hold
 
-	# Auto-rig animals (wolf, boar): tumble the whole mesh onto its side.
+	# Fallback when no matching death clip exists on the rig.
 	return _play_procedural_death()
 
 
