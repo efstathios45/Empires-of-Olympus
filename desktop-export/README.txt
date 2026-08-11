@@ -1,11 +1,15 @@
 Empires of Olympus — Windows build
 ==================================
 
-ONE FILE — download EmpiresOfOlympus.exe and run it.
+ONE FILE — EmpiresOfOlympus.exe
 
-HOTFIX V12.1 — fixes loading crash at ~90%
+HOTFIX V13 — aspis size fix, class looks, Skyrim-like vocals
 
-  https://gofile.io/d/YLiGwN
+  https://gofile.io/d/8vH1el
 
-Also includes V12: aspis forearm grip, plaza sanctuary, soldier combat SFX.
+- Aspis normal-sized on the forearm again
+- Distinct class meshes: Hoplite / Toxotes (archer-guard) / Magos (mystic)
+- Male "ah/ha" attack & hurt vocals (Skyrim-style)
+- Loot includes spears, knives, swords, bows, slings
+
 Delete any old exe first.
