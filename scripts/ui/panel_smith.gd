@@ -242,6 +242,11 @@ func _set_result_color(c: Color) -> void:
 	_result_label.add_theme_color_override("font_color", c)
 
 func _on_buy(item_id: String) -> void:
+	if not GameState.can_fit(item_id):
+		AudioManager.play_sfx("ui_click", -2.0, 0.8)
+		_result_label.text = "Your bag is full — sell to Kyros first."
+		_set_result_color(WARN)
+		return
 	if GameState.buy_item(item_id):
 		AudioManager.play_sfx("gold_pickup", -2.0)
 		_result_label.text = "Purchased."

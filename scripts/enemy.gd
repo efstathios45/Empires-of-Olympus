@@ -535,15 +535,13 @@ func _die() -> void:
 	if beacon != null:
 		beacon.visible = false
 
-	# Loot: gold, xp, crafting material.
+	# Loot: gold + xp instantly; materials / potions / gear as ground pickups
+	# (AABB-fitted so they never spawn as screen-covering giant blocks).
 	var gold_range: Array = cfg["gold"]
 	var gold_amount := randi_range(int(gold_range[0]), int(gold_range[1]))
 	GameState.add_gold(gold_amount)
 	GameState.add_xp(cfg["xp"])
-	GameState.add_material(cfg["material"], 1)
-	if randf() < 0.12:
-		GameState.health_potions += 1
-		GameState.potions_changed.emit()
+	_spawn_ground_loot()
 	GameState.register_kill(enemy_id)
 	if is_boss:
 		GameState.register_minotaur_kill()
@@ -554,6 +552,37 @@ func _die() -> void:
 	if tree:
 		var t := tree.create_timer(3.5)
 		t.timeout.connect(_fade_out)
+
+
+func _spawn_ground_loot() -> void:
+	var parent := get_parent()
+	if parent == null:
+		return
+	var LootPickup = load("res://scripts/loot_pickup.gd")
+	var drops: Array[String] = []
+	# Crafting material always drops as a world pickup.
+	var mat_name: String = String(cfg.get("material", ""))
+	var mat_id: String = GameState.material_item_id(mat_name)
+	if mat_id != "":
+		drops.append(mat_id)
+	# ~10% potion drop (health or mana).
+	if randf() < 0.10:
+		drops.append("health_potion" if randf() < 0.65 else "mana_potion")
+	# Occasional gear (bosses roll more often).
+	var gear_chance := 0.22 if is_boss else 0.12
+	var gear_id: String = GameState.roll_loot_drop(gear_chance, is_boss)
+	if gear_id != "":
+		drops.append(gear_id)
+	if is_boss and randf() < 0.55:
+		var extra: String = GameState.roll_loot_drop(0.85, true)
+		if extra != "" and extra != gear_id:
+			drops.append(extra)
+	for i in drops.size():
+		var drop: Node = LootPickup.new()
+		parent.add_child(drop)
+		var offset := Vector3(randf_range(-0.6, 0.6), 0.2, randf_range(-0.6, 0.6))
+		if drop.has_method("setup"):
+			drop.setup(drops[i], global_position + offset)
 
 func _fade_out() -> void:
 	if not is_instance_valid(self):
