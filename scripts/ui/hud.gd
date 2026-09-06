@@ -453,7 +453,7 @@ func _refresh_quest() -> void:
 	var q: Dictionary = GameState.current_quest()
 	if q.is_empty():
 		_quest_title.text = "All Trials Complete"
-		_quest_lines.text = "Wander, refine, and grow stronger."
+		_quest_lines.text = "Wander, temper your bronze, and grow stronger."
 		_quest_hint.text = ""
 		return
 	_quest_title.text = q["title"]
@@ -691,7 +691,7 @@ func _build_map_field() -> Panel:
 	_add_map_label(field, "Centaur & Gorgon Wilds", Vector2(10, 291), Vector2(130, 46))
 	_add_map_label(field, "Minotaur's Arena", Vector2(145, 328), Vector2(170, 26))
 
-	# The three cursed Oracle Stones.
+	# The three cursed Omphaloi.
 	for stone_pos in MAP_STONES:
 		var sp: Vector2 = stone_pos
 		var gem := Kit.make_icon("icon_gem", 22)
@@ -760,7 +760,7 @@ func _build_map_legend() -> HBoxContainer:
 	legend.add_child(_map_circle(16.0, Color(1.0, 0.86, 0.25), Color(0.15, 0.10, 0.04)))
 	legend.add_child(Kit.make_label("You", 16, Kit.INK))
 	legend.add_child(Kit.make_icon("icon_gem", 20))
-	legend.add_child(Kit.make_label("Oracle Stone", 16, Kit.INK))
+	legend.add_child(Kit.make_label("Omphalos", 16, Kit.INK))
 	legend.add_child(Kit.make_icon("icon_skull", 20))
 	legend.add_child(Kit.make_label("Boss lair", 16, Kit.INK))
 	legend.add_child(Kit.make_label("Esc or M to close", 16, Kit.INK_SOFT))

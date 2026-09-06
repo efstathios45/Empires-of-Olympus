@@ -105,7 +105,7 @@ func _refresh() -> void:
 	var q: Dictionary = GameState.current_quest()
 	if q.is_empty():
 		_quest_title.text = "The Trials are complete"
-		_quest_brief.text = "You have done what no hero before you managed. The stones are dust, the beast is felled. Olympia sings your name."
+		_quest_brief.text = "You have done what no hero before you managed. The Omphaloi are dust, the beast is felled. Olympia sings your name."
 		_progress.text = ""
 		_reward.text = ""
 		_complete_btn.visible = false

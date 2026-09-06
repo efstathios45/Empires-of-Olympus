@@ -74,7 +74,7 @@ func _build_header(v: VBoxContainer) -> void:
 	v.add_child(_divider())
 
 func _build_refinery(v: VBoxContainer) -> void:
-	v.add_child(Kit.make_label("Refine Your Weapon", 23, Kit.INK_TITLE))
+	v.add_child(Kit.make_label("Temper Your Weapon", 23, Kit.INK_TITLE))
 	var warn := Kit.make_label(
 		"Failure past +4 drags the weapon back a level — past +6 it can shatter outright.",
 		15, Kit.INK_SOFT)

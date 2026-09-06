@@ -1,5 +1,5 @@
 extends StaticBody3D
-## Oracle Stone — a cursed whispering monolith. Shatter it to cleanse the land.
+## Omphalos — a cursed whispering navel-stone. Shatter it to cleanse the land.
 
 const VfxHelper = preload("res://scripts/vfx_helper.gd")
 

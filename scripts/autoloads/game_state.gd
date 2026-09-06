@@ -80,28 +80,28 @@ const CLASSES := {
 	},
 }
 
-# ── Refinement ───────────────────────────────────────────────────────────
-# Metin2-style success table: chance to go from +N to +(N+1).
+# ── Tempering (Olympian forge gamble) ────────────────────────────────────
+# Hephaestus's forge table: chance to raise a weapon from +N to +(N+1).
 const REFINE_BASE_RATES := [0.95, 0.90, 0.85, 0.75, 0.65, 0.55, 0.45, 0.35, 0.30]
 const REFINE_MAX := 9
 const REFINE_GOLD_COST := [20, 35, 55, 85, 130, 200, 320, 500, 800]
-# Damage multiplier per refine level.
+# Damage multiplier per temper level.
 const REFINE_DMG_BONUS := 0.12
 
 const SCROLLS := {
 	"hephaestus": {
-		"name": "Scroll of Hephaestus's Blessing",
-		"desc": "Uses the base success rate. The honest hammer.",
+		"name": "Papyrus of Hephaestus",
+		"desc": "Tempers at the base forge rate. The honest hammer.",
 		"price": 60,
 	},
 	"titan": {
-		"name": "Titan's Forging Stone",
-		"desc": "Overrides success to a fixed 75%. Titan-forged certainty.",
+		"name": "Titan's Ember",
+		"desc": "Locks temper chance at a fixed 75%. Titan-forged certainty.",
 		"price": 150,
 	},
 	"oracle": {
-		"name": "Oracle's Ritual Stone",
-		"desc": "Failure cannot downgrade or destroy the weapon.",
+		"name": "Pythia's Ward",
+		"desc": "Failure cannot downgrade or shatter the weapon.",
 		"price": 220,
 	},
 }
@@ -128,19 +128,19 @@ const ITEM_DEFS := {
 		"color": Color(0.22, 0.35, 0.78),
 	},
 	"hephaestus": {
-		"name": "Scroll of Hephaestus's Blessing", "desc": "Refine at base rate.",
+		"name": "Papyrus of Hephaestus", "desc": "Tempers at the base forge rate.",
 		"kind": "scroll", "w": 1, "h": 1, "stackable": true, "price": 60, "sell": 22,
 		"icon": "res://assets/ui/icon_scroll.png", "glb": "",
 		"color": Color(0.72, 0.55, 0.25),
 	},
 	"titan": {
-		"name": "Titan's Forging Stone", "desc": "Refine at fixed 75%.",
+		"name": "Titan's Ember", "desc": "Locks temper chance at a fixed 75%.",
 		"kind": "scroll", "w": 1, "h": 1, "stackable": true, "price": 150, "sell": 55,
 		"icon": "res://assets/ui/icon_gem.png", "glb": "",
 		"color": Color(0.55, 0.35, 0.75),
 	},
 	"oracle": {
-		"name": "Oracle's Ritual Stone", "desc": "Refine with no downgrade risk.",
+		"name": "Pythia's Ward", "desc": "Failure cannot downgrade or shatter the blade.",
 		"kind": "scroll", "w": 1, "h": 1, "stackable": true, "price": 220, "sell": 80,
 		"icon": "res://assets/ui/icon_scroll.png", "glb": "",
 		"color": Color(0.35, 0.65, 0.55),
@@ -254,9 +254,9 @@ const ITEM_DEFS := {
 const SHOP_ITEMS := {
 	"health_potion": {"name": "Health Potion", "desc": "Restores 60 HP.", "price": 25, "icon": "res://assets/ui/icon_potion.png"},
 	"mana_potion": {"name": "Mana Potion", "desc": "Restores 40 MP.", "price": 25, "icon": "res://assets/ui/icon_mana.png"},
-	"hephaestus": {"name": "Scroll of Hephaestus's Blessing", "desc": "Refine at base rate.", "price": 60, "icon": "res://assets/ui/icon_scroll.png"},
-	"titan": {"name": "Titan's Forging Stone", "desc": "Refine at fixed 75%.", "price": 150, "icon": "res://assets/ui/icon_gem.png"},
-	"oracle": {"name": "Oracle's Ritual Stone", "desc": "Refine with no downgrade risk.", "price": 220, "icon": "res://assets/ui/icon_scroll.png"},
+	"hephaestus": {"name": "Papyrus of Hephaestus", "desc": "Tempers at the base forge rate.", "price": 60, "icon": "res://assets/ui/icon_scroll.png"},
+	"titan": {"name": "Titan's Ember", "desc": "Locks temper chance at a fixed 75%.", "price": 150, "icon": "res://assets/ui/icon_gem.png"},
+	"oracle": {"name": "Pythia's Ward", "desc": "Failure cannot downgrade or shatter the blade.", "price": 220, "icon": "res://assets/ui/icon_scroll.png"},
 }
 
 ## Enemy material display name → bag item id.
@@ -303,10 +303,19 @@ var materials: Dictionary = {}
 ## Bag entries: {id, count, x, y}. Footprints may span multiple cells.
 var bag: Array = []
 
+## Equipped gear — paperdoll panoply slots (helm, thorax, weapon, aspis).
+## Values are item ids or "" when empty.
+var equipped: Dictionary = {
+	"helmet": "",
+	"armor": "",
+	"weapon": "",
+	"shield": "",
+}
+
 # Quest chain state.
 var quest_index: int = 0
 var quest_kills: Dictionary = {}
-var oracle_stones_destroyed: int = 0
+var omphaloi_destroyed: int = 0
 var minotaur_slain: bool = false
 
 # Clan.
@@ -329,9 +338,10 @@ func reset_run() -> void:
 	scrolls = {"hephaestus": 0, "titan": 0, "oracle": 0}
 	materials = {}
 	bag.clear()
+	equipped = {"helmet": "", "armor": "", "weapon": "", "shield": ""}
 	quest_index = 0
 	quest_kills = {}
-	oracle_stones_destroyed = 0
+	omphaloi_destroyed = 0
 	minotaur_slain = false
 	clan_name = ""
 	clan_rank = ""
@@ -363,6 +373,7 @@ func attack_damage() -> float:
 		base *= empire_data().get("spell_mult", 1.0)
 	else:
 		base *= empire_data().get("dmg_mult", 1.0)
+	base += _equip_stat("atk")
 	return base
 
 func skill_damage() -> float:
@@ -371,13 +382,14 @@ func skill_damage() -> float:
 	return d
 
 func max_hp() -> int:
-	return int(class_data()["base_hp"] + (level - 1) * 14)
+	return int(class_data()["base_hp"] + (level - 1) * 14 + _equip_stat("hp"))
 
 func max_mp() -> int:
 	return int(class_data()["base_mp"] + (level - 1) * 8)
 
 func damage_taken_mult() -> float:
-	return 1.0 / empire_data().get("def_mult", 1.0)
+	var def_bonus: float = 1.0 + _equip_stat("def") * 0.01
+	return 1.0 / (empire_data().get("def_mult", 1.0) * def_bonus)
 
 func move_speed_mult() -> float:
 	return empire_data().get("speed_mult", 1.0)
@@ -568,6 +580,96 @@ func sell_bag_entry(index: int, amount: int = 1) -> int:
 	return gained
 
 
+# ── Equipment (paperdoll panoply) ────────────────────────────────────────
+
+func slot_for_kind(kind: String) -> String:
+	match kind:
+		"helmet":
+			return "helmet"
+		"armor":
+			return "armor"
+		"weapon":
+			return "weapon"
+		"shield":
+			return "shield"
+		_:
+			return ""
+
+
+func _equip_bonus_for(item_id: String) -> Dictionary:
+	var def := item_def(item_id)
+	var atk := float(def.get("atk", 0))
+	var defense := float(def.get("def", 0))
+	var hp := float(def.get("hp", 0))
+	if atk == 0.0 and defense == 0.0 and hp == 0.0:
+		match String(def.get("kind", "")):
+			"weapon":
+				atk = 4.0 + float(def.get("sell", 40)) * 0.02
+			"shield":
+				defense = 6.0
+			"helmet":
+				defense = 3.0
+				hp = 8.0
+			"armor":
+				defense = 5.0
+				hp = 16.0
+	return {"atk": atk, "def": defense, "hp": hp}
+
+
+func _equip_stat(stat: String) -> float:
+	var total := 0.0
+	for slot in equipped.keys():
+		var id: String = String(equipped[slot])
+		if id == "":
+			continue
+		total += float(_equip_bonus_for(id).get(stat, 0.0))
+	return total
+
+
+## Equip a bag entry into its panoply slot. Returns false if not gear / cannot swap.
+func equip_from_bag(index: int) -> bool:
+	if index < 0 or index >= bag.size():
+		return false
+	var e: Dictionary = bag[index]
+	var id: String = String(e.get("id", ""))
+	var def := item_def(id)
+	var slot: String = slot_for_kind(String(def.get("kind", "")))
+	if slot == "":
+		return false
+	var previous: String = String(equipped.get(slot, ""))
+	if not remove_bag_entry(index, 1):
+		return false
+	if previous != "":
+		if not try_add_to_bag(previous, 1):
+			try_add_to_bag(id, 1)
+			return false
+	equipped[slot] = id
+	inventory_changed.emit()
+	stats_changed.emit()
+	return true
+
+
+func unequip_slot(slot: String) -> bool:
+	if not equipped.has(slot):
+		return false
+	var id: String = String(equipped[slot])
+	if id == "":
+		return false
+	if not try_add_to_bag(id, 1):
+		return false
+	equipped[slot] = ""
+	inventory_changed.emit()
+	stats_changed.emit()
+	return true
+
+
+func equipped_name(slot: String) -> String:
+	var id: String = String(equipped.get(slot, ""))
+	if id == "":
+		return "—"
+	return item_name(id)
+
+
 func add_material(mat: String, count: int = 1) -> void:
 	var item_id: String = String(MATERIAL_ITEM.get(mat, ""))
 	if item_id == "":
@@ -630,7 +732,7 @@ func roll_loot_drop(chance: float = 0.28, boss: bool = false) -> String:
 			return String(row.get("id", ""))
 	return String(LOOT_TABLE.back().get("id", ""))
 
-# ── Refinement (the Metin2 gamble) ───────────────────────────────────────
+# ── Tempering (Hephaestus's forge gamble) ───────────────────────────────────────
 ## Returns a Dictionary: {success, destroyed, downgraded, new_level, message}
 func refine_weapon(scroll_id: String) -> Dictionary:
 	if weapon_refine >= REFINE_MAX:
@@ -671,7 +773,7 @@ func refine_weapon(scroll_id: String) -> Dictionary:
 		if protected:
 			result["message"] = "The forge rejects it — but the Oracle's ward holds. No harm done."
 		elif weapon_refine >= 7:
-			# High-tier failure can destroy (classic Metin2 tension).
+			# High-tier failure can destroy (classic forge-ruin tension).
 			if randf() < 0.30:
 				weapon_refine = 0
 				result["destroyed"] = true
@@ -714,7 +816,7 @@ const QUESTS := [
 	{
 		"id": "stones",
 		"title": "Shatter the Curse",
-		"brief": "Three cursed Oracle Stones poison the land. Destroy them all.",
+		"brief": "Three cursed Omphaloi poison the land. Destroy them all.",
 		"stones": 3,
 		"reward_gold": 350, "reward_xp": 380,
 		"turn_in": "The whispers fade. But something ancient stirs below...",
@@ -753,7 +855,7 @@ func quest_progress_text() -> String:
 			var have: int = quest_kills.get(enemy_id, 0)
 			lines.append("  %s: %d/%d" % [prettify_enemy(enemy_id), mini(have, need), need])
 	if q.has("stones"):
-		lines.append("  Oracle Stones: %d/3" % mini(oracle_stones_destroyed, 3))
+		lines.append("  Omphaloi: %d/3" % mini(omphaloi_destroyed, 3))
 	if q.has("boss"):
 		lines.append("  Minotaur: %s" % ("slain" if minotaur_slain else "alive"))
 	return "\n".join(lines)
@@ -766,7 +868,7 @@ func register_kill(enemy_id: String) -> void:
 	_check_quest_completion()
 
 func register_stone_destroyed() -> void:
-	oracle_stones_destroyed += 1
+	omphaloi_destroyed += 1
 	_check_quest_completion()
 
 func register_minotaur_kill() -> void:
@@ -782,7 +884,7 @@ func _check_quest_completion() -> void:
 		for enemy_id in q["kills"]:
 			if quest_kills.get(enemy_id, 0) < q["kills"][enemy_id]:
 				done = false
-	if q.has("stones") and oracle_stones_destroyed < q["stones"]:
+	if q.has("stones") and omphaloi_destroyed < q["stones"]:
 		done = false
 	if q.has("boss") and not minotaur_slain:
 		done = false
@@ -810,7 +912,7 @@ func is_quest_objective_done() -> bool:
 		for enemy_id in q["kills"]:
 			if quest_kills.get(enemy_id, 0) < q["kills"][enemy_id]:
 				return false
-	if q.has("stones") and oracle_stones_destroyed < q["stones"]:
+	if q.has("stones") and omphaloi_destroyed < q["stones"]:
 		return false
 	if q.has("boss") and not minotaur_slain:
 		return false
