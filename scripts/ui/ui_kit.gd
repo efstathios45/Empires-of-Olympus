@@ -30,9 +30,10 @@ const INK_TITLE := Color(0.42, 0.13, 0.10)
 const INK_GOLD := Color(0.48, 0.33, 0.06)
 const INK_GOOD := Color(0.10, 0.36, 0.14)
 
-static func make_label(text: String, size: int = 18,
+static func make_label(text: String, size: int = 16,
 		color: Color = INK, align: HorizontalAlignment = HORIZONTAL_ALIGNMENT_LEFT) -> Label:
 	## Dark ink on marble: no outline (outlines smear small dark text).
+	## Default 16 keeps Cinzel readable inside marble frames without clipping.
 	var l := Label.new()
 	l.text = text
 	l.mouse_filter = Control.MOUSE_FILTER_IGNORE
@@ -42,7 +43,18 @@ static func make_label(text: String, size: int = 18,
 	l.add_theme_color_override("font_color", color)
 	return l
 
-static func make_hud_label(text: String, size: int = 18,
+
+static func make_body(text: String, size: int = 14, color: Color = INK,
+		width: float = 0.0, align: HorizontalAlignment = HORIZONTAL_ALIGNMENT_LEFT) -> Label:
+	## Wrapped body copy that stays inside a panel's usable width.
+	var l := make_label(text, size, color, align)
+	l.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
+	if width > 0.0:
+		l.custom_minimum_size = Vector2(width, 0)
+	l.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	return l
+
+static func make_hud_label(text: String, size: int = 16,
 		color: Color = Color(1.0, 0.96, 0.86), align: HorizontalAlignment = HORIZONTAL_ALIGNMENT_LEFT) -> Label:
 	## Light text with a heavy outline — for labels drawn over the 3D world.
 	var l := Label.new()
@@ -53,17 +65,19 @@ static func make_hud_label(text: String, size: int = 18,
 	l.add_theme_font_size_override("font_size", size)
 	l.add_theme_color_override("font_color", color)
 	l.add_theme_color_override("font_outline_color", Color(0, 0, 0, 0.9))
-	l.add_theme_constant_override("outline_size", 6)
+	l.add_theme_constant_override("outline_size", 5)
 	return l
 
 static func make_button(text: String, primary: bool = true) -> Button:
 	## Kit buttons are blank marble plaques — we draw the label ourselves.
+	## Clip long labels so they never spill past the plaque edges.
 	var b := Button.new()
 	b.text = text
-	b.custom_minimum_size = Vector2(240, 60)
+	b.custom_minimum_size = Vector2(200, 52)
 	b.focus_mode = Control.FOCUS_NONE
-	b.clip_text = false
+	b.clip_text = true
 	b.autowrap_mode = TextServer.AUTOWRAP_OFF
+	b.text_overrun_behavior = TextServer.OVERRUN_TRIM_ELLIPSIS
 	var sb: StyleBox = style("res://assets/ui/btn_blank.tres" if primary else "res://assets/ui/btn_blank_alt.tres")
 	if sb:
 		for st in ["normal", "hover", "pressed", "focus", "disabled"]:
@@ -73,7 +87,7 @@ static func make_button(text: String, primary: bool = true) -> Button:
 		b.add_theme_color_override(st, c)
 	b.add_theme_color_override("font_disabled_color", Color(0.55, 0.5, 0.45))
 	b.add_theme_font_override("font", font())
-	b.add_theme_font_size_override("font_size", 20)
+	b.add_theme_font_size_override("font_size", 17)
 	b.mouse_entered.connect(func() -> void: b.modulate = Color(1.14, 1.10, 1.0))
 	b.mouse_exited.connect(func() -> void: b.modulate = Color.WHITE)
 	b.pressed.connect(func() -> void: AudioManager.play_sfx("ui_click", -4.0))
@@ -157,6 +171,22 @@ static func make_dark_panel(alpha: float = 0.62) -> PanelContainer:
 static func make_icon(name: String, size: int = 36) -> TextureRect:
 	var t := TextureRect.new()
 	t.texture = icon_texture(name)
+	t.custom_minimum_size = Vector2(size, size)
+	t.expand_mode = TextureRect.EXPAND_IGNORE_SIZE
+	t.stretch_mode = TextureRect.STRETCH_KEEP_ASPECT_CENTERED
+	t.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	return t
+
+
+static func load_texture(path: String) -> Texture2D:
+	if path != "" and ResourceLoader.exists(path):
+		return load(path) as Texture2D
+	return null
+
+
+static func make_item_icon(path: String, size: int = 40) -> TextureRect:
+	var t := TextureRect.new()
+	t.texture = load_texture(path)
 	t.custom_minimum_size = Vector2(size, size)
 	t.expand_mode = TextureRect.EXPAND_IGNORE_SIZE
 	t.stretch_mode = TextureRect.STRETCH_KEEP_ASPECT_CENTERED

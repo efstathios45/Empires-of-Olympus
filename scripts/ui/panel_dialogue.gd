@@ -26,7 +26,7 @@ func _ready() -> void:
 	center.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
 
 	var panel := Kit.make_panel(false)
-	panel.custom_minimum_size = Vector2(820, 560)
+	panel.custom_minimum_size = Vector2(780, 520)
 	center.add_child(panel)
 
 	var margin := Kit.make_margin(34)
@@ -40,37 +40,37 @@ func _ready() -> void:
 	speaker.alignment = BoxContainer.ALIGNMENT_CENTER
 	speaker.add_theme_constant_override("separation", 12)
 	v.add_child(speaker)
-	speaker.add_child(Kit.make_icon("icon_laurel", 38))
-	speaker.add_child(Kit.make_label("Priestess Melite", 30, Kit.INK_TITLE))
+	speaker.add_child(Kit.make_icon("icon_laurel", 30))
+	speaker.add_child(Kit.make_label("Priestess Melite", 22, Kit.INK_TITLE))
 
 	var quote := Kit.make_label(
 		"\"The gods watch you, champion. Hellas bleeds — will you answer?\"",
-		17, Kit.INK_SOFT, HORIZONTAL_ALIGNMENT_CENTER)
+		15, Kit.INK_SOFT, HORIZONTAL_ALIGNMENT_CENTER)
 	quote.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
 	quote.custom_minimum_size = Vector2(TEXT_W, 0)
 	v.add_child(quote)
 	v.add_child(_divider())
 
 	# ── Trial ──
-	_quest_title = Kit.make_label("", 24, Kit.INK_TITLE)
+	_quest_title = Kit.make_label("", 18, Kit.INK_TITLE)
 	_quest_title.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
 	_quest_title.custom_minimum_size = Vector2(TEXT_W, 0)
 	v.add_child(_quest_title)
 
-	_quest_brief = Kit.make_label("", 18, Kit.INK)
+	_quest_brief = Kit.make_label("", 14, Kit.INK)
 	_quest_brief.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
 	_quest_brief.custom_minimum_size = Vector2(TEXT_W, 0)
-	_quest_brief.add_theme_constant_override("line_spacing", 8)
+	_quest_brief.add_theme_constant_override("line_spacing", 4)
 	v.add_child(_quest_brief)
 	v.add_child(Kit.spacer(4))
 
-	_progress = Kit.make_label("", 17, Kit.INK_SOFT)
+	_progress = Kit.make_label("", 13, Kit.INK_SOFT)
 	_progress.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
 	_progress.custom_minimum_size = Vector2(TEXT_W, 0)
 	_progress.add_theme_constant_override("line_spacing", 5)
 	v.add_child(_progress)
 
-	_reward = Kit.make_label("", 18, Kit.INK_GOLD)
+	_reward = Kit.make_label("", 14, Kit.INK_GOLD)
 	_reward.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
 	_reward.custom_minimum_size = Vector2(TEXT_W, 0)
 	v.add_child(_reward)
@@ -83,12 +83,12 @@ func _ready() -> void:
 	v.add_child(row)
 
 	_complete_btn = Kit.make_button("Complete Trial", true)
-	_complete_btn.custom_minimum_size = Vector2(280, 64)
+	_complete_btn.custom_minimum_size = Vector2(240, 52)
 	_complete_btn.pressed.connect(_on_complete)
 	row.add_child(_complete_btn)
 
 	var close_btn := Kit.make_button("Farewell", false)
-	close_btn.custom_minimum_size = Vector2(260, 62)
+	close_btn.custom_minimum_size = Vector2(220, 52)
 	close_btn.pressed.connect(func() -> void: hud.close_panel_from_click())
 	row.add_child(close_btn)
 

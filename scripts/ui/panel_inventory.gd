@@ -4,7 +4,8 @@ extends Control
 
 const Kit = preload("res://scripts/ui/ui_kit.gd")
 
-const CELL := 48
+const CELL := 52
+const ICON_PAD := 4
 const SLOT_KEYS := ["helmet", "armor", "weapon", "shield"]
 const SLOT_LABELS := {
 	"helmet": "Helm",
@@ -19,7 +20,7 @@ var initial_tab: String = "gear"
 var _tabs: HBoxContainer
 var _body: Control
 var _detail: Label
-var _equip_btns: Dictionary = {}
+var _equip_slots: Dictionary = {}
 var _bag_cells: Array = []
 var _selected_bag: int = -1
 var _selected_slot: String = ""
@@ -67,8 +68,8 @@ func _build_shell() -> void:
 	var top := HBoxContainer.new()
 	top.add_theme_constant_override("separation", 12)
 	v.add_child(top)
-	top.add_child(Kit.make_icon("icon_laurel", 34))
-	var title := Kit.make_label("Panoply & Pouch", 28, Kit.INK_TITLE)
+	top.add_child(Kit.make_icon("icon_laurel", 28))
+	var title := Kit.make_label("Panoply & Pouch", 22, Kit.INK_TITLE)
 	title.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	top.add_child(title)
 	var close_btn := Kit.make_button("Close", false)
@@ -103,7 +104,7 @@ func _show(which: String) -> void:
 	for c in _body.get_children():
 		c.queue_free()
 	_bag_cells.clear()
-	_equip_btns.clear()
+	_equip_slots.clear()
 	_stat_labels.clear()
 	_selected_bag = -1
 	_selected_slot = ""
@@ -134,31 +135,16 @@ func _build_panoply() -> void:
 	left.add_theme_constant_override("separation", 8)
 	row.add_child(left)
 
-	left.add_child(Kit.make_label("Worn Panoply", 20, Kit.INK_GOLD))
+	left.add_child(Kit.make_label("Worn Panoply", 17, Kit.INK_GOLD))
 	var emp := GameState.empire_data()
 	var cls := GameState.class_data()
 	left.add_child(Kit.make_label("%s · %s" % [emp.get("name", "?"), cls.get("name", "?")], 14, Kit.INK_SOFT))
 
 	for key in SLOT_KEYS:
-		var slot_row := HBoxContainer.new()
-		slot_row.add_theme_constant_override("separation", 8)
-		left.add_child(slot_row)
-		var tag := Kit.make_label(SLOT_LABELS[key], 13, Kit.INK_SOFT)
-		tag.custom_minimum_size = Vector2(70, 0)
-		slot_row.add_child(tag)
-		var slot_btn := Button.new()
-		slot_btn.custom_minimum_size = Vector2(180, 40)
-		slot_btn.alignment = HORIZONTAL_ALIGNMENT_LEFT
-		slot_btn.focus_mode = Control.FOCUS_NONE
-		slot_btn.add_theme_font_override("font", Kit.font())
-		slot_btn.add_theme_font_size_override("font_size", 14)
-		slot_btn.add_theme_color_override("font_color", Kit.INK)
-		slot_btn.pressed.connect(_select_equip_slot.bind(key))
-		slot_row.add_child(slot_btn)
-		_equip_btns[key] = slot_btn
+		left.add_child(_make_equip_slot(key))
 
 	left.add_child(Kit.spacer(8))
-	left.add_child(Kit.make_label("Battle Stats", 18, Kit.INK_GOLD))
+	left.add_child(Kit.make_label("Battle Stats", 15, Kit.INK_GOLD))
 	for key in ["atk", "def", "hp", "gold", "temper"]:
 		var lab := Kit.make_label("", 14, Kit.INK)
 		left.add_child(lab)
@@ -175,8 +161,11 @@ func _build_panoply() -> void:
 	right.add_theme_constant_override("separation", 8)
 	row.add_child(right)
 
-	right.add_child(Kit.make_label("Traveler's Pouch", 20, Kit.INK_GOLD))
-	right.add_child(Kit.make_label("Select a piece, then Equip or Sell.", 13, Kit.INK_SOFT))
+	right.add_child(Kit.make_label("Traveler's Pouch", 17, Kit.INK_GOLD))
+	var pouch_hint := Kit.make_label("Item pictures in each cell — select, then Equip or Sell.", 12, Kit.INK_SOFT)
+	pouch_hint.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
+	pouch_hint.custom_minimum_size = Vector2(420, 0)
+	right.add_child(pouch_hint)
 
 	var grid_wrap := CenterContainer.new()
 	right.add_child(grid_wrap)
@@ -187,33 +176,9 @@ func _build_panoply() -> void:
 	grid_wrap.add_child(grid)
 
 	for _i in range(GameState.BAG_W * GameState.BAG_H):
-		var cell := PanelContainer.new()
-		cell.custom_minimum_size = Vector2(CELL, CELL)
-		var sb := StyleBoxFlat.new()
-		sb.bg_color = Color(0.93, 0.88, 0.76, 0.95)
-		sb.border_color = Color(0.55, 0.42, 0.22, 0.85)
-		sb.set_border_width_all(1)
-		sb.set_corner_radius_all(3)
-		sb.content_margin_left = 2
-		sb.content_margin_right = 2
-		sb.content_margin_top = 2
-		sb.content_margin_bottom = 2
-		cell.add_theme_stylebox_override("panel", sb)
-		var lab := Label.new()
-		lab.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
-		lab.vertical_alignment = VERTICAL_ALIGNMENT_CENTER
-		lab.add_theme_font_override("font", Kit.font())
-		lab.add_theme_font_size_override("font_size", 10)
-		lab.add_theme_color_override("font_color", Kit.INK)
-		lab.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
-		lab.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
-		cell.add_child(lab)
-		var idx: int = _bag_cells.size()
-		cell.gui_input.connect(_on_bag_cell_input.bind(idx))
-		grid.add_child(cell)
-		_bag_cells.append({"panel": cell, "label": lab, "entry": -1})
+		grid.add_child(_make_bag_cell())
 
-	_detail = Kit.make_label("Select an item in the pouch.", 14, Kit.INK_SOFT)
+	_detail = Kit.make_label("Select an item in the pouch.", 12, Kit.INK_SOFT)
 	_detail.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
 	_detail.custom_minimum_size = Vector2(420, 0)
 	right.add_child(_detail)
@@ -233,15 +198,168 @@ func _build_panoply() -> void:
 	_refresh_panoply()
 
 
+func _make_equip_slot(key: String) -> Control:
+	var slot_row := HBoxContainer.new()
+	slot_row.add_theme_constant_override("separation", 8)
+
+	var tag := Kit.make_label(SLOT_LABELS[key], 13, Kit.INK_SOFT)
+	tag.custom_minimum_size = Vector2(70, 0)
+	slot_row.add_child(tag)
+
+	var icon_panel := PanelContainer.new()
+	icon_panel.custom_minimum_size = Vector2(CELL, CELL)
+	icon_panel.add_theme_stylebox_override("panel", _cell_style())
+	slot_row.add_child(icon_panel)
+
+	var icon_root := Control.new()
+	icon_root.custom_minimum_size = Vector2(CELL - 6, CELL - 6)
+	icon_root.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	icon_root.size_flags_vertical = Control.SIZE_EXPAND_FILL
+	icon_root.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	icon_panel.add_child(icon_root)
+
+	var icon := TextureRect.new()
+	icon.expand_mode = TextureRect.EXPAND_IGNORE_SIZE
+	icon.stretch_mode = TextureRect.STRETCH_KEEP_ASPECT_CENTERED
+	icon.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	icon.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
+	icon.offset_left = ICON_PAD
+	icon.offset_top = ICON_PAD
+	icon.offset_right = -ICON_PAD
+	icon.offset_bottom = -ICON_PAD
+	icon_root.add_child(icon)
+
+	var slot_btn := Button.new()
+	slot_btn.custom_minimum_size = Vector2(120, CELL)
+	slot_btn.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	slot_btn.alignment = HORIZONTAL_ALIGNMENT_LEFT
+	slot_btn.focus_mode = Control.FOCUS_NONE
+	slot_btn.add_theme_font_override("font", Kit.font())
+	slot_btn.add_theme_font_size_override("font_size", 12)
+	slot_btn.clip_text = true
+	slot_btn.text_overrun_behavior = TextServer.OVERRUN_TRIM_ELLIPSIS
+	slot_btn.add_theme_color_override("font_color", Kit.INK)
+	slot_btn.pressed.connect(_select_equip_slot.bind(key))
+	slot_row.add_child(slot_btn)
+
+	icon_panel.gui_input.connect(func(ev: InputEvent) -> void:
+		if ev is InputEventMouseButton and ev.pressed and ev.button_index == MOUSE_BUTTON_LEFT:
+			_select_equip_slot(key)
+	)
+
+	_equip_slots[key] = {"btn": slot_btn, "icon": icon, "panel": icon_panel}
+	return slot_row
+
+
+func _make_bag_cell() -> PanelContainer:
+	var cell := PanelContainer.new()
+	cell.custom_minimum_size = Vector2(CELL, CELL)
+	cell.add_theme_stylebox_override("panel", _cell_style())
+
+	var root := Control.new()
+	root.custom_minimum_size = Vector2(CELL - 6, CELL - 6)
+	root.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	root.size_flags_vertical = Control.SIZE_EXPAND_FILL
+	root.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	cell.add_child(root)
+
+	var icon := TextureRect.new()
+	icon.expand_mode = TextureRect.EXPAND_IGNORE_SIZE
+	icon.stretch_mode = TextureRect.STRETCH_KEEP_ASPECT_CENTERED
+	icon.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	icon.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
+	icon.offset_left = ICON_PAD
+	icon.offset_top = ICON_PAD
+	icon.offset_right = -ICON_PAD
+	icon.offset_bottom = -ICON_PAD
+	root.add_child(icon)
+
+	var count := Label.new()
+	count.horizontal_alignment = HORIZONTAL_ALIGNMENT_RIGHT
+	count.vertical_alignment = VERTICAL_ALIGNMENT_BOTTOM
+	count.add_theme_font_override("font", Kit.font())
+	count.add_theme_font_size_override("font_size", 11)
+	count.add_theme_color_override("font_color", Color(0.12, 0.08, 0.04))
+	count.add_theme_color_override("font_outline_color", Color(0.98, 0.94, 0.82, 0.95))
+	count.add_theme_constant_override("outline_size", 3)
+	count.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	count.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
+	count.offset_left = 2
+	count.offset_top = 2
+	count.offset_right = -3
+	count.offset_bottom = -2
+	root.add_child(count)
+
+	var idx: int = _bag_cells.size()
+	cell.gui_input.connect(_on_bag_cell_input.bind(idx))
+	_bag_cells.append({
+		"panel": cell,
+		"icon": icon,
+		"count": count,
+		"entry": -1,
+		"origin": false,
+	})
+	return cell
+
+
+func _cell_style() -> StyleBoxFlat:
+	var sb := StyleBoxFlat.new()
+	sb.bg_color = Color(0.93, 0.88, 0.76, 0.95)
+	sb.border_color = Color(0.55, 0.42, 0.22, 0.85)
+	sb.set_border_width_all(1)
+	sb.set_corner_radius_all(3)
+	sb.content_margin_left = 1
+	sb.content_margin_right = 1
+	sb.content_margin_top = 1
+	sb.content_margin_bottom = 1
+	return sb
+
+
+func _item_texture(id: String) -> Texture2D:
+	var def: Dictionary = GameState.item_def(id)
+	var path := str(def.get("icon", ""))
+	var tex := Kit.load_texture(path)
+	if tex != null:
+		return tex
+	# Kind fallbacks so unknown loot still shows a picture.
+	match str(def.get("kind", "")):
+		"weapon":
+			return Kit.icon_texture("icon_sword")
+		"shield":
+			return Kit.icon_texture("icon_shield")
+		"helmet", "armor":
+			return Kit.icon_texture("icon_boot")
+		"consumable":
+			return Kit.icon_texture("icon_potion")
+		"scroll":
+			return Kit.icon_texture("icon_scroll")
+		"material":
+			return Kit.icon_texture("icon_gem")
+		_:
+			return Kit.icon_texture("icon_anvil")
+
+
 func _refresh_panoply() -> void:
 	if _detail == null:
 		return
 	for key in SLOT_KEYS:
-		var btn: Button = _equip_btns.get(key)
-		if btn == null:
+		var slot: Dictionary = _equip_slots.get(key, {})
+		if slot.is_empty():
 			continue
+		var btn: Button = slot["btn"]
+		var icon: TextureRect = slot["icon"]
+		var panel: PanelContainer = slot["panel"]
+		var worn_id := str(GameState.equipped.get(key, ""))
 		btn.text = "  %s" % GameState.equipped_name(key)
-		btn.modulate = Color(1.15, 1.08, 0.85) if key == _selected_slot else Color.WHITE
+		if worn_id == "":
+			icon.texture = null
+			icon.modulate = Color(1, 1, 1, 0.35)
+		else:
+			icon.texture = _item_texture(worn_id)
+			icon.modulate = Color.WHITE
+		var selected: bool = key == _selected_slot
+		btn.modulate = Color(1.15, 1.08, 0.85) if selected else Color.WHITE
+		panel.modulate = Color(1.2, 1.1, 0.8) if selected else Color.WHITE
 
 	if _stat_labels.has("atk"):
 		_stat_labels["atk"].text = "Strike force  %d" % int(GameState.attack_damage())
@@ -256,7 +374,9 @@ func _refresh_panoply() -> void:
 
 	for i in range(_bag_cells.size()):
 		_bag_cells[i]["entry"] = -1
-		(_bag_cells[i]["label"] as Label).text = ""
+		_bag_cells[i]["origin"] = false
+		(_bag_cells[i]["icon"] as TextureRect).texture = null
+		(_bag_cells[i]["count"] as Label).text = ""
 		(_bag_cells[i]["panel"] as PanelContainer).modulate = Color.WHITE
 
 	for ei in range(GameState.bag.size()):
@@ -266,10 +386,9 @@ func _refresh_panoply() -> void:
 		var cells: Vector2i = GameState.item_cells(id)
 		var ox := int(e.get("x", 0))
 		var oy := int(e.get("y", 0))
-		var short := _short_name(str(def.get("name", id)))
 		var count := int(e.get("count", 1))
-		var label_text := short if count <= 1 else "%s ×%d" % [short, count]
 		var kind := str(def.get("kind", ""))
+		var tex := _item_texture(id)
 		for dy in cells.y:
 			for dx in cells.x:
 				var cx := ox + dx
@@ -278,8 +397,19 @@ func _refresh_panoply() -> void:
 				if idx < 0 or idx >= _bag_cells.size():
 					continue
 				_bag_cells[idx]["entry"] = ei
-				var lab2: Label = _bag_cells[idx]["label"]
-				lab2.text = label_text if dx == 0 and dy == 0 else "·"
+				var is_origin := dx == 0 and dy == 0
+				_bag_cells[idx]["origin"] = is_origin
+				var icon2: TextureRect = _bag_cells[idx]["icon"]
+				var count_lab: Label = _bag_cells[idx]["count"]
+				if is_origin:
+					icon2.texture = tex
+					icon2.modulate = Color.WHITE
+					count_lab.text = "" if count <= 1 else str(count)
+				else:
+					# Multi-cell footprint: tinted continuation under the same piece.
+					icon2.texture = tex
+					icon2.modulate = Color(1, 1, 1, 0.35)
+					count_lab.text = ""
 				(_bag_cells[idx]["panel"] as PanelContainer).modulate = _tint_for_kind(kind)
 
 	if _selected_bag >= 0 and _selected_bag < GameState.bag.size():
@@ -305,13 +435,6 @@ func _tint_for_kind(kind: String) -> Color:
 			return Color(1.05, 1.0, 1.1)
 		_:
 			return Color(1, 1, 1)
-
-
-func _short_name(full: String) -> String:
-	var parts := full.split(" ")
-	if parts.size() <= 2:
-		return full
-	return "%s %s" % [parts[0], parts[parts.size() - 1]]
 
 
 func _on_bag_cell_input(event: InputEvent, cell_idx: int) -> void:
@@ -425,17 +548,20 @@ func _build_clan() -> void:
 	box.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
 	box.add_theme_constant_override("separation", 10)
 	_body.add_child(box)
-	box.add_child(Kit.make_label("Your Clan", 22, Kit.INK_GOLD))
+	box.add_child(Kit.make_label("Your Clan", 18, Kit.INK_GOLD))
 	if GameState.clan_name == "":
-		box.add_child(Kit.make_label(
+		var alone := Kit.make_label(
 			"You walk alone. Found a brotherhood from the world map when the gods will it.",
-			15, Kit.INK_SOFT))
+			14, Kit.INK_SOFT)
+		alone.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
+		alone.custom_minimum_size = Vector2(700, 0)
+		box.add_child(alone)
 	else:
-		box.add_child(Kit.make_label(GameState.clan_name, 20, Kit.INK_TITLE))
+		box.add_child(Kit.make_label(GameState.clan_name, 16, Kit.INK_TITLE))
 		if GameState.clan_rank != "":
-			box.add_child(Kit.make_label("Rank: %s" % GameState.clan_rank, 15, Kit.INK))
+			box.add_child(Kit.make_label("Rank: %s" % GameState.clan_rank, 14, Kit.INK))
 		box.add_child(Kit.make_label(
-			"Omphaloi shattered: %d" % GameState.omphaloi_destroyed, 15, Kit.INK_SOFT))
+			"Omphaloi shattered: %d" % GameState.omphaloi_destroyed, 14, Kit.INK_SOFT))
 
 
 func _close() -> void:

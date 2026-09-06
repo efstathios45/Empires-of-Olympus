@@ -20,7 +20,7 @@ func _ready() -> void:
 	center.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
 
 	var panel := Kit.make_panel(false)
-	panel.custom_minimum_size = Vector2(820, 660)
+	panel.custom_minimum_size = Vector2(780, 600)
 	center.add_child(panel)
 
 	var margin := Kit.make_margin(28)
@@ -29,12 +29,15 @@ func _ready() -> void:
 	v.add_theme_constant_override("separation", 8)
 	margin.add_child(v)
 
-	v.add_child(Kit.make_label("Kyros the Broker", 28, Kit.INK_TITLE, HORIZONTAL_ALIGNMENT_CENTER))
-	v.add_child(Kit.make_label(
+	v.add_child(Kit.make_label("Kyros the Broker", 22, Kit.INK_TITLE, HORIZONTAL_ALIGNMENT_CENTER))
+	var tag := Kit.make_label(
 		"I buy bronze and bone alike — cheap, honest, and without questions.",
-		15, Kit.INK_SOFT, HORIZONTAL_ALIGNMENT_CENTER))
+		13, Kit.INK_SOFT, HORIZONTAL_ALIGNMENT_CENTER)
+	tag.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
+	tag.custom_minimum_size = Vector2(720, 0)
+	v.add_child(tag)
 
-	_gold_label = Kit.make_label("Your gold: %d" % GameState.gold, 18, Kit.INK_GOLD,
+	_gold_label = Kit.make_label("Your gold: %d" % GameState.gold, 15, Kit.INK_GOLD,
 		HORIZONTAL_ALIGNMENT_CENTER)
 	v.add_child(_gold_label)
 
@@ -90,7 +93,7 @@ func _rebuild() -> void:
 		c.queue_free()
 	_refresh_gold()
 	if GameState.bag.is_empty():
-		var empty := Kit.make_label("Your bag is empty. Hunt the wilds, then return.", 16, Kit.INK_SOFT)
+		var empty := Kit.make_label("Your bag is empty. Hunt the wilds, then return.", 14, Kit.INK_SOFT)
 		_list.add_child(empty)
 		_hint.text = ""
 		return
@@ -107,9 +110,11 @@ func _rebuild() -> void:
 		var name_l := Kit.make_label("%s%s  (%dx%d)" % [
 			String(def.get("name", id)),
 			(" ×%d" % count) if count > 1 else "",
-			cells.x, cells.y], 16)
+			cells.x, cells.y], 13)
 		name_l.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 		name_l.custom_minimum_size = Vector2(360, 0)
+		name_l.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
+		name_l.text_overrun_behavior = TextServer.OVERRUN_TRIM_ELLIPSIS
 		line.add_child(name_l)
 		var price_l := Kit.make_label("%d g" % sell, 16, Kit.INK_GOLD)
 		price_l.custom_minimum_size = Vector2(70, 0)

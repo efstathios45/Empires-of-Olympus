@@ -18,8 +18,8 @@ const MAP := BG + "empire_map_hellas.png"
 ## Card heights are floors — a card grows to fit its lore, so the map below
 ## the title is the element that absorbs whatever height is left over.
 const CARD_W := 520
-const EMPIRE_CARD_H := 440
-const CLASS_CARD_H := 520
+const EMPIRE_CARD_H := 400
+const CLASS_CARD_H := 480
 const CARD_PAD := 16
 const TEXT_W := CARD_W - 96 - CARD_PAD * 2
 
@@ -182,7 +182,7 @@ func _icon_line(icon: String, text: String, color: Color, width: int) -> HBoxCon
 	var ico := Kit.make_icon(icon, 28)
 	if ico != null and ico.texture != null:
 		h.add_child(ico)
-	var l := Kit.make_label(text, 16, color, HORIZONTAL_ALIGNMENT_CENTER)
+	var l := Kit.make_label(text, 13, color, HORIZONTAL_ALIGNMENT_CENTER)
 	l.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
 	l.custom_minimum_size = Vector2(width, 0)
 	h.add_child(l)
@@ -228,11 +228,17 @@ func _colour_band(c: Color) -> ColorRect:
 
 
 func _title_line(text: String) -> Label:
-	return Kit.make_hud_label(text, 46, Color(1.0, 0.93, 0.76), HORIZONTAL_ALIGNMENT_CENTER)
+	var l := Kit.make_hud_label(text, 34, Color(1.0, 0.93, 0.76), HORIZONTAL_ALIGNMENT_CENTER)
+	l.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
+	l.custom_minimum_size = Vector2(980, 0)
+	return l
 
 
 func _sub_line(text: String) -> Label:
-	return Kit.make_hud_label(text, 18, DIM, HORIZONTAL_ALIGNMENT_CENTER)
+	var l := Kit.make_hud_label(text, 15, DIM, HORIZONTAL_ALIGNMENT_CENTER)
+	l.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
+	l.custom_minimum_size = Vector2(900, 0)
+	return l
 
 
 # ── Step 1: title ────────────────────────────────────────────────────────
@@ -255,12 +261,14 @@ func _build_title_step() -> void:
 
 	page.add_child(Kit.make_hud_label(
 		"Three empires. Three paths. One legend cut in bronze.",
-		24, Color(1.0, 0.94, 0.8), HORIZONTAL_ALIGNMENT_CENTER))
+		18, Color(1.0, 0.94, 0.8), HORIZONTAL_ALIGNMENT_CENTER))
+	page.get_child(page.get_child_count() - 1).autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
+	page.get_child(page.get_child_count() - 1).custom_minimum_size = Vector2(900, 0)
 	page.add_child(Kit.spacer(26))
 
 	var begin := Kit.make_button("Begin Your Legend", true)
-	begin.custom_minimum_size = Vector2(360, 74)
-	begin.add_theme_font_size_override("font_size", 26)
+	begin.custom_minimum_size = Vector2(320, 58)
+	begin.add_theme_font_size_override("font_size", 18)
 	begin.pressed.connect(_show_step.bind(2))
 	page.add_child(_centered(begin))
 
@@ -315,8 +323,8 @@ func _build_empire_step() -> void:
 	nav.add_child(study)
 
 	_continue_btn = Kit.make_button("Continue", true)
-	_continue_btn.custom_minimum_size = Vector2(320, 66)
-	_continue_btn.add_theme_font_size_override("font_size", 22)
+	_continue_btn.custom_minimum_size = Vector2(400, 52)
+	_continue_btn.add_theme_font_size_override("font_size", 15)
 	_continue_btn.pressed.connect(_show_step.bind(3))
 	nav.add_child(_continue_btn)
 
@@ -339,9 +347,9 @@ func _make_empire_card(id: String, data: Dictionary) -> PanelContainer:
 	v.add_child(_colour_band(colour))
 
 	var empire_name: String = data.get("name", id.capitalize())
-	v.add_child(Kit.make_label(empire_name, 30, Kit.INK_TITLE, HORIZONTAL_ALIGNMENT_CENTER))
-	v.add_child(_wrapped(String(EMPIRE_REGION.get(id, "")), 14, Kit.INK_SOFT, TEXT_W))
-	v.add_child(_wrapped(String(EMPIRE_LORE.get(id, data.get("desc", ""))), 15, Kit.INK_SOFT, TEXT_W))
+	v.add_child(Kit.make_label(empire_name, 22, Kit.INK_TITLE, HORIZONTAL_ALIGNMENT_CENTER))
+	v.add_child(_wrapped(String(EMPIRE_REGION.get(id, "")), 12, Kit.INK_SOFT, TEXT_W))
+	v.add_child(_wrapped(String(EMPIRE_LORE.get(id, data.get("desc", ""))), 13, Kit.INK_SOFT, TEXT_W))
 	v.add_child(_icon_line("icon_laurel", String(data.get("bonus_desc", "")), Kit.INK_GOLD, TEXT_W - 40))
 
 	var pledge := _card_button("Pledge")
@@ -363,7 +371,7 @@ func _refresh_empire_selection() -> void:
 		card.modulate = Color(1, 1, 1, 1) if key == _empire else Color(0.72, 0.7, 0.66, 0.62)
 	if _continue_btn != null:
 		var data: Dictionary = GameState.EMPIRES.get(_empire, {})
-		_continue_btn.text = "Continue as %s" % String(data.get("name", "Sparta"))
+		_continue_btn.text = "Continue — %s" % String(data.get("name", "Sparta"))
 
 
 # ── Step 3: the path you walk ────────────────────────────────────────────
@@ -396,8 +404,8 @@ func _build_class_step() -> void:
 	nav.add_child(back)
 
 	var play := Kit.make_button("Enter Hellas", true)
-	play.custom_minimum_size = Vector2(360, 74)
-	play.add_theme_font_size_override("font_size", 26)
+	play.custom_minimum_size = Vector2(320, 58)
+	play.add_theme_font_size_override("font_size", 18)
 	play.pressed.connect(_on_play)
 	nav.add_child(play)
 
@@ -412,13 +420,13 @@ func _make_class_card(id: String, data: Dictionary) -> PanelContainer:
 	card.mouse_filter = Control.MOUSE_FILTER_PASS
 	var v := _card_body(card)
 
-	var art := _image(BG + "class_" + id + ".png", Vector2(TEXT_W, 190), true)
+	var art := _image(BG + "class_" + id + ".png", Vector2(TEXT_W, 150), true)
 	if art != null:
 		v.add_child(art)
 
 	var class_name_text: String = data.get("name", id.capitalize())
-	v.add_child(Kit.make_label(class_name_text, 30, Kit.INK_TITLE, HORIZONTAL_ALIGNMENT_CENTER))
-	v.add_child(_wrapped(String(CLASS_LORE.get(id, data.get("desc", ""))), 15, Kit.INK_SOFT, TEXT_W))
+	v.add_child(Kit.make_label(class_name_text, 22, Kit.INK_TITLE, HORIZONTAL_ALIGNMENT_CENTER))
+	v.add_child(_wrapped(String(CLASS_LORE.get(id, data.get("desc", ""))), 13, Kit.INK_SOFT, TEXT_W))
 	v.add_child(_icon_line("icon_sword", String(data.get("weapon_name", "")), Kit.INK, TEXT_W - 40))
 	v.add_child(_icon_line("icon_mana", String(data.get("skill_name", "")), Kit.INK_GOLD, TEXT_W - 40))
 
