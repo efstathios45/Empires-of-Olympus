@@ -106,6 +106,151 @@ const SCROLLS := {
 	},
 }
 
+# ── Item catalog (Diablo/PoE-style grid footprints + vendor sell prices) ──
+# Sell prices sit well below buy prices (~30–40% for shop goods; loot trash
+# lands in the ~15–200 gold band, matching early-Act Diablo vendor trash).
+# Weapons / spears / bows occupy 1×2 cells; helmets, shields, potions, mats,
+# scrolls occupy 1×1.
+const BAG_W := 6
+const BAG_H := 6
+
+const ITEM_DEFS := {
+	"health_potion": {
+		"name": "Health Potion", "desc": "Restores 60 HP.", "kind": "consumable",
+		"w": 1, "h": 1, "stackable": true, "price": 25, "sell": 10,
+		"icon": "res://assets/ui/icon_potion.png", "glb": "",
+		"color": Color(0.75, 0.18, 0.22),
+	},
+	"mana_potion": {
+		"name": "Mana Potion", "desc": "Restores 40 MP.", "kind": "consumable",
+		"w": 1, "h": 1, "stackable": true, "price": 25, "sell": 10,
+		"icon": "res://assets/ui/icon_mana.png", "glb": "",
+		"color": Color(0.22, 0.35, 0.78),
+	},
+	"hephaestus": {
+		"name": "Scroll of Hephaestus's Blessing", "desc": "Refine at base rate.",
+		"kind": "scroll", "w": 1, "h": 1, "stackable": true, "price": 60, "sell": 22,
+		"icon": "res://assets/ui/icon_scroll.png", "glb": "",
+		"color": Color(0.72, 0.55, 0.25),
+	},
+	"titan": {
+		"name": "Titan's Forging Stone", "desc": "Refine at fixed 75%.",
+		"kind": "scroll", "w": 1, "h": 1, "stackable": true, "price": 150, "sell": 55,
+		"icon": "res://assets/ui/icon_gem.png", "glb": "",
+		"color": Color(0.55, 0.35, 0.75),
+	},
+	"oracle": {
+		"name": "Oracle's Ritual Stone", "desc": "Refine with no downgrade risk.",
+		"kind": "scroll", "w": 1, "h": 1, "stackable": true, "price": 220, "sell": 80,
+		"icon": "res://assets/ui/icon_scroll.png", "glb": "",
+		"color": Color(0.35, 0.65, 0.55),
+	},
+	"mat_wolf_pelt": {
+		"name": "Wolf Pelt", "desc": "Rough hide from a wild wolf.",
+		"kind": "material", "w": 1, "h": 1, "stackable": true, "price": 0, "sell": 18,
+		"icon": "res://assets/ui/icon_boot.png", "glb": "",
+		"color": Color(0.45, 0.38, 0.32),
+	},
+	"mat_boar_tusk": {
+		"name": "Boar Tusk", "desc": "Curved ivory from a boar.",
+		"kind": "material", "w": 1, "h": 1, "stackable": true, "price": 0, "sell": 28,
+		"icon": "res://assets/ui/icon_boot.png", "glb": "",
+		"color": Color(0.82, 0.76, 0.62),
+	},
+	"mat_satyr_horn": {
+		"name": "Satyr Horn", "desc": "Trophy of a vineyard raider.",
+		"kind": "material", "w": 1, "h": 1, "stackable": true, "price": 0, "sell": 42,
+		"icon": "res://assets/ui/icon_boot.png", "glb": "",
+		"color": Color(0.55, 0.42, 0.22),
+	},
+	"mat_harpy_feather": {
+		"name": "Harpy Feather", "desc": "Iridescent wing feather.",
+		"kind": "material", "w": 1, "h": 1, "stackable": true, "price": 0, "sell": 48,
+		"icon": "res://assets/ui/icon_boot.png", "glb": "",
+		"color": Color(0.55, 0.62, 0.78),
+	},
+	"mat_centaur_hoof": {
+		"name": "Centaur Hoof", "desc": "Hardened hoof of a warrior.",
+		"kind": "material", "w": 1, "h": 1, "stackable": true, "price": 0, "sell": 85,
+		"icon": "res://assets/ui/icon_boot.png", "glb": "",
+		"color": Color(0.35, 0.28, 0.22),
+	},
+	"mat_gorgon_venom": {
+		"name": "Gorgon Venom", "desc": "Vial of petrifying venom.",
+		"kind": "material", "w": 1, "h": 1, "stackable": true, "price": 0, "sell": 110,
+		"icon": "res://assets/ui/icon_gem.png", "glb": "",
+		"color": Color(0.25, 0.65, 0.35),
+	},
+	"mat_minotaur_horn": {
+		"name": "Minotaur Horn", "desc": "Horn of the Labyrinth beast.",
+		"kind": "material", "w": 1, "h": 1, "stackable": true, "price": 0, "sell": 180,
+		"icon": "res://assets/ui/icon_skull.png", "glb": "",
+		"color": Color(0.55, 0.18, 0.15),
+	},
+	"xiphos": {
+		"name": "Xiphos", "desc": "Short leaf-blade sword. Vendor trash or trophy.",
+		"kind": "weapon", "w": 1, "h": 2, "stackable": false, "price": 240, "sell": 110,
+		"icon": "res://assets/ui/icon_anvil.png",
+		"glb": "res://assets/props/gear/xiphos_sword.glb",
+		"color": Color(0.7, 0.72, 0.78),
+	},
+	"bronze_knife": {
+		"name": "Bronze Machaira", "desc": "Curved fighting knife.",
+		"kind": "weapon", "w": 1, "h": 2, "stackable": false, "price": 90, "sell": 45,
+		"icon": "res://assets/ui/icon_anvil.png",
+		"glb": "res://assets/props/gear/xiphos_sword.glb",
+		"color": Color(0.72, 0.52, 0.28),
+	},
+	"kontos": {
+		"name": "Kontos Lance", "desc": "Long cavalry spear.",
+		"kind": "weapon", "w": 1, "h": 2, "stackable": false, "price": 280, "sell": 130,
+		"icon": "res://assets/ui/icon_anvil.png",
+		"glb": "res://assets/props/gear/kontos_spear.glb",
+		"color": Color(0.62, 0.55, 0.4),
+	},
+	"hunting_bow": {
+		"name": "Cretan Bow", "desc": "Hunting bow recovered from the wilds.",
+		"kind": "weapon", "w": 1, "h": 2, "stackable": false, "price": 210, "sell": 95,
+		"icon": "res://assets/ui/icon_anvil.png",
+		"glb": "res://assets/props/weapons/cretan_bow.glb",
+		"color": Color(0.45, 0.32, 0.2),
+	},
+	"aspis": {
+		"name": "Aspis (Hoplon)", "desc": "Round bronze-rimmed shield.",
+		"kind": "shield", "w": 1, "h": 1, "stackable": false, "price": 180, "sell": 85,
+		"icon": "res://assets/ui/icon_shield.png",
+		"glb": "res://assets/props/gear/aspis_shield.glb",
+		"color": Color(0.75, 0.55, 0.2),
+	},
+	"tower_shield": {
+		"name": "Tower Aspis", "desc": "Heavy rectangular shield.",
+		"kind": "shield", "w": 1, "h": 1, "stackable": false, "price": 320, "sell": 150,
+		"icon": "res://assets/ui/icon_shield.png",
+		"glb": "res://assets/props/gear/tower_shield.glb",
+		"color": Color(0.55, 0.45, 0.3),
+	},
+	"corinthian_helm": {
+		"name": "Corinthian Helmet", "desc": "Bronze helm with crest.",
+		"kind": "helmet", "w": 1, "h": 1, "stackable": false, "price": 200, "sell": 100,
+		"icon": "res://assets/ui/icon_boot.png",
+		"glb": "res://assets/props/gear/corinthian_helmet.glb",
+		"color": Color(0.78, 0.58, 0.22),
+	},
+	"leather_cuirass": {
+		"name": "Leather Cuirass", "desc": "Boiled-leather torso armor.",
+		"kind": "armor", "w": 1, "h": 1, "stackable": false, "price": 160, "sell": 70,
+		"icon": "res://assets/ui/icon_boot.png", "glb": "",
+		"color": Color(0.42, 0.28, 0.18),
+	},
+	"bronze_thorax": {
+		"name": "Bronze Thorax", "desc": "Muscle cuirass of polished bronze.",
+		"kind": "armor", "w": 1, "h": 1, "stackable": false, "price": 380, "sell": 175,
+		"icon": "res://assets/ui/icon_boot.png", "glb": "",
+		"color": Color(0.7, 0.5, 0.22),
+	},
+}
+
+## Shop catalogue kept for Brontes (buy prices only).
 const SHOP_ITEMS := {
 	"health_potion": {"name": "Health Potion", "desc": "Restores 60 HP.", "price": 25, "icon": "res://assets/ui/icon_potion.png"},
 	"mana_potion": {"name": "Mana Potion", "desc": "Restores 40 MP.", "price": 25, "icon": "res://assets/ui/icon_mana.png"},
@@ -113,6 +258,30 @@ const SHOP_ITEMS := {
 	"titan": {"name": "Titan's Forging Stone", "desc": "Refine at fixed 75%.", "price": 150, "icon": "res://assets/ui/icon_gem.png"},
 	"oracle": {"name": "Oracle's Ritual Stone", "desc": "Refine with no downgrade risk.", "price": 220, "icon": "res://assets/ui/icon_scroll.png"},
 }
+
+## Enemy material display name → bag item id.
+const MATERIAL_ITEM := {
+	"Wolf Pelt": "mat_wolf_pelt",
+	"Boar Tusk": "mat_boar_tusk",
+	"Satyr Horn": "mat_satyr_horn",
+	"Harpy Feather": "mat_harpy_feather",
+	"Centaur Hoof": "mat_centaur_hoof",
+	"Gorgon Venom": "mat_gorgon_venom",
+	"Minotaur Horn": "mat_minotaur_horn",
+}
+
+## Weighted ground-gear table (rolled after potion/material drops).
+const LOOT_TABLE := [
+	{"id": "bronze_knife", "weight": 26},
+	{"id": "aspis", "weight": 14},
+	{"id": "xiphos", "weight": 12},
+	{"id": "leather_cuirass", "weight": 12},
+	{"id": "hunting_bow", "weight": 10},
+	{"id": "corinthian_helm", "weight": 10},
+	{"id": "kontos", "weight": 8},
+	{"id": "tower_shield", "weight": 5},
+	{"id": "bronze_thorax", "weight": 3},
+]
 
 # ── Runtime state ────────────────────────────────────────────────────────
 var empire: String = "sparta"
@@ -128,8 +297,11 @@ var health_potions: int = 3
 var mana_potions: int = 2
 var scrolls: Dictionary = {"hephaestus": 1, "titan": 0, "oracle": 0}
 
-# Materials looted from monsters (crafting flavor).
+# Materials looted from monsters (mirrors bag stacks for quest/UI flavor).
 var materials: Dictionary = {}
+
+## Bag entries: {id, count, x, y}. Footprints may span multiple cells.
+var bag: Array = []
 
 # Quest chain state.
 var quest_index: int = 0
@@ -141,6 +313,9 @@ var minotaur_slain: bool = false
 var clan_name: String = ""
 var clan_rank: String = ""
 
+func _ready() -> void:
+	_seed_starter_bag()
+
 func xp_needed() -> int:
 	return 60 + (level - 1) * 45 + (level - 1) * (level - 1) * 6
 
@@ -149,17 +324,29 @@ func reset_run() -> void:
 	xp = 0
 	gold = 50
 	weapon_refine = 0
-	health_potions = 3
-	mana_potions = 2
-	scrolls = {"hephaestus": 1, "titan": 0, "oracle": 0}
+	health_potions = 0
+	mana_potions = 0
+	scrolls = {"hephaestus": 0, "titan": 0, "oracle": 0}
 	materials = {}
+	bag.clear()
 	quest_index = 0
 	quest_kills = {}
 	oracle_stones_destroyed = 0
 	minotaur_slain = false
 	clan_name = ""
 	clan_rank = ""
+	_seed_starter_bag()
 	stats_changed.emit()
+	inventory_changed.emit()
+	potions_changed.emit()
+
+
+func _seed_starter_bag() -> void:
+	bag.clear()
+	try_add_to_bag("health_potion", 3)
+	try_add_to_bag("mana_potion", 2)
+	try_add_to_bag("hephaestus", 1)
+	_resync_derived_counts()
 
 func empire_data() -> Dictionary:
 	return EMPIRES.get(empire, EMPIRES["sparta"])
@@ -219,42 +406,229 @@ func spend_gold(amount: int) -> bool:
 	gold_changed.emit(gold)
 	return true
 
-# ── Inventory ────────────────────────────────────────────────────────────
-func add_material(mat: String, count: int = 1) -> void:
-	materials[mat] = materials.get(mat, 0) + count
+# ── Inventory / bag grid ─────────────────────────────────────────────────
+
+func item_def(item_id: String) -> Dictionary:
+	var d: Dictionary = ITEM_DEFS.get(item_id, {})
+	if d.is_empty():
+		return {"id": item_id, "name": item_id, "kind": "junk", "w": 1, "h": 1,
+			"stackable": true, "price": 0, "sell": 5, "icon": "", "glb": "",
+			"color": Color(0.7, 0.7, 0.7)}
+	var out := d.duplicate()
+	out["id"] = item_id
+	return out
+
+
+func item_name(item_id: String) -> String:
+	return String(item_def(item_id).get("name", item_id))
+
+
+func item_cells(item_id: String) -> Vector2i:
+	var d := item_def(item_id)
+	return Vector2i(int(d.get("w", 1)), int(d.get("h", 1)))
+
+
+func item_sell_price(item_id: String) -> int:
+	return int(item_def(item_id).get("sell", 5))
+
+
+func bag_count(item_id: String) -> int:
+	var n := 0
+	for e in bag:
+		if String(e.get("id", "")) == item_id:
+			n += int(e.get("count", 1))
+	return n
+
+
+func _resync_derived_counts() -> void:
+	health_potions = bag_count("health_potion")
+	mana_potions = bag_count("mana_potion")
+	for sid in SCROLLS.keys():
+		scrolls[sid] = bag_count(String(sid))
+	materials.clear()
+	for e in bag:
+		var id: String = String(e.get("id", ""))
+		var def := item_def(id)
+		if String(def.get("kind", "")) == "material":
+			materials[String(def.get("name", id))] = int(e.get("count", 1))
+
+
+func _occupancy() -> Array:
+	## BAG_H rows of BAG_W ints: -1 empty, else bag index.
+	var grid: Array = []
+	for _y in BAG_H:
+		var row: Array = []
+		row.resize(BAG_W)
+		row.fill(-1)
+		grid.append(row)
+	for i in bag.size():
+		var e: Dictionary = bag[i]
+		var cells := item_cells(String(e.get("id", "")))
+		var ox: int = int(e.get("x", 0))
+		var oy: int = int(e.get("y", 0))
+		for dy in cells.y:
+			for dx in cells.x:
+				var cx: int = ox + dx
+				var cy: int = oy + dy
+				if cx >= 0 and cy >= 0 and cx < BAG_W and cy < BAG_H:
+					grid[cy][cx] = i
+	return grid
+
+
+func can_fit(item_id: String, count: int = 1) -> bool:
+	var def := item_def(item_id)
+	if bool(def.get("stackable", false)):
+		for e in bag:
+			if String(e.get("id", "")) == item_id:
+				return true
+	return _find_free_origin(item_id) != Vector2i(-1, -1) or count <= 0
+
+
+func _find_free_origin(item_id: String) -> Vector2i:
+	var cells := item_cells(item_id)
+	var grid := _occupancy()
+	for y in BAG_H - cells.y + 1:
+		for x in BAG_W - cells.x + 1:
+			var ok := true
+			for dy in cells.y:
+				for dx in cells.x:
+					if int(grid[y + dy][x + dx]) != -1:
+						ok = false
+						break
+				if not ok:
+					break
+			if ok:
+				return Vector2i(x, y)
+	return Vector2i(-1, -1)
+
+
+## Add to bag. Returns false if there is no space (and nothing was added).
+func try_add_to_bag(item_id: String, count: int = 1) -> bool:
+	if count <= 0:
+		return true
+	if not ITEM_DEFS.has(item_id) and not item_id.begins_with("mat_"):
+		# Unknown ids still get a 1×1 junk stub so drops never vanish.
+		pass
+	var def := item_def(item_id)
+	if bool(def.get("stackable", false)):
+		for e in bag:
+			if String(e.get("id", "")) == item_id:
+				e["count"] = int(e.get("count", 1)) + count
+				_resync_derived_counts()
+				inventory_changed.emit()
+				if item_id == "health_potion" or item_id == "mana_potion":
+					potions_changed.emit()
+				return true
+	var origin := _find_free_origin(item_id)
+	if origin.x < 0:
+		return false
+	bag.append({"id": item_id, "count": count, "x": origin.x, "y": origin.y})
+	_resync_derived_counts()
 	inventory_changed.emit()
+	if item_id == "health_potion" or item_id == "mana_potion":
+		potions_changed.emit()
+	return true
+
+
+func remove_bag_entry(index: int, amount: int = -1) -> bool:
+	if index < 0 or index >= bag.size():
+		return false
+	var e: Dictionary = bag[index]
+	var have: int = int(e.get("count", 1))
+	if amount < 0 or amount >= have:
+		bag.remove_at(index)
+	else:
+		e["count"] = have - amount
+	_resync_derived_counts()
+	inventory_changed.emit()
+	potions_changed.emit()
+	return true
+
+
+func remove_one_from_bag(item_id: String) -> bool:
+	for i in bag.size():
+		if String(bag[i].get("id", "")) == item_id:
+			return remove_bag_entry(i, 1)
+	return false
+
+
+## Sell one bag entry (or `amount` from a stack) to a merchant. Returns gold gained.
+func sell_bag_entry(index: int, amount: int = 1) -> int:
+	if index < 0 or index >= bag.size():
+		return 0
+	var e: Dictionary = bag[index]
+	var id: String = String(e.get("id", ""))
+	var have: int = int(e.get("count", 1))
+	var n: int = clampi(amount, 1, have)
+	var gained: int = item_sell_price(id) * n
+	remove_bag_entry(index, n)
+	# add_gold applies empire gold_mult — selling should be flat vendor cash.
+	gold += gained
+	gold_changed.emit(gold)
+	return gained
+
+
+func add_material(mat: String, count: int = 1) -> void:
+	var item_id: String = String(MATERIAL_ITEM.get(mat, ""))
+	if item_id == "":
+		# Fallback synthetic id keeps unknown mats usable.
+		item_id = "mat_" + mat.to_lower().replace(" ", "_")
+	if not try_add_to_bag(item_id, count):
+		# Bag full: keep legacy dict so nothing is lost forever.
+		materials[mat] = materials.get(mat, 0) + count
+		inventory_changed.emit()
+
+
+func material_item_id(mat_name: String) -> String:
+	return String(MATERIAL_ITEM.get(mat_name, ""))
+
 
 func buy_item(item_id: String) -> bool:
 	var item: Dictionary = SHOP_ITEMS.get(item_id, {})
 	if item.is_empty():
 		return false
+	if not can_fit(item_id):
+		return false
 	if not spend_gold(item["price"]):
 		return false
-	match item_id:
-		"health_potion":
-			health_potions += 1
-			potions_changed.emit()
-		"mana_potion":
-			mana_potions += 1
-			potions_changed.emit()
-		"hephaestus", "titan", "oracle":
-			scrolls[item_id] = scrolls.get(item_id, 0) + 1
-			inventory_changed.emit()
+	if not try_add_to_bag(item_id):
+		# Extremely unlikely after can_fit; refund.
+		add_gold(item["price"])
+		return false
 	return true
+
 
 func use_health_potion() -> bool:
-	if health_potions <= 0:
+	if not remove_one_from_bag("health_potion"):
 		return false
-	health_potions -= 1
 	potions_changed.emit()
 	return true
 
+
 func use_mana_potion() -> bool:
-	if mana_potions <= 0:
+	if not remove_one_from_bag("mana_potion"):
 		return false
-	mana_potions -= 1
 	potions_changed.emit()
 	return true
+
+
+## Roll a gear drop id, or "" on a miss.
+func roll_loot_drop(chance: float = 0.28, boss: bool = false) -> String:
+	var c := chance * (1.55 if boss else 1.0)
+	if randf() > clampf(c, 0.0, 0.92):
+		return ""
+	var total := 0.0
+	for row in LOOT_TABLE:
+		total += float(row.get("weight", 1))
+	if total <= 0.0:
+		return ""
+	var pick := randf() * total
+	var acc := 0.0
+	for row in LOOT_TABLE:
+		acc += float(row.get("weight", 1))
+		if pick <= acc:
+			return String(row.get("id", ""))
+	return String(LOOT_TABLE.back().get("id", ""))
 
 # ── Refinement (the Metin2 gamble) ───────────────────────────────────────
 ## Returns a Dictionary: {success, destroyed, downgraded, new_level, message}
@@ -262,7 +636,7 @@ func refine_weapon(scroll_id: String) -> Dictionary:
 	if weapon_refine >= REFINE_MAX:
 		return {"success": false, "destroyed": false, "downgraded": false,
 			"new_level": weapon_refine, "message": "Already at +%d perfection." % REFINE_MAX}
-	if scrolls.get(scroll_id, 0) <= 0:
+	if bag_count(scroll_id) <= 0:
 		return {"success": false, "destroyed": false, "downgraded": false,
 			"new_level": weapon_refine, "message": "You lack the required scroll."}
 	var cost: int = REFINE_GOLD_COST[weapon_refine]
@@ -270,7 +644,9 @@ func refine_weapon(scroll_id: String) -> Dictionary:
 		return {"success": false, "destroyed": false, "downgraded": false,
 			"new_level": weapon_refine, "message": "Not enough gold (%d needed)." % cost}
 
-	scrolls[scroll_id] -= 1
+	if not remove_one_from_bag(scroll_id):
+		return {"success": false, "destroyed": false, "downgraded": false,
+			"new_level": weapon_refine, "message": "You lack the required scroll."}
 	spend_gold(cost)
 
 	var rate: float = REFINE_BASE_RATES[weapon_refine]

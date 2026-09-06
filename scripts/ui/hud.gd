@@ -11,6 +11,7 @@ const Kit = preload("res://scripts/ui/ui_kit.gd")
 const DialoguePanel = preload("res://scripts/ui/panel_dialogue.gd")
 const SmithPanel = preload("res://scripts/ui/panel_smith.gd")
 const InventoryPanel = preload("res://scripts/ui/panel_inventory.gd")
+const MerchantPanel = preload("res://scripts/ui/panel_merchant.gd")
 const PausePanel = preload("res://scripts/ui/panel_pause.gd")
 
 # HUD text tints (light — always on a dark slate panel).
@@ -537,6 +538,9 @@ func open_dialogue(_npc: Node3D) -> void:
 
 func open_smith(_npc: Node3D) -> void:
 	_open(SmithPanel.new())
+
+func open_merchant(_npc: Node3D) -> void:
+	_open(MerchantPanel.new())
 
 func toggle_inventory(tab: String = "gear") -> void:
 	if _open_panel is InventoryPanel:

@@ -101,6 +101,38 @@ static func scale_to_height(node: Node3D, target_meters: float) -> void:
 	var factor = target_meters / current
 	node.scale *= factor
 
+
+## Longest mesh-axis extent of a node's meshes (metres), honouring nested scales.
+## Works even when the node is not yet inside the SceneTree (no global xforms).
+static func measure_max_extent(node: Node3D) -> float:
+	var max_e := 0.0
+	for child in node.find_children("*", "MeshInstance3D", true, false):
+		var mi := child as MeshInstance3D
+		if mi == null or mi.mesh == null:
+			continue
+		var scale_acc: Vector3 = mi.scale
+		var p: Node = mi.get_parent()
+		while p != null:
+			if p is Node3D:
+				scale_acc *= (p as Node3D).scale
+			if p == node:
+				break
+			p = p.get_parent()
+		var sz: Vector3 = mi.mesh.get_aabb().size
+		sz = Vector3(absf(sz.x * scale_acc.x), absf(sz.y * scale_acc.y), absf(sz.z * scale_acc.z))
+		max_e = maxf(max_e, maxf(sz.x, maxf(sz.y, sz.z)))
+	return max_e
+
+
+## Uniformly scale so the longest mesh axis equals target_meters.
+## Use for world loot: Tripo/Kenney GLBs arrive at wildly different units and a
+## fixed `scale = 0.55` still leaves giant blocks covering the camera.
+static func scale_to_max_extent(node: Node3D, target_meters: float) -> void:
+	var current := measure_max_extent(node)
+	if current < 0.001:
+		return
+	node.scale *= target_meters / current
+
 ## One-call setup for movement-driven characters.
 static func setup_character_for_movement(node: Node3D, target_height: float = 1.8) -> void:
 	scale_to_height(node, target_height)

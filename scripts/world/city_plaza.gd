@@ -42,6 +42,12 @@ const MOSAIC_TEX := "res://assets/textures/stone/greek_pebble_mosaic.png"
 const MOSAIC_TILE_TEX := "res://assets/textures/stone/old_mosaic_floor_cc0.png"
 const FREE_VASE := "res://assets/props/decorations/free_antique_ceramic_vase_01/antique_ceramic_vase_01.glb"
 const FREE_BUST := "res://assets/props/decorations/free_marble_bust_01/marble_bust_01.glb"
+const MERCHANT_GLB := "res://assets/characters/citizen_merchant/citizen_merchant.glb"
+const MERCHANT_LIB := "res://assets/characters/citizen_merchant/citizen_merchant_animations.tres"
+const WOMAN_GLB := "res://assets/characters/citizen_woman/citizen_woman.glb"
+const WOMAN_LIB := "res://assets/characters/citizen_woman/citizen_woman_animations.tres"
+const GUARD_GLB := "res://assets/characters/city_guard/city_guard.glb"
+const GUARD_LIB := "res://assets/characters/city_guard/city_guard_animations.tres"
 
 # Temple: 13.5 m tall → 16.9 x 14.9 m footprint, stylobate top 1.52 m up.
 const TEMPLE_POS := Vector2(0.0, -20.0)
@@ -260,6 +266,13 @@ static func _smith_yard(world) -> void:
 	world.add_child(smith)
 	world.add_interactable(smith)
 
+	# Kyros — buys bag spoils (materials, potions, looted gear).
+	var broker = NpcScript.create("merchant", "Kyros the Broker",
+		MERCHANT_GLB, MERCHANT_LIB,
+		Vector3(14.8, 0.0, 12.6), 1.75, 200.0)
+	world.add_child(broker)
+	world.add_interactable(broker)
+
 
 # ── Small-prop shorthands ────────────────────────────────────────────────
 static func _brazier(world, x: float, z: float) -> void:
@@ -282,12 +295,7 @@ static func _dummy(world, x: float, z: float, yaw: float) -> void:
 ## Nine citizens: merchants at the stalls, neighbours gossiping by the fountain,
 ## guards on the gate and the temple steps. Decoration only — an idle clip each
 ## and one remark on E. Missing models are skipped silently.
-const MERCHANT_GLB := "res://assets/characters/citizen_merchant/citizen_merchant.glb"
-const MERCHANT_LIB := "res://assets/characters/citizen_merchant/citizen_merchant_animations.tres"
-const WOMAN_GLB := "res://assets/characters/citizen_woman/citizen_woman.glb"
-const WOMAN_LIB := "res://assets/characters/citizen_woman/citizen_woman_animations.tres"
-const GUARD_GLB := "res://assets/characters/city_guard/city_guard.glb"
-const GUARD_LIB := "res://assets/characters/city_guard/city_guard_animations.tres"
+
 
 static func _townsfolk(world) -> void:
 	var folk := [
