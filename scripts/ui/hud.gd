@@ -124,11 +124,11 @@ func _build() -> void:
 	_xp_bar.offset_bottom = -4.0
 
 	# ── Centre announcements (over the world) ──
-	_announce = Kit.make_hud_label("", 26, HUD_GOLD, HORIZONTAL_ALIGNMENT_CENTER)
+	_announce = Kit.make_hud_label("", 20, HUD_GOLD, HORIZONTAL_ALIGNMENT_CENTER)
 	_announce.set_anchors_preset(Control.PRESET_CENTER)
-	_announce.position = Vector2(-420, -180)
-	_announce.custom_minimum_size = Vector2(840, 60)
-	_announce.size = Vector2(840, 60)
+	_announce.position = Vector2(-360, -160)
+	_announce.custom_minimum_size = Vector2(720, 72)
+	_announce.size = Vector2(720, 72)
 	_announce.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
 	_announce.modulate.a = 0.0
 	root.add_child(_announce)

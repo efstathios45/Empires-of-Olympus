@@ -137,27 +137,21 @@ func interact() -> void:
 
 # ── Flavour chatter ──────────────────────────────────────────────────────
 
-## Show a one-off remark above this NPC's head (and in the HUD if it takes one).
+## Show a short remark above this NPC's head (world-space only — no HUD twin).
 func _say(line: String) -> void:
-	var hud := get_tree().get_first_node_in_group("hud")
-	if hud != null:
-		for m in ["show_announcement", "announce", "show_toast", "show_message",
-				"show_notification"]:
-			if hud.has_method(m):
-				hud.call(m, "%s: %s" % [display_name, line])
-				break
 	if _bubble == null or not is_instance_valid(_bubble):
 		_bubble = Label3D.new()
 		_bubble.billboard = BaseMaterial3D.BILLBOARD_ENABLED
 		_bubble.shaded = false
 		_bubble.double_sided = true
 		_bubble.no_depth_test = false
-		_bubble.pixel_size = 0.0038
-		_bubble.font_size = 96
-		_bubble.outline_size = 26
+		# Small pixel size + modest font keeps Cinzel readable without filling the view.
+		_bubble.pixel_size = 0.0024
+		_bubble.font_size = 48
+		_bubble.outline_size = 12
 		_bubble.outline_modulate = Color(0.05, 0.04, 0.03, 0.95)
 		_bubble.modulate = Color(1.0, 0.96, 0.85)
-		_bubble.width = 900.0
+		_bubble.width = 520.0
 		_bubble.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
 		_bubble.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
 		add_child(_bubble)

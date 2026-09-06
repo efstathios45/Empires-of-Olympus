@@ -323,8 +323,8 @@ func _build_empire_step() -> void:
 	nav.add_child(study)
 
 	_continue_btn = Kit.make_button("Continue", true)
-	_continue_btn.custom_minimum_size = Vector2(340, 54)
-	_continue_btn.add_theme_font_size_override("font_size", 16)
+	_continue_btn.custom_minimum_size = Vector2(400, 52)
+	_continue_btn.add_theme_font_size_override("font_size", 15)
 	_continue_btn.pressed.connect(_show_step.bind(3))
 	nav.add_child(_continue_btn)
 
@@ -371,7 +371,7 @@ func _refresh_empire_selection() -> void:
 		card.modulate = Color(1, 1, 1, 1) if key == _empire else Color(0.72, 0.7, 0.66, 0.62)
 	if _continue_btn != null:
 		var data: Dictionary = GameState.EMPIRES.get(_empire, {})
-		_continue_btn.text = "Continue as %s" % String(data.get("name", "Sparta"))
+		_continue_btn.text = "Continue — %s" % String(data.get("name", "Sparta"))
 
 
 # ── Step 3: the path you walk ────────────────────────────────────────────
