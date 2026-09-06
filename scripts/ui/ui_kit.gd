@@ -163,6 +163,22 @@ static func make_icon(name: String, size: int = 36) -> TextureRect:
 	t.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	return t
 
+
+static func load_texture(path: String) -> Texture2D:
+	if path != "" and ResourceLoader.exists(path):
+		return load(path) as Texture2D
+	return null
+
+
+static func make_item_icon(path: String, size: int = 40) -> TextureRect:
+	var t := TextureRect.new()
+	t.texture = load_texture(path)
+	t.custom_minimum_size = Vector2(size, size)
+	t.expand_mode = TextureRect.EXPAND_IGNORE_SIZE
+	t.stretch_mode = TextureRect.STRETCH_KEEP_ASPECT_CENTERED
+	t.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	return t
+
 static func make_dimmer() -> ColorRect:
 	## Catches clicks behind an open panel so the game camera doesn't grab them.
 	var d := ColorRect.new()
