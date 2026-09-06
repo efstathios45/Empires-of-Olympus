@@ -17,7 +17,7 @@ func _ready() -> void:
 	center.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
 
 	var panel := Kit.make_panel(false)
-	panel.custom_minimum_size = Vector2(700, 620)
+	panel.custom_minimum_size = Vector2(680, 560)
 	center.add_child(panel)
 
 	var margin := Kit.make_margin(34)
@@ -27,8 +27,8 @@ func _ready() -> void:
 	v.add_theme_constant_override("separation", 10)
 	margin.add_child(v)
 
-	v.add_child(Kit.make_label("Rest a Moment", 34, Kit.INK_TITLE, HORIZONTAL_ALIGNMENT_CENTER))
-	v.add_child(Kit.make_label("Ways of the Champion", 19, Kit.INK_SOFT, HORIZONTAL_ALIGNMENT_CENTER))
+	v.add_child(Kit.make_label("Rest a Moment", 26, Kit.INK_TITLE, HORIZONTAL_ALIGNMENT_CENTER))
+	v.add_child(Kit.make_label("Ways of the Champion", 15, Kit.INK_SOFT, HORIZONTAL_ALIGNMENT_CENTER))
 	v.add_child(Kit.spacer(4))
 
 	for line in [
@@ -38,7 +38,7 @@ func _ready() -> void:
 			"Shift — sprint   •   Space — leap   •   E — speak / touch",
 			"1 / 2 — health & spirit potions",
 			"I — spoils   •   L — clan   •   M — map of Hellas"]:
-		var l := Kit.make_label(String(line), 17, Kit.INK, HORIZONTAL_ALIGNMENT_CENTER)
+		var l := Kit.make_label(String(line), 14, Kit.INK, HORIZONTAL_ALIGNMENT_CENTER)
 		l.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
 		l.custom_minimum_size = Vector2(TEXT_W, 0)
 		v.add_child(l)
@@ -46,13 +46,13 @@ func _ready() -> void:
 	v.add_child(Kit.spacer(10))
 
 	var resume := Kit.make_button("Return to Battle", true)
-	resume.custom_minimum_size = Vector2(300, 64)
+	resume.custom_minimum_size = Vector2(280, 52)
 	resume.size_flags_horizontal = Control.SIZE_SHRINK_CENTER
 	resume.pressed.connect(func() -> void: hud.close_panel_from_click())
 	v.add_child(resume)
 
 	var menu := Kit.make_button("Abandon the Hunt", false)
-	menu.custom_minimum_size = Vector2(300, 62)
+	menu.custom_minimum_size = Vector2(280, 52)
 	menu.size_flags_horizontal = Control.SIZE_SHRINK_CENTER
 	menu.pressed.connect(_on_menu)
 	v.add_child(menu)

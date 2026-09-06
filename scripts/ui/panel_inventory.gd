@@ -68,8 +68,8 @@ func _build_shell() -> void:
 	var top := HBoxContainer.new()
 	top.add_theme_constant_override("separation", 12)
 	v.add_child(top)
-	top.add_child(Kit.make_icon("icon_laurel", 34))
-	var title := Kit.make_label("Panoply & Pouch", 28, Kit.INK_TITLE)
+	top.add_child(Kit.make_icon("icon_laurel", 28))
+	var title := Kit.make_label("Panoply & Pouch", 22, Kit.INK_TITLE)
 	title.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	top.add_child(title)
 	var close_btn := Kit.make_button("Close", false)
@@ -135,7 +135,7 @@ func _build_panoply() -> void:
 	left.add_theme_constant_override("separation", 8)
 	row.add_child(left)
 
-	left.add_child(Kit.make_label("Worn Panoply", 20, Kit.INK_GOLD))
+	left.add_child(Kit.make_label("Worn Panoply", 17, Kit.INK_GOLD))
 	var emp := GameState.empire_data()
 	var cls := GameState.class_data()
 	left.add_child(Kit.make_label("%s · %s" % [emp.get("name", "?"), cls.get("name", "?")], 14, Kit.INK_SOFT))
@@ -144,7 +144,7 @@ func _build_panoply() -> void:
 		left.add_child(_make_equip_slot(key))
 
 	left.add_child(Kit.spacer(8))
-	left.add_child(Kit.make_label("Battle Stats", 18, Kit.INK_GOLD))
+	left.add_child(Kit.make_label("Battle Stats", 15, Kit.INK_GOLD))
 	for key in ["atk", "def", "hp", "gold", "temper"]:
 		var lab := Kit.make_label("", 14, Kit.INK)
 		left.add_child(lab)
@@ -161,8 +161,11 @@ func _build_panoply() -> void:
 	right.add_theme_constant_override("separation", 8)
 	row.add_child(right)
 
-	right.add_child(Kit.make_label("Traveler's Pouch", 20, Kit.INK_GOLD))
-	right.add_child(Kit.make_label("Item pictures in each cell — select, then Equip or Sell.", 13, Kit.INK_SOFT))
+	right.add_child(Kit.make_label("Traveler's Pouch", 17, Kit.INK_GOLD))
+	var pouch_hint := Kit.make_label("Item pictures in each cell — select, then Equip or Sell.", 12, Kit.INK_SOFT)
+	pouch_hint.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
+	pouch_hint.custom_minimum_size = Vector2(420, 0)
+	right.add_child(pouch_hint)
 
 	var grid_wrap := CenterContainer.new()
 	right.add_child(grid_wrap)
@@ -175,7 +178,7 @@ func _build_panoply() -> void:
 	for _i in range(GameState.BAG_W * GameState.BAG_H):
 		grid.add_child(_make_bag_cell())
 
-	_detail = Kit.make_label("Select an item in the pouch.", 14, Kit.INK_SOFT)
+	_detail = Kit.make_label("Select an item in the pouch.", 12, Kit.INK_SOFT)
 	_detail.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
 	_detail.custom_minimum_size = Vector2(420, 0)
 	right.add_child(_detail)
@@ -232,7 +235,9 @@ func _make_equip_slot(key: String) -> Control:
 	slot_btn.alignment = HORIZONTAL_ALIGNMENT_LEFT
 	slot_btn.focus_mode = Control.FOCUS_NONE
 	slot_btn.add_theme_font_override("font", Kit.font())
-	slot_btn.add_theme_font_size_override("font_size", 13)
+	slot_btn.add_theme_font_size_override("font_size", 12)
+	slot_btn.clip_text = true
+	slot_btn.text_overrun_behavior = TextServer.OVERRUN_TRIM_ELLIPSIS
 	slot_btn.add_theme_color_override("font_color", Kit.INK)
 	slot_btn.pressed.connect(_select_equip_slot.bind(key))
 	slot_row.add_child(slot_btn)
@@ -543,17 +548,20 @@ func _build_clan() -> void:
 	box.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
 	box.add_theme_constant_override("separation", 10)
 	_body.add_child(box)
-	box.add_child(Kit.make_label("Your Clan", 22, Kit.INK_GOLD))
+	box.add_child(Kit.make_label("Your Clan", 18, Kit.INK_GOLD))
 	if GameState.clan_name == "":
-		box.add_child(Kit.make_label(
+		var alone := Kit.make_label(
 			"You walk alone. Found a brotherhood from the world map when the gods will it.",
-			15, Kit.INK_SOFT))
+			14, Kit.INK_SOFT)
+		alone.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
+		alone.custom_minimum_size = Vector2(700, 0)
+		box.add_child(alone)
 	else:
-		box.add_child(Kit.make_label(GameState.clan_name, 20, Kit.INK_TITLE))
+		box.add_child(Kit.make_label(GameState.clan_name, 16, Kit.INK_TITLE))
 		if GameState.clan_rank != "":
-			box.add_child(Kit.make_label("Rank: %s" % GameState.clan_rank, 15, Kit.INK))
+			box.add_child(Kit.make_label("Rank: %s" % GameState.clan_rank, 14, Kit.INK))
 		box.add_child(Kit.make_label(
-			"Omphaloi shattered: %d" % GameState.omphaloi_destroyed, 15, Kit.INK_SOFT))
+			"Omphaloi shattered: %d" % GameState.omphaloi_destroyed, 14, Kit.INK_SOFT))
 
 
 func _close() -> void:

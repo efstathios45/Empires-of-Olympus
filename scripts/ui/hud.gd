@@ -107,11 +107,12 @@ func _build() -> void:
 	_build_map_hint(root)
 
 	# ── Interact prompt (drawn straight over the world: outlined light text) ──
-	_prompt = Kit.make_hud_label("", 21, HUD_CREAM, HORIZONTAL_ALIGNMENT_CENTER)
+	_prompt = Kit.make_hud_label("", 16, HUD_CREAM, HORIZONTAL_ALIGNMENT_CENTER)
 	_prompt.set_anchors_preset(Control.PRESET_CENTER_BOTTOM)
 	_prompt.position = Vector2(-320, -150)
-	_prompt.custom_minimum_size = Vector2(640, 32)
-	_prompt.size = Vector2(640, 32)
+	_prompt.custom_minimum_size = Vector2(640, 40)
+	_prompt.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
+	_prompt.size = Vector2(640, 40)
 	root.add_child(_prompt)
 
 	# ── XP bar (hugging the bottom edge, fully on screen) ──
@@ -123,7 +124,7 @@ func _build() -> void:
 	_xp_bar.offset_bottom = -4.0
 
 	# ── Centre announcements (over the world) ──
-	_announce = Kit.make_hud_label("", 36, HUD_GOLD, HORIZONTAL_ALIGNMENT_CENTER)
+	_announce = Kit.make_hud_label("", 26, HUD_GOLD, HORIZONTAL_ALIGNMENT_CENTER)
 	_announce.set_anchors_preset(Control.PRESET_CENTER)
 	_announce.position = Vector2(-420, -180)
 	_announce.custom_minimum_size = Vector2(840, 60)
@@ -155,14 +156,14 @@ func _build_vitals(root: Control) -> void:
 	level_row.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	vitals.add_child(level_row)
 	level_row.add_child(Kit.make_icon("icon_laurel", 28))
-	_level_text = Kit.make_hud_label("Level 1", 19, HUD_GOLD)
+	_level_text = Kit.make_hud_label("Level 1", 16, HUD_GOLD)
 	level_row.add_child(_level_text)
 	var gold_spacer := Control.new()
 	gold_spacer.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	gold_spacer.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	level_row.add_child(gold_spacer)
 	level_row.add_child(Kit.make_icon("icon_gold", 24))
-	_gold_text = Kit.make_hud_label("0", 19, Color(1.0, 0.84, 0.38))
+	_gold_text = Kit.make_hud_label("0", 16, Color(1.0, 0.84, 0.38))
 	level_row.add_child(_gold_text)
 
 	_hp_bar = Kit.make_bar(Color(0.78, 0.18, 0.16), 22)
@@ -202,17 +203,17 @@ func _build_tracker(root: Control) -> void:
 	head.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	tv.add_child(head)
 	head.add_child(Kit.make_icon("icon_quest", 24))
-	_quest_title = Kit.make_hud_label("", 19, HUD_GOLD)
+	_quest_title = Kit.make_hud_label("", 15, HUD_GOLD)
 	_quest_title.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
 	_quest_title.custom_minimum_size = Vector2(280, 0)
 	head.add_child(_quest_title)
 
-	_quest_lines = Kit.make_hud_label("", 16, HUD_CREAM)
+	_quest_lines = Kit.make_hud_label("", 13, HUD_CREAM)
 	_quest_lines.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
 	_quest_lines.custom_minimum_size = Vector2(316, 0)
 	tv.add_child(_quest_lines)
 
-	_quest_hint = Kit.make_hud_label("", 15, HUD_GREEN)
+	_quest_hint = Kit.make_hud_label("", 12, HUD_GREEN)
 	_quest_hint.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
 	_quest_hint.custom_minimum_size = Vector2(316, 0)
 	tv.add_child(_quest_hint)
@@ -273,7 +274,7 @@ func _build_boss_bar(root: Control) -> void:
 	bv.add_theme_constant_override("separation", 4)
 	bv.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	bh.add_child(bv)
-	bv.add_child(Kit.make_hud_label("The Minotaur", 20, Color(1.0, 0.74, 0.52)))
+	bv.add_child(Kit.make_hud_label("The Minotaur", 16, Color(1.0, 0.74, 0.52)))
 	_boss_bar = Kit.make_bar(Color(0.62, 0.1, 0.3), 18)
 	_boss_bar.custom_minimum_size = Vector2(440, 18)
 	bv.add_child(_boss_bar)
@@ -293,7 +294,7 @@ func _build_map_hint(root: Control) -> void:
 	h.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	hint.add_child(h)
 	h.add_child(Kit.make_icon("icon_map", 30))
-	h.add_child(Kit.make_hud_label("M  Map", 17, HUD_GOLD))
+	h.add_child(Kit.make_hud_label("M  Map", 14, HUD_GOLD))
 	hint.gui_input.connect(_on_map_hint_input)
 
 func _on_map_hint_input(event: InputEvent) -> void:
@@ -323,14 +324,14 @@ func _build_death_overlay(root: Control) -> void:
 	v.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	margin.add_child(v)
 
-	v.add_child(Kit.make_label("You Have Fallen", 40, Kit.INK_TITLE, HORIZONTAL_ALIGNMENT_CENTER))
+	v.add_child(Kit.make_label("You Have Fallen", 28, Kit.INK_TITLE, HORIZONTAL_ALIGNMENT_CENTER))
 	var body := Kit.make_label(
 		"The Fates carry you back to the sanctuary.\nA tithe of your gold is lost.",
 		19, Kit.INK, HORIZONTAL_ALIGNMENT_CENTER)
 	body.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
 	body.custom_minimum_size = Vector2(460, 0)
 	v.add_child(body)
-	v.add_child(Kit.make_label("Rise again, champion.", 17, Kit.INK_SOFT, HORIZONTAL_ALIGNMENT_CENTER))
+	v.add_child(Kit.make_label("Rise again, champion.", 14, Kit.INK_SOFT, HORIZONTAL_ALIGNMENT_CENTER))
 
 func _build_victory_overlay(root: Control) -> void:
 	_victory_overlay = CenterContainer.new()
@@ -352,9 +353,9 @@ func _build_victory_overlay(root: Control) -> void:
 	var crown := Kit.make_icon("icon_laurel", 76)
 	crown.size_flags_horizontal = Control.SIZE_SHRINK_CENTER
 	v.add_child(crown)
-	v.add_child(Kit.make_label("Legend of Hellas!", 44, Kit.INK_TITLE, HORIZONTAL_ALIGNMENT_CENTER))
+	v.add_child(Kit.make_label("Legend of Hellas!", 30, Kit.INK_TITLE, HORIZONTAL_ALIGNMENT_CENTER))
 
-	_victory_stats = Kit.make_label("", 20, Kit.INK, HORIZONTAL_ALIGNMENT_CENTER)
+	_victory_stats = Kit.make_label("", 15, Kit.INK, HORIZONTAL_ALIGNMENT_CENTER)
 	_victory_stats.name = "VictoryStats"
 	_victory_stats.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
 	_victory_stats.custom_minimum_size = Vector2(540, 0)
@@ -369,7 +370,7 @@ func _build_victory_overlay(root: Control) -> void:
 	v.add_child(Kit.spacer(6))
 
 	var btn := Kit.make_button("Continue the Legend", true)
-	btn.custom_minimum_size = Vector2(300, 64)
+	btn.custom_minimum_size = Vector2(280, 52)
 	btn.size_flags_horizontal = Control.SIZE_SHRINK_CENTER
 	btn.pressed.connect(_close_victory)
 	v.add_child(btn)
@@ -629,9 +630,9 @@ func _build_map_panel() -> Control:
 	head.add_theme_constant_override("separation", 12)
 	v.add_child(head)
 	head.add_child(Kit.make_icon("icon_map", 40))
-	head.add_child(Kit.make_label("Map of Hellas", 32, Kit.INK_TITLE))
+	head.add_child(Kit.make_label("Map of Hellas", 24, Kit.INK_TITLE))
 
-	_map_where = Kit.make_label("", 18, Kit.INK_SOFT, HORIZONTAL_ALIGNMENT_CENTER)
+	_map_where = Kit.make_label("", 14, Kit.INK_SOFT, HORIZONTAL_ALIGNMENT_CENTER)
 	_map_where.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
 	_map_where.custom_minimum_size = Vector2(MAP_FIELD_PX, 0)
 	v.add_child(_map_where)
@@ -648,7 +649,7 @@ func _build_map_panel() -> Control:
 	close_row.alignment = BoxContainer.ALIGNMENT_CENTER
 	v.add_child(close_row)
 	var close_btn := Kit.make_button("Close Map  (M)", true)
-	close_btn.custom_minimum_size = Vector2(280, 62)
+	close_btn.custom_minimum_size = Vector2(260, 52)
 	close_btn.pressed.connect(close_panel_from_click)
 	close_row.add_child(close_btn)
 
@@ -745,7 +746,7 @@ func _map_circle(diameter: float, fill: Color, border: Color) -> Panel:
 	return p
 
 func _add_map_label(field: Panel, text: String, at: Vector2, box: Vector2) -> void:
-	var l := Kit.make_label(text, 14, Kit.INK, HORIZONTAL_ALIGNMENT_CENTER)
+	var l := Kit.make_label(text, 11, Kit.INK, HORIZONTAL_ALIGNMENT_CENTER)
 	l.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
 	l.vertical_alignment = VERTICAL_ALIGNMENT_CENTER
 	l.custom_minimum_size = Vector2(box.x, 0)
@@ -758,12 +759,12 @@ func _build_map_legend() -> HBoxContainer:
 	legend.alignment = BoxContainer.ALIGNMENT_CENTER
 	legend.add_theme_constant_override("separation", 18)
 	legend.add_child(_map_circle(16.0, Color(1.0, 0.86, 0.25), Color(0.15, 0.10, 0.04)))
-	legend.add_child(Kit.make_label("You", 16, Kit.INK))
+	legend.add_child(Kit.make_label("You", 13, Kit.INK))
 	legend.add_child(Kit.make_icon("icon_gem", 20))
-	legend.add_child(Kit.make_label("Omphalos", 16, Kit.INK))
+	legend.add_child(Kit.make_label("Omphalos", 13, Kit.INK))
 	legend.add_child(Kit.make_icon("icon_skull", 20))
-	legend.add_child(Kit.make_label("Boss lair", 16, Kit.INK))
-	legend.add_child(Kit.make_label("Esc or M to close", 16, Kit.INK_SOFT))
+	legend.add_child(Kit.make_label("Boss lair", 13, Kit.INK))
+	legend.add_child(Kit.make_label("Esc or M to close", 12, Kit.INK_SOFT))
 	return legend
 
 func _update_map_marker() -> void:

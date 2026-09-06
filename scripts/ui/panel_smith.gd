@@ -45,7 +45,7 @@ func _ready() -> void:
 
 	v.add_child(Kit.spacer(4))
 	var close_btn := Kit.make_button("Leave the Forge", true)
-	close_btn.custom_minimum_size = Vector2(300, 62)
+	close_btn.custom_minimum_size = Vector2(260, 52)
 	close_btn.size_flags_horizontal = Control.SIZE_SHRINK_CENTER
 	close_btn.pressed.connect(func() -> void: hud.close_panel_from_click())
 	v.add_child(close_btn)
@@ -62,46 +62,48 @@ func _build_header(v: VBoxContainer) -> void:
 	head.alignment = BoxContainer.ALIGNMENT_CENTER
 	head.add_theme_constant_override("separation", 12)
 	v.add_child(head)
-	head.add_child(Kit.make_icon("icon_anvil", 38))
-	head.add_child(Kit.make_label("Brontes the Smith", 30, Kit.INK_TITLE))
+	head.add_child(Kit.make_icon("icon_anvil", 30))
+	head.add_child(Kit.make_label("Brontes the Smith", 22, Kit.INK_TITLE))
 
 	var quote := Kit.make_label(
 		"\"Steel remembers every hammer-blow. Dare the flames, champion?\"",
-		16, Kit.INK_SOFT, HORIZONTAL_ALIGNMENT_CENTER)
+		14, Kit.INK_SOFT, HORIZONTAL_ALIGNMENT_CENTER)
 	quote.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
 	quote.custom_minimum_size = Vector2(CONTENT_W, 0)
 	v.add_child(quote)
 	v.add_child(_divider())
 
 func _build_refinery(v: VBoxContainer) -> void:
-	v.add_child(Kit.make_label("Temper Your Weapon", 23, Kit.INK_TITLE))
+	v.add_child(Kit.make_label("Temper Your Weapon", 18, Kit.INK_TITLE))
 	var warn := Kit.make_label(
 		"Failure past +4 drags the weapon back a level — past +6 it can shatter outright.",
-		15, Kit.INK_SOFT)
+		13, Kit.INK_SOFT)
 	warn.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
 	warn.custom_minimum_size = Vector2(CONTENT_W, 0)
 	v.add_child(warn)
 
-	_weapon_label = Kit.make_label("", 21, Kit.INK)
+	_weapon_label = Kit.make_label("", 16, Kit.INK)
+	_weapon_label.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
+	_weapon_label.custom_minimum_size = Vector2(CONTENT_W, 0)
 	v.add_child(_weapon_label)
 
 	var stats := HBoxContainer.new()
 	stats.add_theme_constant_override("separation", 26)
 	v.add_child(stats)
-	_damage_label = Kit.make_label("", 17, Kit.INK)
+	_damage_label = Kit.make_label("", 14, Kit.INK)
 	_damage_label.custom_minimum_size = Vector2(250, 0)
 	stats.add_child(_damage_label)
-	_rate_label = Kit.make_label("", 17, Kit.INK)
+	_rate_label = Kit.make_label("", 14, Kit.INK)
 	_rate_label.custom_minimum_size = Vector2(200, 0)
 	stats.add_child(_rate_label)
-	_cost_label = Kit.make_label("", 17, Kit.INK_GOLD)
+	_cost_label = Kit.make_label("", 14, Kit.INK_GOLD)
 	stats.add_child(_cost_label)
 	v.add_child(Kit.spacer(2))
 
 	for scroll_id in ["hephaestus", "titan", "oracle"]:
 		v.add_child(_make_scroll_row(scroll_id))
 
-	_result_label = Kit.make_label("", 18, Kit.INK, HORIZONTAL_ALIGNMENT_CENTER)
+	_result_label = Kit.make_label("", 14, Kit.INK, HORIZONTAL_ALIGNMENT_CENTER)
 	_result_label.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
 	_result_label.custom_minimum_size = Vector2(CONTENT_W, 26)
 	v.add_child(_result_label)
@@ -116,18 +118,18 @@ func _make_scroll_row(scroll_id: String) -> HBoxContainer:
 	text.add_theme_constant_override("separation", 0)
 	text.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	row.add_child(text)
-	var name_label := Kit.make_label(String(s["name"]), 17, Kit.INK)
+	var name_label := Kit.make_label(String(s["name"]), 14, Kit.INK)
 	name_label.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
 	name_label.custom_minimum_size = Vector2(430, 0)
 	text.add_child(name_label)
-	var desc := Kit.make_label(String(s["desc"]), 14, Kit.INK_SOFT)
+	var desc := Kit.make_label(String(s["desc"]), 12, Kit.INK_SOFT)
 	desc.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
 	desc.custom_minimum_size = Vector2(430, 0)
 	text.add_child(desc)
 
 	var btn := Kit.make_button("", false)
-	btn.custom_minimum_size = Vector2(226, 60)
-	btn.add_theme_font_size_override("font_size", 18)
+	btn.custom_minimum_size = Vector2(200, 48)
+	btn.add_theme_font_size_override("font_size", 15)
 	btn.pressed.connect(_on_refine.bind(scroll_id))
 	row.add_child(btn)
 	_scroll_buttons[scroll_id] = btn
@@ -138,12 +140,12 @@ func _build_wares(v: VBoxContainer) -> void:
 	head.add_theme_constant_override("separation", 10)
 	v.add_child(head)
 	head.add_child(Kit.make_icon("icon_gold", 30))
-	head.add_child(Kit.make_label("Wares of the Forge", 23, Kit.INK_TITLE))
+	head.add_child(Kit.make_label("Wares of the Forge", 18, Kit.INK_TITLE))
 	var pad := Control.new()
 	pad.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	pad.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	head.add_child(pad)
-	_gold_label = Kit.make_label("", 20, Kit.INK_GOLD)
+	_gold_label = Kit.make_label("", 15, Kit.INK_GOLD)
 	head.add_child(_gold_label)
 
 	var scroll := ScrollContainer.new()
@@ -208,18 +210,18 @@ func _rebuild_shop() -> void:
 		text.add_theme_constant_override("separation", 0)
 		text.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 		row.add_child(text)
-		var name_label := Kit.make_label(String(item["name"]), 17, Kit.INK)
+		var name_label := Kit.make_label(String(item["name"]), 14, Kit.INK)
 		name_label.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
 		name_label.custom_minimum_size = Vector2(400, 0)
 		text.add_child(name_label)
-		var desc := Kit.make_label(String(item["desc"]), 14, Kit.INK_SOFT)
+		var desc := Kit.make_label(String(item["desc"]), 12, Kit.INK_SOFT)
 		desc.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
 		desc.custom_minimum_size = Vector2(400, 0)
 		text.add_child(desc)
 
 		var btn := Kit.make_button("%d gold" % item["price"], false)
-		btn.custom_minimum_size = Vector2(190, 58)
-		btn.add_theme_font_size_override("font_size", 18)
+		btn.custom_minimum_size = Vector2(170, 46)
+		btn.add_theme_font_size_override("font_size", 14)
 		btn.pressed.connect(_on_buy.bind(item_id))
 		row.add_child(btn)
 
