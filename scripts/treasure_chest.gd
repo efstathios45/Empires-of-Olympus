@@ -38,7 +38,15 @@ func interact() -> void:
 	opened = true
 	var gold := randi_range(45, 90)
 	GameState.add_gold(gold)
-	GameState.health_potions += 1
+	if not GameState.try_add_to_bag("health_potion"):
+		# Spawn on ground if bag is full.
+		var LootPickup = load("res://scripts/loot_pickup.gd")
+		var drop: Node = LootPickup.new()
+		var parent := get_parent()
+		if parent:
+			parent.add_child(drop)
+			if drop.has_method("setup"):
+				drop.setup("health_potion", global_position + Vector3(0, 0.4, 0))
 	GameState.potions_changed.emit()
 	AudioManager.play_sfx("gold_pickup")
 	VfxHelper.spawn_hit(global_position + Vector3(0, 0.8, 0), get_parent())

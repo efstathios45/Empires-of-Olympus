@@ -67,6 +67,11 @@ var camera_pivot: Node3D
 var spring_arm: SpringArm3D
 var camera: Camera3D
 var world: Node3D
+## Character mesh used for bone-attached panoply (helm / aspis / weapon).
+var _character_model: Node3D
+var _helm_attach: Node3D
+var _shield_attach: Node3D
+var _default_weapon_path: String = ""
 
 func _ready() -> void:
 	add_to_group("player")
@@ -78,11 +83,14 @@ func _ready() -> void:
 	mp = GameState.max_mp()
 	GameState.level_up.connect(_on_level_up)
 	GameState.weapon_refined.connect(_on_weapon_refined)
+	if not GameState.inventory_changed.is_connected(_on_inventory_changed):
+		GameState.inventory_changed.connect(_on_inventory_changed)
 	call_deferred("_late_ready")
 
 func _late_ready() -> void:
 	health_changed.emit(hp, GameState.max_hp())
 	mana_changed.emit(mp, GameState.max_mp())
+	_refresh_panoply_visuals()
 
 func _build_body() -> void:
 	var shape := CollisionShape3D.new()
@@ -98,6 +106,7 @@ func _build_body() -> void:
 	add_child(mesh_root)
 	var model: Node3D = load(CharacterGLB).instantiate()
 	mesh_root.add_child(model)
+	_character_model = model
 	ModelUtils.setup_character_for_movement(model, 1.85)
 
 	anim = model.find_child("AnimationPlayer", true) as AnimationPlayer
@@ -110,14 +119,120 @@ func _build_body() -> void:
 			anim.add_animation_library("", lib)
 	ModelUtils.set_animation_loops(anim)
 
-	# Class weapon in the right hand.
-	var weapon_path: String = GameState.class_data()["weapon"]
-	if ResourceLoader.exists(weapon_path):
-		var grip_class := "melee"
-		weapon_node = WeaponGrip.attach(model, weapon_path, grip_class)
+	# Class weapon in the right hand (swapped when a pouch weapon is equipped).
+	_default_weapon_path = String(GameState.class_data().get("weapon", ""))
+	if ResourceLoader.exists(_default_weapon_path):
+		weapon_node = WeaponGrip.attach(model, _default_weapon_path, "melee")
 		_update_weapon_glow()
 
 	anim.play("ual1_Idle")
+
+
+func _on_inventory_changed() -> void:
+	_refresh_panoply_visuals()
+	# Equipped thorax/helm can raise max HP — keep bars in sync.
+	hp = minf(hp, GameState.max_hp())
+	health_changed.emit(hp, GameState.max_hp())
+
+
+## Show worn panoply on the hoplite so pouch equip feels real in-world.
+func _refresh_panoply_visuals() -> void:
+	if _character_model == null or not is_instance_valid(_character_model):
+		return
+	_free_attach(_helm_attach)
+	_helm_attach = null
+	_free_attach(_shield_attach)
+	_shield_attach = null
+
+	var helm_id := String(GameState.equipped.get("helmet", ""))
+	if helm_id != "":
+		var helm_glb := String(GameState.item_def(helm_id).get("glb", ""))
+		if helm_glb != "" and ResourceLoader.exists(helm_glb):
+			_helm_attach = _attach_prop_to_bone(
+				helm_glb, "Head", Vector3(0.0, 0.06, 0.0), Vector3(0, 180, 0), 0.28, helm_id)
+
+	var shield_id := String(GameState.equipped.get("shield", ""))
+	if shield_id != "":
+		var shield_glb := String(GameState.item_def(shield_id).get("glb", ""))
+		if shield_glb != "" and ResourceLoader.exists(shield_glb):
+			_shield_attach = WeaponGrip.attach(
+				_character_model,
+				shield_glb,
+				"shield",
+				{"bone": "LeftLowerArm", "position": Vector3(0.02, 0.04, 0.08),
+					"rotation_deg": Vector3(10, 90, -10), "scale": 1.15})
+			if _shield_attach != null:
+				GearLook.apply(_shield_attach, shield_id)
+
+	var weapon_id := String(GameState.equipped.get("weapon", ""))
+	var want_path := _default_weapon_path
+	var want_id := ""
+	if weapon_id != "":
+		var wglb := String(GameState.item_def(weapon_id).get("glb", ""))
+		if wglb != "" and ResourceLoader.exists(wglb):
+			want_path = wglb
+			want_id = weapon_id
+	_ensure_weapon_path(want_path, want_id)
+
+
+func _ensure_weapon_path(path: String, item_id: String = "") -> void:
+	if path == "" or not ResourceLoader.exists(path) or _character_model == null:
+		return
+	var current_path := String(weapon_node.get_meta("weapon_path", "")) if weapon_node != null else ""
+	if weapon_node != null and current_path == path and is_instance_valid(weapon_node):
+		if item_id != "":
+			GearLook.apply(weapon_node, item_id)
+		_update_weapon_glow()
+		return
+	_free_attach(weapon_node)
+	weapon_node = WeaponGrip.attach(_character_model, path, "melee")
+	if weapon_node != null:
+		weapon_node.set_meta("weapon_path", path)
+		if item_id != "":
+			GearLook.apply(weapon_node, item_id)
+	_update_weapon_glow()
+
+
+func _attach_prop_to_bone(
+		glb_path: String,
+		bone: String,
+		pos: Vector3,
+		euler_deg: Vector3,
+		target_extent: float,
+		item_id: String = "") -> Node3D:
+	if _character_model == null or not ResourceLoader.exists(glb_path):
+		return null
+	var skel: Skeleton3D = null
+	for n in _character_model.find_children("*", "Skeleton3D", true, false):
+		skel = n as Skeleton3D
+		break
+	if skel == null:
+		return null
+	var scene: PackedScene = load(glb_path) as PackedScene
+	if scene == null:
+		return null
+	var attachment := BoneAttachment3D.new()
+	attachment.name = "Panoply_%s" % bone
+	attachment.bone_name = bone
+	skel.add_child(attachment)
+	var holder := Node3D.new()
+	holder.name = "Prop"
+	attachment.add_child(holder)
+	var inst: Node3D = scene.instantiate()
+	holder.add_child(inst)
+	GearLook.apply(inst, item_id)
+	# Cancel character scale so extents stay in metres.
+	var comp := 1.0 / maxf(0.0001, _character_model.scale.x)
+	ModelUtils.scale_to_max_extent(inst, target_extent)
+	holder.scale = Vector3.ONE * comp
+	holder.position = pos * comp
+	holder.rotation_degrees = euler_deg
+	return attachment
+
+
+func _free_attach(node: Node) -> void:
+	if node != null and is_instance_valid(node):
+		node.queue_free()
 
 func _build_camera() -> void:
 	camera_pivot = Node3D.new()

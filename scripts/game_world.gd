@@ -1,6 +1,6 @@
 extends Node3D
 ## GameWorld — the land of Hellas: terrain, sky, the hub sanctuary, hunting
-## grounds, oracle stones, the Minotaur's arena, spawns and interactables.
+## grounds, Omphaloi, the Minotaur's arena, spawns and interactables.
 
 const HTerrain = preload("res://addons/zylann.hterrain/hterrain.gd")
 const HTerrainData = preload("res://addons/zylann.hterrain/hterrain_data.gd")
@@ -462,7 +462,7 @@ func _build_wilds() -> void:
 			rng.randf_range(1.8, 4.2), rng.randf() * 360.0, 2)
 		placed += 1
 
-	# The three cursed Oracle Stones.
+	# The three cursed Omphaloi.
 	for pos in [Vector2(40.0, -70.0), Vector2(-70.0, -25.0), Vector2(35.0, 55.0)]:
 		var stone := OracleStoneScript.create(Vector3(pos.x, sample_height(pos.x, pos.y), pos.y))
 		add_child(stone)

@@ -132,6 +132,8 @@ func interact() -> void:
 		hud.open_dialogue(self)
 	elif npc_id == "smith" and hud.has_method("open_smith"):
 		hud.open_smith(self)
+	elif npc_id == "merchant" and hud.has_method("open_merchant"):
+		hud.open_merchant(self)
 
 # ── Flavour chatter ──────────────────────────────────────────────────────
 

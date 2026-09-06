@@ -9,7 +9,7 @@ extends RefCounted
 ##
 ## Compass: north = -Z, south = +Z, east = +X, west = -X.
 ##   north  — the temple of Athena on its stepped stylobate, guarded, brazier-lit
-##   centre — the marble fountain in a paved circle ringed by six columns
+##   centre — the marble fountain on a ψηφιδωτό pebble-mosaic court, six columns
 ##   east   — the market row: four stalls, carts, amphorae, merchants
 ##   west   — the stoa colonnade, townhouses closing the street edge
 ##   south  — the city gate arch, the road out to the wilds, gate guards
@@ -36,7 +36,18 @@ const ALTAR := "res://assets/props/furniture/marble_altar.glb"
 const STATUE := "res://assets/props/decorations/greek_statue.glb"
 const ANVIL := "res://assets/props/tools/blacksmith_anvil.glb"
 const AMPHORA := "res://assets/props/containers/amphora.glb"
-const MARBLE_TEX := "res://assets/textures/stone/white_marble.png"
+## Ancient Greek pebble mosaic (ψηφιδωτό) for the fountain court.
+const MOSAIC_TEX := "res://assets/textures/stone/greek_pebble_mosaic.png"
+## Seamless CC0 mosaic tiles (Poly Haven) for the road out to the gate.
+const MOSAIC_TILE_TEX := "res://assets/textures/stone/old_mosaic_floor_cc0.png"
+const FREE_VASE := "res://assets/props/decorations/free_antique_ceramic_vase_01/antique_ceramic_vase_01.glb"
+const FREE_BUST := "res://assets/props/decorations/free_marble_bust_01/marble_bust_01.glb"
+const MERCHANT_GLB := "res://assets/characters/citizen_merchant/citizen_merchant.glb"
+const MERCHANT_LIB := "res://assets/characters/citizen_merchant/citizen_merchant_animations.tres"
+const WOMAN_GLB := "res://assets/characters/citizen_woman/citizen_woman.glb"
+const WOMAN_LIB := "res://assets/characters/citizen_woman/citizen_woman_animations.tres"
+const GUARD_GLB := "res://assets/characters/city_guard/city_guard.glb"
+const GUARD_LIB := "res://assets/characters/city_guard/city_guard_animations.tres"
 
 # Temple: 13.5 m tall → 16.9 x 14.9 m footprint, stylobate top 1.52 m up.
 const TEMPLE_POS := Vector2(0.0, -20.0)
@@ -61,41 +72,68 @@ static func build(world) -> void:
 
 
 # ── Paving ───────────────────────────────────────────────────────────────
-## Flat marble: the fountain circle plus the paved road running out to the gate.
+## ψηφιδωτό (pebble mosaic): circular court medallion + tiled road to the gate.
 ## Purely decorative, so no collider and no shadow casting; the top sits 2 cm
 ## over the (flattened) pad so it can never z-fight the terrain.
 static func _paving(world) -> void:
-	var mat := StandardMaterial3D.new()
-	mat.albedo_color = Color(0.87, 0.84, 0.77)
-	if ResourceLoader.exists(MARBLE_TEX):
-		mat.albedo_texture = load(MARBLE_TEX)
-	mat.uv1_scale = Vector3(8.0, 8.0, 1.0)
-	mat.roughness = 0.88
-	mat.metallic = 0.0
+	var court_mat := StandardMaterial3D.new()
+	# Warm, muted tint — never the old blown-out white marble.
+	court_mat.albedo_color = Color(0.72, 0.64, 0.52)
+	if ResourceLoader.exists(MOSAIC_TEX):
+		court_mat.albedo_texture = load(MOSAIC_TEX)
+	# One medallion across the disc (planar UVs from _make_disc_mesh).
+	court_mat.uv1_scale = Vector3(1.0, 1.0, 1.0)
+	court_mat.roughness = 0.92
+	court_mat.metallic = 0.0
+
+	var road_mat := StandardMaterial3D.new()
+	road_mat.albedo_color = Color(0.68, 0.60, 0.50)
+	if ResourceLoader.exists(MOSAIC_TILE_TEX):
+		road_mat.albedo_texture = load(MOSAIC_TILE_TEX)
+	elif ResourceLoader.exists(MOSAIC_TEX):
+		road_mat.albedo_texture = load(MOSAIC_TEX)
+	road_mat.uv1_scale = Vector3(3.5, 6.5, 1.0)
+	road_mat.roughness = 0.94
+	road_mat.metallic = 0.0
 
 	var gy: float = world.sample_height(0.0, 0.0)
 
 	var disc := MeshInstance3D.new()
-	var cyl := CylinderMesh.new()
-	cyl.top_radius = PAVE_R
-	cyl.bottom_radius = PAVE_R
-	cyl.height = 0.12
-	cyl.radial_segments = 32
-	cyl.rings = 1
-	disc.mesh = cyl
-	disc.material_override = mat
+	disc.mesh = _make_disc_mesh(PAVE_R, 64)
+	disc.material_override = court_mat
 	disc.cast_shadow = GeometryInstance3D.SHADOW_CASTING_SETTING_OFF
 	world.add_child(disc)
-	disc.global_position = Vector3(0.0, gy - 0.04, 0.0)
+	disc.global_position = Vector3(0.0, gy + 0.02, 0.0)
 
 	var road := MeshInstance3D.new()
 	var box := BoxMesh.new()
 	box.size = Vector3(7.0, 0.12, 13.0)
 	road.mesh = box
-	road.material_override = mat
+	road.material_override = road_mat
 	road.cast_shadow = GeometryInstance3D.SHADOW_CASTING_SETTING_OFF
 	world.add_child(road)
-	road.global_position = Vector3(0.0, gy - 0.04, 19.0)
+	road.global_position = Vector3(0.0, gy + 0.02, 19.0)
+
+
+## Flat circular mesh with planar UVs so a radial mosaic maps 1:1 onto the court.
+static func _make_disc_mesh(radius: float, segments: int) -> ArrayMesh:
+	var st := SurfaceTool.new()
+	st.begin(Mesh.PRIMITIVE_TRIANGLES)
+	st.set_normal(Vector3.UP)
+	st.set_uv(Vector2(0.5, 0.5))
+	st.add_vertex(Vector3.ZERO)
+	for i in range(segments + 1):
+		var a: float = TAU * float(i) / float(segments)
+		var x: float = cos(a) * radius
+		var z: float = sin(a) * radius
+		st.set_normal(Vector3.UP)
+		st.set_uv(Vector2(0.5 + cos(a) * 0.5, 0.5 + sin(a) * 0.5))
+		st.add_vertex(Vector3(x, 0.0, z))
+	for i in range(segments):
+		st.add_index(0)
+		st.add_index(i + 1)
+		st.add_index(i + 2)
+	return st.commit()
 
 
 # ── North: the temple precinct ───────────────────────────────────────────
@@ -154,6 +192,11 @@ static func _fountain_court(world) -> void:
 
 	_brazier(world, -8.6, 4.6)
 	_brazier(world, 8.6, 4.6)
+
+	# Free CC0 Poly Haven props — ceramic vase by the east stalls approach,
+	# marble bust on the west edge of the court (see assets/ASSETS_CC0.md).
+	world._place_glb(FREE_VASE, 6.8, -3.2, 0.95, 25.0, 1)
+	world._place_glb(FREE_BUST, -7.2, 2.4, 1.15, 140.0, 1)
 
 
 # ── East: the market row ─────────────────────────────────────────────────
@@ -223,6 +266,13 @@ static func _smith_yard(world) -> void:
 	world.add_child(smith)
 	world.add_interactable(smith)
 
+	# Kyros — buys bag spoils (materials, potions, looted gear).
+	var broker = NpcScript.create("merchant", "Kyros the Broker",
+		MERCHANT_GLB, MERCHANT_LIB,
+		Vector3(14.8, 0.0, 12.6), 1.75, 200.0)
+	world.add_child(broker)
+	world.add_interactable(broker)
+
 
 # ── Small-prop shorthands ────────────────────────────────────────────────
 static func _brazier(world, x: float, z: float) -> void:
@@ -245,12 +295,7 @@ static func _dummy(world, x: float, z: float, yaw: float) -> void:
 ## Nine citizens: merchants at the stalls, neighbours gossiping by the fountain,
 ## guards on the gate and the temple steps. Decoration only — an idle clip each
 ## and one remark on E. Missing models are skipped silently.
-const MERCHANT_GLB := "res://assets/characters/citizen_merchant/citizen_merchant.glb"
-const MERCHANT_LIB := "res://assets/characters/citizen_merchant/citizen_merchant_animations.tres"
-const WOMAN_GLB := "res://assets/characters/citizen_woman/citizen_woman.glb"
-const WOMAN_LIB := "res://assets/characters/citizen_woman/citizen_woman_animations.tres"
-const GUARD_GLB := "res://assets/characters/city_guard/city_guard.glb"
-const GUARD_LIB := "res://assets/characters/city_guard/city_guard_animations.tres"
+
 
 static func _townsfolk(world) -> void:
 	var folk := [
