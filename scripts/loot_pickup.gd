@@ -84,6 +84,8 @@ func _build_visual(id: String) -> void:
 		if scene != null:
 			var inst: Node3D = scene.instantiate()
 			_mesh_root.add_child(inst)
+			# Gear GLBs often import pure-white / textureless — paint them bronze.
+			GearLook.apply(inst, id)
 			_fit_instance(inst, _target_extent(def))
 			return
 	_build_marker(def)

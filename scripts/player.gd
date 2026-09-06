@@ -149,7 +149,7 @@ func _refresh_panoply_visuals() -> void:
 		var helm_glb := String(GameState.item_def(helm_id).get("glb", ""))
 		if helm_glb != "" and ResourceLoader.exists(helm_glb):
 			_helm_attach = _attach_prop_to_bone(
-				helm_glb, "Head", Vector3(0.0, 0.06, 0.0), Vector3(0, 180, 0), 0.28)
+				helm_glb, "Head", Vector3(0.0, 0.06, 0.0), Vector3(0, 180, 0), 0.28, helm_id)
 
 	var shield_id := String(GameState.equipped.get("shield", ""))
 	if shield_id != "":
@@ -161,27 +161,35 @@ func _refresh_panoply_visuals() -> void:
 				"shield",
 				{"bone": "LeftLowerArm", "position": Vector3(0.02, 0.04, 0.08),
 					"rotation_deg": Vector3(10, 90, -10), "scale": 1.15})
+			if _shield_attach != null:
+				GearLook.apply(_shield_attach, shield_id)
 
 	var weapon_id := String(GameState.equipped.get("weapon", ""))
 	var want_path := _default_weapon_path
+	var want_id := ""
 	if weapon_id != "":
 		var wglb := String(GameState.item_def(weapon_id).get("glb", ""))
 		if wglb != "" and ResourceLoader.exists(wglb):
 			want_path = wglb
-	_ensure_weapon_path(want_path)
+			want_id = weapon_id
+	_ensure_weapon_path(want_path, want_id)
 
 
-func _ensure_weapon_path(path: String) -> void:
+func _ensure_weapon_path(path: String, item_id: String = "") -> void:
 	if path == "" or not ResourceLoader.exists(path) or _character_model == null:
 		return
 	var current_path := String(weapon_node.get_meta("weapon_path", "")) if weapon_node != null else ""
 	if weapon_node != null and current_path == path and is_instance_valid(weapon_node):
+		if item_id != "":
+			GearLook.apply(weapon_node, item_id)
 		_update_weapon_glow()
 		return
 	_free_attach(weapon_node)
 	weapon_node = WeaponGrip.attach(_character_model, path, "melee")
 	if weapon_node != null:
 		weapon_node.set_meta("weapon_path", path)
+		if item_id != "":
+			GearLook.apply(weapon_node, item_id)
 	_update_weapon_glow()
 
 
@@ -190,7 +198,8 @@ func _attach_prop_to_bone(
 		bone: String,
 		pos: Vector3,
 		euler_deg: Vector3,
-		target_extent: float) -> Node3D:
+		target_extent: float,
+		item_id: String = "") -> Node3D:
 	if _character_model == null or not ResourceLoader.exists(glb_path):
 		return null
 	var skel: Skeleton3D = null
@@ -211,6 +220,7 @@ func _attach_prop_to_bone(
 	attachment.add_child(holder)
 	var inst: Node3D = scene.instantiate()
 	holder.add_child(inst)
+	GearLook.apply(inst, item_id)
 	# Cancel character scale so extents stay in metres.
 	var comp := 1.0 / maxf(0.0001, _character_model.scale.x)
 	ModelUtils.scale_to_max_extent(inst, target_extent)
