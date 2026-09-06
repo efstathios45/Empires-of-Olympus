@@ -356,6 +356,10 @@ func _seed_starter_bag() -> void:
 	try_add_to_bag("health_potion", 3)
 	try_add_to_bag("mana_potion", 2)
 	try_add_to_bag("hephaestus", 1)
+	# A few panoply pieces so the pouch opens with visible item pictures.
+	try_add_to_bag("bronze_knife", 1)
+	try_add_to_bag("aspis", 1)
+	try_add_to_bag("corinthian_helm", 1)
 	_resync_derived_counts()
 
 func empire_data() -> Dictionary:
