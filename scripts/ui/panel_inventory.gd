@@ -33,7 +33,7 @@ func _ready() -> void:
 	panel.custom_minimum_size = Vector2(780, 640)
 	center.add_child(panel)
 
-	var margin := Kit.make_margin(34)
+	var margin := Kit.make_margin(44)
 	panel.add_child(margin)
 	var v := VBoxContainer.new()
 	v.add_theme_constant_override("separation", 8)

@@ -5,7 +5,7 @@ extends Control
 
 const Kit = preload("res://scripts/ui/ui_kit.gd")
 
-const CONTENT_W := 700
+const CONTENT_W := 660
 const BAD := Color(0.55, 0.08, 0.06)
 const WARN := Color(0.60, 0.33, 0.04)
 
@@ -33,7 +33,7 @@ func _ready() -> void:
 	panel.custom_minimum_size = Vector2(864, 640)
 	center.add_child(panel)
 
-	var margin := Kit.make_margin(34)
+	var margin := Kit.make_margin(44)
 	panel.add_child(margin)
 	var v := VBoxContainer.new()
 	v.add_theme_constant_override("separation", 6)

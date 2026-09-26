@@ -313,7 +313,7 @@ func _build_death_overlay(root: Control) -> void:
 	p.custom_minimum_size = Vector2(600, 300)
 	p.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	_death_overlay.add_child(p)
-	var margin := Kit.make_margin(34)
+	var margin := Kit.make_margin(44)
 	margin.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	p.add_child(margin)
 	var v := VBoxContainer.new()
@@ -341,7 +341,7 @@ func _build_victory_overlay(root: Control) -> void:
 	var p := Kit.make_panel(false)
 	p.custom_minimum_size = Vector2(720, 500)
 	_victory_overlay.add_child(p)
-	var margin := Kit.make_margin(34)
+	var margin := Kit.make_margin(44)
 	p.add_child(margin)
 	var v := VBoxContainer.new()
 	v.alignment = BoxContainer.ALIGNMENT_CENTER
@@ -614,7 +614,7 @@ func _build_map_panel() -> Control:
 
 	var panel := Kit.make_panel(false)
 	center.add_child(panel)
-	var margin := Kit.make_margin(34)
+	var margin := Kit.make_margin(44)
 	panel.add_child(margin)
 	var v := VBoxContainer.new()
 	v.add_theme_constant_override("separation", 8)

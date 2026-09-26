@@ -5,7 +5,7 @@ extends Control
 
 const Kit = preload("res://scripts/ui/ui_kit.gd")
 
-const TEXT_W := 640
+const TEXT_W := 600
 
 var hud: CanvasLayer
 
@@ -29,7 +29,7 @@ func _ready() -> void:
 	panel.custom_minimum_size = Vector2(820, 560)
 	center.add_child(panel)
 
-	var margin := Kit.make_margin(34)
+	var margin := Kit.make_margin(44)
 	panel.add_child(margin)
 	var v := VBoxContainer.new()
 	v.add_theme_constant_override("separation", 8)
