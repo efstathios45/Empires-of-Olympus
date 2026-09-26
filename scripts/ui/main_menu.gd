@@ -21,7 +21,7 @@ const CARD_W := 520
 const EMPIRE_CARD_H := 480
 const CLASS_CARD_H := 560
 const FRAME_INSET := 100
-const CARD_PAD := 20
+const CARD_PAD := 28
 ## Outer 520 − frame 100×2 − CARD_PAD×2 ≈ usable wrap width.
 const TEXT_W := CARD_W - FRAME_INSET * 2 - CARD_PAD * 2
 
