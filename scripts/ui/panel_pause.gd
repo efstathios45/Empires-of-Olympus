@@ -3,7 +3,8 @@ extends Control
 
 const Kit = preload("res://scripts/ui/ui_kit.gd")
 
-const TEXT_W := 480
+## panel_scroll content_margin ~118×2 + inner margin 20×2 → keep text inside cream.
+const TEXT_W := 400
 
 var hud: CanvasLayer
 
@@ -20,7 +21,7 @@ func _ready() -> void:
 	panel.custom_minimum_size = Vector2(700, 620)
 	center.add_child(panel)
 
-	var margin := Kit.make_margin(44)
+	var margin := Kit.make_margin(20)
 	panel.add_child(margin)
 	var v := VBoxContainer.new()
 	v.alignment = BoxContainer.ALIGNMENT_CENTER

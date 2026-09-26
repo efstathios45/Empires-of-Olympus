@@ -13,16 +13,17 @@ const POSTER := "res://assets/ui/title_poster.webp"
 const WORDMARK := "res://assets/ui/wordmark_title.png"
 const MAP := BG + "empire_map_hellas.png"
 
-## Card geometry. The panel art insets ~48px (9-slice) + style content_margin,
-## then CARD_PAD adds breathing room so letters never kiss the gold frame or art.
-## Card heights are floors — a card grows to fit its lore, so the map below
-## the title is the element that absorbs whatever height is left over.
+## Card geometry. panel_card content_margin clears the ornate gold frame
+## (cream field begins ~82–112px in). CARD_PAD is extra air inside that
+## cream so Cinzel glyphs never sit on the border or art edge.
+## Card heights are floors — a card grows to fit its lore.
 const CARD_W := 520
-const EMPIRE_CARD_H := 460
-const CLASS_CARD_H := 540
-const CARD_PAD := 28
-## 96 = texture margins, 36 = stylebox content margins, CARD_PAD*2 = inner pad.
-const TEXT_W := CARD_W - 96 - 36 - CARD_PAD * 2
+const EMPIRE_CARD_H := 480
+const CLASS_CARD_H := 560
+const FRAME_INSET := 100
+const CARD_PAD := 20
+## Outer 520 − frame 100×2 − CARD_PAD×2 ≈ usable wrap width.
+const TEXT_W := CARD_W - FRAME_INSET * 2 - CARD_PAD * 2
 
 const DIM := Color(0.86, 0.82, 0.72)
 
@@ -169,34 +170,45 @@ func _row(sep: int = 20) -> HBoxContainer:
 	return h
 
 
-## Body text on marble: dark ink, wrapped, with a width to wrap against.
+## Body text on marble: dark ink, wrapped inside the padded content width.
 func _wrapped(text: String, size: int, color: Color, width: int) -> Label:
 	var l := Kit.make_label(text, size, color, HORIZONTAL_ALIGNMENT_CENTER)
 	l.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
-	l.custom_minimum_size = Vector2(width, 0)
+	l.custom_minimum_size = Vector2(maxi(width, 120), 0)
+	## Shrink-center so the label never stretches wider than TEXT_W.
+	l.size_flags_horizontal = Control.SIZE_SHRINK_CENTER
+	l.clip_text = false
 	return l
 
 
 ## Icon + one line of gold ink, e.g. a weapon or a realm bonus.
 func _icon_line(icon: String, text: String, color: Color, width: int) -> HBoxContainer:
 	var h := _row(8)
-	var ico := Kit.make_icon(icon, 28)
+	h.size_flags_horizontal = Control.SIZE_SHRINK_CENTER
+	h.custom_minimum_size = Vector2(maxi(width, 120), 0)
+	var ico := Kit.make_icon(icon, 22)
 	if ico != null and ico.texture != null:
 		h.add_child(ico)
-	var l := Kit.make_label(text, 13, color, HORIZONTAL_ALIGNMENT_CENTER)
+	var l := Kit.make_label(text, 12, color, HORIZONTAL_ALIGNMENT_CENTER)
 	l.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
-	l.custom_minimum_size = Vector2(width, 0)
+	l.custom_minimum_size = Vector2(maxi(width - 40, 100), 0)
+	l.size_flags_horizontal = Control.SIZE_SHRINK_CENTER
 	h.add_child(l)
 	return h
 
 
 func _card_body(card: PanelContainer) -> VBoxContainer:
+	## Clip the cream field so Cinzel glyphs cannot paint over the gold frame.
+	card.clip_contents = true
 	var m := Kit.make_margin(CARD_PAD)
+	m.clip_contents = true
+	m.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	card.add_child(m)
 	var v := VBoxContainer.new()
-	v.add_theme_constant_override("separation", 10)
+	v.add_theme_constant_override("separation", 8)
 	v.alignment = BoxContainer.ALIGNMENT_CENTER
 	v.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	v.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	m.add_child(v)
 	return v
 
@@ -214,8 +226,9 @@ func _equalize_heights(cards: Dictionary) -> void:
 
 func _card_button(text: String) -> Button:
 	var b := Kit.make_button(text, false)
-	b.custom_minimum_size = Vector2(280, 62)
+	b.custom_minimum_size = Vector2(mini(TEXT_W, 260), 52)
 	b.size_flags_horizontal = Control.SIZE_SHRINK_CENTER
+	b.clip_text = true
 	return b
 
 
@@ -223,7 +236,8 @@ func _card_button(text: String) -> Button:
 func _colour_band(c: Color) -> ColorRect:
 	var r := ColorRect.new()
 	r.color = c
-	r.custom_minimum_size = Vector2(TEXT_W, 5)
+	r.custom_minimum_size = Vector2(0, 5)
+	r.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	r.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	return r
 
@@ -332,20 +346,24 @@ func _make_empire_card(id: String, data: Dictionary) -> PanelContainer:
 	card.mouse_filter = Control.MOUSE_FILTER_PASS
 	var v := _card_body(card)
 
-	var art := _image(BG + "empire_" + id + ".png", Vector2(TEXT_W, 100), true)
+	var art := _image(BG + "empire_" + id + ".png", Vector2(TEXT_W, 88), true)
 	if art != null:
+		art.size_flags_horizontal = Control.SIZE_SHRINK_CENTER
 		v.add_child(art)
 		v.add_child(Kit.spacer(12))
 
 	var colour: Color = data.get("color", Kit.INK_GOLD)
-	v.add_child(_colour_band(colour))
-	v.add_child(Kit.spacer(4))
+	var band := _colour_band(colour)
+	band.custom_minimum_size = Vector2(TEXT_W, 5)
+	band.size_flags_horizontal = Control.SIZE_SHRINK_CENTER
+	v.add_child(band)
+	v.add_child(Kit.spacer(6))
 
 	var empire_name: String = data.get("name", id.capitalize())
-	v.add_child(Kit.make_label(empire_name, 26, Kit.INK_TITLE, HORIZONTAL_ALIGNMENT_CENTER))
-	v.add_child(_wrapped(String(EMPIRE_REGION.get(id, "")), 13, Kit.INK_SOFT, TEXT_W))
-	v.add_child(_wrapped(String(EMPIRE_LORE.get(id, data.get("desc", ""))), 13, Kit.INK_SOFT, TEXT_W))
-	v.add_child(_icon_line("icon_laurel", String(data.get("bonus_desc", "")), Kit.INK_GOLD, TEXT_W - 40))
+	v.add_child(_wrapped(empire_name, 20, Kit.INK_TITLE, TEXT_W))
+	v.add_child(_wrapped(String(EMPIRE_REGION.get(id, "")), 11, Kit.INK_SOFT, TEXT_W))
+	v.add_child(_wrapped(String(EMPIRE_LORE.get(id, data.get("desc", ""))), 11, Kit.INK_SOFT, TEXT_W))
+	v.add_child(_icon_line("icon_laurel", String(data.get("bonus_desc", "")), Kit.INK_GOLD, TEXT_W))
 
 	var pledge := _card_button("Pledge")
 	pledge.pressed.connect(_on_pick_empire.bind(id))
@@ -415,16 +433,17 @@ func _make_class_card(id: String, data: Dictionary) -> PanelContainer:
 	card.mouse_filter = Control.MOUSE_FILTER_PASS
 	var v := _card_body(card)
 
-	var art := _image(BG + "class_" + id + ".png", Vector2(TEXT_W, 150), true)
+	var art := _image(BG + "class_" + id + ".png", Vector2(TEXT_W, 128), true)
 	if art != null:
+		art.size_flags_horizontal = Control.SIZE_SHRINK_CENTER
 		v.add_child(art)
 		v.add_child(Kit.spacer(12))
 
 	var class_name_text: String = data.get("name", id.capitalize())
-	v.add_child(Kit.make_label(class_name_text, 26, Kit.INK_TITLE, HORIZONTAL_ALIGNMENT_CENTER))
-	v.add_child(_wrapped(String(CLASS_LORE.get(id, data.get("desc", ""))), 13, Kit.INK_SOFT, TEXT_W))
-	v.add_child(_icon_line("icon_sword", String(data.get("weapon_name", "")), Kit.INK, TEXT_W - 40))
-	v.add_child(_icon_line("icon_mana", String(data.get("skill_name", "")), Kit.INK_GOLD, TEXT_W - 40))
+	v.add_child(_wrapped(class_name_text, 20, Kit.INK_TITLE, TEXT_W))
+	v.add_child(_wrapped(String(CLASS_LORE.get(id, data.get("desc", ""))), 11, Kit.INK_SOFT, TEXT_W))
+	v.add_child(_icon_line("icon_sword", String(data.get("weapon_name", "")), Kit.INK, TEXT_W))
+	v.add_child(_icon_line("icon_mana", String(data.get("skill_name", "")), Kit.INK_GOLD, TEXT_W))
 
 	var walk := _card_button("Walk this Path")
 	walk.pressed.connect(_on_pick_class.bind(id))

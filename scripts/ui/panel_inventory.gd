@@ -11,7 +11,8 @@ const CLANS := {
 	"The Laurel Order": "Wisdom wields the spear. Keepers of the sacred games.",
 }
 
-const TEXT_W := 560
+## panel_scroll content_margin ~118×2 + inner margin 20×2 → keep text inside cream.
+const TEXT_W := 480
 
 var hud: CanvasLayer
 var initial_tab: String = "gear"
@@ -33,7 +34,7 @@ func _ready() -> void:
 	panel.custom_minimum_size = Vector2(780, 640)
 	center.add_child(panel)
 
-	var margin := Kit.make_margin(44)
+	var margin := Kit.make_margin(20)
 	panel.add_child(margin)
 	var v := VBoxContainer.new()
 	v.add_theme_constant_override("separation", 8)
