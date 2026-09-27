@@ -288,7 +288,7 @@ func _build_title_step() -> void:
 	page.add_child(_sub_line(
 		"WASD move  ·  Mouse look  ·  Click to strike  ·  Q god-skill"))
 	page.add_child(_sub_line(
-		"E speak  ·  I spoils  ·  M map  ·  Esc save & rest"))
+		"E speak  ·  Enter chat  ·  I spoils  ·  M map  ·  Esc rest"))
 
 	var bottom := Control.new()
 	bottom.mouse_filter = Control.MOUSE_FILTER_IGNORE
@@ -323,6 +323,7 @@ func _build_auth_form(page: VBoxContainer) -> void:
 
 	var form := VBoxContainer.new()
 	form.add_theme_constant_override("separation", 8)
+	form.alignment = BoxContainer.ALIGNMENT_CENTER
 	form.custom_minimum_size = Vector2(340, 0)
 	page.add_child(_centered(form))
 

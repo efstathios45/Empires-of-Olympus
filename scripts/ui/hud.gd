@@ -12,6 +12,7 @@ const DialoguePanel = preload("res://scripts/ui/panel_dialogue.gd")
 const SmithPanel = preload("res://scripts/ui/panel_smith.gd")
 const InventoryPanel = preload("res://scripts/ui/panel_inventory.gd")
 const PausePanel = preload("res://scripts/ui/panel_pause.gd")
+const ChatOverlay = preload("res://scripts/ui/chat_overlay.gd")
 
 # HUD text tints (light — always on a dark slate panel).
 const HUD_GOLD := Color(1.0, 0.88, 0.55)
@@ -44,6 +45,7 @@ var ui_open: bool = false
 
 var _player: Node3D
 var _world: Node3D
+var _chat: Control = null
 
 var _hp_bar: ProgressBar
 var _mp_bar: ProgressBar
@@ -98,6 +100,12 @@ func _build() -> void:
 	_vignette.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	_vignette.modulate.a = 0.0
 	root.add_child(_vignette)
+
+	_chat = ChatOverlay.new()
+	_chat.name = "Chat"
+	root.add_child(_chat)
+	_chat.chat_opened.connect(_on_chat_opened)
+	_chat.chat_closed.connect(_on_chat_closed)
 
 	_build_vitals(root)
 	_build_tracker(root)
@@ -511,6 +519,27 @@ func _refresh_boss_bar() -> void:
 func _unhandled_input(event: InputEvent) -> void:
 	if not event is InputEventKey or not event.pressed or event.echo:
 		return
+	## Enter opens chat when no full panel is up; while typing, LineEdit owns Enter.
+	if event.is_action_pressed("chat"):
+		if _chat != null and _chat.get("is_open"):
+			return
+		if _open_panel != null:
+			return
+		if _victory_overlay != null and _victory_overlay.visible:
+			return
+		if _death_overlay != null and _death_overlay.visible:
+			return
+		if _chat != null and _chat.has_method("open_chat"):
+			_chat.call("open_chat")
+			get_viewport().set_input_as_handled()
+		return
+	if _chat != null and _chat.get("is_open"):
+		## Block other hotkeys while composing a message.
+		if event.is_action_pressed("pause") or event.is_action_pressed("ui_cancel"):
+			_chat.call("close_chat")
+			_set_ui_open(false, true)
+			get_viewport().set_input_as_handled()
+		return
 	if event.is_action_pressed("interact") and not ui_open:
 		if _world and _player:
 			var target: Node3D = _world.get_nearest_interactable(_player.global_position)
@@ -529,6 +558,16 @@ func _unhandled_input(event: InputEvent) -> void:
 			pass
 		else:
 			toggle_pause()
+
+
+func _on_chat_opened() -> void:
+	## Freeze combat/movement while typing; mouse free for the text field.
+	_set_ui_open(true)
+
+
+func _on_chat_closed() -> void:
+	if _open_panel == null and not _victory_overlay.visible:
+		_set_ui_open(false, true)
 
 func open_dialogue(_npc: Node3D) -> void:
 	_open(DialoguePanel.new())
@@ -560,6 +599,8 @@ func toggle_map() -> void:
 		_open(_build_map_panel())
 
 func _open(panel: Control) -> void:
+	if _chat != null and _chat.get("is_open") and _chat.has_method("close_chat"):
+		_chat.call("close_chat", false)
 	if _open_panel != null:
 		_open_panel.queue_free()
 	if not panel.has_meta("is_map"):
