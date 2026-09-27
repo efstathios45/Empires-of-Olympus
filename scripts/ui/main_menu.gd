@@ -338,22 +338,19 @@ func _build_auth_form(page: VBoxContainer) -> void:
 	_auth_status.custom_minimum_size = Vector2(420, 0)
 	form.add_child(_auth_status)
 
-	var row := _row(12)
-	form.add_child(row)
+	## Stack kit plaques vertically so every action button is the same size.
 	var create_btn := Kit.make_button("Register", true)
 	create_btn.pressed.connect(_on_create_account)
-	row.add_child(create_btn)
+	form.add_child(create_btn)
 	var login_btn := Kit.make_button("Sign In", false)
 	login_btn.pressed.connect(_on_sign_in)
-	row.add_child(login_btn)
-
-	page.add_child(Kit.spacer(6))
+	form.add_child(login_btn)
 	var guest := Kit.make_button("Play Guest", false)
 	guest.pressed.connect(func() -> void:
 		_load_from_save = false
 		_show_step(2)
 	)
-	page.add_child(_centered(guest))
+	form.add_child(guest)
 
 
 func _build_logged_in_actions(page: VBoxContainer) -> void:
