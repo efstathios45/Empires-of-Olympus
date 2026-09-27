@@ -38,12 +38,14 @@ No zip extract needed — this download is the .exe alone.
 Download
 ------------------------------------------------------------
 Signed single-file Windows build (current):
-  https://gofile.io/d/ULaZAokt
+  https://gofile.io/d/Wn95tYpR
 
 File name: EmpiresOfOlympus.exe
 
 Includes combat loot crash fix, inventory frame fit, standardized buttons,
-and local account saves (Register / Sign In on the title screen).
+local account saves, Enter-to-chat, a visible in-game cursor, and
+bag→panoply drag-and-drop (boots, weapon, and other worn slots).
 Shared/cloud multiplayer persistence is documented in docs/ACCOUNTS.md.
 
 In-world: Enter opens player chat (see docs/CHAT.md).
+Hold RMB + drag to look; open Panoply with I and drag gear onto slots.

@@ -44,3 +44,5 @@ File name: EmpiresOfOlympus.exe
 
 Includes combat loot crash fix, inventory frame fit, account save/sync,
 Enter-to-chat, visible in-game cursor, and bag→panoply drag-and-drop.
+
+Hold RMB + drag to look; open Panoply with I and drag gear onto slots.
