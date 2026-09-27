@@ -21,9 +21,10 @@ const MAP := BG + "empire_map_hellas.png"
 const CARD_W := 520
 const EMPIRE_CARD_H := 480
 const CLASS_CARD_H := 560
-const FRAME_INSET := 100
-const CARD_PAD := 28
-## Outer 520 − frame 100×2 − CARD_PAD×2 ≈ usable wrap width.
+## Cream field begins ~81–83px in on panel_card.png; keep TEXT_W inside it.
+const FRAME_INSET := 104
+const CARD_PAD := 32
+## Outer 520 − frame 104×2 − CARD_PAD×2 ≈ usable wrap width.
 const TEXT_W := CARD_W - FRAME_INSET * 2 - CARD_PAD * 2
 
 const DIM := Color(0.86, 0.82, 0.72)

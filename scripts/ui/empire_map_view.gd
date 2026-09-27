@@ -6,17 +6,11 @@ signal empire_selected(id: String)
 
 const Kit = preload("res://scripts/ui/ui_kit.gd")
 const MAP_TEX := "res://assets/textures/backgrounds/empire_map_hellas.png"
-## Border-only overlays (not filled land masks — those washed the map).
+## Border-only overlays traced from each painted realm (never filled land masks).
 const BORDER_TEX := {
 	"sparta": "res://assets/textures/backgrounds/empire_border_sparta.png",
 	"athens": "res://assets/textures/backgrounds/empire_border_athens.png",
 	"corinth": "res://assets/textures/backgrounds/empire_border_corinth.png",
-}
-## Fallback if border assets are missing.
-const MASK_TEX := {
-	"sparta": "res://assets/textures/backgrounds/empire_mask_sparta.png",
-	"athens": "res://assets/textures/backgrounds/empire_mask_athens.png",
-	"corinth": "res://assets/textures/backgrounds/empire_mask_corinth.png",
 }
 
 ## Click hotspots (normalized AABB over the painted landmasses).
@@ -59,13 +53,6 @@ const CHRONICLE := {
 	},
 }
 
-## Per-realm border tint so the outline reads against the painted map.
-const BORDER_TINT := {
-	"sparta": Color(1.15, 0.55, 0.42, 1.0),
-	"athens": Color(0.55, 0.78, 1.2, 1.0),
-	"corinth": Color(1.2, 0.95, 0.45, 1.0),
-}
-
 var selected: String = "sparta"
 var _map_host: Control
 var _map_tex: TextureRect
@@ -102,13 +89,12 @@ func _ready() -> void:
 	for id in ["sparta", "athens", "corinth"]:
 		var hl := TextureRect.new()
 		var path: String = String(BORDER_TEX.get(id, ""))
-		if path == "" or not ResourceLoader.exists(path):
-			path = String(MASK_TEX.get(id, ""))
-		if ResourceLoader.exists(path):
+		if path != "" and ResourceLoader.exists(path):
 			hl.texture = load(path)
 		hl.expand_mode = TextureRect.EXPAND_IGNORE_SIZE
 		hl.stretch_mode = TextureRect.STRETCH_SCALE
 		hl.mouse_filter = Control.MOUSE_FILTER_IGNORE
+		## Borders are pre-coloured; modulate only fades them in/out.
 		hl.modulate = Color(1, 1, 1, 0)
 		_map_host.add_child(hl)
 		_highlights[id] = hl
@@ -211,12 +197,8 @@ func set_selected(id: String) -> void:
 func _refresh_highlights() -> void:
 	for id in _highlights:
 		var hl: TextureRect = _highlights[id]
-		var tint: Color = BORDER_TINT.get(id, Color(1.15, 1.05, 0.7, 1.0))
-		if id == selected:
-			## Bright rim — no filled wash over the landmass.
-			hl.modulate = Color(tint.r, tint.g, tint.b, 1.0)
-		else:
-			hl.modulate = Color(1, 1, 1, 0)
+		## Bright rim only — textures are already stroke-only.
+		hl.modulate = Color(1.08, 1.05, 1.0, 1.0) if id == selected else Color(1, 1, 1, 0)
 
 
 func _refresh_detail() -> void:
@@ -249,8 +231,4 @@ func _on_region_hover(id: String, on: bool) -> void:
 	var hl: TextureRect = _highlights.get(id)
 	if hl == null:
 		return
-	var tint: Color = BORDER_TINT.get(id, Color(1, 1, 1, 1))
-	if on:
-		hl.modulate = Color(tint.r, tint.g, tint.b, 0.55)
-	else:
-		hl.modulate = Color(1, 1, 1, 0)
+	hl.modulate = Color(1, 1, 1, 0.55 if on else 0.0)
