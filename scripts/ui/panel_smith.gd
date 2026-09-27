@@ -45,9 +45,7 @@ func _ready() -> void:
 	_build_wares(v)
 
 	v.add_child(Kit.spacer(4))
-	var close_btn := Kit.make_button("Leave the Forge", true)
-	close_btn.custom_minimum_size = Vector2(300, 62)
-	close_btn.size_flags_horizontal = Control.SIZE_SHRINK_CENTER
+	var close_btn := Kit.make_button("Leave", true)
 	close_btn.pressed.connect(func() -> void: hud.close_panel_from_click())
 	v.add_child(close_btn)
 
@@ -126,9 +124,7 @@ func _make_scroll_row(scroll_id: String) -> HBoxContainer:
 	desc.custom_minimum_size = Vector2(430, 0)
 	text.add_child(desc)
 
-	var btn := Kit.make_button("", false)
-	btn.custom_minimum_size = Vector2(226, 60)
-	btn.add_theme_font_size_override("font_size", 18)
+	var btn := Kit.make_button("Use", false)
 	btn.pressed.connect(_on_refine.bind(scroll_id))
 	row.add_child(btn)
 	_scroll_buttons[scroll_id] = btn
@@ -183,7 +179,9 @@ func _refresh() -> void:
 	for scroll_id in _scroll_buttons:
 		var count: int = GameState.scrolls.get(scroll_id, 0)
 		var btn: Button = _scroll_buttons[scroll_id]
-		btn.text = "Use  (×%d)" % count
+		## Keep kit plaque label short: "Use ×3"
+		btn.text = "Use ×%d" % count
+		Kit.standardize_button(btn)
 	_rebuild_shop()
 
 func _rebuild_shop() -> void:
@@ -218,9 +216,8 @@ func _rebuild_shop() -> void:
 		desc.custom_minimum_size = Vector2(400, 0)
 		text.add_child(desc)
 
-		var btn := Kit.make_button("%d gold" % item["price"], false)
-		btn.custom_minimum_size = Vector2(190, 58)
-		btn.add_theme_font_size_override("font_size", 18)
+		## Short buy label fits the standard plaque (e.g. "Buy 90").
+		var btn := Kit.make_button("Buy %d" % int(item["price"]), false)
 		btn.pressed.connect(_on_buy.bind(item_id))
 		row.add_child(btn)
 

@@ -1,5 +1,5 @@
 extends Control
-## Rest menu — controls, save, and the road back to the title.
+## Rest menu — controls, local save, and the road back to the title.
 
 const Kit = preload("res://scripts/ui/ui_kit.gd")
 
@@ -19,7 +19,7 @@ func _ready() -> void:
 	center.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
 
 	var panel := Kit.make_panel(false)
-	panel.custom_minimum_size = Vector2(720, 680)
+	panel.custom_minimum_size = Vector2(720, 700)
 	panel.clip_contents = true
 	center.add_child(panel)
 
@@ -55,35 +55,27 @@ func _ready() -> void:
 	if AccountSystem.is_logged_in():
 		_status.text = "Signed in as %s" % AccountSystem.display_name
 	else:
-		_status.text = "Guest — create an account on the title screen to save."
+		_status.text = "Guest — register on the title screen to save."
 
 	if not AccountSystem.save_finished.is_connected(_on_save_finished):
 		AccountSystem.save_finished.connect(_on_save_finished)
-	if not AccountSystem.sync_finished.is_connected(_on_sync_msg):
-		AccountSystem.sync_finished.connect(_on_sync_msg)
 
-	var save_btn := Kit.make_button("Save Legend", true)
-	save_btn.custom_minimum_size = Vector2(300, 58)
-	save_btn.size_flags_horizontal = Control.SIZE_SHRINK_CENTER
+	var save_btn := Kit.make_button("Save", true)
 	save_btn.pressed.connect(_on_save)
 	v.add_child(save_btn)
 
-	var resume := Kit.make_button("Return to Battle", true)
-	resume.custom_minimum_size = Vector2(300, 58)
-	resume.size_flags_horizontal = Control.SIZE_SHRINK_CENTER
+	var resume := Kit.make_button("Resume", true)
 	resume.pressed.connect(func() -> void: hud.close_panel_from_click())
 	v.add_child(resume)
 
-	var menu := Kit.make_button("Save & Return to Title", false)
-	menu.custom_minimum_size = Vector2(300, 56)
-	menu.size_flags_horizontal = Control.SIZE_SHRINK_CENTER
+	var menu := Kit.make_button("Quit", false)
 	menu.pressed.connect(_on_menu)
 	v.add_child(menu)
 
 
 func _on_save() -> void:
 	if not AccountSystem.is_logged_in():
-		_status.text = "Sign in from the title screen to save your legend."
+		_status.text = "Register on the title screen to save."
 		return
 	var extra := {}
 	var player := get_tree().get_first_node_in_group("player") as Node3D
@@ -94,17 +86,13 @@ func _on_save() -> void:
 			"z": player.global_position.z,
 		}
 	if AccountSystem.save_game(extra):
-		_status.text = "Legend saved."
+		_status.text = "Saved."
 	else:
 		_status.text = AccountSystem.last_error
 
 
 func _on_save_finished(ok: bool, message: String) -> void:
 	_status.text = message if message != "" else ("Saved." if ok else "Save failed.")
-
-
-func _on_sync_msg(ok: bool, message: String) -> void:
-	_status.text = message
 
 
 func _on_menu() -> void:

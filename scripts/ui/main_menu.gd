@@ -17,7 +17,8 @@ const MAP := BG + "empire_map_hellas.png"
 ## Card geometry sized for 1080p so map + cards + nav all fit on one screen
 ## (large 520×480 cards pushed Continue off-screen / felt "zoomed in").
 ## content_margin on panel_card clears the gold frame; CARD_PAD keeps lore in.
-const CARD_W := 380
+## Wide enough that Kit.BTN_SIZE (220) fits in the cream field of each card.
+const CARD_W := 420
 const EMPIRE_CARD_H := 300
 const CLASS_CARD_H := 380
 const FRAME_INSET := 78
@@ -233,12 +234,8 @@ func _equalize_heights(cards: Dictionary) -> void:
 
 
 func _card_button(text: String) -> Button:
-	var b := Kit.make_button(text, false)
-	b.custom_minimum_size = Vector2(mini(TEXT_W, 180), 40)
-	b.size_flags_horizontal = Control.SIZE_SHRINK_CENTER
-	b.clip_text = true
-	b.add_theme_font_size_override("font_size", 14)
-	return b
+	## Same plaque size/font as every other kit button.
+	return Kit.make_button(text, false)
 
 
 ## A thin band of the realm's map colour, tying card to territory.
@@ -322,7 +319,7 @@ func _styled_line_edit(placeholder: String, secret: bool = false) -> LineEdit:
 
 func _build_auth_form(page: VBoxContainer) -> void:
 	page.add_child(Kit.spacer(10))
-	page.add_child(_sub_line("Create an account to save your legend — and continue on another PC."))
+	page.add_child(_sub_line("Create an account to save your legend on this PC."))
 
 	var form := VBoxContainer.new()
 	form.add_theme_constant_override("separation", 8)
@@ -343,21 +340,15 @@ func _build_auth_form(page: VBoxContainer) -> void:
 
 	var row := _row(12)
 	form.add_child(row)
-	var create_btn := Kit.make_button("Create Account", true)
-	create_btn.custom_minimum_size = Vector2(180, 52)
-	create_btn.add_theme_font_size_override("font_size", 16)
+	var create_btn := Kit.make_button("Register", true)
 	create_btn.pressed.connect(_on_create_account)
 	row.add_child(create_btn)
 	var login_btn := Kit.make_button("Sign In", false)
-	login_btn.custom_minimum_size = Vector2(140, 52)
-	login_btn.add_theme_font_size_override("font_size", 16)
 	login_btn.pressed.connect(_on_sign_in)
 	row.add_child(login_btn)
 
 	page.add_child(Kit.spacer(6))
-	var guest := Kit.make_button("Play as Guest (no cloud save)", false)
-	guest.custom_minimum_size = Vector2(360, 48)
-	guest.add_theme_font_size_override("font_size", 15)
+	var guest := Kit.make_button("Play Guest", false)
 	guest.pressed.connect(func() -> void:
 		_load_from_save = false
 		_show_step(2)
@@ -373,7 +364,7 @@ func _build_logged_in_actions(page: VBoxContainer) -> void:
 	if AccountSystem.has_local_save():
 		page.add_child(_sub_line("A saved legend awaits on this device."))
 	else:
-		page.add_child(_sub_line("No local save yet — start a new legend, or pull from the cloud."))
+		page.add_child(_sub_line("No save yet — start a new legend."))
 
 	page.add_child(Kit.spacer(10))
 	var actions := VBoxContainer.new()
@@ -381,39 +372,23 @@ func _build_logged_in_actions(page: VBoxContainer) -> void:
 	page.add_child(_centered(actions))
 
 	if AccountSystem.has_local_save():
-		var cont := Kit.make_button("Continue Legend", true)
-		cont.custom_minimum_size = Vector2(360, 64)
-		cont.add_theme_font_size_override("font_size", 22)
+		var cont := Kit.make_button("Continue", true)
 		cont.pressed.connect(_on_continue_legend)
 		actions.add_child(cont)
 
-	var begin := Kit.make_button("Begin New Legend", not AccountSystem.has_local_save())
-	begin.custom_minimum_size = Vector2(360, 56)
-	begin.add_theme_font_size_override("font_size", 18)
+	var begin := Kit.make_button("New Game", not AccountSystem.has_local_save())
 	begin.pressed.connect(func() -> void:
 		_load_from_save = false
 		_show_step(2)
 	)
 	actions.add_child(begin)
 
-	var sync_row := _row(10)
-	actions.add_child(sync_row)
-	var pull := Kit.make_button("Sync From Cloud", false)
-	pull.custom_minimum_size = Vector2(200, 44)
-	pull.add_theme_font_size_override("font_size", 14)
-	pull.pressed.connect(func() -> void:
-		_set_auth_status("Pulling cloud save…")
-		AccountSystem.request_cloud_pull()
-	)
-	sync_row.add_child(pull)
 	var logout := Kit.make_button("Sign Out", false)
-	logout.custom_minimum_size = Vector2(140, 44)
-	logout.add_theme_font_size_override("font_size", 14)
 	logout.pressed.connect(func() -> void:
 		AccountSystem.logout()
 		_show_step(1)
 	)
-	sync_row.add_child(logout)
+	actions.add_child(logout)
 
 	_auth_status = Kit.make_hud_label("", 14, Color(1.0, 0.85, 0.55), HORIZONTAL_ALIGNMENT_CENTER)
 	_auth_status.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
@@ -504,18 +479,14 @@ func _build_empire_step() -> void:
 	page.add_child(nav)
 
 	var back := Kit.make_button("Back", false)
-	back.custom_minimum_size = Vector2(180, 52)
 	back.pressed.connect(_show_step.bind(1))
 	nav.add_child(back)
 
-	var study := Kit.make_button("Study the Map", false)
-	study.custom_minimum_size = Vector2(220, 52)
+	var study := Kit.make_button("Map", false)
 	study.pressed.connect(_show_map_overlay)
 	nav.add_child(study)
 
 	_continue_btn = Kit.make_button("Continue", true)
-	_continue_btn.custom_minimum_size = Vector2(260, 54)
-	_continue_btn.add_theme_font_size_override("font_size", 18)
 	_continue_btn.pressed.connect(_show_step.bind(3))
 	nav.add_child(_continue_btn)
 
@@ -569,9 +540,9 @@ func _refresh_empire_selection() -> void:
 		var card: Control = _empire_cards[key]
 		## Keep unselected cards readable — soft dim, not a grey wash.
 		card.modulate = Color(1, 1, 1, 1) if key == _empire else Color(0.88, 0.86, 0.82, 0.85)
+	## Keep the kit label short so it always fits the plaque.
 	if _continue_btn != null:
-		var data: Dictionary = GameState.EMPIRES.get(_empire, {})
-		_continue_btn.text = "Continue as %s" % String(data.get("name", "Sparta"))
+		_continue_btn.text = "Continue"
 
 
 # ── Step 3: the path you walk ────────────────────────────────────────────
@@ -599,13 +570,10 @@ func _build_class_step() -> void:
 	page.add_child(nav)
 
 	var back := Kit.make_button("Back", false)
-	back.custom_minimum_size = Vector2(220, 62)
 	back.pressed.connect(_show_step.bind(2))
 	nav.add_child(back)
 
-	var play := Kit.make_button("Enter Hellas", true)
-	play.custom_minimum_size = Vector2(360, 74)
-	play.add_theme_font_size_override("font_size", 26)
+	var play := Kit.make_button("Enter", true)
 	play.pressed.connect(_on_play)
 	nav.add_child(play)
 
@@ -632,7 +600,7 @@ func _make_class_card(id: String, data: Dictionary) -> PanelContainer:
 	v.add_child(_icon_line("icon_sword", String(data.get("weapon_name", "")), Kit.INK, TEXT_W))
 	v.add_child(_icon_line("icon_mana", String(data.get("skill_name", "")), Kit.INK_GOLD, TEXT_W))
 
-	var walk := _card_button("Walk this Path")
+	var walk := _card_button("Choose")
 	walk.pressed.connect(_on_pick_class.bind(id))
 	v.add_child(walk)
 	return card
@@ -686,7 +654,6 @@ func _show_map_overlay() -> void:
 	_map_view.call_deferred("set_selected", _empire)
 
 	var close := Kit.make_button("Close", false)
-	close.custom_minimum_size = Vector2(260, 62)
 	close.pressed.connect(_close_overlay)
 	v.add_child(_centered(close))
 

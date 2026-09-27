@@ -88,7 +88,6 @@ func _build_shell() -> void:
 	title.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	top.add_child(title)
 	var close_btn := Kit.make_button("Close", false)
-	close_btn.custom_minimum_size = Vector2(100, 36)
 	close_btn.pressed.connect(_close)
 	top.add_child(close_btn)
 
@@ -107,7 +106,6 @@ func _build_shell() -> void:
 
 func _add_tab(id: String, text: String) -> void:
 	var b := Kit.make_button(text, id == "gear")
-	b.custom_minimum_size = Vector2(120, 36)
 	b.set_meta("tab_id", id)
 	b.pressed.connect(func() -> void: _show(id))
 	_tabs.add_child(b)
@@ -217,7 +215,6 @@ func _build_panoply() -> void:
 		_stat_labels[key] = lab
 
 	_btn_unequip = Kit.make_button("Unequip", false)
-	_btn_unequip.custom_minimum_size = Vector2(140, 36)
 	_btn_unequip.pressed.connect(_do_unequip)
 	left.add_child(_btn_unequip)
 
@@ -295,11 +292,9 @@ func _build_panoply() -> void:
 	actions.add_theme_constant_override("separation", 8)
 	right.add_child(actions)
 	_btn_equip = Kit.make_button("Equip", true)
-	_btn_equip.custom_minimum_size = Vector2(110, 36)
 	_btn_equip.pressed.connect(_do_equip)
 	actions.add_child(_btn_equip)
 	_btn_sell = Kit.make_button("Sell", false)
-	_btn_sell.custom_minimum_size = Vector2(110, 36)
 	_btn_sell.pressed.connect(_do_sell)
 	actions.add_child(_btn_sell)
 

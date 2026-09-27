@@ -1,7 +1,11 @@
 extends Node
-## AccountSystem — local username/password accounts + cloud sync.
+## AccountSystem — local username/password accounts + local saves (default).
 ## Local: hashed credentials in user://accounts.json, saves in user://saves/<user>.json
-## Cloud: optional HTTPS API (register/login/save/load) so play continues on another device.
+##
+## Multiplayer / shared readiness: keep GameState.to_save_dict() as the single
+## snapshot format. Flip CLOUD_ENABLED and point sync_url at cloud_sync/ (or a
+## future game-server) when you want cross-device or authoritative multiplayer
+## persistence. See docs/ACCOUNTS.md.
 
 signal auth_changed
 signal sync_finished(ok: bool, message: String)
@@ -12,10 +16,11 @@ const SAVES_DIR := "user://saves"
 const SESSION_PATH := "user://session.json"
 const SAVE_VERSION := 1
 
-## Public sync API. Overridable via user://sync_url.txt (one line).
-## Empty = local-only (still creates accounts & saves on this device).
-## Default public sync endpoint (Cloudflare tunnel while hosted; override with user://sync_url.txt).
-var sync_url: String = "https://sole-employees-dover-pupils.trycloudflare.com"
+## Local-only until a shared backend is hosted. Cloud code paths stay wired.
+const CLOUD_ENABLED := false
+
+## When CLOUD_ENABLED, set this (or user://sync_url.txt) to the sync API root.
+var sync_url: String = ""
 
 var username: String = ""
 var auth_token: String = ""
@@ -32,8 +37,15 @@ func _ready() -> void:
 	_http.timeout = 20.0
 	add_child(_http)
 	_http.request_completed.connect(_on_http)
-	_load_sync_url_override()
+	if CLOUD_ENABLED:
+		_load_sync_url_override()
+	else:
+		sync_url = ""
 	_restore_session()
+
+
+func cloud_available() -> bool:
+	return CLOUD_ENABLED and sync_url != ""
 
 
 func is_logged_in() -> bool:
@@ -175,8 +187,8 @@ func register(user: String, password: String, hero_name: String = "") -> bool:
 	auth_token = ""
 	_persist_session()
 	auth_changed.emit()
-	## Best-effort cloud register (async). Local account already works offline.
-	if sync_url != "":
+	## Optional cloud register when a shared backend is enabled.
+	if cloud_available():
 		_cloud_register(user, password, display_name)
 	last_error = ""
 	return true
@@ -202,13 +214,13 @@ func login(user: String, password: String) -> bool:
 		display_name = String(rec.get("display_name", user))
 		_persist_session()
 		auth_changed.emit()
-		if sync_url != "":
+		if cloud_available():
 			_cloud_login(user, password)
 		last_error = ""
 		return true
-	## Not on this device — need cloud.
-	if sync_url == "":
-		last_error = "Unknown account on this device (cloud sync offline)."
+	## Not on this device — only recoverable via a shared backend.
+	if not cloud_available():
+		last_error = "Unknown account on this device."
 		return false
 	last_error = "Contacting sync server…"
 	_cloud_login(user, password, true)
@@ -249,8 +261,8 @@ func save_game(extra: Dictionary = {}) -> bool:
 	f.store_string(JSON.stringify(payload, "\t"))
 	f.close()
 	last_error = ""
-	save_finished.emit(true, "Legend saved.")
-	if sync_url != "" and auth_token != "":
+	save_finished.emit(true, "Saved.")
+	if cloud_available() and auth_token != "":
 		_cloud_push(payload)
 	return true
 
@@ -261,7 +273,7 @@ func load_game() -> bool:
 		return false
 	var path := _save_path(username)
 	if not FileAccess.file_exists(path):
-		last_error = "No local save — try Sync From Cloud, or start a new legend."
+		last_error = "No save yet — start a new legend."
 		return false
 	var f := FileAccess.open(path, FileAccess.READ)
 	if f == null:
@@ -287,19 +299,21 @@ func load_game() -> bool:
 
 
 func request_cloud_pull() -> void:
-	if sync_url == "" or auth_token == "":
-		sync_finished.emit(false, "Cloud sync unavailable (not logged into server).")
+	if not cloud_available() or auth_token == "":
+		sync_finished.emit(false, "Shared sync is off (local saves only).")
 		return
 	_cloud_pull()
 
 
 func request_cloud_push() -> void:
+	if not cloud_available():
+		sync_finished.emit(false, "Shared sync is off (local saves only).")
+		return
 	if not is_logged_in():
 		sync_finished.emit(false, "Log in first.")
 		return
 	var path := _save_path(username)
 	if not FileAccess.file_exists(path):
-		## Build from current GameState
 		save_game()
 		return
 	var f := FileAccess.open(path, FileAccess.READ)

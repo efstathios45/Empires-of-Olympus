@@ -42,6 +42,6 @@ Signed single-file Windows build (current):
 
 File name: EmpiresOfOlympus.exe
 
-Includes wolf/boar combat crash fix, inventory frame fit, and account save/sync.
-Create an account on the title screen to save your legend and continue later
-(cross-device needs the sync server — see docs/ACCOUNTS.md).
+Includes combat loot crash fix, inventory frame fit, standardized buttons,
+and local account saves (Register / Sign In on the title screen).
+Shared/cloud multiplayer persistence is documented in docs/ACCOUNTS.md.

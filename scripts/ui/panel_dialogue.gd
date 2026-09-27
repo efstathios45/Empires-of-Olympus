@@ -83,13 +83,11 @@ func _ready() -> void:
 	row.add_theme_constant_override("separation", 20)
 	v.add_child(row)
 
-	_complete_btn = Kit.make_button("Complete Trial", true)
-	_complete_btn.custom_minimum_size = Vector2(280, 64)
+	_complete_btn = Kit.make_button("Complete", true)
 	_complete_btn.pressed.connect(_on_complete)
 	row.add_child(_complete_btn)
 
 	var close_btn := Kit.make_button("Farewell", false)
-	close_btn.custom_minimum_size = Vector2(260, 62)
 	close_btn.pressed.connect(func() -> void: hud.close_panel_from_click())
 	row.add_child(close_btn)
 

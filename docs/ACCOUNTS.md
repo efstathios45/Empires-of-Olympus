@@ -1,42 +1,72 @@
-# Accounts, saves, and cross-device continue
+# Accounts & saves
 
-Yes — **continuing on another device needs a sync server**. This repo ships one.
+**Default today: local-only.** Username/password + a save file on this PC.
+Cross-device sync and multiplayer persistence are stubbed and documented below.
 
-## What you get
+## Player flow
 
-| Layer | What it does |
-|-------|----------------|
-| **Local account** | Username + password (SHA-256 salted) stored in `user://accounts.json` |
-| **Local save** | Full run snapshot in `user://saves/<user>.json` (level, gold, bag, gear, quests, position…) |
-| **Cloud sync** | `cloud_sync/` FastAPI + SQLite — register / login / upload / download the same JSON |
+1. Title → **Register** / **Sign In** (or **Play Guest**)
+2. Esc → **Save** (autosave ~every 45s when signed in)
+3. Title → **Continue** loads `user://saves/<user>.json`
 
-## In the game
+Guest play does not persist.
 
-1. Title screen → **Create Account** or **Sign In**
-2. Play → Esc → **Save Legend** (also autosaves every ~45s when signed in)
-3. On another PC: **Sign In** with the same username/password → **Sync From Cloud** → **Continue Legend**
+## Data shape (keep this stable)
 
-Guest play still works; it does not cloud-save.
+`GameState.to_save_dict()` / `apply_save_dict()` is the **single snapshot** for:
 
-## Sync server
+- empire, class, name, level, xp, gold, refine
+- bag + equipped slots
+- quests / clan / optional `pos`
 
-```bash
-cd cloud_sync
-pip install -r requirements.txt
-export EOO_JWT_SECRET="$(openssl rand -hex 24)"
-uvicorn server:app --host 0.0.0.0 --port 8787
-```
+Anything that needs to survive a session (or travel between clients) must go
+through this dict — not ad-hoc globals.
 
-Point a build at your host by writing one line to the game’s user data file `sync_url.txt`:
+## Files
 
-```
-https://your-sync-host.example
-```
+| Path | Purpose |
+|------|---------|
+| `user://accounts.json` | Salted password hashes + display names |
+| `user://saves/<user>.json` | Latest run snapshot |
+| `user://session.json` | Remembered login on this device |
+| `scripts/autoloads/account_system.gd` | Auth + save/load (+ optional cloud) |
+| `cloud_sync/` | Optional HTTP sync API (off by default) |
 
-The client default URL is set in `scripts/autoloads/account_system.gd` (`sync_url`).
+## Enabling shared / cloud later
 
-Docker: see `cloud_sync/Dockerfile` and `cloud_sync/README.md`.
+1. Host `cloud_sync/` (see that folder’s README / Dockerfile).
+2. In `account_system.gd`: set `CLOUD_ENABLED = true` and `sync_url` (or write
+   `user://sync_url.txt` with the API root).
+3. Re-ship the client. Register/login will also hit `/v1/register` + `/v1/login`;
+   saves will PUT/GET `/v1/save`.
 
-## Security note
+Conflict rule already implied by the API: **last write wins** via `saved_at`.
+For real multiplayer you will want server authority (below).
 
-Passwords are hashed; the sync API uses JWT bearer tokens. Use HTTPS in production and a strong `EOO_JWT_SECRET`. This is an indie save-sync service, not a full anti-cheat backend.
+## Advice: multiplayer-ready persistence
+
+When you add shared worlds / parties, treat the local JSON as a **client cache**,
+not the source of truth.
+
+Recommended shape:
+
+1. **Authoritative game server** (Godot dedicated, or custom) owns:
+   - character rows (same fields as `to_save_dict`)
+   - world mutables you care about (chests opened, stones destroyed, etc.)
+2. **Auth**: keep username/password (or move to OAuth later). Issue a session
+   token; every save/load goes over that token.
+3. **Protocol**:
+   - login → token + character list
+   - enter world → server spawns you from DB snapshot
+   - periodic / on-checkpoint → client sends *deltas* or full snapshot;
+     server validates (gold can’t jump illegally, etc.) and stores
+   - disconnect → server writes final snapshot
+4. **Reuse `to_save_dict()`** as the payload schema so UI and combat code do not
+   fork. Version it with `"v": N` and migrate in `apply_save_dict`.
+5. **Do not** trust the client for inventory/gold in multiplayer — validate on
+   the server. Local-only mode can keep trusting the file.
+6. **Optional bridge**: keep `cloud_sync/` as a thin “solo cloud save” service;
+   multiplayer should be a real game server that also persists characters.
+
+`AccountSystem.cloud_available()` gates the HTTP paths so solo builds stay
+offline-friendly until you flip the flag.

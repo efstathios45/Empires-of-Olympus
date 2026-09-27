@@ -5,6 +5,14 @@ extends Node
 const FONT_PATH := "res://assets/fonts/cinzel.ttf"
 const ICON_DIR := "res://assets/ui/"
 
+## One plaque size for every action button (fits empire/class cards + panels).
+const BTN_SIZE := Vector2(220, 62)
+## Single Cinzel size — shorten labels instead of shrinking per-button.
+const BTN_FONT := 15
+## Keep glyph ink inside the marble face (outside the ornate rim).
+const BTN_PAD_X := 32.0
+const BTN_PAD_Y := 14.0
+
 static var _font: Font
 
 static func font() -> Font:
@@ -56,16 +64,46 @@ static func make_hud_label(text: String, size: int = 18,
 	l.add_theme_constant_override("outline_size", 6)
 	return l
 
+
+## Usable text width inside the standard plaque (after content margins).
+static func button_text_width() -> float:
+	return BTN_SIZE.x - BTN_PAD_X * 2.0
+
+
+## True when `text` fits the standard button at BTN_FONT (Cinzel).
+static func button_text_fits(text: String) -> bool:
+	var f := font()
+	if f == null:
+		return text.length() <= 14
+	return f.get_string_size(text, HORIZONTAL_ALIGNMENT_LEFT, -1, BTN_FONT).x <= button_text_width()
+
+
+static func _button_style(primary: bool) -> StyleBox:
+	var path := "res://assets/ui/btn_blank.tres" if primary else "res://assets/ui/btn_blank_alt.tres"
+	var base: StyleBox = style(path)
+	if base == null:
+		return null
+	var sb: StyleBox = base.duplicate()
+	## Explicit content margins so labels never sit on the ornate rim.
+	sb.content_margin_left = BTN_PAD_X
+	sb.content_margin_right = BTN_PAD_X
+	sb.content_margin_top = BTN_PAD_Y
+	sb.content_margin_bottom = BTN_PAD_Y
+	return sb
+
+
 static func make_button(text: String, primary: bool = true) -> Button:
-	## Kit buttons are blank marble plaques — we draw the label ourselves.
+	## One size, one font, centered label — callers must not override size/font.
 	var b := Button.new()
 	b.text = text
-	b.custom_minimum_size = Vector2(240, 60)
+	b.custom_minimum_size = BTN_SIZE
+	b.size_flags_horizontal = Control.SIZE_SHRINK_CENTER
+	b.alignment = HORIZONTAL_ALIGNMENT_CENTER
 	b.focus_mode = Control.FOCUS_NONE
 	b.clip_text = true
 	b.autowrap_mode = TextServer.AUTOWRAP_OFF
 	b.text_overrun_behavior = TextServer.OVERRUN_TRIM_ELLIPSIS
-	var sb: StyleBox = style("res://assets/ui/btn_blank.tres" if primary else "res://assets/ui/btn_blank_alt.tres")
+	var sb := _button_style(primary)
 	if sb:
 		for st in ["normal", "hover", "pressed", "focus", "disabled"]:
 			b.add_theme_stylebox_override(st, sb)
@@ -74,11 +112,36 @@ static func make_button(text: String, primary: bool = true) -> Button:
 		b.add_theme_color_override(st, c)
 	b.add_theme_color_override("font_disabled_color", Color(0.55, 0.5, 0.45))
 	b.add_theme_font_override("font", font())
-	b.add_theme_font_size_override("font_size", 20)
+	b.add_theme_font_size_override("font_size", BTN_FONT)
 	b.mouse_entered.connect(func() -> void: b.modulate = Color(1.14, 1.10, 1.0))
 	b.mouse_exited.connect(func() -> void: b.modulate = Color.WHITE)
-	b.pressed.connect(func() -> void: AudioManager.play_sfx("ui_click", -4.0))
+	## Runtime lookup so this script compiles even when autoload globals are not yet registered.
+	b.pressed.connect(func() -> void:
+		var tree := Engine.get_main_loop() as SceneTree
+		if tree == null:
+			return
+		var am := tree.root.get_node_or_null("AudioManager")
+		if am != null and am.has_method("play_sfx"):
+			am.call("play_sfx", "ui_click", -4.0)
+	)
+	if not button_text_fits(text):
+		push_warning("UIKit: button label too long for plaque — shorten it: \"%s\"" % text)
 	return b
+
+
+## Lock a button back to the kit standard (use after legacy size overrides).
+static func standardize_button(b: Button) -> void:
+	if b == null:
+		return
+	b.custom_minimum_size = BTN_SIZE
+	b.size_flags_horizontal = Control.SIZE_SHRINK_CENTER
+	b.alignment = HORIZONTAL_ALIGNMENT_CENTER
+	b.clip_text = true
+	b.autowrap_mode = TextServer.AUTOWRAP_OFF
+	b.text_overrun_behavior = TextServer.OVERRUN_TRIM_ELLIPSIS
+	b.add_theme_font_override("font", font())
+	b.add_theme_font_size_override("font_size", BTN_FONT)
+
 
 static func make_bar(fill: Color, height: int = 20) -> ProgressBar:
 	var bar := ProgressBar.new()
@@ -86,7 +149,7 @@ static func make_bar(fill: Color, height: int = 20) -> ProgressBar:
 	bar.max_value = 100.0
 	bar.value = 100.0
 	bar.show_percentage = false
-	bar.custom_minimum_size = Vector2(240, height)
+	bar.custom_minimum_size = Vector2(BTN_SIZE.x, height)
 	bar.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	var bg := StyleBoxFlat.new()
 	bg.bg_color = Color(0.05, 0.04, 0.06, 0.72)
