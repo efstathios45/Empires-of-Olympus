@@ -17,7 +17,8 @@ const MAP := BG + "empire_map_hellas.png"
 ## Card geometry sized for 1080p so map + cards + nav all fit on one screen
 ## (large 520×480 cards pushed Continue off-screen / felt "zoomed in").
 ## content_margin on panel_card clears the gold frame; CARD_PAD keeps lore in.
-const CARD_W := 380
+## Wide enough that Kit.BTN_SIZE (220) fits in the cream field of each card.
+const CARD_W := 420
 const EMPIRE_CARD_H := 300
 const CLASS_CARD_H := 380
 const FRAME_INSET := 78
@@ -58,6 +59,11 @@ var _content: Control
 var _overlay: Control
 var _bg_tween: Tween
 var _map_view: Control
+var _user_edit: LineEdit
+var _pass_edit: LineEdit
+var _name_edit: LineEdit
+var _auth_status: Label
+var _load_from_save: bool = false
 
 
 func _ready() -> void:
@@ -83,6 +89,9 @@ func _ready() -> void:
 	_content.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	add_child(_content)
 	_content.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
+
+	if not AccountSystem.sync_finished.is_connected(_on_sync_finished):
+		AccountSystem.sync_finished.connect(_on_sync_finished)
 
 	_show_step(1)
 
@@ -225,12 +234,8 @@ func _equalize_heights(cards: Dictionary) -> void:
 
 
 func _card_button(text: String) -> Button:
-	var b := Kit.make_button(text, false)
-	b.custom_minimum_size = Vector2(mini(TEXT_W, 180), 40)
-	b.size_flags_horizontal = Control.SIZE_SHRINK_CENTER
-	b.clip_text = true
-	b.add_theme_font_size_override("font_size", 14)
-	return b
+	## Same plaque size/font as every other kit button.
+	return Kit.make_button(text, false)
 
 
 ## A thin band of the realm's map colour, tying card to territory.
@@ -251,19 +256,20 @@ func _sub_line(text: String) -> Label:
 	return Kit.make_hud_label(text, 15, DIM, HORIZONTAL_ALIGNMENT_CENTER)
 
 
-# ── Step 1: title ────────────────────────────────────────────────────────
+# ── Step 1: title + account ──────────────────────────────────────────────
 
 func _build_title_step() -> void:
 	_set_backdrop(POSTER, 0.35)
-	var page := _page(10)
+	_load_from_save = false
+	var page := _page(8)
 
 	var top := Control.new()
 	top.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	top.size_flags_vertical = Control.SIZE_EXPAND_FILL
-	top.size_flags_stretch_ratio = 0.55
+	top.size_flags_stretch_ratio = 0.35
 	page.add_child(top)
 
-	var mark := _image(WORDMARK, Vector2(620, 200), false)
+	var mark := _image(WORDMARK, Vector2(560, 170), false)
 	if mark != null:
 		page.add_child(_centered(mark))
 	else:
@@ -271,25 +277,172 @@ func _build_title_step() -> void:
 
 	page.add_child(Kit.make_hud_label(
 		"Three empires. Three paths. One legend cut in bronze.",
-		24, Color(1.0, 0.94, 0.8), HORIZONTAL_ALIGNMENT_CENTER))
-	page.add_child(Kit.spacer(26))
+		20, Color(1.0, 0.94, 0.8), HORIZONTAL_ALIGNMENT_CENTER))
 
-	var begin := Kit.make_button("Begin Your Legend", true)
-	begin.custom_minimum_size = Vector2(360, 74)
-	begin.add_theme_font_size_override("font_size", 26)
-	begin.pressed.connect(_show_step.bind(2))
-	page.add_child(_centered(begin))
+	if AccountSystem.is_logged_in():
+		_build_logged_in_actions(page)
+	else:
+		_build_auth_form(page)
 
-	page.add_child(Kit.spacer(18))
+	page.add_child(Kit.spacer(8))
 	page.add_child(_sub_line(
 		"WASD move  ·  Mouse look  ·  Click to strike  ·  Q god-skill"))
 	page.add_child(_sub_line(
-		"E speak  ·  I spoils  ·  M map"))
+		"E speak  ·  I spoils  ·  M map  ·  Esc save & rest"))
 
 	var bottom := Control.new()
 	bottom.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	bottom.size_flags_vertical = Control.SIZE_EXPAND_FILL
 	page.add_child(bottom)
+
+
+func _styled_line_edit(placeholder: String, secret: bool = false) -> LineEdit:
+	var e := LineEdit.new()
+	e.placeholder_text = placeholder
+	e.secret = secret
+	e.custom_minimum_size = Vector2(320, 44)
+	e.add_theme_font_override("font", Kit.font())
+	e.add_theme_font_size_override("font_size", 16)
+	e.add_theme_color_override("font_color", Kit.INK)
+	e.add_theme_color_override("font_placeholder_color", Kit.INK_SOFT)
+	var sb := StyleBoxFlat.new()
+	sb.bg_color = Color(0.96, 0.92, 0.82, 0.95)
+	sb.border_color = Color(0.55, 0.42, 0.22, 0.9)
+	sb.set_border_width_all(2)
+	sb.set_corner_radius_all(4)
+	sb.content_margin_left = 12
+	sb.content_margin_right = 12
+	e.add_theme_stylebox_override("normal", sb)
+	e.add_theme_stylebox_override("focus", sb)
+	return e
+
+
+func _build_auth_form(page: VBoxContainer) -> void:
+	page.add_child(Kit.spacer(10))
+	page.add_child(_sub_line("Create an account to save your legend on this PC."))
+
+	var form := VBoxContainer.new()
+	form.add_theme_constant_override("separation", 8)
+	form.custom_minimum_size = Vector2(340, 0)
+	page.add_child(_centered(form))
+
+	_name_edit = _styled_line_edit("Hero name (optional)")
+	form.add_child(_name_edit)
+	_user_edit = _styled_line_edit("Username")
+	form.add_child(_user_edit)
+	_pass_edit = _styled_line_edit("Password (6+ chars)", true)
+	form.add_child(_pass_edit)
+
+	_auth_status = Kit.make_hud_label("", 14, Color(1.0, 0.85, 0.55), HORIZONTAL_ALIGNMENT_CENTER)
+	_auth_status.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
+	_auth_status.custom_minimum_size = Vector2(420, 0)
+	form.add_child(_auth_status)
+
+	## Stack kit plaques vertically so every action button is the same size.
+	var create_btn := Kit.make_button("Register", true)
+	create_btn.pressed.connect(_on_create_account)
+	form.add_child(create_btn)
+	var login_btn := Kit.make_button("Sign In", false)
+	login_btn.pressed.connect(_on_sign_in)
+	form.add_child(login_btn)
+	var guest := Kit.make_button("Play Guest", false)
+	guest.pressed.connect(func() -> void:
+		_load_from_save = false
+		_show_step(2)
+	)
+	form.add_child(guest)
+
+
+func _build_logged_in_actions(page: VBoxContainer) -> void:
+	page.add_child(Kit.spacer(12))
+	page.add_child(Kit.make_hud_label(
+		"Signed in as %s" % AccountSystem.display_name,
+		18, Color(0.85, 1.0, 0.75), HORIZONTAL_ALIGNMENT_CENTER))
+	if AccountSystem.has_local_save():
+		page.add_child(_sub_line("A saved legend awaits on this device."))
+	else:
+		page.add_child(_sub_line("No save yet — start a new legend."))
+
+	page.add_child(Kit.spacer(10))
+	var actions := VBoxContainer.new()
+	actions.add_theme_constant_override("separation", 10)
+	page.add_child(_centered(actions))
+
+	if AccountSystem.has_local_save():
+		var cont := Kit.make_button("Continue", true)
+		cont.pressed.connect(_on_continue_legend)
+		actions.add_child(cont)
+
+	var begin := Kit.make_button("New Game", not AccountSystem.has_local_save())
+	begin.pressed.connect(func() -> void:
+		_load_from_save = false
+		_show_step(2)
+	)
+	actions.add_child(begin)
+
+	var logout := Kit.make_button("Sign Out", false)
+	logout.pressed.connect(func() -> void:
+		AccountSystem.logout()
+		_show_step(1)
+	)
+	actions.add_child(logout)
+
+	_auth_status = Kit.make_hud_label("", 14, Color(1.0, 0.85, 0.55), HORIZONTAL_ALIGNMENT_CENTER)
+	_auth_status.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
+	_auth_status.custom_minimum_size = Vector2(420, 0)
+	actions.add_child(_auth_status)
+
+
+func _set_auth_status(msg: String) -> void:
+	if _auth_status != null and is_instance_valid(_auth_status):
+		_auth_status.text = msg
+
+
+func _on_create_account() -> void:
+	var user := _user_edit.text if _user_edit else ""
+	var password := _pass_edit.text if _pass_edit else ""
+	var hero := _name_edit.text if _name_edit else ""
+	if AccountSystem.register(user, password, hero):
+		GameState.player_name = AccountSystem.display_name
+		_set_auth_status("Account created. Starting your legend…")
+		_load_from_save = false
+		_show_step(2)
+	else:
+		_set_auth_status(AccountSystem.last_error)
+
+
+func _on_sign_in() -> void:
+	var user := _user_edit.text if _user_edit else ""
+	var password := _pass_edit.text if _pass_edit else ""
+	_set_auth_status("Signing in…")
+	if not AccountSystem.login(user, password):
+		_set_auth_status(AccountSystem.last_error)
+		return
+	## Local login is immediate; cloud-only login finishes via sync_finished.
+	if AccountSystem.is_logged_in():
+		GameState.player_name = AccountSystem.display_name
+		_show_step(1)
+	else:
+		_set_auth_status("Contacting sync server…")
+
+
+func _on_sync_finished(ok: bool, message: String) -> void:
+	_set_auth_status(message)
+	if ok and _step == 1:
+		## Refresh title so Continue appears after cloud pull / remote login.
+		_show_step(1)
+
+
+func _on_continue_legend() -> void:
+	if not AccountSystem.load_game():
+		_set_auth_status(AccountSystem.last_error)
+		return
+	_load_from_save = true
+	_empire = GameState.empire
+	_class = GameState.player_class
+	AudioManager.play_sfx("ui_confirm")
+	Input.mouse_mode = Input.MOUSE_MODE_CAPTURED
+	LoadingScreen.preload_and_change_scene("res://scenes/game_world.tscn", 1.2)
 
 
 # ── Step 2: the empires of Hellas ────────────────────────────────────────
@@ -323,18 +476,14 @@ func _build_empire_step() -> void:
 	page.add_child(nav)
 
 	var back := Kit.make_button("Back", false)
-	back.custom_minimum_size = Vector2(180, 52)
 	back.pressed.connect(_show_step.bind(1))
 	nav.add_child(back)
 
-	var study := Kit.make_button("Study the Map", false)
-	study.custom_minimum_size = Vector2(220, 52)
+	var study := Kit.make_button("Map", false)
 	study.pressed.connect(_show_map_overlay)
 	nav.add_child(study)
 
 	_continue_btn = Kit.make_button("Continue", true)
-	_continue_btn.custom_minimum_size = Vector2(260, 54)
-	_continue_btn.add_theme_font_size_override("font_size", 18)
 	_continue_btn.pressed.connect(_show_step.bind(3))
 	nav.add_child(_continue_btn)
 
@@ -388,9 +537,9 @@ func _refresh_empire_selection() -> void:
 		var card: Control = _empire_cards[key]
 		## Keep unselected cards readable — soft dim, not a grey wash.
 		card.modulate = Color(1, 1, 1, 1) if key == _empire else Color(0.88, 0.86, 0.82, 0.85)
+	## Keep the kit label short so it always fits the plaque.
 	if _continue_btn != null:
-		var data: Dictionary = GameState.EMPIRES.get(_empire, {})
-		_continue_btn.text = "Continue as %s" % String(data.get("name", "Sparta"))
+		_continue_btn.text = "Continue"
 
 
 # ── Step 3: the path you walk ────────────────────────────────────────────
@@ -418,13 +567,10 @@ func _build_class_step() -> void:
 	page.add_child(nav)
 
 	var back := Kit.make_button("Back", false)
-	back.custom_minimum_size = Vector2(220, 62)
 	back.pressed.connect(_show_step.bind(2))
 	nav.add_child(back)
 
-	var play := Kit.make_button("Enter Hellas", true)
-	play.custom_minimum_size = Vector2(360, 74)
-	play.add_theme_font_size_override("font_size", 26)
+	var play := Kit.make_button("Enter", true)
 	play.pressed.connect(_on_play)
 	nav.add_child(play)
 
@@ -451,7 +597,7 @@ func _make_class_card(id: String, data: Dictionary) -> PanelContainer:
 	v.add_child(_icon_line("icon_sword", String(data.get("weapon_name", "")), Kit.INK, TEXT_W))
 	v.add_child(_icon_line("icon_mana", String(data.get("skill_name", "")), Kit.INK_GOLD, TEXT_W))
 
-	var walk := _card_button("Walk this Path")
+	var walk := _card_button("Choose")
 	walk.pressed.connect(_on_pick_class.bind(id))
 	v.add_child(walk)
 	return card
@@ -505,7 +651,6 @@ func _show_map_overlay() -> void:
 	_map_view.call_deferred("set_selected", _empire)
 
 	var close := Kit.make_button("Close", false)
-	close.custom_minimum_size = Vector2(260, 62)
 	close.pressed.connect(_close_overlay)
 	v.add_child(_centered(close))
 
@@ -523,9 +668,14 @@ func _close_overlay() -> void:
 # ── Into the world ───────────────────────────────────────────────────────
 
 func _on_play() -> void:
-	GameState.reset_run()
-	GameState.empire = _empire
-	GameState.player_class = _class
+	if not _load_from_save:
+		GameState.reset_run()
+		GameState.empire = _empire
+		GameState.player_class = _class
+		if AccountSystem.is_logged_in() and AccountSystem.display_name != "":
+			GameState.player_name = AccountSystem.display_name
 	AudioManager.play_sfx("ui_confirm")
 	Input.mouse_mode = Input.MOUSE_MODE_CAPTURED
+	if AccountSystem.is_logged_in():
+		AccountSystem.save_game()
 	LoadingScreen.preload_and_change_scene("res://scenes/game_world.tscn", 1.5)

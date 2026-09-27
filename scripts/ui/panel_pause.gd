@@ -1,5 +1,5 @@
 extends Control
-## Rest menu — controls, and the road back to the title.
+## Rest menu — controls, local save, and the road back to the title.
 
 const Kit = preload("res://scripts/ui/ui_kit.gd")
 
@@ -7,6 +7,7 @@ const Kit = preload("res://scripts/ui/ui_kit.gd")
 const TEXT_W := 400
 
 var hud: CanvasLayer
+var _status: Label
 
 func _ready() -> void:
 	set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
@@ -18,7 +19,8 @@ func _ready() -> void:
 	center.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
 
 	var panel := Kit.make_panel(false)
-	panel.custom_minimum_size = Vector2(700, 620)
+	panel.custom_minimum_size = Vector2(720, 700)
+	panel.clip_contents = true
 	center.add_child(panel)
 
 	var margin := Kit.make_margin(20)
@@ -44,20 +46,57 @@ func _ready() -> void:
 		l.custom_minimum_size = Vector2(TEXT_W, 0)
 		v.add_child(l)
 
-	v.add_child(Kit.spacer(10))
+	v.add_child(Kit.spacer(8))
 
-	var resume := Kit.make_button("Return to Battle", true)
-	resume.custom_minimum_size = Vector2(300, 64)
-	resume.size_flags_horizontal = Control.SIZE_SHRINK_CENTER
+	_status = Kit.make_label("", 14, Kit.INK_GOLD, HORIZONTAL_ALIGNMENT_CENTER)
+	_status.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
+	_status.custom_minimum_size = Vector2(TEXT_W, 0)
+	v.add_child(_status)
+	if AccountSystem.is_logged_in():
+		_status.text = "Signed in as %s" % AccountSystem.display_name
+	else:
+		_status.text = "Guest — register on the title screen to save."
+
+	if not AccountSystem.save_finished.is_connected(_on_save_finished):
+		AccountSystem.save_finished.connect(_on_save_finished)
+
+	var save_btn := Kit.make_button("Save", true)
+	save_btn.pressed.connect(_on_save)
+	v.add_child(save_btn)
+
+	var resume := Kit.make_button("Resume", true)
 	resume.pressed.connect(func() -> void: hud.close_panel_from_click())
 	v.add_child(resume)
 
-	var menu := Kit.make_button("Abandon the Hunt", false)
-	menu.custom_minimum_size = Vector2(300, 62)
-	menu.size_flags_horizontal = Control.SIZE_SHRINK_CENTER
+	var menu := Kit.make_button("Quit", false)
 	menu.pressed.connect(_on_menu)
 	v.add_child(menu)
 
+
+func _on_save() -> void:
+	if not AccountSystem.is_logged_in():
+		_status.text = "Register on the title screen to save."
+		return
+	var extra := {}
+	var player := get_tree().get_first_node_in_group("player") as Node3D
+	if player != null:
+		extra["pos"] = {
+			"x": player.global_position.x,
+			"y": player.global_position.y,
+			"z": player.global_position.z,
+		}
+	if AccountSystem.save_game(extra):
+		_status.text = "Saved."
+	else:
+		_status.text = AccountSystem.last_error
+
+
+func _on_save_finished(ok: bool, message: String) -> void:
+	_status.text = message if message != "" else ("Saved." if ok else "Save failed.")
+
+
 func _on_menu() -> void:
+	if AccountSystem.is_logged_in():
+		_on_save()
 	Input.mouse_mode = Input.MOUSE_MODE_VISIBLE
 	LoadingScreen.preload_and_change_scene("res://scenes/ui/main_menu.tscn", 1.0)

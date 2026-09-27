@@ -65,14 +65,19 @@ func _build_shell() -> void:
 	center.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
 
 	var panel := Kit.make_panel(false)
-	## Smaller than the old 860×640 Metin2-style window.
-	panel.custom_minimum_size = Vector2(620, 460)
+	## panel_scroll content_margin is ~118×2 / 136+128. Usable cream must fit
+	## paperdoll (220) + gap + 6×36 bag (226) without spilling past the gold frame.
+	panel.custom_minimum_size = Vector2(880, 760)
+	panel.clip_contents = true
 	center.add_child(panel)
 
-	var margin := Kit.make_margin(16)
+	## Stylebox already insets past the ornate border — keep only a light gap.
+	var margin := Kit.make_margin(8)
+	margin.clip_contents = true
 	panel.add_child(margin)
 	var v := VBoxContainer.new()
 	v.add_theme_constant_override("separation", 6)
+	v.clip_contents = true
 	margin.add_child(v)
 
 	var top := HBoxContainer.new()
@@ -83,7 +88,6 @@ func _build_shell() -> void:
 	title.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	top.add_child(title)
 	var close_btn := Kit.make_button("Close", false)
-	close_btn.custom_minimum_size = Vector2(100, 36)
 	close_btn.pressed.connect(_close)
 	top.add_child(close_btn)
 
@@ -95,13 +99,13 @@ func _build_shell() -> void:
 
 	_body = Control.new()
 	_body.size_flags_vertical = Control.SIZE_EXPAND_FILL
-	_body.custom_minimum_size = Vector2(0, 340)
+	_body.custom_minimum_size = Vector2(0, 360)
+	_body.clip_contents = true
 	v.add_child(_body)
 
 
 func _add_tab(id: String, text: String) -> void:
 	var b := Kit.make_button(text, id == "gear")
-	b.custom_minimum_size = Vector2(120, 36)
 	b.set_meta("tab_id", id)
 	b.pressed.connect(func() -> void: _show(id))
 	_tabs.add_child(b)
@@ -138,11 +142,13 @@ func _paint_tabs() -> void:
 func _build_panoply() -> void:
 	var row := HBoxContainer.new()
 	row.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
-	row.add_theme_constant_override("separation", 12)
+	row.add_theme_constant_override("separation", 16)
+	row.clip_contents = true
 	_body.add_child(row)
 
 	var left := VBoxContainer.new()
-	left.custom_minimum_size = Vector2(240, 0)
+	left.custom_minimum_size = Vector2(230, 0)
+	left.size_flags_horizontal = Control.SIZE_SHRINK_BEGIN
 	left.add_theme_constant_override("separation", 4)
 	row.add_child(left)
 
@@ -209,24 +215,31 @@ func _build_panoply() -> void:
 		_stat_labels[key] = lab
 
 	_btn_unequip = Kit.make_button("Unequip", false)
-	_btn_unequip.custom_minimum_size = Vector2(140, 36)
 	_btn_unequip.pressed.connect(_do_unequip)
 	left.add_child(_btn_unequip)
 
 	var right := VBoxContainer.new()
 	right.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	right.size_flags_stretch_ratio = 1.0
+	right.clip_contents = true
 	right.add_theme_constant_override("separation", 4)
 	row.add_child(right)
 
 	right.add_child(Kit.make_label("Traveler's Pouch", 15, Kit.INK_GOLD))
 	right.add_child(Kit.make_label("Select → Equip / Sell", 11, Kit.INK_SOFT))
 
+	## Keep the 6×6 grid inside the cream field (never past the gold frame).
 	var grid_wrap := CenterContainer.new()
+	grid_wrap.size_flags_horizontal = Control.SIZE_SHRINK_CENTER
+	grid_wrap.clip_contents = true
 	right.add_child(grid_wrap)
 	var grid := GridContainer.new()
 	grid.columns = GameState.BAG_W
 	grid.add_theme_constant_override("h_separation", 2)
 	grid.add_theme_constant_override("v_separation", 2)
+	grid.custom_minimum_size = Vector2(
+		GameState.BAG_W * CELL + (GameState.BAG_W - 1) * 2,
+		GameState.BAG_H * CELL + (GameState.BAG_H - 1) * 2)
 	grid_wrap.add_child(grid)
 
 	for _i in range(GameState.BAG_W * GameState.BAG_H):
@@ -271,18 +284,17 @@ func _build_panoply() -> void:
 
 	_detail = Kit.make_label("Select an item.", 12, Kit.INK_SOFT)
 	_detail.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
-	_detail.custom_minimum_size = Vector2(300, 0)
+	_detail.custom_minimum_size = Vector2(226, 0)
+	_detail.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	right.add_child(_detail)
 
 	var actions := HBoxContainer.new()
 	actions.add_theme_constant_override("separation", 8)
 	right.add_child(actions)
 	_btn_equip = Kit.make_button("Equip", true)
-	_btn_equip.custom_minimum_size = Vector2(110, 36)
 	_btn_equip.pressed.connect(_do_equip)
 	actions.add_child(_btn_equip)
 	_btn_sell = Kit.make_button("Sell", false)
-	_btn_sell.custom_minimum_size = Vector2(110, 36)
 	_btn_sell.pressed.connect(_do_sell)
 	actions.add_child(_btn_sell)
 

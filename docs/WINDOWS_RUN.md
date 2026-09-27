@@ -38,8 +38,10 @@ No zip extract needed — this download is the .exe alone.
 Download
 ------------------------------------------------------------
 Signed single-file Windows build (current):
-  https://gofile.io/d/W9kD3vs7
+  https://gofile.io/d/i9WUFmPv
 
 File name: EmpiresOfOlympus.exe
 
-This build includes the wolf/boar combat crash fix (gear loot fit).
+Includes combat loot crash fix, inventory frame fit, standardized buttons,
+and local account saves (Register / Sign In on the title screen).
+Shared/cloud multiplayer persistence is documented in docs/ACCOUNTS.md.

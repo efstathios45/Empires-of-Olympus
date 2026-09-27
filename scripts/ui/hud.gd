@@ -367,9 +367,7 @@ func _build_victory_overlay(root: Control) -> void:
 	v.add_child(flavour)
 	v.add_child(Kit.spacer(6))
 
-	var btn := Kit.make_button("Continue the Legend", true)
-	btn.custom_minimum_size = Vector2(300, 64)
-	btn.size_flags_horizontal = Control.SIZE_SHRINK_CENTER
+	var btn := Kit.make_button("Continue", true)
 	btn.pressed.connect(_close_victory)
 	v.add_child(btn)
 
@@ -643,8 +641,7 @@ func _build_map_panel() -> Control:
 	var close_row := HBoxContainer.new()
 	close_row.alignment = BoxContainer.ALIGNMENT_CENTER
 	v.add_child(close_row)
-	var close_btn := Kit.make_button("Close Map  (M)", true)
-	close_btn.custom_minimum_size = Vector2(280, 62)
+	var close_btn := Kit.make_button("Close", true)
 	close_btn.pressed.connect(close_panel_from_click)
 	close_row.add_child(close_btn)
 
