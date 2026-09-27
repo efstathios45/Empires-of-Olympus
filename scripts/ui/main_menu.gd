@@ -58,6 +58,11 @@ var _content: Control
 var _overlay: Control
 var _bg_tween: Tween
 var _map_view: Control
+var _user_edit: LineEdit
+var _pass_edit: LineEdit
+var _name_edit: LineEdit
+var _auth_status: Label
+var _load_from_save: bool = false
 
 
 func _ready() -> void:
@@ -83,6 +88,9 @@ func _ready() -> void:
 	_content.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	add_child(_content)
 	_content.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
+
+	if not AccountSystem.sync_finished.is_connected(_on_sync_finished):
+		AccountSystem.sync_finished.connect(_on_sync_finished)
 
 	_show_step(1)
 
@@ -251,19 +259,20 @@ func _sub_line(text: String) -> Label:
 	return Kit.make_hud_label(text, 15, DIM, HORIZONTAL_ALIGNMENT_CENTER)
 
 
-# ── Step 1: title ────────────────────────────────────────────────────────
+# ── Step 1: title + account ──────────────────────────────────────────────
 
 func _build_title_step() -> void:
 	_set_backdrop(POSTER, 0.35)
-	var page := _page(10)
+	_load_from_save = false
+	var page := _page(8)
 
 	var top := Control.new()
 	top.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	top.size_flags_vertical = Control.SIZE_EXPAND_FILL
-	top.size_flags_stretch_ratio = 0.55
+	top.size_flags_stretch_ratio = 0.35
 	page.add_child(top)
 
-	var mark := _image(WORDMARK, Vector2(620, 200), false)
+	var mark := _image(WORDMARK, Vector2(560, 170), false)
 	if mark != null:
 		page.add_child(_centered(mark))
 	else:
@@ -271,25 +280,197 @@ func _build_title_step() -> void:
 
 	page.add_child(Kit.make_hud_label(
 		"Three empires. Three paths. One legend cut in bronze.",
-		24, Color(1.0, 0.94, 0.8), HORIZONTAL_ALIGNMENT_CENTER))
-	page.add_child(Kit.spacer(26))
+		20, Color(1.0, 0.94, 0.8), HORIZONTAL_ALIGNMENT_CENTER))
 
-	var begin := Kit.make_button("Begin Your Legend", true)
-	begin.custom_minimum_size = Vector2(360, 74)
-	begin.add_theme_font_size_override("font_size", 26)
-	begin.pressed.connect(_show_step.bind(2))
-	page.add_child(_centered(begin))
+	if AccountSystem.is_logged_in():
+		_build_logged_in_actions(page)
+	else:
+		_build_auth_form(page)
 
-	page.add_child(Kit.spacer(18))
+	page.add_child(Kit.spacer(8))
 	page.add_child(_sub_line(
 		"WASD move  ·  Mouse look  ·  Click to strike  ·  Q god-skill"))
 	page.add_child(_sub_line(
-		"E speak  ·  I spoils  ·  M map"))
+		"E speak  ·  I spoils  ·  M map  ·  Esc save & rest"))
 
 	var bottom := Control.new()
 	bottom.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	bottom.size_flags_vertical = Control.SIZE_EXPAND_FILL
 	page.add_child(bottom)
+
+
+func _styled_line_edit(placeholder: String, secret: bool = false) -> LineEdit:
+	var e := LineEdit.new()
+	e.placeholder_text = placeholder
+	e.secret = secret
+	e.custom_minimum_size = Vector2(320, 44)
+	e.add_theme_font_override("font", Kit.font())
+	e.add_theme_font_size_override("font_size", 16)
+	e.add_theme_color_override("font_color", Kit.INK)
+	e.add_theme_color_override("font_placeholder_color", Kit.INK_SOFT)
+	var sb := StyleBoxFlat.new()
+	sb.bg_color = Color(0.96, 0.92, 0.82, 0.95)
+	sb.border_color = Color(0.55, 0.42, 0.22, 0.9)
+	sb.set_border_width_all(2)
+	sb.set_corner_radius_all(4)
+	sb.content_margin_left = 12
+	sb.content_margin_right = 12
+	e.add_theme_stylebox_override("normal", sb)
+	e.add_theme_stylebox_override("focus", sb)
+	return e
+
+
+func _build_auth_form(page: VBoxContainer) -> void:
+	page.add_child(Kit.spacer(10))
+	page.add_child(_sub_line("Create an account to save your legend — and continue on another PC."))
+
+	var form := VBoxContainer.new()
+	form.add_theme_constant_override("separation", 8)
+	form.custom_minimum_size = Vector2(340, 0)
+	page.add_child(_centered(form))
+
+	_name_edit = _styled_line_edit("Hero name (optional)")
+	form.add_child(_name_edit)
+	_user_edit = _styled_line_edit("Username")
+	form.add_child(_user_edit)
+	_pass_edit = _styled_line_edit("Password (6+ chars)", true)
+	form.add_child(_pass_edit)
+
+	_auth_status = Kit.make_hud_label("", 14, Color(1.0, 0.85, 0.55), HORIZONTAL_ALIGNMENT_CENTER)
+	_auth_status.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
+	_auth_status.custom_minimum_size = Vector2(420, 0)
+	form.add_child(_auth_status)
+
+	var row := _row(12)
+	form.add_child(row)
+	var create_btn := Kit.make_button("Create Account", true)
+	create_btn.custom_minimum_size = Vector2(180, 52)
+	create_btn.add_theme_font_size_override("font_size", 16)
+	create_btn.pressed.connect(_on_create_account)
+	row.add_child(create_btn)
+	var login_btn := Kit.make_button("Sign In", false)
+	login_btn.custom_minimum_size = Vector2(140, 52)
+	login_btn.add_theme_font_size_override("font_size", 16)
+	login_btn.pressed.connect(_on_sign_in)
+	row.add_child(login_btn)
+
+	page.add_child(Kit.spacer(6))
+	var guest := Kit.make_button("Play as Guest (no cloud save)", false)
+	guest.custom_minimum_size = Vector2(360, 48)
+	guest.add_theme_font_size_override("font_size", 15)
+	guest.pressed.connect(func() -> void:
+		_load_from_save = false
+		_show_step(2)
+	)
+	page.add_child(_centered(guest))
+
+
+func _build_logged_in_actions(page: VBoxContainer) -> void:
+	page.add_child(Kit.spacer(12))
+	page.add_child(Kit.make_hud_label(
+		"Signed in as %s" % AccountSystem.display_name,
+		18, Color(0.85, 1.0, 0.75), HORIZONTAL_ALIGNMENT_CENTER))
+	if AccountSystem.has_local_save():
+		page.add_child(_sub_line("A saved legend awaits on this device."))
+	else:
+		page.add_child(_sub_line("No local save yet — start a new legend, or pull from the cloud."))
+
+	page.add_child(Kit.spacer(10))
+	var actions := VBoxContainer.new()
+	actions.add_theme_constant_override("separation", 10)
+	page.add_child(_centered(actions))
+
+	if AccountSystem.has_local_save():
+		var cont := Kit.make_button("Continue Legend", true)
+		cont.custom_minimum_size = Vector2(360, 64)
+		cont.add_theme_font_size_override("font_size", 22)
+		cont.pressed.connect(_on_continue_legend)
+		actions.add_child(cont)
+
+	var begin := Kit.make_button("Begin New Legend", not AccountSystem.has_local_save())
+	begin.custom_minimum_size = Vector2(360, 56)
+	begin.add_theme_font_size_override("font_size", 18)
+	begin.pressed.connect(func() -> void:
+		_load_from_save = false
+		_show_step(2)
+	)
+	actions.add_child(begin)
+
+	var sync_row := _row(10)
+	actions.add_child(sync_row)
+	var pull := Kit.make_button("Sync From Cloud", false)
+	pull.custom_minimum_size = Vector2(200, 44)
+	pull.add_theme_font_size_override("font_size", 14)
+	pull.pressed.connect(func() -> void:
+		_set_auth_status("Pulling cloud save…")
+		AccountSystem.request_cloud_pull()
+	)
+	sync_row.add_child(pull)
+	var logout := Kit.make_button("Sign Out", false)
+	logout.custom_minimum_size = Vector2(140, 44)
+	logout.add_theme_font_size_override("font_size", 14)
+	logout.pressed.connect(func() -> void:
+		AccountSystem.logout()
+		_show_step(1)
+	)
+	sync_row.add_child(logout)
+
+	_auth_status = Kit.make_hud_label("", 14, Color(1.0, 0.85, 0.55), HORIZONTAL_ALIGNMENT_CENTER)
+	_auth_status.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
+	_auth_status.custom_minimum_size = Vector2(420, 0)
+	actions.add_child(_auth_status)
+
+
+func _set_auth_status(msg: String) -> void:
+	if _auth_status != null and is_instance_valid(_auth_status):
+		_auth_status.text = msg
+
+
+func _on_create_account() -> void:
+	var user := _user_edit.text if _user_edit else ""
+	var password := _pass_edit.text if _pass_edit else ""
+	var hero := _name_edit.text if _name_edit else ""
+	if AccountSystem.register(user, password, hero):
+		GameState.player_name = AccountSystem.display_name
+		_set_auth_status("Account created. Starting your legend…")
+		_load_from_save = false
+		_show_step(2)
+	else:
+		_set_auth_status(AccountSystem.last_error)
+
+
+func _on_sign_in() -> void:
+	var user := _user_edit.text if _user_edit else ""
+	var password := _pass_edit.text if _pass_edit else ""
+	_set_auth_status("Signing in…")
+	if not AccountSystem.login(user, password):
+		_set_auth_status(AccountSystem.last_error)
+		return
+	## Local login is immediate; cloud-only login finishes via sync_finished.
+	if AccountSystem.is_logged_in():
+		GameState.player_name = AccountSystem.display_name
+		_show_step(1)
+	else:
+		_set_auth_status("Contacting sync server…")
+
+
+func _on_sync_finished(ok: bool, message: String) -> void:
+	_set_auth_status(message)
+	if ok and _step == 1:
+		## Refresh title so Continue appears after cloud pull / remote login.
+		_show_step(1)
+
+
+func _on_continue_legend() -> void:
+	if not AccountSystem.load_game():
+		_set_auth_status(AccountSystem.last_error)
+		return
+	_load_from_save = true
+	_empire = GameState.empire
+	_class = GameState.player_class
+	AudioManager.play_sfx("ui_confirm")
+	Input.mouse_mode = Input.MOUSE_MODE_CAPTURED
+	LoadingScreen.preload_and_change_scene("res://scenes/game_world.tscn", 1.2)
 
 
 # ── Step 2: the empires of Hellas ────────────────────────────────────────
@@ -523,9 +704,14 @@ func _close_overlay() -> void:
 # ── Into the world ───────────────────────────────────────────────────────
 
 func _on_play() -> void:
-	GameState.reset_run()
-	GameState.empire = _empire
-	GameState.player_class = _class
+	if not _load_from_save:
+		GameState.reset_run()
+		GameState.empire = _empire
+		GameState.player_class = _class
+		if AccountSystem.is_logged_in() and AccountSystem.display_name != "":
+			GameState.player_name = AccountSystem.display_name
 	AudioManager.play_sfx("ui_confirm")
 	Input.mouse_mode = Input.MOUSE_MODE_CAPTURED
+	if AccountSystem.is_logged_in():
+		AccountSystem.save_game()
 	LoadingScreen.preload_and_change_scene("res://scenes/game_world.tscn", 1.5)

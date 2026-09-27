@@ -74,6 +74,7 @@ var interactables: Array[Node3D] = []
 var _music_timer: float = 0.0
 var _boss_node: Node3D = null
 var _stone_timer: float = 8.0
+var _autosave_timer: float = 45.0
 
 ## Adapter the grass field samples: heights as Vector3, plus a grass mask.
 class GrassTerrain extends RefCounted:
@@ -560,6 +561,13 @@ func _spawn_player() -> void:
 	add_child(player)
 	player.add_to_group("player")
 	player.global_position = get_respawn_point()
+	## Resume at last saved world position when continuing a legend.
+	var save := AccountSystem.read_local_save()
+	if typeof(save.get("pos", null)) == TYPE_DICTIONARY:
+		var p: Dictionary = save["pos"]
+		var x := float(p.get("x", player.global_position.x))
+		var z := float(p.get("z", player.global_position.z))
+		player.global_position = Vector3(x, sample_height(x, z) + 1.0, z)
 
 func _spawn_zones() -> void:
 	for zi in ZONES.size():
@@ -704,6 +712,25 @@ func _process(delta: float) -> void:
 		_stone_timer = STONE_SPAWN_INTERVAL
 		if randf() < STONE_SPAWN_CHANCE:
 			_try_random_stone_spawn()
+
+	if AccountSystem.is_logged_in():
+		_autosave_timer -= delta
+		if _autosave_timer <= 0.0:
+			_autosave_timer = 45.0
+			_autosave()
+
+
+func _autosave() -> void:
+	if not AccountSystem.is_logged_in():
+		return
+	var extra := {}
+	if player != null and is_instance_valid(player):
+		extra["pos"] = {
+			"x": player.global_position.x,
+			"y": player.global_position.y,
+			"z": player.global_position.z,
+		}
+	AccountSystem.save_game(extra)
 
 
 func _alive_oracle_stones() -> int:

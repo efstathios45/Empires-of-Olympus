@@ -429,6 +429,98 @@ func reset_run() -> void:
 	potions_changed.emit()
 
 
+## Serializable run snapshot for local / cloud saves (v1).
+func to_save_dict() -> Dictionary:
+	var bag_copy: Array = []
+	for e in bag:
+		if typeof(e) == TYPE_DICTIONARY:
+			bag_copy.append({
+				"id": String(e.get("id", "")),
+				"count": int(e.get("count", 1)),
+				"x": int(e.get("x", 0)),
+				"y": int(e.get("y", 0)),
+			})
+	var eq := {}
+	for k in equipped:
+		eq[String(k)] = String(equipped[k])
+	var qk := {}
+	for k in quest_kills:
+		qk[String(k)] = int(quest_kills[k])
+	return {
+		"v": 1,
+		"empire": empire,
+		"player_class": player_class,
+		"player_name": player_name,
+		"level": level,
+		"xp": xp,
+		"gold": gold,
+		"weapon_refine": weapon_refine,
+		"bag": bag_copy,
+		"equipped": eq,
+		"quest_index": quest_index,
+		"quest_kills": qk,
+		"omphaloi_destroyed": omphaloi_destroyed,
+		"minotaur_slain": minotaur_slain,
+		"clan_name": clan_name,
+		"clan_rank": clan_rank,
+	}
+
+
+## Apply a save snapshot. Does not seed starter loot.
+func apply_save_dict(data: Dictionary) -> bool:
+	if data.is_empty():
+		return false
+	empire = String(data.get("empire", empire))
+	player_class = String(data.get("player_class", player_class))
+	player_name = String(data.get("player_name", player_name))
+	level = maxi(1, int(data.get("level", 1)))
+	xp = maxi(0, int(data.get("xp", 0)))
+	gold = maxi(0, int(data.get("gold", 0)))
+	weapon_refine = maxi(0, int(data.get("weapon_refine", 0)))
+	bag.clear()
+	var raw_bag = data.get("bag", [])
+	if typeof(raw_bag) == TYPE_ARRAY:
+		for e in raw_bag:
+			if typeof(e) != TYPE_DICTIONARY:
+				continue
+			var id := String(e.get("id", ""))
+			if id == "":
+				continue
+			bag.append({
+				"id": id,
+				"count": maxi(1, int(e.get("count", 1))),
+				"x": int(e.get("x", 0)),
+				"y": int(e.get("y", 0)),
+			})
+	equipped = {
+		"helmet": "", "armor": "", "weapon": "", "shield": "",
+		"boots": "", "necklace": "", "earring": "", "bracelet": "",
+	}
+	var raw_eq = data.get("equipped", {})
+	if typeof(raw_eq) == TYPE_DICTIONARY:
+		for k in equipped.keys():
+			if raw_eq.has(k):
+				equipped[k] = String(raw_eq[k])
+	quest_index = maxi(0, int(data.get("quest_index", 0)))
+	quest_kills = {}
+	var raw_qk = data.get("quest_kills", {})
+	if typeof(raw_qk) == TYPE_DICTIONARY:
+		for k in raw_qk:
+			quest_kills[String(k)] = int(raw_qk[k])
+	omphaloi_destroyed = maxi(0, int(data.get("omphaloi_destroyed", 0)))
+	minotaur_slain = bool(data.get("minotaur_slain", false))
+	clan_name = String(data.get("clan_name", ""))
+	clan_rank = String(data.get("clan_rank", ""))
+	_resync_derived_counts()
+	stats_changed.emit()
+	inventory_changed.emit()
+	potions_changed.emit()
+	var q := current_quest()
+	quest_advanced.emit(String(q.get("id", "")), quest_index)
+	clan_changed.emit()
+	return true
+
+
 func _seed_starter_bag() -> void:
 	bag.clear()
 	try_add_to_bag("health_potion", 3)

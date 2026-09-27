@@ -13,6 +13,7 @@ config/features=PackedStringArray("4.3", "Forward Plus")
 LoadingScreen="*res://scripts/autoloads/loading_screen.gd"
 AudioManager="*res://scripts/autoloads/audio_manager.gd"
 GameState="*res://scripts/autoloads/game_state.gd"
+AccountSystem="*res://scripts/autoloads/account_system.gd"
 TesanaWorldEditor="*res://addons/tesana_world_editor/scene_export.gd"
 
 [audio]
