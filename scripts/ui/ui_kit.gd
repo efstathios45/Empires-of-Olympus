@@ -62,8 +62,9 @@ static func make_button(text: String, primary: bool = true) -> Button:
 	b.text = text
 	b.custom_minimum_size = Vector2(240, 60)
 	b.focus_mode = Control.FOCUS_NONE
-	b.clip_text = false
+	b.clip_text = true
 	b.autowrap_mode = TextServer.AUTOWRAP_OFF
+	b.text_overrun_behavior = TextServer.OVERRUN_TRIM_ELLIPSIS
 	var sb: StyleBox = style("res://assets/ui/btn_blank.tres" if primary else "res://assets/ui/btn_blank_alt.tres")
 	if sb:
 		for st in ["normal", "hover", "pressed", "focus", "disabled"]:
@@ -124,8 +125,8 @@ static func make_card_panel() -> PanelContainer:
 		p.add_theme_stylebox_override("panel", sb)
 	return p
 
-static func make_margin(all: int = 30) -> MarginContainer:
-	## Keeps content inside the ornate frame instead of under the gold border.
+static func make_margin(all: int = 40) -> MarginContainer:
+	## Keeps content inside the ornate frame with a clear gap from the gold border.
 	var m := MarginContainer.new()
 	m.add_theme_constant_override("margin_left", all)
 	m.add_theme_constant_override("margin_right", all)
@@ -147,10 +148,10 @@ static func make_dark_panel(alpha: float = 0.62) -> PanelContainer:
 	sb.corner_radius_top_right = 6
 	sb.corner_radius_bottom_left = 6
 	sb.corner_radius_bottom_right = 6
-	sb.content_margin_left = 12
-	sb.content_margin_right = 12
-	sb.content_margin_top = 8
-	sb.content_margin_bottom = 8
+	sb.content_margin_left = 16
+	sb.content_margin_right = 16
+	sb.content_margin_top = 12
+	sb.content_margin_bottom = 12
 	p.add_theme_stylebox_override("panel", sb)
 	return p
 
