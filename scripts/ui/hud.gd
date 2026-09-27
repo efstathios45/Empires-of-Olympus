@@ -439,7 +439,7 @@ func _refresh_all() -> void:
 	if _player == null:
 		return
 	_level_text.text = "Level %d  %s" % [GameState.level, GameState.class_data()["name"]]
-	_gold_text.text = str(GameState.gold)
+	_gold_text.text = "%d δρ" % GameState.gold
 	_potion1_text.text = "1  ×%d" % GameState.health_potions
 	_potion2_text.text = "2  ×%d" % GameState.mana_potions
 	_xp_bar.max_value = GameState.xp_needed()

@@ -1,20 +1,24 @@
 extends Control
-## Interactive political map of Hellas — click a realm to highlight it and
-## read the chronicle (kings, wars, rivalries). Emits empire_selected(id).
+## Interactive political map of Hellas — click a realm to highlight its
+## LAND border (painted mask) and read the chronicle (kings, wars, rivalries).
 
 signal empire_selected(id: String)
 
 const Kit = preload("res://scripts/ui/ui_kit.gd")
 const MAP_TEX := "res://assets/textures/backgrounds/empire_map_hellas.png"
+const MASK_TEX := {
+	"sparta": "res://assets/textures/backgrounds/empire_mask_sparta.png",
+	"athens": "res://assets/textures/backgrounds/empire_mask_athens.png",
+	"corinth": "res://assets/textures/backgrounds/empire_mask_corinth.png",
+}
 
-## Normalized rects on the painted map: [x, y, w, h] in 0–1 of the texture.
+## Click hotspots (normalized AABB over the painted landmasses).
 const REGION_RECTS := {
 	"sparta": [0.14, 0.40, 0.36, 0.48],
 	"athens": [0.52, 0.28, 0.42, 0.48],
 	"corinth": [0.30, 0.16, 0.32, 0.34],
 }
 
-## Made-up Age-of-Bronze chronicle for each empire (game fiction).
 const CHRONICLE := {
 	"sparta": {
 		"name": "Sparta",
@@ -32,7 +36,7 @@ const CHRONICLE := {
 		"queen": "Priestess Aspasia of the Olive",
 		"capital": "Athens",
 		"rival": "Sparta",
-		"war": "The Olive and the Spear — academy gold funding island revolts",
+		"war": "The Olive and the Spear — academy silver funding island revolts",
 		"battle": "Night of Broken Oars off Salamis Sound",
 		"detail": "Athena's city rules the isles by decree and silver. Perikles keeps the lamps of the academy burning while privateers harry Corinthian grain. Thebes watches uneasily; the Cyclades fly the blue pennant.",
 	},
@@ -44,17 +48,19 @@ const CHRONICLE := {
 		"rival": "Both — and neither",
 		"war": "The Toll Wars — every keel taxed, every rival bribed",
 		"battle": "The Burning of the Diolkos warehouses",
-		"detail": "Two seas, one isthmus, and Kypselos' ledgers thicker than any shield. Corinth sells grain to Sparta and timber to Athens in the same week, then funds both sides' next campaign. Gold is her phalanx.",
+		"detail": "Two seas, one isthmus, and Kypselos' ledgers thicker than any shield. Corinth sells grain to Sparta and timber to Athens in the same week, then funds both sides' next campaign. Drachmae are her phalanx.",
 	},
 }
 
 var selected: String = "sparta"
 var _map_host: Control
 var _map_tex: TextureRect
-var _highlights: Dictionary = {}  ## id -> ColorRect
-var _hotspots: Dictionary = {}  ## id -> Button
+var _highlights: Dictionary = {}  ## id -> TextureRect (land mask)
+var _hotspots: Dictionary = {}
 var _detail_title: Label
 var _detail_body: Label
+var _map_origin: Vector2 = Vector2.ZERO
+var _map_drawn: Vector2 = Vector2.ZERO
 
 
 func _ready() -> void:
@@ -80,10 +86,13 @@ func _ready() -> void:
 	_map_host.add_child(_map_tex)
 
 	for id in ["sparta", "athens", "corinth"]:
-		var color: Color = GameState.EMPIRES.get(id, {}).get("color", Color.WHITE)
-		var hl := ColorRect.new()
-		hl.color = Color(color.r, color.g, color.b, 0.0)
+		var hl := TextureRect.new()
+		if ResourceLoader.exists(MASK_TEX[id]):
+			hl.texture = load(MASK_TEX[id])
+		hl.expand_mode = TextureRect.EXPAND_IGNORE_SIZE
+		hl.stretch_mode = TextureRect.STRETCH_SCALE
 		hl.mouse_filter = Control.MOUSE_FILTER_IGNORE
+		hl.modulate = Color(1, 1, 1, 0)
 		_map_host.add_child(hl)
 		_highlights[id] = hl
 
@@ -98,8 +107,7 @@ func _ready() -> void:
 		_map_host.add_child(btn)
 		_hotspots[id] = btn
 
-	## Plain parchment side panel — ornate 9-slice margins are too thick for
-	## a narrow chronicle column and would shove text into the gold frame.
+	## Plain parchment chronicle (not ornate 9-slice — margins would crush text).
 	var side := PanelContainer.new()
 	side.custom_minimum_size = Vector2(360, 0)
 	side.size_flags_vertical = Control.SIZE_EXPAND_FILL
@@ -107,10 +115,7 @@ func _ready() -> void:
 	sb.bg_color = Color(0.93, 0.87, 0.74, 0.96)
 	sb.border_color = Color(0.55, 0.40, 0.16, 0.95)
 	sb.set_border_width_all(3)
-	sb.corner_radius_top_left = 6
-	sb.corner_radius_top_right = 6
-	sb.corner_radius_bottom_left = 6
-	sb.corner_radius_bottom_right = 6
+	sb.set_corner_radius_all(6)
 	sb.content_margin_left = 18
 	sb.content_margin_right = 18
 	sb.content_margin_top = 16
@@ -135,7 +140,7 @@ func _ready() -> void:
 	_detail_body.size_flags_vertical = Control.SIZE_EXPAND_FILL
 	col.add_child(_detail_body)
 
-	var tip := Kit.make_label("Click a coloured realm on the map.", 12, Kit.INK_SOFT, HORIZONTAL_ALIGNMENT_CENTER)
+	var tip := Kit.make_label("Click a coloured realm — its land border lights up.", 12, Kit.INK_SOFT, HORIZONTAL_ALIGNMENT_CENTER)
 	tip.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
 	tip.custom_minimum_size = Vector2(CHRONICLE_W, 0)
 	col.add_child(tip)
@@ -157,19 +162,24 @@ func _layout_map() -> void:
 		return
 	var tex_size := tex.get_size()
 	var scale: float = minf(host.x / tex_size.x, host.y / tex_size.y)
-	var drawn := tex_size * scale
-	var origin := (host - drawn) * 0.5
+	_map_drawn = tex_size * scale
+	_map_origin = (host - _map_drawn) * 0.5
+
+	## Land masks must match the map image exactly (same rect as drawn texture).
+	for id in _highlights:
+		var hl: TextureRect = _highlights[id]
+		hl.position = _map_origin
+		hl.size = _map_drawn
+
 	for id in _hotspots:
 		var rect_n: Array = REGION_RECTS.get(id, [0.3, 0.3, 0.2, 0.2])
 		var r := Rect2(
-			origin.x + float(rect_n[0]) * drawn.x,
-			origin.y + float(rect_n[1]) * drawn.y,
-			float(rect_n[2]) * drawn.x,
-			float(rect_n[3]) * drawn.y)
+			_map_origin.x + float(rect_n[0]) * _map_drawn.x,
+			_map_origin.y + float(rect_n[1]) * _map_drawn.y,
+			float(rect_n[2]) * _map_drawn.x,
+			float(rect_n[3]) * _map_drawn.y)
 		_hotspots[id].position = r.position
 		_hotspots[id].size = r.size
-		_highlights[id].position = r.position
-		_highlights[id].size = r.size
 	_refresh_highlights()
 
 
@@ -183,12 +193,9 @@ func set_selected(id: String) -> void:
 
 func _refresh_highlights() -> void:
 	for id in _highlights:
-		var hl: ColorRect = _highlights[id]
-		var base: Color = GameState.EMPIRES.get(id, {}).get("color", Color.WHITE)
-		if id == selected:
-			hl.color = Color(base.r, base.g, base.b, 0.42)
-		else:
-			hl.color = Color(base.r, base.g, base.b, 0.0)
+		var hl: TextureRect = _highlights[id]
+		## Selected land: bright fill + strong border. Others: hidden.
+		hl.modulate = Color(1.15, 1.1, 1.0, 1.0) if id == selected else Color(1, 1, 1, 0)
 
 
 func _refresh_detail() -> void:
@@ -218,8 +225,7 @@ func _on_region_pressed(id: String) -> void:
 func _on_region_hover(id: String, on: bool) -> void:
 	if id == selected:
 		return
-	var hl: ColorRect = _highlights.get(id)
+	var hl: TextureRect = _highlights.get(id)
 	if hl == null:
 		return
-	var base: Color = GameState.EMPIRES.get(id, {}).get("color", Color.WHITE)
-	hl.color = Color(base.r, base.g, base.b, 0.22 if on else 0.0)
+	hl.modulate = Color(1, 1, 1, 0.55 if on else 0.0)

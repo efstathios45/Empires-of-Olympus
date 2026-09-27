@@ -148,7 +148,8 @@ func _say(line: String) -> void:
 		_bubble.font_size = 96
 		_bubble.outline_size = 26
 		_bubble.outline_modulate = Color(0.05, 0.04, 0.03, 0.95)
-		_bubble.modulate = Color(1.0, 0.96, 0.85)
+		## Gold ink only — no second cream/white HUD mirror of the same line.
+		_bubble.modulate = Color(1.0, 0.84, 0.28)
 		_bubble.width = 900.0
 		_bubble.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
 		_bubble.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER

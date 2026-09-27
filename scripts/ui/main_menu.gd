@@ -14,25 +14,23 @@ const POSTER := "res://assets/ui/title_poster.webp"
 const WORDMARK := "res://assets/ui/wordmark_title.png"
 const MAP := BG + "empire_map_hellas.png"
 
-## Card geometry. panel_card content_margin clears the ornate gold frame.
-## ART_W is the hero strip; TEXT_W is deliberately narrower so lore never
-## runs past the artwork's left/right edges (Cinzel is a wide display face).
-const CARD_W := 360
-const EMPIRE_CARD_H := 300
-const CLASS_CARD_H := 500
+## Card geometry. content_margin clears the gold frame; TEXT_W stays inside
+## the cream field so the original lore can wrap without painting the border.
+const CARD_W := 400
+const EMPIRE_CARD_H := 360
+const CLASS_CARD_H := 520
 const FRAME_INSET := 90
 const CARD_PAD := 16
 const ART_W := CARD_W - FRAME_INSET * 2 - CARD_PAD * 2
-## Lore wrap sits inside the art width with extra breathing room.
-const TEXT_W := ART_W - 36
+const TEXT_W := ART_W - 28
 
 const DIM := Color(0.86, 0.82, 0.72)
 
-## Short card blurbs — full kings/wars chronicle lives on the map panel.
+## Full card lore (kept). Kings / wars chronicle lives on the map panel.
 const EMPIRE_LORE := {
-	"sparta": "Born on the shield. Buried beneath it. The phalanx never breaks.",
-	"athens": "Athena's lamps burn till dawn. A keen mind cuts deeper than bronze.",
-	"corinth": "Two seas, one isthmus. Every keel pays Corinth's toll.",
+	"sparta": "Born upon the shield, buried beneath it. In Laconia the phalanx moves as one beast of bronze, and it never breaks.",
+	"athens": "Under Athena's olive the academy lamps burn until dawn. A mind honed to an edge cuts deeper than any blade.",
+	"corinth": "Two seas, one isthmus, and every keel in Hellas paying toll. Corinth buys what she cannot outrun.",
 }
 
 ## Where each realm sits on the map, so the cards read against the borders.
@@ -358,11 +356,11 @@ func _make_empire_card(id: String, data: Dictionary) -> PanelContainer:
 	card.mouse_filter = Control.MOUSE_FILTER_PASS
 	var v := _card_body(card)
 
-	var art := _image(BG + "empire_" + id + ".png", Vector2(ART_W, 56), true)
+	var art := _image(BG + "empire_" + id + ".png", Vector2(ART_W, 72), true)
 	if art != null:
 		art.size_flags_horizontal = Control.SIZE_SHRINK_CENTER
 		v.add_child(art)
-		v.add_child(Kit.spacer(4))
+		v.add_child(Kit.spacer(6))
 
 	var colour: Color = data.get("color", Kit.INK_GOLD)
 	var band := _colour_band(colour)
@@ -371,8 +369,10 @@ func _make_empire_card(id: String, data: Dictionary) -> PanelContainer:
 	v.add_child(band)
 
 	var empire_name: String = data.get("name", id.capitalize())
-	v.add_child(_wrapped(empire_name, 16, Kit.INK_TITLE, TEXT_W))
-	v.add_child(_wrapped(String(EMPIRE_LORE.get(id, data.get("desc", ""))), 9, Kit.INK_SOFT, TEXT_W))
+	v.add_child(_wrapped(empire_name, 18, Kit.INK_TITLE, TEXT_W))
+	v.add_child(_wrapped(String(EMPIRE_REGION.get(id, "")), 10, Kit.INK_SOFT, TEXT_W))
+	v.add_child(_wrapped(String(EMPIRE_LORE.get(id, data.get("desc", ""))), 10, Kit.INK_SOFT, TEXT_W))
+	v.add_child(_icon_line("icon_laurel", String(data.get("bonus_desc", "")), Kit.INK_GOLD, TEXT_W))
 
 	var pledge := _card_button("Pledge")
 	pledge.pressed.connect(_on_pick_empire.bind(id))

@@ -139,22 +139,43 @@ func _build_panoply() -> void:
 	var cls := GameState.class_data()
 	left.add_child(Kit.make_label("%s · %s" % [emp.get("name", "?"), cls.get("name", "?")], 14, Kit.INK_SOFT))
 
+	## Metin2-style paperdoll: silhouette + gear slots around the body.
+	var doll := CenterContainer.new()
+	left.add_child(doll)
+	var doll_box := Control.new()
+	doll_box.custom_minimum_size = Vector2(240, 210)
+	doll.add_child(doll_box)
+	var body := ColorRect.new()
+	body.color = Color(0.62, 0.52, 0.38, 0.55)
+	body.position = Vector2(88, 36)
+	body.size = Vector2(64, 140)
+	doll_box.add_child(body)
+	var head := ColorRect.new()
+	head.color = Color(0.72, 0.58, 0.42, 0.7)
+	head.position = Vector2(100, 8)
+	head.size = Vector2(40, 36)
+	doll_box.add_child(head)
+
+	## Slot buttons anchored around the silhouette (helm / thorax / weapon / aspis).
+	var slot_pos := {
+		"helmet": Vector2(8, 8),
+		"armor": Vector2(8, 80),
+		"weapon": Vector2(8, 152),
+		"shield": Vector2(160, 80),
+	}
 	for key in SLOT_KEYS:
-		var slot_row := HBoxContainer.new()
-		slot_row.add_theme_constant_override("separation", 8)
-		left.add_child(slot_row)
-		var tag := Kit.make_label(SLOT_LABELS[key], 13, Kit.INK_SOFT)
-		tag.custom_minimum_size = Vector2(70, 0)
-		slot_row.add_child(tag)
 		var slot_btn := Button.new()
-		slot_btn.custom_minimum_size = Vector2(180, 40)
-		slot_btn.alignment = HORIZONTAL_ALIGNMENT_LEFT
+		slot_btn.custom_minimum_size = Vector2(72, 52)
+		slot_btn.position = slot_pos[key]
+		slot_btn.alignment = HORIZONTAL_ALIGNMENT_CENTER
 		slot_btn.focus_mode = Control.FOCUS_NONE
+		slot_btn.clip_text = true
 		slot_btn.add_theme_font_override("font", Kit.font())
-		slot_btn.add_theme_font_size_override("font_size", 14)
+		slot_btn.add_theme_font_size_override("font_size", 11)
 		slot_btn.add_theme_color_override("font_color", Kit.INK)
+		slot_btn.tooltip_text = SLOT_LABELS[key]
 		slot_btn.pressed.connect(_select_equip_slot.bind(key))
-		slot_row.add_child(slot_btn)
+		doll_box.add_child(slot_btn)
 		_equip_btns[key] = slot_btn
 
 	left.add_child(Kit.spacer(8))

@@ -207,7 +207,8 @@ static func _market_row(world) -> void:
 	for z in [-6.2, -1.6, 3.0, 7.6]:
 		var stall = world._place_glb(STALL, 15.6, float(z), 3.0, 90.0, 0)
 		if stall != null:
-			world._add_box_collider(stall, Vector3(2.0, 2.2, 2.4), Vector3(0.0, 1.1, 0.0))
+			## Footplate only — awning must not wall the walkway.
+			world._add_box_collider(stall, Vector3(1.6, 1.6, 1.8), Vector3(0.0, 0.8, 0.0))
 	_cart(world, 12.9, -9.2, 25.0)
 	_cart(world, 17.4, 0.8, 200.0)
 	for p in [Vector2(13.1, -6.6), Vector2(13.8, -5.5), Vector2(17.2, -4.4),
@@ -220,8 +221,9 @@ static func _stoa_and_houses(world) -> void:
 	# Stoa gallery faces the plaza — shallow footprint so walking lanes stay open.
 	var stoa = world._place_glb(STOA, -17.6, 0.0, 7.0, 90.0, 0)
 	if stoa != null:
-		world._add_box_collider(stoa, Vector3(12.0, 6.5, 3.2),
-			Vector3(0.0, 3.25, 0.0))
+		## Slim gallery footprint — leave the plaza walk lanes open.
+		world._add_box_collider(stoa, Vector3(11.0, 5.5, 2.4),
+			Vector3(0.0, 2.75, 0.0))
 
 	# Townhouses: solid street wall with a tight footprint (not roof AABB).
 	var houses := [
@@ -234,9 +236,9 @@ static func _stoa_and_houses(world) -> void:
 	for h in houses:
 		var house = world._place_glb(TOWNHOUSE, float(h[0]), float(h[1]), float(h[2]), float(h[3]), 0)
 		if house != null:
-			# Footprint only — about half a street-front; roof/eaves don't block.
-			world._add_box_collider(house, Vector3(5.2, 5.5, 4.4),
-				Vector3(0.0, 2.75, 0.0))
+			# Footprint only — roof/eaves must not block the street.
+			world._add_box_collider(house, Vector3(4.2, 4.8, 3.6),
+				Vector3(0.0, 2.4, 0.0))
 	_cart(world, -13.2, -9.4, 160.0)
 	_amphora(world, -13.4, 5.6)
 	_amphora(world, -12.9, 6.5)
