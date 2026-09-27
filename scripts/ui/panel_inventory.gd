@@ -448,6 +448,8 @@ func _arm_bag_drag(entry_index: int, press_pos: Vector2) -> void:
 	_dragging = false
 	_drag_press_pos = press_pos
 	_drag_data = {"from": "bag", "index": entry_index, "item_id": id, "slot": slot}
+	set_process(true)
+	set_process_input(true)
 
 
 func _arm_slot_drag(key: String, item_id: String, press_pos: Vector2) -> void:
@@ -455,6 +457,23 @@ func _arm_slot_drag(key: String, item_id: String, press_pos: Vector2) -> void:
 	_dragging = false
 	_drag_press_pos = press_pos
 	_drag_data = {"from": "slot", "slot": key, "item_id": item_id}
+	set_process(true)
+	set_process_input(true)
+
+
+func _process(_delta: float) -> void:
+	if not _drag_armed and not _dragging:
+		set_process(false)
+		return
+	var gp := get_global_mouse_position()
+	if not Input.is_mouse_button_pressed(MOUSE_BUTTON_LEFT):
+		_finish_drag(gp)
+		return
+	if not _dragging and _drag_armed and gp.distance_to(_drag_press_pos) >= DRAG_SLOP:
+		_begin_drag_visual()
+	if _dragging:
+		_move_drag_preview(gp)
+		_paint_drop_hints_at(gp)
 
 
 func _input(event: InputEvent) -> void:
@@ -511,9 +530,14 @@ func _make_drag_preview(item_id: String) -> Control:
 
 func _finish_drag(global_pos: Vector2) -> void:
 	var was_dragging := _dragging
+	var was_armed := _drag_armed
+	var press_pos := _drag_press_pos
 	var data := _drag_data.duplicate()
 	_clear_drag_state()
-	if not was_dragging or data.is_empty():
+	if data.is_empty() or not (was_dragging or was_armed):
+		return
+	## Pure click (no travel) = selection only.
+	if not was_dragging and global_pos.distance_to(press_pos) < DRAG_SLOP:
 		return
 	var from := str(data.get("from", ""))
 	if from == "bag":
@@ -550,6 +574,7 @@ func _clear_drag_state() -> void:
 	_drag_armed = false
 	_dragging = false
 	_drag_data = {}
+	set_process(false)
 	if _drag_preview != null and is_instance_valid(_drag_preview):
 		_drag_preview.queue_free()
 	_drag_preview = null
@@ -609,8 +634,23 @@ func _clear_drop_hints() -> void:
 
 
 func _select_equip_slot(key: String) -> void:
-	if _dragging:
+	if _dragging or _drag_armed:
 		return
+	## Click a matching slot while a pouch item is selected → equip (no drag needed).
+	if _selected_bag >= 0 and _selected_bag < GameState.bag.size():
+		var id := str(GameState.bag[_selected_bag].get("id", ""))
+		var want := GameState.slot_for_kind(str(GameState.item_def(id).get("kind", "")))
+		if want == key:
+			if GameState.equip_from_bag_to_slot(_selected_bag, key):
+				AudioManager.play_sfx("ui_confirm")
+				_selected_bag = -1
+				_selected_slot = key
+				_refresh_panoply()
+				return
+			AudioManager.play_sfx("ui_click")
+			if _detail:
+				_detail.text = "That piece does not fit the %s slot." % SLOT_LABELS.get(key, key)
+			return
 	_selected_slot = key
 	_selected_bag = -1
 	_refresh_panoply()
