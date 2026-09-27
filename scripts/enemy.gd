@@ -901,10 +901,14 @@ func _spawn_world_loot(foe_lvl: int) -> void:
 
 
 func _spawn_one_drop(LootPickup: Script, parent: Node, loot_id: String, gold_value: int) -> void:
+	if LootPickup == null or parent == null or loot_id == "":
+		return
 	var drop: Node = LootPickup.new()
+	if drop == null:
+		return
 	parent.add_child(drop)
 	if drop.has_method("setup"):
-		drop.setup(loot_id, global_position + Vector3(0, 0.2, 0), gold_value)
+		drop.call("setup", loot_id, global_position + Vector3(0, 0.2, 0), gold_value)
 
 
 ## Plays the death clip and/or a mesh tumble. Returns how long to leave the

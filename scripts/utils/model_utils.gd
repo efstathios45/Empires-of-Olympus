@@ -222,6 +222,41 @@ static func _measure_skeleton_height(node: Node3D) -> float:
 	return max_y - min_y if min_y != INF else 0.0
 
 
+## Longest side of the combined mesh AABB in the node's local space (metres).
+## Used by ground loot to pocket-size gear GLBs without stretching by height alone.
+static func measure_max_extent(node: Node3D) -> float:
+	if node == null:
+		return 0.0
+	if node.is_inside_tree():
+		node.force_update_transform()
+	var aabb := _get_combined_aabb(node)
+	var longest: float = maxf(aabb.size.x, maxf(aabb.size.y, aabb.size.z))
+	if longest >= 0.001:
+		return longest
+	# Fallback when meshes aren't ready / AABB empty — height is still useful.
+	return measure_height(node)
+
+
+## Uniformly scale so the longest mesh side matches target_meters.
+static func scale_to_max_extent(node: Node3D, target_meters: float) -> void:
+	if node == null or target_meters <= 0.0:
+		return
+	if node.is_inside_tree():
+		node.force_update_transform()
+	var current := measure_max_extent(node)
+	if current < 0.001:
+		return
+	var factor := target_meters / current
+	# Props can be tiny authored units or oversized Tripo meshes — keep sane.
+	factor = clampf(factor, 0.01, 80.0)
+	node.scale *= factor
+	if node.is_inside_tree():
+		node.force_update_transform()
+		var final_e := measure_max_extent(node)
+		if final_e > target_meters * 1.25 and final_e > 0.01:
+			node.scale *= target_meters / final_e
+
+
 ## Scale a node so its world-space height matches target_meters.
 static func scale_to_height(node: Node3D, target_meters: float) -> void:
 	_restore_maya_cm_mesh_scales(node)

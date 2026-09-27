@@ -119,15 +119,19 @@ func _add_icon_billboard(id: String) -> void:
 
 
 func _fit_instance(inst: Node3D, target: float) -> void:
+	if inst == null or target <= 0.0:
+		return
 	ModelUtils.scale_to_max_extent(inst, target)
 	var extent := ModelUtils.measure_max_extent(inst)
 	if extent > target * 1.15 or extent < 0.02:
 		ModelUtils.scale_to_max_extent(inst, target)
-	ModelUtils.ground_model(inst, 0.02)
+	if inst.is_inside_tree():
+		ModelUtils.ground_model(inst, 0.02)
 	extent = ModelUtils.measure_max_extent(inst)
 	if extent > 1.1:
 		inst.scale *= 1.1 / extent
-		ModelUtils.ground_model(inst, 0.02)
+		if inst.is_inside_tree():
+			ModelUtils.ground_model(inst, 0.02)
 
 
 func _refit_visual() -> void:
