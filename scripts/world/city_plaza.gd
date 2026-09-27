@@ -65,13 +65,22 @@ static func build(world) -> void:
 ## Purely decorative, so no collider and no shadow casting; the top sits 2 cm
 ## over the (flattened) pad so it can never z-fight the terrain.
 static func _paving(world) -> void:
+	# Ancient-Greek tesserae mosaic (ψηφιδωτό) in place of the old bright marble:
+	# an earthy limestone/ochre field laced with terracotta / charcoal /
+	# Aegean-blue lines and dark grout. Generated in code, no image asset needed.
+	var mosaic := _make_mosaic_texture()
 	var mat := StandardMaterial3D.new()
-	mat.albedo_color = Color(0.87, 0.84, 0.77)
-	if ResourceLoader.exists(MARBLE_TEX):
-		mat.albedo_texture = load(MARBLE_TEX)
-	mat.uv1_scale = Vector3(8.0, 8.0, 1.0)
-	mat.roughness = 0.88
+	mat.albedo_texture = mosaic
+	mat.uv1_scale = Vector3(6.0, 6.0, 1.0)
+	mat.roughness = 0.94
 	mat.metallic = 0.0
+	mat.texture_filter = BaseMaterial3D.TEXTURE_FILTER_LINEAR_WITH_MIPMAPS
+	var road_mat := StandardMaterial3D.new()
+	road_mat.albedo_texture = mosaic
+	road_mat.uv1_scale = Vector3(2.2, 4.0, 1.0)
+	road_mat.roughness = 0.94
+	road_mat.metallic = 0.0
+	road_mat.texture_filter = BaseMaterial3D.TEXTURE_FILTER_LINEAR_WITH_MIPMAPS
 
 	var gy: float = world.sample_height(0.0, 0.0)
 
@@ -92,10 +101,41 @@ static func _paving(world) -> void:
 	var box := BoxMesh.new()
 	box.size = Vector3(7.0, 0.12, 13.0)
 	road.mesh = box
-	road.material_override = mat
+	road.material_override = road_mat
 	road.cast_shadow = GeometryInstance3D.SHADOW_CASTING_SETTING_OFF
 	world.add_child(road)
 	road.global_position = Vector3(0.0, gy - 0.04, 19.0)
+
+
+## Build a seamless ancient-Greek mosaic texture from small tesserae: a muted
+## limestone/ochre field, banded every few tiles with terracotta / charcoal /
+## Aegean-blue lines, all separated by dark grout. 256px across 16 tiles so it
+## tiles cleanly. Deliberately earthy and mid-toned — no white glare.
+static func _make_mosaic_texture() -> ImageTexture:
+	var size := 256
+	var tile := 16          # tesserae edge in px (16 across → seamless)
+	var gap := 3            # grout width in px
+	var img := Image.create_empty(size, size, true, Image.FORMAT_RGBA8)
+	img.fill(Color(0.11, 0.09, 0.08))   # grout
+	var field := [Color(0.66, 0.58, 0.44), Color(0.74, 0.62, 0.40)]  # limestone, ochre
+	var accent := [Color(0.17, 0.32, 0.45), Color(0.20, 0.17, 0.15), Color(0.60, 0.29, 0.18)]  # blue, charcoal, terracotta
+	var n := size / tile
+	var rng := RandomNumberGenerator.new()
+	rng.seed = 20260811
+	for j in n:
+		for i in n:
+			var col: Color
+			if i % 4 == 0 or j % 4 == 0:
+				col = accent[(i + j) % accent.size()]
+			else:
+				col = field[(i + j) % field.size()]
+			var jit := rng.randf_range(-0.05, 0.05)
+			col = Color(clampf(col.r + jit, 0.0, 1.0), clampf(col.g + jit, 0.0, 1.0), clampf(col.b + jit, 0.0, 1.0))
+			for py in range(j * tile + gap, j * tile + tile):
+				for px in range(i * tile + gap, i * tile + tile):
+					img.set_pixel(px, py, col)
+	img.generate_mipmaps()
+	return ImageTexture.create_from_image(img)
 
 
 # ── North: the temple precinct ───────────────────────────────────────────
