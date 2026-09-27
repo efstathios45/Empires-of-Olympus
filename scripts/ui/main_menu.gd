@@ -14,17 +14,14 @@ const POSTER := "res://assets/ui/title_poster.webp"
 const WORDMARK := "res://assets/ui/wordmark_title.png"
 const MAP := BG + "empire_map_hellas.png"
 
-## Card geometry. panel_card content_margin clears the ornate gold frame
-## (cream field begins ~82–112px in). CARD_PAD is extra air inside that
-## cream so Cinzel glyphs never sit on the border or art edge.
-## Card heights are floors — a card grows to fit its lore.
-const CARD_W := 520
-const EMPIRE_CARD_H := 480
-const CLASS_CARD_H := 560
-## Cream field begins ~81–83px in on panel_card.png; keep TEXT_W inside it.
-const FRAME_INSET := 104
-const CARD_PAD := 32
-## Outer 520 − frame 104×2 − CARD_PAD×2 ≈ usable wrap width.
+## Card geometry sized for 1080p so map + cards + nav all fit on one screen
+## (large 520×480 cards pushed Continue off-screen / felt "zoomed in").
+## content_margin on panel_card clears the gold frame; CARD_PAD keeps lore in.
+const CARD_W := 380
+const EMPIRE_CARD_H := 300
+const CLASS_CARD_H := 380
+const FRAME_INSET := 78
+const CARD_PAD := 14
 const TEXT_W := CARD_W - FRAME_INSET * 2 - CARD_PAD * 2
 
 const DIM := Color(0.86, 0.82, 0.72)
@@ -114,7 +111,7 @@ func _set_backdrop(path: String, shade_alpha: float) -> void:
 
 ## A full-rect page: outer margin so nothing hugs the screen edge, then a VBox.
 func _page(sep: int = 8) -> VBoxContainer:
-	var m := Kit.make_margin(32)
+	var m := Kit.make_margin(20)
 	m.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	_content.add_child(m)
 	m.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
@@ -229,9 +226,10 @@ func _equalize_heights(cards: Dictionary) -> void:
 
 func _card_button(text: String) -> Button:
 	var b := Kit.make_button(text, false)
-	b.custom_minimum_size = Vector2(mini(TEXT_W, 260), 52)
+	b.custom_minimum_size = Vector2(mini(TEXT_W, 180), 40)
 	b.size_flags_horizontal = Control.SIZE_SHRINK_CENTER
 	b.clip_text = true
+	b.add_theme_font_size_override("font_size", 14)
 	return b
 
 
@@ -246,11 +244,11 @@ func _colour_band(c: Color) -> ColorRect:
 
 
 func _title_line(text: String) -> Label:
-	return Kit.make_hud_label(text, 46, Color(1.0, 0.93, 0.76), HORIZONTAL_ALIGNMENT_CENTER)
+	return Kit.make_hud_label(text, 34, Color(1.0, 0.93, 0.76), HORIZONTAL_ALIGNMENT_CENTER)
 
 
 func _sub_line(text: String) -> Label:
-	return Kit.make_hud_label(text, 18, DIM, HORIZONTAL_ALIGNMENT_CENTER)
+	return Kit.make_hud_label(text, 15, DIM, HORIZONTAL_ALIGNMENT_CENTER)
 
 
 # ── Step 1: title ────────────────────────────────────────────────────────
@@ -305,12 +303,13 @@ func _build_empire_step() -> void:
 		"Three realms share one peninsula, and their borders are drawn in gold."))
 
 	## Static painted map on the pledge screen; Study the Map opens the interactive chronicle.
-	var map := _image(MAP, Vector2(560, 240), false)
+	## Larger painted map; cards below stay compact so nav stays on-screen.
+	var map := _image(MAP, Vector2(780, 300), false)
 	if map != null:
-		map.size_flags_vertical = Control.SIZE_EXPAND_FILL
-		page.add_child(map)
+		map.size_flags_vertical = Control.SIZE_SHRINK_CENTER
+		page.add_child(_centered(map))
 
-	var cards := _row(26)
+	var cards := _row(16)
 	cards.size_flags_vertical = Control.SIZE_SHRINK_CENTER
 	page.add_child(cards)
 	for key in GameState.EMPIRES:
@@ -324,18 +323,18 @@ func _build_empire_step() -> void:
 	page.add_child(nav)
 
 	var back := Kit.make_button("Back", false)
-	back.custom_minimum_size = Vector2(220, 62)
+	back.custom_minimum_size = Vector2(180, 52)
 	back.pressed.connect(_show_step.bind(1))
 	nav.add_child(back)
 
 	var study := Kit.make_button("Study the Map", false)
-	study.custom_minimum_size = Vector2(280, 62)
+	study.custom_minimum_size = Vector2(220, 52)
 	study.pressed.connect(_show_map_overlay)
 	nav.add_child(study)
 
 	_continue_btn = Kit.make_button("Continue", true)
-	_continue_btn.custom_minimum_size = Vector2(320, 66)
-	_continue_btn.add_theme_font_size_override("font_size", 22)
+	_continue_btn.custom_minimum_size = Vector2(260, 54)
+	_continue_btn.add_theme_font_size_override("font_size", 18)
 	_continue_btn.pressed.connect(_show_step.bind(3))
 	nav.add_child(_continue_btn)
 
@@ -350,23 +349,22 @@ func _make_empire_card(id: String, data: Dictionary) -> PanelContainer:
 	card.mouse_filter = Control.MOUSE_FILTER_PASS
 	var v := _card_body(card)
 
-	var art := _image(BG + "empire_" + id + ".png", Vector2(TEXT_W, 88), true)
+	var art := _image(BG + "empire_" + id + ".png", Vector2(TEXT_W, 56), true)
 	if art != null:
 		art.size_flags_horizontal = Control.SIZE_SHRINK_CENTER
 		v.add_child(art)
-		v.add_child(Kit.spacer(12))
+		v.add_child(Kit.spacer(4))
 
 	var colour: Color = data.get("color", Kit.INK_GOLD)
 	var band := _colour_band(colour)
-	band.custom_minimum_size = Vector2(TEXT_W, 5)
+	band.custom_minimum_size = Vector2(TEXT_W, 4)
 	band.size_flags_horizontal = Control.SIZE_SHRINK_CENTER
 	v.add_child(band)
-	v.add_child(Kit.spacer(6))
 
 	var empire_name: String = data.get("name", id.capitalize())
-	v.add_child(_wrapped(empire_name, 20, Kit.INK_TITLE, TEXT_W))
-	v.add_child(_wrapped(String(EMPIRE_REGION.get(id, "")), 11, Kit.INK_SOFT, TEXT_W))
-	v.add_child(_wrapped(String(EMPIRE_LORE.get(id, data.get("desc", ""))), 11, Kit.INK_SOFT, TEXT_W))
+	v.add_child(_wrapped(empire_name, 16, Kit.INK_TITLE, TEXT_W))
+	v.add_child(_wrapped(String(EMPIRE_REGION.get(id, "")), 10, Kit.INK_SOFT, TEXT_W))
+	v.add_child(_wrapped(String(EMPIRE_LORE.get(id, data.get("desc", ""))), 10, Kit.INK_SOFT, TEXT_W))
 	v.add_child(_icon_line("icon_laurel", String(data.get("bonus_desc", "")), Kit.INK_GOLD, TEXT_W))
 
 	var pledge := _card_button("Pledge")
@@ -441,15 +439,15 @@ func _make_class_card(id: String, data: Dictionary) -> PanelContainer:
 	card.mouse_filter = Control.MOUSE_FILTER_PASS
 	var v := _card_body(card)
 
-	var art := _image(BG + "class_" + id + ".png", Vector2(TEXT_W, 128), true)
+	var art := _image(BG + "class_" + id + ".png", Vector2(TEXT_W, 90), true)
 	if art != null:
 		art.size_flags_horizontal = Control.SIZE_SHRINK_CENTER
 		v.add_child(art)
-		v.add_child(Kit.spacer(12))
+		v.add_child(Kit.spacer(6))
 
 	var class_name_text: String = data.get("name", id.capitalize())
-	v.add_child(_wrapped(class_name_text, 20, Kit.INK_TITLE, TEXT_W))
-	v.add_child(_wrapped(String(CLASS_LORE.get(id, data.get("desc", ""))), 11, Kit.INK_SOFT, TEXT_W))
+	v.add_child(_wrapped(class_name_text, 16, Kit.INK_TITLE, TEXT_W))
+	v.add_child(_wrapped(String(CLASS_LORE.get(id, data.get("desc", ""))), 10, Kit.INK_SOFT, TEXT_W))
 	v.add_child(_icon_line("icon_sword", String(data.get("weapon_name", "")), Kit.INK, TEXT_W))
 	v.add_child(_icon_line("icon_mana", String(data.get("skill_name", "")), Kit.INK_GOLD, TEXT_W))
 

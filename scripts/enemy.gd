@@ -846,16 +846,10 @@ func _die() -> void:
 	if beacon != null:
 		beacon.visible = false
 
-	# Loot: gold, xp, crafting material, chance of ground gear drop.
-	var gold_range: Array = cfg["gold"]
-	var gold_amount := randi_range(int(gold_range[0]), int(gold_range[1]))
-	GameState.add_gold(gold_amount)
+	# Loot: XP instant; gold + gear + mats as Metin2-style ground drops.
+	var foe_lvl: int = int(cfg.get("level", 1))
 	GameState.add_xp(cfg["xp"])
-	GameState.add_material(cfg["material"], 1)
-	if randf() < 0.12:
-		GameState.health_potions += 1
-		GameState.potions_changed.emit()
-	_spawn_gear_drops()
+	_spawn_world_loot(foe_lvl)
 	GameState.register_kill(String(cfg.get("quest_id", enemy_id)))
 	if is_boss:
 		GameState.register_minotaur_kill()
@@ -872,26 +866,45 @@ func _die() -> void:
 		t.timeout.connect(_fade_out)
 
 
-## Pop 0–2 gear pickups onto the ground (MMORPG-style world loot).
-func _spawn_gear_drops() -> void:
-	var rolls := 2 if is_boss else 1
-	var chance := 0.55 if is_boss else 0.38
-	# Higher-level foes drop more often.
-	chance += clampf(float(cfg.get("level", 1)) * 0.03, 0.0, 0.2)
+## Metin2-style world loot: gold pile, material, chance of level-gated gear.
+func _spawn_world_loot(foe_lvl: int) -> void:
 	var parent := get_parent()
 	if parent == null:
 		return
 	var LootPickup := load("res://scripts/loot_pickup.gd")
 	if LootPickup == null:
 		return
+	var gold_range: Array = cfg["gold"]
+	var gold_amount: int = GameState.roll_gold_drop(
+		int(gold_range[0]), int(gold_range[1]), foe_lvl)
+	_spawn_one_drop(LootPickup, parent, "gold_coin", gold_amount)
+
+	## Crafting mat almost always drops on the ground with an icon.
+	var mat_name: String = String(cfg.get("material", ""))
+	if mat_name != "":
+		var mat_id: String = GameState.material_item_id(mat_name)
+		if mat_id == "":
+			mat_id = "mat_" + mat_name.to_lower().replace(" ", "_")
+		_spawn_one_drop(LootPickup, parent, mat_id, 0)
+
+	if randf() < 0.12:
+		_spawn_one_drop(LootPickup, parent, "health_potion", 0)
+
+	var rolls := 2 if is_boss else 1
+	var chance := 0.55 if is_boss else 0.38
+	chance += clampf(float(foe_lvl) * 0.03, 0.0, 0.2)
 	for _i in rolls:
-		var loot_id: String = GameState.roll_loot_drop(chance, is_boss)
+		var loot_id: String = GameState.roll_loot_drop(chance, is_boss, foe_lvl)
 		if loot_id == "":
 			continue
-		var drop: Node = LootPickup.new()
-		parent.add_child(drop)
-		if drop.has_method("setup"):
-			drop.setup(loot_id, global_position + Vector3(0, 0.2, 0))
+		_spawn_one_drop(LootPickup, parent, loot_id, 0)
+
+
+func _spawn_one_drop(LootPickup: Script, parent: Node, loot_id: String, gold_value: int) -> void:
+	var drop: Node = LootPickup.new()
+	parent.add_child(drop)
+	if drop.has_method("setup"):
+		drop.setup(loot_id, global_position + Vector3(0, 0.2, 0), gold_value)
 
 
 ## Plays the death clip and/or a mesh tumble. Returns how long to leave the

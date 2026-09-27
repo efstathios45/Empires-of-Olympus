@@ -562,13 +562,10 @@ func _melee_hit(dmg: float, reach: float, arc: float) -> void:
 		VfxHelper.spawn_hit(enemy.global_position + Vector3(0, 1.2, 0), self)
 		hit_any = true
 	if hit_any:
-		# One clean bronze impact for hoplites; dry hit for others (no muddy double-layer).
-		if GameState.player_class == "hoplite":
-			AudioManager.play_sfx("spear_clash", -1.5, randf_range(0.94, 1.06))
-			if randf() < 0.45:
-				AudioManager.play_sfx("bronze_hit", -6.0, randf_range(0.9, 1.1))
-		else:
-			AudioManager.play_sfx("hit_flesh", -2.0, randf_range(0.9, 1.1))
+		## Distinct impact (never reuse the swing whoosh) — bronze ring on hit.
+		AudioManager.play_sfx("bronze_hit", -1.0, randf_range(0.88, 1.12))
+		if GameState.player_class == "hoplite" and randf() < 0.35:
+			AudioManager.play_sfx("spear_clash", -5.5, randf_range(0.95, 1.05))
 		add_camera_shake(0.055, 0.15)
 
 func _fire_projectile(dmg: float, speed: float) -> void:

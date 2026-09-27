@@ -247,6 +247,69 @@ const ITEM_DEFS := {
 		"kind": "armor", "w": 1, "h": 1, "stackable": false, "price": 380, "sell": 175,
 		"icon": "res://assets/ui/icon_boot.png", "glb": "",
 		"color": Color(0.7, 0.5, 0.22),
+		"min_level": 8,
+	},
+	"leather_boots": {
+		"name": "Leather Sandals", "desc": "Traveler's boots bound with rawhide.",
+		"kind": "boots", "w": 1, "h": 1, "stackable": false, "price": 70, "sell": 30,
+		"icon": "res://assets/ui/icon_boot.png", "glb": "",
+		"color": Color(0.48, 0.32, 0.18),
+		"min_level": 1, "def": 2.0, "hp": 4.0,
+	},
+	"bronze_greaves": {
+		"name": "Bronze Greaves", "desc": "Shin-guards of hammered bronze.",
+		"kind": "boots", "w": 1, "h": 1, "stackable": false, "price": 190, "sell": 85,
+		"icon": "res://assets/ui/icon_boot.png", "glb": "",
+		"color": Color(0.72, 0.52, 0.24),
+		"min_level": 5, "def": 5.0, "hp": 10.0,
+	},
+	"olive_necklace": {
+		"name": "Olive Pendant", "desc": "Athena's leaf on a leather cord.",
+		"kind": "necklace", "w": 1, "h": 1, "stackable": false, "price": 120, "sell": 50,
+		"icon": "res://assets/ui/icon_laurel.png", "glb": "",
+		"color": Color(0.55, 0.7, 0.35),
+		"min_level": 2, "hp": 12.0, "atk": 1.0,
+	},
+	"gold_torque": {
+		"name": "Gold Torque", "desc": "Heavy neck-ring of beaten gold.",
+		"kind": "necklace", "w": 1, "h": 1, "stackable": false, "price": 340, "sell": 150,
+		"icon": "res://assets/ui/icon_gold.png", "glb": "",
+		"color": Color(0.9, 0.75, 0.28),
+		"min_level": 8, "hp": 22.0, "atk": 3.0,
+	},
+	"bronze_earring": {
+		"name": "Bronze Earring", "desc": "A soldier's simple bronze hoop.",
+		"kind": "earring", "w": 1, "h": 1, "stackable": false, "price": 55, "sell": 22,
+		"icon": "res://assets/ui/icon_gem.png", "glb": "",
+		"color": Color(0.7, 0.5, 0.25),
+		"min_level": 1, "atk": 1.5,
+	},
+	"silver_earring": {
+		"name": "Silver Earring", "desc": "Temple silver, cold to the touch.",
+		"kind": "earring", "w": 1, "h": 1, "stackable": false, "price": 160, "sell": 70,
+		"icon": "res://assets/ui/icon_gem.png", "glb": "",
+		"color": Color(0.78, 0.8, 0.85),
+		"min_level": 5, "atk": 3.0, "hp": 6.0,
+	},
+	"leather_bracelet": {
+		"name": "Leather Bracelet", "desc": "Wrist-wrap for a spearman.",
+		"kind": "bracelet", "w": 1, "h": 1, "stackable": false, "price": 45, "sell": 18,
+		"icon": "res://assets/ui/icon_scroll.png", "glb": "",
+		"color": Color(0.5, 0.35, 0.2),
+		"min_level": 1, "def": 1.5,
+	},
+	"bronze_bracelet": {
+		"name": "Bronze Bracelet", "desc": "Coiled bronze for the sword-arm.",
+		"kind": "bracelet", "w": 1, "h": 1, "stackable": false, "price": 140, "sell": 60,
+		"icon": "res://assets/ui/icon_anvil.png", "glb": "",
+		"color": Color(0.68, 0.48, 0.22),
+		"min_level": 4, "def": 3.0, "atk": 1.5,
+	},
+	"gold_coin": {
+		"name": "Drachmae", "desc": "Loose coins from a fallen foe.",
+		"kind": "gold", "w": 1, "h": 1, "stackable": true, "price": 0, "sell": 0,
+		"icon": "res://assets/ui/icon_gold.png", "glb": "",
+		"color": Color(1.0, 0.84, 0.28),
 	},
 }
 
@@ -270,17 +333,25 @@ const MATERIAL_ITEM := {
 	"Minotaur Horn": "mat_minotaur_horn",
 }
 
-## Weighted ground-gear table (rolled after potion/material drops).
+## Weighted ground-gear table. `min_level` gates drops to foe strength (Metin2-ish).
 const LOOT_TABLE := [
-	{"id": "bronze_knife", "weight": 26},
-	{"id": "aspis", "weight": 14},
-	{"id": "xiphos", "weight": 12},
-	{"id": "leather_cuirass", "weight": 12},
-	{"id": "hunting_bow", "weight": 10},
-	{"id": "corinthian_helm", "weight": 10},
-	{"id": "kontos", "weight": 8},
-	{"id": "tower_shield", "weight": 5},
-	{"id": "bronze_thorax", "weight": 3},
+	{"id": "bronze_knife", "weight": 22, "min_level": 1},
+	{"id": "leather_boots", "weight": 18, "min_level": 1},
+	{"id": "bronze_earring", "weight": 16, "min_level": 1},
+	{"id": "leather_bracelet", "weight": 16, "min_level": 1},
+	{"id": "leather_cuirass", "weight": 12, "min_level": 2},
+	{"id": "olive_necklace", "weight": 10, "min_level": 2},
+	{"id": "aspis", "weight": 12, "min_level": 3},
+	{"id": "xiphos", "weight": 10, "min_level": 3},
+	{"id": "hunting_bow", "weight": 9, "min_level": 3},
+	{"id": "corinthian_helm", "weight": 9, "min_level": 4},
+	{"id": "bronze_bracelet", "weight": 8, "min_level": 4},
+	{"id": "bronze_greaves", "weight": 8, "min_level": 5},
+	{"id": "silver_earring", "weight": 7, "min_level": 5},
+	{"id": "kontos", "weight": 6, "min_level": 6},
+	{"id": "tower_shield", "weight": 5, "min_level": 7},
+	{"id": "bronze_thorax", "weight": 4, "min_level": 8},
+	{"id": "gold_torque", "weight": 3, "min_level": 8},
 ]
 
 # ── Runtime state ────────────────────────────────────────────────────────
@@ -303,13 +374,17 @@ var materials: Dictionary = {}
 ## Bag entries: {id, count, x, y}. Footprints may span multiple cells.
 var bag: Array = []
 
-## Equipped gear — paperdoll panoply slots (helm, thorax, weapon, aspis).
-## Values are item ids or "" when empty.
+## Equipped gear — Metin2-style paperdoll (helm, armor, weapon, shield,
+## boots, necklace, earring, bracelet). Values are item ids or "".
 var equipped: Dictionary = {
 	"helmet": "",
 	"armor": "",
 	"weapon": "",
 	"shield": "",
+	"boots": "",
+	"necklace": "",
+	"earring": "",
+	"bracelet": "",
 }
 
 # Quest chain state.
@@ -338,7 +413,10 @@ func reset_run() -> void:
 	scrolls = {"hephaestus": 0, "titan": 0, "oracle": 0}
 	materials = {}
 	bag.clear()
-	equipped = {"helmet": "", "armor": "", "weapon": "", "shield": ""}
+	equipped = {
+		"helmet": "", "armor": "", "weapon": "", "shield": "",
+		"boots": "", "necklace": "", "earring": "", "bracelet": "",
+	}
 	quest_index = 0
 	quest_kills = {}
 	omphaloi_destroyed = 0
@@ -592,6 +670,14 @@ func slot_for_kind(kind: String) -> String:
 			return "weapon"
 		"shield":
 			return "shield"
+		"boots":
+			return "boots"
+		"necklace":
+			return "necklace"
+		"earring":
+			return "earring"
+		"bracelet":
+			return "bracelet"
 		_:
 			return ""
 
@@ -613,6 +699,16 @@ func _equip_bonus_for(item_id: String) -> Dictionary:
 			"armor":
 				defense = 5.0
 				hp = 16.0
+			"boots":
+				defense = 2.0
+				hp = 6.0
+			"necklace":
+				hp = 10.0
+				atk = 1.0
+			"earring":
+				atk = 2.0
+			"bracelet":
+				defense = 2.0
 	return {"atk": atk, "def": defense, "hp": hp}
 
 
@@ -670,6 +766,48 @@ func equipped_name(slot: String) -> String:
 	return item_name(id)
 
 
+## GLB path for a worn slot (or "" if empty / no mesh). Maps "sidearm" → weapon.
+func equipped_glb(slot: String) -> String:
+	var key := slot
+	if key == "sidearm":
+		key = "weapon"
+	var id: String = String(equipped.get(key, ""))
+	if id == "":
+		return ""
+	return String(item_def(id).get("glb", ""))
+
+
+## Icon texture path for an item id (fallback by kind).
+func item_icon_path(item_id: String) -> String:
+	if item_id == "gold_coin" or item_id.begins_with("gold_"):
+		return "res://assets/ui/icon_gold.png"
+	var def := item_def(item_id)
+	var icon := String(def.get("icon", ""))
+	if icon != "" and ResourceLoader.exists(icon):
+		return icon
+	match String(def.get("kind", "")):
+		"weapon":
+			return "res://assets/ui/icon_sword.png"
+		"shield":
+			return "res://assets/ui/icon_shield.png"
+		"helmet", "armor", "boots":
+			return "res://assets/ui/icon_boot.png"
+		"necklace", "earring":
+			return "res://assets/ui/icon_gem.png"
+		"bracelet":
+			return "res://assets/ui/icon_anvil.png"
+		"consumable":
+			return "res://assets/ui/icon_potion.png"
+		"scroll":
+			return "res://assets/ui/icon_scroll.png"
+		"material":
+			return "res://assets/ui/icon_skull.png"
+		"gold":
+			return "res://assets/ui/icon_gold.png"
+		_:
+			return "res://assets/ui/icon_laurel.png"
+
+
 func add_material(mat: String, count: int = 1) -> void:
 	var item_id: String = String(MATERIAL_ITEM.get(mat, ""))
 	if item_id == "":
@@ -714,23 +852,42 @@ func use_mana_potion() -> bool:
 	return true
 
 
-## Roll a gear drop id, or "" on a miss.
-func roll_loot_drop(chance: float = 0.28, boss: bool = false) -> String:
+## Roll a gear drop id for a foe of `enemy_level`, or "" on a miss.
+func roll_loot_drop(chance: float = 0.28, boss: bool = false, enemy_level: int = 1) -> String:
 	var c := chance * (1.55 if boss else 1.0)
 	if randf() > clampf(c, 0.0, 0.92):
 		return ""
+	var lvl := maxi(enemy_level, 1)
+	var pool: Array = []
 	var total := 0.0
 	for row in LOOT_TABLE:
-		total += float(row.get("weight", 1))
-	if total <= 0.0:
+		var need := int(row.get("min_level", 1))
+		# Allow slightly above the foe's level only for bosses.
+		if need > lvl + (2 if boss else 0):
+			continue
+		# Prefer gear near the foe's level (Metin2-ish relevance).
+		var w := float(row.get("weight", 1))
+		var dist := absf(float(need) - float(lvl))
+		w *= clampf(1.35 - dist * 0.18, 0.35, 1.35)
+		pool.append({"id": row.get("id", ""), "weight": w})
+		total += w
+	if total <= 0.0 or pool.is_empty():
 		return ""
 	var pick := randf() * total
 	var acc := 0.0
-	for row in LOOT_TABLE:
+	for row in pool:
 		acc += float(row.get("weight", 1))
 		if pick <= acc:
 			return String(row.get("id", ""))
-	return String(LOOT_TABLE.back().get("id", ""))
+	return String(pool.back().get("id", ""))
+
+
+## Gold amount scaled by foe level (empire gold_mult applied by add_gold).
+func roll_gold_drop(base_min: int, base_max: int, enemy_level: int = 1) -> int:
+	var lvl := maxi(enemy_level, 1)
+	var lo := maxi(1, int(float(base_min) * (1.0 + float(lvl) * 0.1)))
+	var hi := maxi(lo, int(float(base_max) * (1.0 + float(lvl) * 0.12)))
+	return randi_range(lo, hi)
 
 # ── Tempering (Hephaestus's forge gamble) ───────────────────────────────────────
 ## Returns a Dictionary: {success, destroyed, downgraded, new_level, message}

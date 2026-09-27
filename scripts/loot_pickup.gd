@@ -1,8 +1,8 @@
 extends Area3D
-## LootPickup — ground drop from a slain foe.
-## Every mesh is forced to a pocket-sized AABB so Tripo/Kenney imports never
-## spawn as screen-filling giant blocks. Materials/potions use simple markers
-## (never giant cubes). Drops sit close to the ground with a light bob.
+## LootPickup — Metin2-style ground drop: icon billboard + name, optional 3D mesh.
+## Gold piles convert to drachmae on pickup; gear/mats go into the bag.
+
+const GearPaint = preload("res://scripts/gear_paint.gd")
 
 ## Pocket sizes by kind — readable on the ground without looking like crates.
 const EXTENT_BY_KIND := {
@@ -10,22 +10,31 @@ const EXTENT_BY_KIND := {
 	"shield": 0.55,
 	"helmet": 0.32,
 	"armor": 0.40,
+	"boots": 0.28,
+	"necklace": 0.22,
+	"earring": 0.18,
+	"bracelet": 0.20,
 	"consumable": 0.18,
 	"scroll": 0.20,
 	"material": 0.16,
+	"gold": 0.22,
 }
 
 var item_id: String = ""
+## Extra gold amount when item_id is gold_coin (stack value).
+var gold_amount: int = 0
 var _label: Label3D
 var _mesh_root: Node3D
+var _icon: Sprite3D
 var _bob_t: float = 0.0
 var _settled: bool = false
 var _velocity: Vector3 = Vector3.ZERO
 var _collecting: bool = false
 
 
-func setup(id: String, from: Vector3) -> void:
+func setup(id: String, from: Vector3, gold_value: int = 0) -> void:
 	item_id = id
+	gold_amount = gold_value
 	collision_layer = 0
 	collision_mask = 0
 	monitoring = true
@@ -43,14 +52,17 @@ func setup(id: String, from: Vector3) -> void:
 	_build_visual(id)
 
 	_label = Label3D.new()
-	_label.text = GameState.item_name(id)
-	_label.font_size = 48
-	_label.pixel_size = 0.0032
-	_label.modulate = Color(1.0, 0.92, 0.55)
+	if id == "gold_coin" and gold_amount > 0:
+		_label.text = "%d δ" % gold_amount
+	else:
+		_label.text = GameState.item_name(id)
+	_label.font_size = 42
+	_label.pixel_size = 0.0030
+	_label.modulate = Color(1.0, 0.92, 0.55) if id != "gold_coin" else Color(1.0, 0.88, 0.3)
 	_label.outline_modulate = Color(0, 0, 0, 0.9)
-	_label.outline_size = 14
+	_label.outline_size = 12
 	_label.billboard = BaseMaterial3D.BILLBOARD_ENABLED
-	_label.position = Vector3(0, 0.48, 0)
+	_label.position = Vector3(0, 0.55, 0)
 	add_child(_label)
 
 	global_position = from + Vector3(0, 0.35, 0)
@@ -64,7 +76,6 @@ func setup(id: String, from: Vector3) -> void:
 
 	body_entered.connect(_on_body)
 	set_collision_mask_value(2, true)  # player layer
-	# Second pass once we are in the SceneTree (AABB can be empty pre-ready).
 	call_deferred("_refit_visual")
 	var tree := get_tree()
 	if tree:
@@ -78,27 +89,41 @@ func _target_extent(def: Dictionary) -> float:
 
 func _build_visual(id: String) -> void:
 	var def: Dictionary = GameState.item_def(id)
+	## Always show a Metin2-style floating icon so every drop is readable.
+	_add_icon_billboard(id)
+
 	var glb: String = String(def.get("glb", ""))
 	if glb != "" and ResourceLoader.exists(glb):
 		var scene: PackedScene = load(glb) as PackedScene
 		if scene != null:
 			var inst: Node3D = scene.instantiate()
 			_mesh_root.add_child(inst)
-			# Gear GLBs often import pure-white / textureless — paint them bronze.
-			GearLook.apply(inst, id)
+			GearPaint.paint_attached(inst, glb)
 			_fit_instance(inst, _target_extent(def))
 			return
 	_build_marker(def)
 
 
+func _add_icon_billboard(id: String) -> void:
+	var path: String = GameState.item_icon_path(id)
+	if path == "" or not ResourceLoader.exists(path):
+		return
+	_icon = Sprite3D.new()
+	_icon.texture = load(path)
+	_icon.billboard = BaseMaterial3D.BILLBOARD_ENABLED
+	_icon.pixel_size = 0.0042
+	_icon.position = Vector3(0, 0.32, 0)
+	_icon.shaded = false
+	_icon.double_sided = true
+	add_child(_icon)
+
+
 func _fit_instance(inst: Node3D, target: float) -> void:
-	# Two passes catch nested import scales that report a tiny AABB first frame.
 	ModelUtils.scale_to_max_extent(inst, target)
 	var extent := ModelUtils.measure_max_extent(inst)
 	if extent > target * 1.15 or extent < 0.02:
 		ModelUtils.scale_to_max_extent(inst, target)
 	ModelUtils.ground_model(inst, 0.02)
-	# Hard clamp — never allow a drop taller/wider than 1.1 m.
 	extent = ModelUtils.measure_max_extent(inst)
 	if extent > 1.1:
 		inst.scale *= 1.1 / extent
@@ -112,7 +137,6 @@ func _refit_visual() -> void:
 	for child in _mesh_root.get_children():
 		if child is MeshInstance3D:
 			var mesh: Mesh = (child as MeshInstance3D).mesh
-			# Skip our compact marker primitives.
 			if mesh is SphereMesh or mesh is CylinderMesh or mesh is BoxMesh:
 				continue
 		if child is Node3D:
@@ -120,51 +144,41 @@ func _refit_visual() -> void:
 
 
 func _build_marker(def: Dictionary) -> void:
-	## Compact non-box markers so empty-glb drops never look like crates.
+	## Compact non-box markers under the icon (gold = coin stack look).
 	var stub := MeshInstance3D.new()
 	var kind := String(def.get("kind", ""))
 	var mesh: Mesh
-	var y_lift := 0.1
+	var y_lift := 0.08
 	match kind:
-		"consumable":
+		"gold":
 			var cyl := CylinderMesh.new()
-			cyl.top_radius = 0.05
-			cyl.bottom_radius = 0.05
-			cyl.height = 0.14
+			cyl.top_radius = 0.09
+			cyl.bottom_radius = 0.09
+			cyl.height = 0.05
 			mesh = cyl
-			y_lift = 0.08
-		"scroll":
+			y_lift = 0.04
+		"consumable":
 			var cyl2 := CylinderMesh.new()
-			cyl2.top_radius = 0.035
-			cyl2.bottom_radius = 0.035
-			cyl2.height = 0.16
+			cyl2.top_radius = 0.05
+			cyl2.bottom_radius = 0.05
+			cyl2.height = 0.14
 			mesh = cyl2
-			y_lift = 0.09
 		"material":
 			var sph := SphereMesh.new()
 			sph.radius = 0.07
 			sph.height = 0.14
 			mesh = sph
-			y_lift = 0.08
-		"shield":
-			var cyl3 := CylinderMesh.new()
-			cyl3.top_radius = 0.22
-			cyl3.bottom_radius = 0.22
-			cyl3.height = 0.05
-			mesh = cyl3
-			y_lift = 0.06
 		_:
 			var sph2 := SphereMesh.new()
-			sph2.radius = 0.09
-			sph2.height = 0.18
+			sph2.radius = 0.08
+			sph2.height = 0.16
 			mesh = sph2
-			y_lift = 0.1
 	stub.mesh = mesh
 	var mat := StandardMaterial3D.new()
 	mat.albedo_color = def.get("color", Color(0.85, 0.7, 0.3))
 	mat.emission_enabled = true
-	mat.emission = mat.albedo_color * 0.45
-	mat.emission_energy_multiplier = 0.45
+	mat.emission = mat.albedo_color * 0.5
+	mat.emission_energy_multiplier = 0.55
 	stub.material_override = mat
 	stub.position.y = y_lift
 	_mesh_root.add_child(stub)
@@ -194,6 +208,8 @@ func _physics_process(delta: float) -> void:
 		if _mesh_root != null:
 			_mesh_root.position.y = 0.04 + sin(_bob_t * 2.4) * 0.03
 			_mesh_root.rotate_y(delta * 0.9)
+		if _icon != null:
+			_icon.position.y = 0.32 + sin(_bob_t * 2.4) * 0.04
 		var player := get_tree().get_first_node_in_group("player") as Node3D
 		if player != null and is_instance_valid(player):
 			if global_position.distance_to(player.global_position) < 1.55:
@@ -210,15 +226,26 @@ func _collect() -> void:
 		return
 	_collecting = true
 	var id := item_id
+	var hud := get_tree().get_first_node_in_group("hud")
+
+	## Gold piles → wallet, not bag cells.
+	if id == "gold_coin" or String(GameState.item_def(id).get("kind", "")) == "gold":
+		var amt := gold_amount if gold_amount > 0 else 1
+		GameState.add_gold(amt)
+		item_id = ""
+		AudioManager.play_sfx("gold_pickup", -3.0, randf_range(0.95, 1.1))
+		if hud != null and hud.has_method("show_announcement"):
+			hud.show_announcement("+%d δ" % amt)
+		queue_free()
+		return
+
 	if GameState.try_add_to_bag(id):
 		item_id = ""
 		AudioManager.play_sfx("gold_pickup", -4.0, randf_range(0.95, 1.08))
-		var hud := get_tree().get_first_node_in_group("hud")
 		if hud != null and hud.has_method("show_announcement"):
 			hud.show_announcement("Looted: %s" % GameState.item_name(id))
 		queue_free()
 	else:
 		_collecting = false
-		var hud2 := get_tree().get_first_node_in_group("hud")
-		if hud2 != null and hud2.has_method("show_announcement"):
-			hud2.show_announcement("Bag full — sell spoils to Kyros.")
+		if hud != null and hud.has_method("show_announcement"):
+			hud.show_announcement("Bag full — sell spoils to Kyros.")
