@@ -38,8 +38,9 @@ No zip extract needed — this download is the .exe alone.
 Download
 ------------------------------------------------------------
 Signed single-file Windows build (current):
-  https://gofile.io/d/ULaZAokt
+  https://gofile.io/d/Wn95tYpR
 
 File name: EmpiresOfOlympus.exe
 
-Includes combat loot crash fix, inventory frame fit, and account save/sync.
+Includes combat loot crash fix, inventory frame fit, account save/sync,
+Enter-to-chat, visible in-game cursor, and bag→panoply drag-and-drop.
