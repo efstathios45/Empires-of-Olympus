@@ -263,8 +263,10 @@ func _build_panoply() -> void:
 		sb.content_margin_bottom = 1
 		cell.add_theme_stylebox_override("panel", sb)
 
+		## Ignore mouse on children so the cell receives drag / clicks.
 		var stack := Control.new()
 		stack.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
+		stack.mouse_filter = Control.MOUSE_FILTER_IGNORE
 		cell.add_child(stack)
 
 		var ico := TextureRect.new()

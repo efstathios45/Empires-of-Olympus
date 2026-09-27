@@ -526,6 +526,8 @@ func _seed_starter_bag() -> void:
 	try_add_to_bag("health_potion", 3)
 	try_add_to_bag("mana_potion", 2)
 	try_add_to_bag("hephaestus", 1)
+	## Traveler's sandals — drag onto the Boots panoply slot.
+	try_add_to_bag("leather_boots", 1)
 	_resync_derived_counts()
 
 func empire_data() -> Dictionary:
