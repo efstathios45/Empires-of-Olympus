@@ -37,6 +37,8 @@ var _btn_equip: Button
 var _btn_unequip: Button
 var _btn_sell: Button
 var _stat_labels: Dictionary = {}
+## Drag payload while moving pouch gear onto paperdoll (or slot → pouch).
+var _drag_slot_hint: String = ""
 
 
 func _ready() -> void:
@@ -197,6 +199,11 @@ func _build_panoply() -> void:
 		slot_btn.add_theme_color_override("font_color", Kit.INK)
 		slot_btn.tooltip_text = SLOT_LABELS[key]
 		slot_btn.pressed.connect(_select_equip_slot.bind(key))
+		## Drag pouch gear here; drag worn piece back to the pouch to unequip.
+		slot_btn.set_drag_forwarding(
+			_slot_get_drag.bind(key),
+			_slot_can_drop.bind(key),
+			_slot_drop.bind(key))
 		doll_box.add_child(slot_btn)
 		_equip_btns[key] = slot_btn
 		var ico := TextureRect.new()
@@ -226,7 +233,7 @@ func _build_panoply() -> void:
 	row.add_child(right)
 
 	right.add_child(Kit.make_label("Traveler's Pouch", 15, Kit.INK_GOLD))
-	right.add_child(Kit.make_label("Select → Equip / Sell", 11, Kit.INK_SOFT))
+	right.add_child(Kit.make_label("Drag onto slots · or Select → Equip", 11, Kit.INK_SOFT))
 
 	## Keep the 6×6 grid inside the cream field (never past the gold frame).
 	var grid_wrap := CenterContainer.new()
@@ -279,6 +286,10 @@ func _build_panoply() -> void:
 
 		var idx: int = _bag_cells.size()
 		cell.gui_input.connect(_on_bag_cell_input.bind(idx))
+		cell.set_drag_forwarding(
+			_bag_get_drag.bind(idx),
+			_bag_can_drop.bind(idx),
+			_bag_drop.bind(idx))
 		grid.add_child(cell)
 		_bag_cells.append({"panel": cell, "label": lab, "icon": ico, "entry": -1})
 
@@ -407,6 +418,130 @@ func _on_bag_cell_input(event: InputEvent, cell_idx: int) -> void:
 		_selected_bag = ei
 		_selected_slot = ""
 		_refresh_panoply()
+
+
+func _make_drag_preview(item_id: String) -> Control:
+	var wrap := Control.new()
+	wrap.custom_minimum_size = Vector2(40, 40)
+	var ico := TextureRect.new()
+	ico.expand_mode = TextureRect.EXPAND_IGNORE_SIZE
+	ico.stretch_mode = TextureRect.STRETCH_KEEP_ASPECT_CENTERED
+	ico.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
+	ico.modulate = Color(1, 1, 1, 0.92)
+	var path: String = GameState.item_icon_path(item_id)
+	if path != "" and ResourceLoader.exists(path):
+		ico.texture = load(path)
+	wrap.add_child(ico)
+	return wrap
+
+
+func _bag_get_drag(_at: Vector2, cell_idx: int) -> Variant:
+	if cell_idx < 0 or cell_idx >= _bag_cells.size():
+		return null
+	var ei: int = int(_bag_cells[cell_idx]["entry"])
+	if ei < 0 or ei >= GameState.bag.size():
+		return null
+	var e: Dictionary = GameState.bag[ei]
+	var id := str(e.get("id", ""))
+	if id == "":
+		return null
+	var kind := str(GameState.item_def(id).get("kind", ""))
+	var slot := GameState.slot_for_kind(kind)
+	## Only gear that has a panoply home can start a wear-drag.
+	if slot == "":
+		return null
+	_selected_bag = ei
+	_selected_slot = ""
+	_drag_slot_hint = slot
+	_paint_drop_hints(slot)
+	var cell: Control = _bag_cells[cell_idx]["panel"]
+	cell.set_drag_preview(_make_drag_preview(id))
+	return {"from": "bag", "index": ei, "item_id": id, "slot": slot}
+
+
+func _bag_can_drop(_at: Vector2, data: Variant, _cell_idx: int) -> bool:
+	if typeof(data) != TYPE_DICTIONARY:
+		return false
+	## Dropping a worn piece anywhere on the pouch unequips it.
+	return str(data.get("from", "")) == "slot" and str(data.get("slot", "")) != ""
+
+
+func _bag_drop(_at: Vector2, data: Variant, _cell_idx: int) -> void:
+	_clear_drop_hints()
+	if typeof(data) != TYPE_DICTIONARY or str(data.get("from", "")) != "slot":
+		return
+	var key := str(data.get("slot", ""))
+	if GameState.unequip_slot(key):
+		AudioManager.play_sfx("ui_confirm")
+		_selected_slot = ""
+		_selected_bag = -1
+		_refresh_panoply()
+	else:
+		AudioManager.play_sfx("ui_click")
+		if _detail:
+			_detail.text = "Cannot unequip — pouch may be full."
+
+
+func _slot_get_drag(_at: Vector2, key: String) -> Variant:
+	var id := str(GameState.equipped.get(key, ""))
+	if id == "":
+		return null
+	_selected_slot = key
+	_selected_bag = -1
+	_drag_slot_hint = ""
+	var btn: Control = _equip_btns.get(key)
+	if btn:
+		btn.set_drag_preview(_make_drag_preview(id))
+	return {"from": "slot", "slot": key, "item_id": id}
+
+
+func _slot_can_drop(_at: Vector2, data: Variant, key: String) -> bool:
+	if typeof(data) != TYPE_DICTIONARY:
+		return false
+	if str(data.get("from", "")) != "bag":
+		return false
+	return str(data.get("slot", "")) == key
+
+
+func _slot_drop(_at: Vector2, data: Variant, key: String) -> void:
+	_clear_drop_hints()
+	if typeof(data) != TYPE_DICTIONARY or str(data.get("from", "")) != "bag":
+		return
+	var index := int(data.get("index", -1))
+	if GameState.equip_from_bag_to_slot(index, key):
+		AudioManager.play_sfx("ui_confirm")
+		_selected_bag = -1
+		_selected_slot = key
+		_refresh_panoply()
+	else:
+		AudioManager.play_sfx("ui_click")
+		if _detail:
+			_detail.text = "That piece does not fit the %s slot." % SLOT_LABELS.get(key, key)
+
+
+func _paint_drop_hints(want_slot: String) -> void:
+	for key in SLOT_KEYS:
+		var btn: Button = _equip_btns.get(key)
+		if btn == null:
+			continue
+		if key == want_slot:
+			btn.modulate = Color(1.35, 1.2, 0.7)
+		else:
+			btn.modulate = Color(0.75, 0.75, 0.75, 0.85)
+
+
+func _clear_drop_hints() -> void:
+	_drag_slot_hint = ""
+	for key in SLOT_KEYS:
+		var btn: Button = _equip_btns.get(key)
+		if btn == null:
+			continue
+		btn.modulate = Color(1.15, 1.08, 0.85) if key == _selected_slot else Color.WHITE
+
+
+func _notification(what: int) -> void:
+	if what == NOTIFICATION_DRAG_END:
+		_clear_drop_hints()
 
 
 func _select_equip_slot(key: String) -> void:

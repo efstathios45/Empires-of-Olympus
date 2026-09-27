@@ -286,7 +286,7 @@ func _build_title_step() -> void:
 
 	page.add_child(Kit.spacer(8))
 	page.add_child(_sub_line(
-		"WASD move  ·  Mouse look  ·  Click to strike  ·  Q god-skill"))
+		"WASD move  ·  RMB look  ·  Click to strike  ·  Q god-skill"))
 	page.add_child(_sub_line(
 		"E speak  ·  Enter chat  ·  I spoils  ·  M map  ·  Esc rest"))
 
@@ -442,7 +442,7 @@ func _on_continue_legend() -> void:
 	_empire = GameState.empire
 	_class = GameState.player_class
 	AudioManager.play_sfx("ui_confirm")
-	Input.mouse_mode = Input.MOUSE_MODE_CAPTURED
+	GameCursor.apply()
 	LoadingScreen.preload_and_change_scene("res://scenes/game_world.tscn", 1.2)
 
 
@@ -676,7 +676,7 @@ func _on_play() -> void:
 		if AccountSystem.is_logged_in() and AccountSystem.display_name != "":
 			GameState.player_name = AccountSystem.display_name
 	AudioManager.play_sfx("ui_confirm")
-	Input.mouse_mode = Input.MOUSE_MODE_CAPTURED
+	GameCursor.apply()
 	if AccountSystem.is_logged_in():
 		AccountSystem.save_game()
 	LoadingScreen.preload_and_change_scene("res://scenes/game_world.tscn", 1.5)

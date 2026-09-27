@@ -270,17 +270,37 @@ func _build_camera() -> void:
 	camera.current = true
 	spring_arm.add_child(camera)
 
+## Visible cursor: hold-drag RMB to look; short RMB click still heavy-attacks.
+var _rmb_down: bool = false
+var _rmb_looking: bool = false
+var _rmb_press_pos: Vector2 = Vector2.ZERO
+const RMB_LOOK_SLOP := 6.0
+
 func _unhandled_input(event: InputEvent) -> void:
 	if state == State.DEAD:
 		return
-	if event is InputEventMouseButton and event.pressed:
-		# Click-to-recapture (web pointer lock needs a gesture).
-		if Input.mouse_mode != Input.MOUSE_MODE_CAPTURED:
-			Input.mouse_mode = Input.MOUSE_MODE_CAPTURED
-			return
-	if event is InputEventMouseMotion and Input.mouse_mode == Input.MOUSE_MODE_CAPTURED:
-		cam_yaw -= event.relative.x * MOUSE_SENS
-		cam_pitch = clampf(cam_pitch - event.relative.y * MOUSE_SENS, -1.05, 0.7)
+	if _ui_open():
+		_rmb_down = false
+		_rmb_looking = false
+		return
+	if event is InputEventMouseButton and event.button_index == MOUSE_BUTTON_RIGHT:
+		if event.pressed:
+			_rmb_down = true
+			_rmb_looking = false
+			_rmb_press_pos = event.position
+		else:
+			## Short click (no drag) → heavy blow; drag was camera look.
+			if _rmb_down and not _rmb_looking and state == State.FREE and not _ui_open():
+				_try_heavy_attack()
+			_rmb_down = false
+			_rmb_looking = false
+		return
+	if event is InputEventMouseMotion and _rmb_down:
+		if not _rmb_looking and event.position.distance_to(_rmb_press_pos) >= RMB_LOOK_SLOP:
+			_rmb_looking = true
+		if _rmb_looking:
+			cam_yaw -= event.relative.x * MOUSE_SENS
+			cam_pitch = clampf(cam_pitch - event.relative.y * MOUSE_SENS, -1.05, 0.7)
 
 func _physics_process(delta: float) -> void:
 	if world == null:
@@ -363,8 +383,7 @@ func _process_free(delta: float) -> void:
 
 	if Input.is_action_just_pressed("attack_light"):
 		_try_light_attack()
-	elif Input.is_action_just_pressed("attack_heavy"):
-		_try_heavy_attack()
+	## Heavy blow: short RMB click is handled in _unhandled_input (RMB also looks).
 	elif Input.is_action_just_pressed("skill"):
 		_try_skill()
 	elif Input.is_action_just_pressed("dodge") and dir.length() > 0.1:

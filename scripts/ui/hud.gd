@@ -81,6 +81,7 @@ var _last_hp: float = -1.0
 func setup(p: Node3D, w: Node3D) -> void:
 	_player = p
 	_world = w
+	GameCursor.apply()
 	_build()
 	_connect_signals()
 
@@ -625,10 +626,10 @@ func _clear_map_refs() -> void:
 	_map_marker = null
 	_map_where = null
 
-func _set_ui_open(open: bool, recapture: bool = false) -> void:
+func _set_ui_open(open: bool, _recapture: bool = false) -> void:
 	ui_open = open
-	Input.mouse_mode = Input.MOUSE_MODE_VISIBLE if open else (
-		Input.MOUSE_MODE_CAPTURED if recapture else Input.mouse_mode)
+	## Always keep the custom in-game cursor visible (look is RMB-drag).
+	GameCursor.apply()
 
 # ── The Map of Hellas ────────────────────────────────────────────────────
 # A schematic drawn from plain Controls: parchment field, coloured region

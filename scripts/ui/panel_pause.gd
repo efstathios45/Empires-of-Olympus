@@ -35,8 +35,8 @@ func _ready() -> void:
 	v.add_child(Kit.spacer(4))
 
 	for line in [
-			"WASD — move   •   Mouse — look",
-			"Left click — strike   •   Right click — heavy blow",
+			"WASD — move   •   Hold RMB + drag — look",
+			"Left click — strike   •   Short RMB — heavy blow",
 			"Q — god-skill   •   F — raise shield   •   C — dodge roll",
 			"Shift — sprint   •   Space — leap   •   E — speak / touch",
 			"Enter — chat with players   •   Esc — close chat / rest",

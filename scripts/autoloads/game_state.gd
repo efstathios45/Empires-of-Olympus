@@ -814,7 +814,7 @@ func _equip_stat(stat: String) -> float:
 	return total
 
 
-## Equip a bag entry into its panoply slot. Returns false if not gear / cannot swap.
+## Equip a bag entry into its natural panoply slot. Returns false if not gear / cannot swap.
 func equip_from_bag(index: int) -> bool:
 	if index < 0 or index >= bag.size():
 		return false
@@ -823,6 +823,21 @@ func equip_from_bag(index: int) -> bool:
 	var def := item_def(id)
 	var slot: String = slot_for_kind(String(def.get("kind", "")))
 	if slot == "":
+		return false
+	return equip_from_bag_to_slot(index, slot)
+
+
+## Equip into a specific paperdoll slot (drag-and-drop). Slot must match item kind.
+func equip_from_bag_to_slot(index: int, slot: String) -> bool:
+	if index < 0 or index >= bag.size():
+		return false
+	if not equipped.has(slot):
+		return false
+	var e: Dictionary = bag[index]
+	var id: String = String(e.get("id", ""))
+	var def := item_def(id)
+	var want: String = slot_for_kind(String(def.get("kind", "")))
+	if want == "" or want != slot:
 		return false
 	var previous: String = String(equipped.get(slot, ""))
 	if not remove_bag_entry(index, 1):
