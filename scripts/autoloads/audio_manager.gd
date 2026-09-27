@@ -3,6 +3,7 @@ extends Node
 
 var music_player: AudioStreamPlayer
 var ambient_player: AudioStreamPlayer
+var footstep_player: AudioStreamPlayer
 var sfx_players: Array[AudioStreamPlayer] = []
 const MAX_SFX_PLAYERS := 10
 
@@ -18,13 +19,20 @@ const MUSIC := {
 const SFX := {
 	"spear_clash": "res://assets/audio/sfx/weapon/weapon_spear_clash.mp3",
 	"sword_swing": "res://assets/audio/sfx/weapon/weapon_sword_swing.mp3",
+	"spear_thrust": "res://assets/audio/sfx/weapon/weapon_spear_thrust.mp3",
+	"bronze_hit": "res://assets/audio/sfx/weapon/weapon_bronze_hit.mp3",
 	"hit_flesh": "res://assets/audio/sfx/player/player_hit_flesh.mp3",
+	"attack_grunt": "res://assets/audio/sfx/player/player_attack_grunt.mp3",
+	# Skyrim-style male combat vocals ("ah!" / "ha!" / pain).
+	"male_attack_a": "res://assets/audio/sfx/player/voice/male_attack_a.mp3",
+	"male_attack_b": "res://assets/audio/sfx/player/voice/male_attack_b.mp3",
+	"male_hurt_a": "res://assets/audio/sfx/player/voice/male_hurt_a.mp3",
+	"male_hurt_b": "res://assets/audio/sfx/player/voice/male_hurt_b.mp3",
+	"male_hurt_c": "res://assets/audio/sfx/player/voice/male_hurt_c.mp3",
 	"level_up": "res://assets/audio/sfx/player/player_level_up.mp3",
 	"refine_success": "res://assets/audio/sfx/ui/ui_refine_success.mp3",
 	"refine_fail": "res://assets/audio/sfx/ui/ui_refine_fail.mp3",
 	"gold_pickup": "res://assets/audio/sfx/pickup/pickup_gold_pickup.mp3",
-	"minotaur_roar": "res://assets/audio/sfx/enemy/enemy_minotaur_roar.mp3",
-	"harpy_screech": "res://assets/audio/sfx/enemy/enemy_harpy_screech.mp3",
 	"dodge_roll": "res://assets/audio/sfx/player/player_dodge_roll.mp3",
 	"footstep_dirt": "res://assets/audio/sfx/player/player_footstep_dirt.mp3",
 	"footstep_stone": "res://assets/audio/sfx/player/player_footstep_stone.mp3",
@@ -37,6 +45,36 @@ const SFX := {
 	"potion_drink": "res://assets/audio/sfx/pickup/pickup_potion_drink.mp3",
 	"ui_click": "res://assets/audio/sfx/ui/ui_ui_click.mp3",
 	"ui_confirm": "res://assets/audio/sfx/ui/ui_ui_confirm.mp3",
+	# Per-creature attack / death — free OpenGameArt animal/monster samples.
+	# Wolves: aggro howl · attack snarl · bite on hit. Boars: growl · squeal · charge.
+	"wolf_aggro": "res://assets/audio/sfx/enemy/creatures/lykaon_aggro.mp3",
+	"wolf_attack": "res://assets/audio/sfx/enemy/creatures/lykaon_attack.mp3",
+	"wolf_bite": "res://assets/audio/sfx/enemy/creatures/lykaon_bite.mp3",
+	"wolf_death": "res://assets/audio/sfx/enemy/creatures/lykaon_death.mp3",
+	"wolf_black_attack": "res://assets/audio/sfx/enemy/creatures/stygian_attack.mp3",
+	"wolf_black_bite": "res://assets/audio/sfx/enemy/creatures/stygian_bite.mp3",
+	"wolf_black_death": "res://assets/audio/sfx/enemy/creatures/stygian_death.mp3",
+	"wolf_dire_attack": "res://assets/audio/sfx/enemy/creatures/erymanthian_attack.mp3",
+	"wolf_dire_bite": "res://assets/audio/sfx/enemy/creatures/lykaon_bite.mp3",
+	"wolf_dire_death": "res://assets/audio/sfx/enemy/creatures/erymanthian_death.mp3",
+	"boar_idle": "res://assets/audio/sfx/enemy/creatures/boar_idle.mp3",
+	"boar_attack": "res://assets/audio/sfx/enemy/creatures/boar_attack.mp3",
+	"boar_attack_b": "res://assets/audio/sfx/enemy/creatures/boar_attack_b.mp3",
+	"boar_death": "res://assets/audio/sfx/enemy/creatures/boar_death.mp3",
+	"satyr_attack": "res://assets/audio/sfx/enemy/creatures/satyr_attack.mp3",
+	"satyr_death": "res://assets/audio/sfx/enemy/creatures/satyr_death.mp3",
+	"harpy_attack": "res://assets/audio/sfx/enemy/creatures/harpy_attack.mp3",
+	"harpy_death": "res://assets/audio/sfx/enemy/creatures/harpy_death.mp3",
+	"harpy_screech": "res://assets/audio/sfx/enemy/creatures/harpy_screech_extra.mp3",
+	"centaur_attack": "res://assets/audio/sfx/enemy/creatures/centaur_attack.mp3",
+	"centaur_death": "res://assets/audio/sfx/enemy/creatures/centaur_death.mp3",
+	"gorgon_attack": "res://assets/audio/sfx/enemy/creatures/gorgon_attack.mp3",
+	"gorgon_death": "res://assets/audio/sfx/enemy/creatures/gorgon_death.mp3",
+	"minotaur_attack": "res://assets/audio/sfx/enemy/creatures/minotaur_attack.mp3",
+	"minotaur_death": "res://assets/audio/sfx/enemy/creatures/minotaur_death.mp3",
+	"minotaur_roar": "res://assets/audio/sfx/enemy/creatures/minotaur_roar_extra.mp3",
+	"stone_rise": "res://assets/audio/sfx/enemy/creatures/stone_rise.mp3",
+	"stone_shatter": "res://assets/audio/sfx/enemy/creatures/stone_shatter.mp3",
 }
 
 const AMBIENT := {
@@ -57,6 +95,12 @@ func _ready() -> void:
 	ambient_player.volume_db = -14.0
 	ambient_player.playback_type = AudioServer.PLAYBACK_TYPE_STREAM
 	add_child(ambient_player)
+	# One dedicated footstep voice so grass/dirt samples never stack into a
+	# stampede when stride timing overlaps a long multi-hit WAV/MP3.
+	footstep_player = AudioStreamPlayer.new()
+	footstep_player.bus = "Master"
+	footstep_player.playback_type = AudioServer.PLAYBACK_TYPE_STREAM
+	add_child(footstep_player)
 	for i in MAX_SFX_PLAYERS:
 		var p := AudioStreamPlayer.new()
 		p.bus = "Master"
@@ -124,3 +168,20 @@ func play_sfx(key: String, volume_db: float = 0.0, pitch: float = 1.0) -> void:
 			p.pitch_scale = pitch
 			p.play()
 			return
+
+## Footsteps use a single voice — restart instead of stacking overlaps.
+func play_footstep(key: String, volume_db: float = 0.0, pitch: float = 1.0) -> void:
+	var path: String = SFX.get(key, "")
+	if path == "" or not ResourceLoader.exists(path):
+		return
+	var stream := load(path) as AudioStream
+	if stream == null:
+		return
+	if footstep_player == null:
+		play_sfx(key, volume_db, pitch)
+		return
+	footstep_player.stop()
+	footstep_player.stream = stream
+	footstep_player.volume_db = volume_db
+	footstep_player.pitch_scale = pitch
+	footstep_player.play()

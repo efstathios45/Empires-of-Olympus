@@ -310,10 +310,10 @@ func _build_death_overlay(root: Control) -> void:
 	root.add_child(_death_overlay)
 
 	var p := Kit.make_panel(false)
-	p.custom_minimum_size = Vector2(600, 300)
+	p.custom_minimum_size = Vector2(780, 360)
 	p.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	_death_overlay.add_child(p)
-	var margin := Kit.make_margin(34)
+	var margin := Kit.make_margin(20)
 	margin.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	p.add_child(margin)
 	var v := VBoxContainer.new()
@@ -327,7 +327,7 @@ func _build_death_overlay(root: Control) -> void:
 		"The Fates carry you back to the sanctuary.\nA tithe of your gold is lost.",
 		19, Kit.INK, HORIZONTAL_ALIGNMENT_CENTER)
 	body.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
-	body.custom_minimum_size = Vector2(460, 0)
+	body.custom_minimum_size = Vector2(480, 0)
 	v.add_child(body)
 	v.add_child(Kit.make_label("Rise again, champion.", 17, Kit.INK_SOFT, HORIZONTAL_ALIGNMENT_CENTER))
 
@@ -339,9 +339,9 @@ func _build_victory_overlay(root: Control) -> void:
 	_victory_overlay.add_child(Kit.make_dimmer())
 
 	var p := Kit.make_panel(false)
-	p.custom_minimum_size = Vector2(720, 500)
+	p.custom_minimum_size = Vector2(860, 540)
 	_victory_overlay.add_child(p)
-	var margin := Kit.make_margin(34)
+	var margin := Kit.make_margin(20)
 	p.add_child(margin)
 	var v := VBoxContainer.new()
 	v.alignment = BoxContainer.ALIGNMENT_CENTER
@@ -356,14 +356,14 @@ func _build_victory_overlay(root: Control) -> void:
 	_victory_stats = Kit.make_label("", 20, Kit.INK, HORIZONTAL_ALIGNMENT_CENTER)
 	_victory_stats.name = "VictoryStats"
 	_victory_stats.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
-	_victory_stats.custom_minimum_size = Vector2(540, 0)
+	_victory_stats.custom_minimum_size = Vector2(520, 0)
 	v.add_child(_victory_stats)
 
 	var flavour := Kit.make_label(
 		"The curse is broken. The wilds are yours to wander — the forge still burns, and greater glory awaits.",
 		18, Kit.INK_SOFT, HORIZONTAL_ALIGNMENT_CENTER)
 	flavour.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
-	flavour.custom_minimum_size = Vector2(540, 0)
+	flavour.custom_minimum_size = Vector2(520, 0)
 	v.add_child(flavour)
 	v.add_child(Kit.spacer(6))
 
@@ -439,7 +439,7 @@ func _refresh_all() -> void:
 	if _player == null:
 		return
 	_level_text.text = "Level %d  %s" % [GameState.level, GameState.class_data()["name"]]
-	_gold_text.text = str(GameState.gold)
+	_gold_text.text = "%d δρ" % GameState.gold
 	_potion1_text.text = "1  ×%d" % GameState.health_potions
 	_potion2_text.text = "2  ×%d" % GameState.mana_potions
 	_xp_bar.max_value = GameState.xp_needed()
@@ -614,7 +614,7 @@ func _build_map_panel() -> Control:
 
 	var panel := Kit.make_panel(false)
 	center.add_child(panel)
-	var margin := Kit.make_margin(34)
+	var margin := Kit.make_margin(20)
 	panel.add_child(margin)
 	var v := VBoxContainer.new()
 	v.add_theme_constant_override("separation", 8)
