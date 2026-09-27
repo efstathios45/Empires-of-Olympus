@@ -137,7 +137,7 @@ func _build_body() -> void:
 			weapon_path = side_glb
 	if ResourceLoader.exists(weapon_path):
 		var grip_class := "melee"
-		weapon_node = WeaponGrip.attach(model, weapon_path, grip_class, {}, "WeaponMount")
+		weapon_node = WeaponGrip.attach(model, weapon_path, grip_class, {})
 		if weapon_node:
 			GearPaint.paint_attached(weapon_node, weapon_path)
 		_update_weapon_glow()
@@ -148,8 +148,9 @@ func _build_body() -> void:
 		if shield_path == "":
 			shield_path = String(GameState.class_data().get("shield", ""))
 		if shield_path != "" and ResourceLoader.exists(shield_path):
-			shield_node = WeaponGrip.attach(model, shield_path, "shield", {}, "ShieldMount")
+			shield_node = WeaponGrip.attach(model, shield_path, "shield", {})
 			if shield_node:
+				shield_node.name = "ShieldMount"
 				GearPaint.paint_attached(shield_node, shield_path)
 
 	_attach_helmet(model)
@@ -211,7 +212,7 @@ func _refresh_held_gear() -> void:
 		if side_glb != "" and ResourceLoader.exists(side_glb):
 			weapon_path = side_glb
 	if ResourceLoader.exists(weapon_path):
-		weapon_node = WeaponGrip.attach(model, weapon_path, "melee", {}, "WeaponMount")
+		weapon_node = WeaponGrip.attach(model, weapon_path, "melee", {})
 		if weapon_node:
 			GearPaint.paint_attached(weapon_node, weapon_path)
 		_update_weapon_glow()
@@ -220,8 +221,9 @@ func _refresh_held_gear() -> void:
 		if shield_path == "":
 			shield_path = String(GameState.class_data().get("shield", ""))
 		if shield_path != "" and ResourceLoader.exists(shield_path):
-			shield_node = WeaponGrip.attach(model, shield_path, "shield", {}, "ShieldMount")
+			shield_node = WeaponGrip.attach(model, shield_path, "shield", {})
 			if shield_node:
+				shield_node.name = "ShieldMount"
 				GearPaint.paint_attached(shield_node, shield_path)
 	_attach_helmet(model)
 

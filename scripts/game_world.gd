@@ -107,11 +107,28 @@ func _ready() -> void:
 
 func _setup_environment() -> void:
 	var env := Environment.new()
+	## Never leave the default grey clear colour — if the panorama sky fails
+	## to load (common on some GL Compatibility builds), fall back to a warm
+	## Hellas procedural sky so spawn never looks like an empty viewport.
+	var sky_ok := false
 	if ResourceLoader.exists("res://assets/textures/skyboxes/olympus_sky_sky.tres"):
-		env.sky = load("res://assets/textures/skyboxes/olympus_sky_sky.tres")
-		env.background_mode = Environment.BG_SKY
-		env.ambient_light_source = Environment.AMBIENT_SOURCE_SKY
-		env.ambient_light_energy = 0.55
+		var sky_res = load("res://assets/textures/skyboxes/olympus_sky_sky.tres")
+		if sky_res is Sky:
+			env.sky = sky_res
+			sky_ok = true
+	if not sky_ok:
+		var proc := ProceduralSkyMaterial.new()
+		proc.sky_top_color = Color(0.45, 0.62, 0.88)
+		proc.sky_horizon_color = Color(0.95, 0.82, 0.62)
+		proc.ground_bottom_color = Color(0.35, 0.28, 0.18)
+		proc.ground_horizon_color = Color(0.78, 0.62, 0.42)
+		proc.sun_angle_max = 30.0
+		var sky := Sky.new()
+		sky.sky_material = proc
+		env.sky = sky
+	env.background_mode = Environment.BG_SKY
+	env.ambient_light_source = Environment.AMBIENT_SOURCE_SKY
+	env.ambient_light_energy = 0.55
 	env.tonemap_mode = Environment.TONE_MAPPER_ACES
 	env.tonemap_exposure = 1.06
 	env.glow_enabled = true

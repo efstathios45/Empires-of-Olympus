@@ -14,19 +14,21 @@ const POSTER := "res://assets/ui/title_poster.webp"
 const WORDMARK := "res://assets/ui/wordmark_title.png"
 const MAP := BG + "empire_map_hellas.png"
 
-## Card geometry. content_margin clears the gold frame; TEXT_W stays inside
-## the cream field so the original lore can wrap without painting the border.
-const CARD_W := 400
-const EMPIRE_CARD_H := 360
-const CLASS_CARD_H := 520
-const FRAME_INSET := 90
-const CARD_PAD := 16
-const ART_W := CARD_W - FRAME_INSET * 2 - CARD_PAD * 2
-const TEXT_W := ART_W - 28
+## Card geometry. panel_card content_margin clears the ornate gold frame
+## (cream field begins ~82–112px in). CARD_PAD is extra air inside that
+## cream so Cinzel glyphs never sit on the border or art edge.
+## Card heights are floors — a card grows to fit its lore.
+const CARD_W := 520
+const EMPIRE_CARD_H := 480
+const CLASS_CARD_H := 560
+const FRAME_INSET := 100
+const CARD_PAD := 28
+## Outer 520 − frame 100×2 − CARD_PAD×2 ≈ usable wrap width.
+const TEXT_W := CARD_W - FRAME_INSET * 2 - CARD_PAD * 2
 
 const DIM := Color(0.86, 0.82, 0.72)
 
-## Full card lore (kept). Kings / wars chronicle lives on the map panel.
+## In-fiction lore, written for the pledge screen.
 const EMPIRE_LORE := {
 	"sparta": "Born upon the shield, buried beneath it. In Laconia the phalanx moves as one beast of bronze, and it never breaks.",
 	"athens": "Under Athena's olive the academy lamps burn until dawn. A mind honed to an edge cuts deeper than any blade.",
@@ -57,7 +59,6 @@ var _shade: ColorRect
 var _content: Control
 var _overlay: Control
 var _bg_tween: Tween
-var _empire_map: Control
 var _map_view: Control
 
 
@@ -171,32 +172,29 @@ func _row(sep: int = 20) -> HBoxContainer:
 	return h
 
 
-## Body text on marble: dark ink, hard-capped wrap width inside the art strip.
+## Body text on marble: dark ink, wrapped inside the padded content width.
 func _wrapped(text: String, size: int, color: Color, width: int) -> Label:
 	var l := Kit.make_label(text, size, color, HORIZONTAL_ALIGNMENT_CENTER)
 	l.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
-	l.custom_minimum_size = Vector2(maxi(width, 100), 0)
+	l.custom_minimum_size = Vector2(maxi(width, 120), 0)
+	## Shrink-center so the label never stretches wider than TEXT_W.
 	l.size_flags_horizontal = Control.SIZE_SHRINK_CENTER
-	## Hard max so Cinzel never paints past the artwork edges.
-	l.max_lines_visible = 6
-	l.clip_text = true
-	l.text_overrun_behavior = TextServer.OVERRUN_TRIM_ELLIPSIS
+	l.clip_text = false
 	return l
 
 
 ## Icon + one line of gold ink, e.g. a weapon or a realm bonus.
 func _icon_line(icon: String, text: String, color: Color, width: int) -> HBoxContainer:
-	var h := _row(6)
+	var h := _row(8)
 	h.size_flags_horizontal = Control.SIZE_SHRINK_CENTER
-	h.custom_minimum_size = Vector2(maxi(width, 100), 0)
-	var ico := Kit.make_icon(icon, 18)
+	h.custom_minimum_size = Vector2(maxi(width, 120), 0)
+	var ico := Kit.make_icon(icon, 22)
 	if ico != null and ico.texture != null:
 		h.add_child(ico)
-	var l := Kit.make_label(text, 10, color, HORIZONTAL_ALIGNMENT_CENTER)
+	var l := Kit.make_label(text, 12, color, HORIZONTAL_ALIGNMENT_CENTER)
 	l.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
-	l.custom_minimum_size = Vector2(maxi(width - 28, 80), 0)
+	l.custom_minimum_size = Vector2(maxi(width - 40, 100), 0)
 	l.size_flags_horizontal = Control.SIZE_SHRINK_CENTER
-	l.clip_text = true
 	h.add_child(l)
 	return h
 
@@ -209,11 +207,10 @@ func _card_body(card: PanelContainer) -> VBoxContainer:
 	m.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	card.add_child(m)
 	var v := VBoxContainer.new()
-	v.add_theme_constant_override("separation", 6)
+	v.add_theme_constant_override("separation", 8)
 	v.alignment = BoxContainer.ALIGNMENT_CENTER
 	v.mouse_filter = Control.MOUSE_FILTER_IGNORE
-	v.size_flags_horizontal = Control.SIZE_SHRINK_CENTER
-	v.custom_minimum_size = Vector2(ART_W, 0)
+	v.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	m.add_child(v)
 	return v
 
@@ -231,10 +228,9 @@ func _equalize_heights(cards: Dictionary) -> void:
 
 func _card_button(text: String) -> Button:
 	var b := Kit.make_button(text, false)
-	b.custom_minimum_size = Vector2(mini(TEXT_W, 220), 48)
+	b.custom_minimum_size = Vector2(mini(TEXT_W, 260), 52)
 	b.size_flags_horizontal = Control.SIZE_SHRINK_CENTER
 	b.clip_text = true
-	b.add_theme_font_size_override("font_size", 16)
 	return b
 
 
@@ -300,23 +296,20 @@ func _build_title_step() -> void:
 # ── Step 2: the empires of Hellas ────────────────────────────────────────
 
 func _build_empire_step() -> void:
-	_set_backdrop(BG + "empire_" + _empire + ".png", 0.58)
-	var page := _page(6)
+	_set_backdrop(BG + "empire_" + _empire + ".png", 0.45)
+	var page := _page(8)
 
 	page.add_child(_title_line("Choose Your Empire"))
 	page.add_child(_sub_line(
-		"Click a realm on the map — then pledge your spear."))
+		"Three realms share one peninsula, and their borders are drawn in gold."))
 
-	## Interactive political map with highlight + kings/wars chronicle.
-	_empire_map = EmpireMapView.new()
-	_empire_map.custom_minimum_size = Vector2(0, 340)
-	_empire_map.size_flags_vertical = Control.SIZE_EXPAND_FILL
-	_empire_map.size_flags_stretch_ratio = 2.0
-	page.add_child(_empire_map)
-	_empire_map.empire_selected.connect(_on_pick_empire)
-	_empire_map.call_deferred("set_selected", _empire)
+	## Static painted map on the pledge screen; Study the Map opens the interactive chronicle.
+	var map := _image(MAP, Vector2(560, 240), false)
+	if map != null:
+		map.size_flags_vertical = Control.SIZE_EXPAND_FILL
+		page.add_child(map)
 
-	var cards := _row(14)
+	var cards := _row(26)
 	cards.size_flags_vertical = Control.SIZE_SHRINK_CENTER
 	page.add_child(cards)
 	for key in GameState.EMPIRES:
@@ -356,22 +349,23 @@ func _make_empire_card(id: String, data: Dictionary) -> PanelContainer:
 	card.mouse_filter = Control.MOUSE_FILTER_PASS
 	var v := _card_body(card)
 
-	var art := _image(BG + "empire_" + id + ".png", Vector2(ART_W, 72), true)
+	var art := _image(BG + "empire_" + id + ".png", Vector2(TEXT_W, 88), true)
 	if art != null:
 		art.size_flags_horizontal = Control.SIZE_SHRINK_CENTER
 		v.add_child(art)
-		v.add_child(Kit.spacer(6))
+		v.add_child(Kit.spacer(12))
 
 	var colour: Color = data.get("color", Kit.INK_GOLD)
 	var band := _colour_band(colour)
-	band.custom_minimum_size = Vector2(TEXT_W, 3)
+	band.custom_minimum_size = Vector2(TEXT_W, 5)
 	band.size_flags_horizontal = Control.SIZE_SHRINK_CENTER
 	v.add_child(band)
+	v.add_child(Kit.spacer(6))
 
 	var empire_name: String = data.get("name", id.capitalize())
-	v.add_child(_wrapped(empire_name, 18, Kit.INK_TITLE, TEXT_W))
-	v.add_child(_wrapped(String(EMPIRE_REGION.get(id, "")), 10, Kit.INK_SOFT, TEXT_W))
-	v.add_child(_wrapped(String(EMPIRE_LORE.get(id, data.get("desc", ""))), 10, Kit.INK_SOFT, TEXT_W))
+	v.add_child(_wrapped(empire_name, 20, Kit.INK_TITLE, TEXT_W))
+	v.add_child(_wrapped(String(EMPIRE_REGION.get(id, "")), 11, Kit.INK_SOFT, TEXT_W))
+	v.add_child(_wrapped(String(EMPIRE_LORE.get(id, data.get("desc", ""))), 11, Kit.INK_SOFT, TEXT_W))
 	v.add_child(_icon_line("icon_laurel", String(data.get("bonus_desc", "")), Kit.INK_GOLD, TEXT_W))
 
 	var pledge := _card_button("Pledge")
@@ -383,19 +377,18 @@ func _make_empire_card(id: String, data: Dictionary) -> PanelContainer:
 func _on_pick_empire(id: String) -> void:
 	_empire = id
 	AudioManager.play_sfx("ui_confirm")
-	_set_backdrop(BG + "empire_" + _empire + ".png", 0.58)
+	_set_backdrop(BG + "empire_" + _empire + ".png", 0.45)
 	_refresh_empire_selection()
-	if _empire_map != null and is_instance_valid(_empire_map) and _empire_map.has_method("set_selected"):
-		if String(_empire_map.get("selected")) != id:
-			_empire_map.call("set_selected", id)
 	if _map_view != null and is_instance_valid(_map_view) and _map_view.has_method("set_selected"):
-		_map_view.call("set_selected", id)
+		if String(_map_view.get("selected")) != id:
+			_map_view.call("set_selected", id)
 
 
 func _refresh_empire_selection() -> void:
 	for key in _empire_cards:
 		var card: Control = _empire_cards[key]
-		card.modulate = Color(1, 1, 1, 1) if key == _empire else Color(0.72, 0.7, 0.66, 0.62)
+		## Keep unselected cards readable — soft dim, not a grey wash.
+		card.modulate = Color(1, 1, 1, 1) if key == _empire else Color(0.88, 0.86, 0.82, 0.85)
 	if _continue_btn != null:
 		var data: Dictionary = GameState.EMPIRES.get(_empire, {})
 		_continue_btn.text = "Continue as %s" % String(data.get("name", "Sparta"))
@@ -404,7 +397,7 @@ func _refresh_empire_selection() -> void:
 # ── Step 3: the path you walk ────────────────────────────────────────────
 
 func _build_class_step() -> void:
-	_set_backdrop(BG + "class_" + _class + ".png", 0.6)
+	_set_backdrop(BG + "class_" + _class + ".png", 0.48)
 	var page := _page(8)
 
 	page.add_child(_title_line("Choose Your Path"))
@@ -447,15 +440,15 @@ func _make_class_card(id: String, data: Dictionary) -> PanelContainer:
 	card.mouse_filter = Control.MOUSE_FILTER_PASS
 	var v := _card_body(card)
 
-	var art := _image(BG + "class_" + id + ".png", Vector2(ART_W, 120), true)
+	var art := _image(BG + "class_" + id + ".png", Vector2(TEXT_W, 128), true)
 	if art != null:
 		art.size_flags_horizontal = Control.SIZE_SHRINK_CENTER
 		v.add_child(art)
-		v.add_child(Kit.spacer(10))
+		v.add_child(Kit.spacer(12))
 
 	var class_name_text: String = data.get("name", id.capitalize())
-	v.add_child(_wrapped(class_name_text, 18, Kit.INK_TITLE, TEXT_W))
-	v.add_child(_wrapped(String(CLASS_LORE.get(id, data.get("desc", ""))), 10, Kit.INK_SOFT, TEXT_W))
+	v.add_child(_wrapped(class_name_text, 20, Kit.INK_TITLE, TEXT_W))
+	v.add_child(_wrapped(String(CLASS_LORE.get(id, data.get("desc", ""))), 11, Kit.INK_SOFT, TEXT_W))
 	v.add_child(_icon_line("icon_sword", String(data.get("weapon_name", "")), Kit.INK, TEXT_W))
 	v.add_child(_icon_line("icon_mana", String(data.get("skill_name", "")), Kit.INK_GOLD, TEXT_W))
 
@@ -468,14 +461,14 @@ func _make_class_card(id: String, data: Dictionary) -> PanelContainer:
 func _on_pick_class(id: String) -> void:
 	_class = id
 	AudioManager.play_sfx("ui_confirm")
-	_set_backdrop(BG + "class_" + _class + ".png", 0.6)
+	_set_backdrop(BG + "class_" + _class + ".png", 0.48)
 	_refresh_class_selection()
 
 
 func _refresh_class_selection() -> void:
 	for key in _class_cards:
 		var card: Control = _class_cards[key]
-		card.modulate = Color(1, 1, 1, 1) if key == _class else Color(0.72, 0.7, 0.66, 0.62)
+		card.modulate = Color(1, 1, 1, 1) if key == _class else Color(0.88, 0.86, 0.82, 0.85)
 
 
 # ── The map, full screen ─────────────────────────────────────────────────
@@ -503,7 +496,7 @@ func _show_map_overlay() -> void:
 
 	v.add_child(_title_line("The Realms of Hellas"))
 	v.add_child(_sub_line(
-		"Click Sparta, Athens, or Corinth — the chronicle names kings and wars."))
+		"Click a realm — its land border lights gold. The chronicle names kings and wars."))
 
 	_map_view = EmpireMapView.new()
 	_map_view.size_flags_vertical = Control.SIZE_EXPAND_FILL
