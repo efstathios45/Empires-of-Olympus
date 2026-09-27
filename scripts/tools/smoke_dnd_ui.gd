@@ -1,13 +1,14 @@
 extends SceneTree
-## Build panoply panel, simulate get/can/drop callables for boots → boots / wrong slot.
+## Build panoply panel and drive manual drag helpers (bag → boots → pouch).
+
 
 func _init() -> void:
 	call_deferred("_run")
 
+
 func _run() -> void:
 	var gs := get_root().get_node("GameState")
 	gs.call("reset_run")
-	## Ensure leather_boots present
 	var has_boots := false
 	for e in gs.get("bag"):
 		if str(e.get("id", "")) == "leather_boots":
@@ -22,55 +23,41 @@ func _run() -> void:
 	await process_frame
 	await process_frame
 	await process_frame
-	## Find bag cell with boots
-	var cells: Array = panel.get("_bag_cells")
-	var boots_cell := -1
-	var boots_entry := -1
-	for i in range(cells.size()):
-		var ei := int(cells[i]["entry"])
-		if ei < 0:
-			continue
-		var bag: Array = gs.get("bag")
-		if ei < bag.size() and str(bag[ei].get("id", "")) == "leather_boots":
-			boots_cell = i
-			boots_entry = ei
+	var bag: Array = gs.get("bag")
+	var boots_i := -1
+	for i in range(bag.size()):
+		if str(bag[i].get("id", "")) == "leather_boots":
+			boots_i = i
 			break
-	if boots_cell < 0:
-		push_error("no boots cell")
+	if boots_i < 0:
+		push_error("no boots")
 		quit(1)
 		return
-	var data: Variant = panel.call("_bag_get_drag", Vector2(10, 10), boots_cell)
-	print("DRAG_DATA=", data)
-	if typeof(data) != TYPE_DICTIONARY:
-		push_error("drag data null")
+	panel.call("_arm_bag_drag", boots_i, Vector2(100, 100))
+	panel.set("_dragging", true)
+	panel.set("_drag_armed", false)
+	var boots_btn: Control = (panel.get("_equip_btns") as Dictionary).get("boots")
+	if boots_btn == null:
+		push_error("no boots button")
 		quit(1)
 		return
-	var can_weapon: bool = bool(panel.call("_slot_can_drop", Vector2(), data, "weapon"))
-	var can_boots: bool = bool(panel.call("_slot_can_drop", Vector2(), data, "boots"))
-	print("CAN_WEAPON=", can_weapon, " CAN_BOOTS=", can_boots)
-	if can_weapon:
-		push_error("weapon should reject boots")
-		quit(1)
-		return
-	if not can_boots:
-		push_error("boots should accept")
-		quit(1)
-		return
-	panel.call("_slot_drop", Vector2(), data, "boots")
+	var drop_pos: Vector2 = boots_btn.get_global_rect().get_center()
+	panel.call("_finish_drag", drop_pos)
 	var eq: Dictionary = gs.get("equipped")
-	print("EQUIPPED_BOOTS=", eq.get("boots", ""))
 	if str(eq.get("boots", "")) != "leather_boots":
-		push_error("equip failed via panel drop")
+		push_error("manual drag equip failed: %s" % str(eq.get("boots", "")))
 		quit(1)
 		return
-	## Unequip via bag drop
-	var udata: Variant = panel.call("_slot_get_drag", Vector2(), "boots")
-	print("UNEQUIP_DRAG=", udata)
-	panel.call("_bag_drop", Vector2(), udata, 0)
+	panel.call("_arm_slot_drag", "boots", "leather_boots", drop_pos)
+	panel.set("_dragging", true)
+	panel.set("_drag_armed", false)
+	var cells: Array = panel.get("_bag_cells")
+	var pouch_pos: Vector2 = (cells[0]["panel"] as Control).get_global_rect().get_center()
+	panel.call("_finish_drag", pouch_pos)
 	eq = gs.get("equipped")
 	if str(eq.get("boots", "")) != "":
-		push_error("unequip failed")
+		push_error("manual unequip failed")
 		quit(1)
 		return
-	print("SMOKE_DND_UI_OK")
+	print("SMOKE_DND_UI_OK manual")
 	quit(0)
