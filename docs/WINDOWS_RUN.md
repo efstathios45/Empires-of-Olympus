@@ -29,7 +29,15 @@ If Defender quarantines it: Windows Security → Protection history
 ------------------------------------------------------------
 Where to put the file
 ------------------------------------------------------------
-Extract the zip to a normal folder, for example:
+Save EmpiresOfOlympus.exe to a normal folder, for example:
   C:\Games\EmpiresOfOlympus\
 
-Do not run it from inside the zip.
+No zip extract needed — this download is the .exe alone.
+
+------------------------------------------------------------
+Download
+------------------------------------------------------------
+Signed single-file Windows build (current):
+  https://gofile.io/d/NrxJ4QJl
+
+File name: EmpiresOfOlympus.exe
