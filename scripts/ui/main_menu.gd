@@ -20,8 +20,10 @@ const MAP := BG + "empire_map_hellas.png"
 const CARD_W := 520
 const EMPIRE_CARD_H := 440
 const CLASS_CARD_H := 520
-const CARD_PAD := 16
-const TEXT_W := CARD_W - 96 - CARD_PAD * 2
+const CARD_PAD := 24
+## The ornate frame art eats ~70px each side; keep body text well inside it so
+## words never spill onto the gold border (was CARD_W-96, which touched it).
+const TEXT_W := CARD_W - 150 - CARD_PAD * 2
 
 const DIM := Color(0.86, 0.82, 0.72)
 
@@ -37,6 +39,21 @@ const EMPIRE_REGION := {
 	"sparta": "Crimson highlands — south-west",
 	"athens": "Blue coasts and isles — east",
 	"corinth": "Golden isthmus — the centre",
+}
+
+## Approximate territory on the map image (normalised 0..1 centre + size), used
+## to highlight a realm when it's picked on the interactive map.
+const EMPIRE_MAP := {
+	"sparta":  {"c": Vector2(0.36, 0.66), "s": Vector2(0.30, 0.44)},
+	"corinth": {"c": Vector2(0.42, 0.31), "s": Vector2(0.26, 0.30)},
+	"athens":  {"c": Vector2(0.67, 0.41), "s": Vector2(0.38, 0.50)},
+}
+
+## Made-up-but-flavourful history (kings & wars) shown on the interactive map.
+const EMPIRE_HISTORY := {
+	"sparta": "Two royal houses — the Agiad and Eurypontid lines — led Sparta from the front rank. Leonidas the Bold held the Hot Gates with his Three Hundred; Kleomenes the Iron bound the helots to the soil. Her wars never ceased: the Messenian Yoke, the long duel with Athens for the sea, and the bronze harvest of Thermopylae.",
+	"athens": "Athens crowned no king after Theseus — her archons and the Assembly ruled. Themistokles built the wooden walls that shattered the Persian fleet at Salamis; Perikles raised the marble Acropolis and the tribute-empire of the Delian League. She fought with oar and silver: Marathon, Salamis, and the ruinous venture at Syracuse.",
+	"corinth": "The tyrants Kypselos and Periander made Corinth the richest city in Hellas, mistress of two seas and of the diolkos that hauled ships across the isthmus. Her colonies — Syracuse and Corcyra — warred as fiercely as their mother-city. Corinth bought allies, hired fleets, and let others bleed while her merchants counted the toll.",
 }
 
 const CLASS_LORE := {
@@ -56,6 +73,10 @@ var _shade: ColorRect
 var _content: Control
 var _overlay: Control
 var _bg_tween: Tween
+var _map_highlights: Dictionary = {}
+var _map_hist_title: Label
+var _map_hist_region: Label
+var _map_hist_body: Label
 
 
 func _ready() -> void:
@@ -446,43 +467,161 @@ func _refresh_class_selection() -> void:
 func _show_map_overlay() -> void:
 	if _overlay != null:
 		return
+	_map_highlights = {}
 	_overlay = Control.new()
-	_overlay.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	_overlay.mouse_filter = Control.MOUSE_FILTER_STOP
 	add_child(_overlay)
 	_overlay.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
 
 	var dim := Kit.make_dimmer()
-	dim.color = Color(0.02, 0.015, 0.03, 0.82)
+	dim.color = Color(0.02, 0.015, 0.03, 0.93)
 	_overlay.add_child(dim)
 	dim.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
 
-	var m := Kit.make_margin(34)
-	m.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	var m := Kit.make_margin(30)
 	_overlay.add_child(m)
 	m.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
 
-	var v := VBoxContainer.new()
-	v.add_theme_constant_override("separation", 10)
-	v.mouse_filter = Control.MOUSE_FILTER_IGNORE
-	m.add_child(v)
+	var col := VBoxContainer.new()
+	col.add_theme_constant_override("separation", 10)
+	m.add_child(col)
 
-	v.add_child(_title_line("The Realms of Hellas"))
-	var big := _image(MAP, Vector2(900, 400), false)
-	if big != null:
-		big.size_flags_vertical = Control.SIZE_EXPAND_FILL
-		v.add_child(big)
-	v.add_child(_sub_line(
-		"Crimson: Sparta  ·  Blue: Athens  ·  Gold: Corinth"))
+	col.add_child(_title_line("The Realms of Hellas"))
+	col.add_child(_sub_line(
+		"Click a realm to raise its banner and read its history."))
 
+	var body := HBoxContainer.new()
+	body.add_theme_constant_override("separation", 24)
+	body.size_flags_vertical = Control.SIZE_EXPAND_FILL
+	col.add_child(body)
+	body.add_child(_build_interactive_map(Vector2(940, 529)))
+	body.add_child(_build_history_panel())
+
+	var nav := _row(18)
+	col.add_child(nav)
 	var close := Kit.make_button("Close", false)
-	close.custom_minimum_size = Vector2(260, 62)
+	close.custom_minimum_size = Vector2(240, 60)
 	close.pressed.connect(_close_overlay)
-	v.add_child(_centered(close))
+	nav.add_child(close)
+	var pledge := Kit.make_button("Pledge this Realm", true)
+	pledge.custom_minimum_size = Vector2(320, 60)
+	pledge.pressed.connect(_pledge_from_map)
+	nav.add_child(pledge)
+
+	_refresh_map_selection()
+
+
+## The map at a fixed 16:9 size, with a highlight blob + invisible click hotspot
+## + name label over each realm's territory.
+func _build_interactive_map(map_size: Vector2) -> Control:
+	var holder := Control.new()
+	holder.custom_minimum_size = map_size
+	holder.size_flags_vertical = Control.SIZE_EXPAND_FILL
+
+	var tex := TextureRect.new()
+	if ResourceLoader.exists(MAP):
+		tex.texture = load(MAP)
+	tex.expand_mode = TextureRect.EXPAND_IGNORE_SIZE
+	tex.stretch_mode = TextureRect.STRETCH_SCALE
+	tex.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
+	tex.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	holder.add_child(tex)
+
+	for key in EMPIRE_MAP:
+		var id: String = key
+		var region: Dictionary = EMPIRE_MAP[id]
+		var c: Vector2 = region["c"]
+		var s: Vector2 = region["s"]
+		var rpos := Vector2((c.x - s.x * 0.5) * map_size.x, (c.y - s.y * 0.5) * map_size.y)
+		var rsize := Vector2(s.x * map_size.x, s.y * map_size.y)
+		var colour: Color = GameState.EMPIRES.get(id, {}).get("color", Kit.INK_GOLD)
+
+		var hl := Panel.new()
+		hl.mouse_filter = Control.MOUSE_FILTER_IGNORE
+		var sb := StyleBoxFlat.new()
+		sb.bg_color = Color(colour.r, colour.g, colour.b, 0.24)
+		sb.border_color = Color(colour.r, colour.g, colour.b, 0.98)
+		sb.set_border_width_all(4)
+		sb.set_corner_radius_all(int(minf(rsize.x, rsize.y) * 0.5))
+		hl.add_theme_stylebox_override("panel", sb)
+		hl.position = rpos
+		hl.size = rsize
+		holder.add_child(hl)
+		_map_highlights[id] = hl
+
+		var hotspot := Button.new()
+		hotspot.flat = true
+		hotspot.focus_mode = Control.FOCUS_NONE
+		hotspot.modulate = Color(1, 1, 1, 0)
+		hotspot.position = rpos
+		hotspot.size = rsize
+		hotspot.pressed.connect(_on_map_region.bind(id))
+		holder.add_child(hotspot)
+
+		var lbl := Kit.make_hud_label(
+			String(GameState.EMPIRES.get(id, {}).get("name", id.capitalize())),
+			24, Color(1.0, 0.96, 0.82), HORIZONTAL_ALIGNMENT_CENTER)
+		lbl.mouse_filter = Control.MOUSE_FILTER_IGNORE
+		lbl.position = Vector2(rpos.x, rpos.y + rsize.y * 0.5 - 18.0)
+		lbl.size = Vector2(rsize.x, 36)
+		holder.add_child(lbl)
+	return holder
+
+
+func _build_history_panel() -> Control:
+	var panel := Kit.make_dark_panel(0.55)
+	panel.custom_minimum_size = Vector2(430, 0)
+	var mm := Kit.make_margin(20)
+	panel.add_child(mm)
+	var v := VBoxContainer.new()
+	v.add_theme_constant_override("separation", 8)
+	mm.add_child(v)
+	_map_hist_title = Kit.make_hud_label("", 32, Color(1.0, 0.9, 0.62))
+	v.add_child(_map_hist_title)
+	_map_hist_region = Kit.make_hud_label("", 16, DIM)
+	v.add_child(_map_hist_region)
+	v.add_child(Kit.spacer(8))
+	_map_hist_body = Kit.make_hud_label("", 17, Color(0.95, 0.92, 0.84))
+	_map_hist_body.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
+	_map_hist_body.custom_minimum_size = Vector2(390, 0)
+	v.add_child(_map_hist_body)
+	return panel
+
+
+func _on_map_region(id: String) -> void:
+	_empire = id
+	AudioManager.play_sfx("ui_confirm")
+	_refresh_map_selection()
+	_refresh_empire_selection()
+
+
+func _pledge_from_map() -> void:
+	_on_pick_empire(_empire)
+	_close_overlay()
+
+
+## Only the chosen realm's banner shows; the history panel follows the choice.
+func _refresh_map_selection() -> void:
+	for key in _map_highlights:
+		var hl: Control = _map_highlights[key]
+		if is_instance_valid(hl):
+			hl.visible = (key == _empire)
+	var data: Dictionary = GameState.EMPIRES.get(_empire, {})
+	if _map_hist_title != null:
+		_map_hist_title.text = String(data.get("name", "Sparta"))
+	if _map_hist_region != null:
+		_map_hist_region.text = String(EMPIRE_REGION.get(_empire, ""))
+	if _map_hist_body != null:
+		_map_hist_body.text = String(EMPIRE_HISTORY.get(_empire, ""))
 
 
 func _close_overlay() -> void:
 	if _overlay == null:
 		return
+	_map_highlights = {}
+	_map_hist_title = null
+	_map_hist_region = null
+	_map_hist_body = null
 	var o := _overlay
 	_overlay = null
 	remove_child(o)
