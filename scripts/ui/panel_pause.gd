@@ -39,6 +39,7 @@ func _ready() -> void:
 			"Left click — strike   •   Right click — heavy blow",
 			"Q — god-skill   •   F — raise shield   •   C — dodge roll",
 			"Shift — sprint   •   Space — leap   •   E — speak / touch",
+			"Enter — chat with players   •   Esc — close chat / rest",
 			"1 / 2 — health & spirit potions",
 			"I — spoils   •   L — clan   •   M — map of Hellas"]:
 		var l := Kit.make_label(String(line), 17, Kit.INK, HORIZONTAL_ALIGNMENT_CENTER)
