@@ -17,14 +17,14 @@ const MAP := BG + "empire_map_hellas.png"
 ## Card geometry. panel_card content_margin clears the ornate gold frame.
 ## ART_W is the hero strip; TEXT_W is deliberately narrower so lore never
 ## runs past the artwork's left/right edges (Cinzel is a wide display face).
-const CARD_W := 380
-const EMPIRE_CARD_H := 420
+const CARD_W := 360
+const EMPIRE_CARD_H := 300
 const CLASS_CARD_H := 500
 const FRAME_INSET := 90
-const CARD_PAD := 18
+const CARD_PAD := 16
 const ART_W := CARD_W - FRAME_INSET * 2 - CARD_PAD * 2
 ## Lore wrap sits inside the art width with extra breathing room.
-const TEXT_W := ART_W - 40
+const TEXT_W := ART_W - 36
 
 const DIM := Color(0.86, 0.82, 0.72)
 
@@ -311,14 +311,14 @@ func _build_empire_step() -> void:
 
 	## Interactive political map with highlight + kings/wars chronicle.
 	_empire_map = EmpireMapView.new()
-	_empire_map.custom_minimum_size = Vector2(0, 280)
+	_empire_map.custom_minimum_size = Vector2(0, 340)
 	_empire_map.size_flags_vertical = Control.SIZE_EXPAND_FILL
-	_empire_map.size_flags_stretch_ratio = 1.35
+	_empire_map.size_flags_stretch_ratio = 2.0
 	page.add_child(_empire_map)
 	_empire_map.empire_selected.connect(_on_pick_empire)
 	_empire_map.call_deferred("set_selected", _empire)
 
-	var cards := _row(18)
+	var cards := _row(14)
 	cards.size_flags_vertical = Control.SIZE_SHRINK_CENTER
 	page.add_child(cards)
 	for key in GameState.EMPIRES:
@@ -358,23 +358,21 @@ func _make_empire_card(id: String, data: Dictionary) -> PanelContainer:
 	card.mouse_filter = Control.MOUSE_FILTER_PASS
 	var v := _card_body(card)
 
-	var art := _image(BG + "empire_" + id + ".png", Vector2(ART_W, 80), true)
+	var art := _image(BG + "empire_" + id + ".png", Vector2(ART_W, 56), true)
 	if art != null:
 		art.size_flags_horizontal = Control.SIZE_SHRINK_CENTER
 		v.add_child(art)
-		v.add_child(Kit.spacer(8))
+		v.add_child(Kit.spacer(4))
 
 	var colour: Color = data.get("color", Kit.INK_GOLD)
 	var band := _colour_band(colour)
-	band.custom_minimum_size = Vector2(TEXT_W, 4)
+	band.custom_minimum_size = Vector2(TEXT_W, 3)
 	band.size_flags_horizontal = Control.SIZE_SHRINK_CENTER
 	v.add_child(band)
 
 	var empire_name: String = data.get("name", id.capitalize())
-	v.add_child(_wrapped(empire_name, 18, Kit.INK_TITLE, TEXT_W))
-	v.add_child(_wrapped(String(EMPIRE_REGION.get(id, "")), 10, Kit.INK_SOFT, TEXT_W))
-	v.add_child(_wrapped(String(EMPIRE_LORE.get(id, data.get("desc", ""))), 10, Kit.INK_SOFT, TEXT_W))
-	v.add_child(_icon_line("icon_laurel", String(data.get("bonus_desc", "")), Kit.INK_GOLD, TEXT_W))
+	v.add_child(_wrapped(empire_name, 16, Kit.INK_TITLE, TEXT_W))
+	v.add_child(_wrapped(String(EMPIRE_LORE.get(id, data.get("desc", ""))), 9, Kit.INK_SOFT, TEXT_W))
 
 	var pledge := _card_button("Pledge")
 	pledge.pressed.connect(_on_pick_empire.bind(id))

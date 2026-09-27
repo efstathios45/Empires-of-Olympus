@@ -98,35 +98,46 @@ func _ready() -> void:
 		_map_host.add_child(btn)
 		_hotspots[id] = btn
 
+	## Plain parchment side panel — ornate 9-slice margins are too thick for
+	## a narrow chronicle column and would shove text into the gold frame.
 	var side := PanelContainer.new()
-	side.custom_minimum_size = Vector2(340, 0)
+	side.custom_minimum_size = Vector2(360, 0)
 	side.size_flags_vertical = Control.SIZE_EXPAND_FILL
-	var sb: StyleBox = Kit.style("res://assets/ui/panel_scroll.tres")
-	if sb:
-		side.add_theme_stylebox_override("panel", sb)
+	var sb := StyleBoxFlat.new()
+	sb.bg_color = Color(0.93, 0.87, 0.74, 0.96)
+	sb.border_color = Color(0.55, 0.40, 0.16, 0.95)
+	sb.set_border_width_all(3)
+	sb.corner_radius_top_left = 6
+	sb.corner_radius_top_right = 6
+	sb.corner_radius_bottom_left = 6
+	sb.corner_radius_bottom_right = 6
+	sb.content_margin_left = 18
+	sb.content_margin_right = 18
+	sb.content_margin_top = 16
+	sb.content_margin_bottom = 16
+	side.add_theme_stylebox_override("panel", sb)
 	root.add_child(side)
 
-	var margin := Kit.make_margin(20)
-	side.add_child(margin)
 	var col := VBoxContainer.new()
 	col.add_theme_constant_override("separation", 8)
-	margin.add_child(col)
+	side.add_child(col)
 
-	col.add_child(Kit.make_label("Chronicle of the Realm", 18, Kit.INK_TITLE, HORIZONTAL_ALIGNMENT_CENTER))
+	const CHRONICLE_W := 320
+	col.add_child(Kit.make_label("Chronicle of the Realm", 17, Kit.INK_TITLE, HORIZONTAL_ALIGNMENT_CENTER))
 	_detail_title = Kit.make_label("", 22, Kit.INK_TITLE, HORIZONTAL_ALIGNMENT_CENTER)
 	_detail_title.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
-	_detail_title.custom_minimum_size = Vector2(260, 0)
+	_detail_title.custom_minimum_size = Vector2(CHRONICLE_W, 0)
 	col.add_child(_detail_title)
 
 	_detail_body = Kit.make_label("", 13, Kit.INK, HORIZONTAL_ALIGNMENT_LEFT)
 	_detail_body.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
-	_detail_body.custom_minimum_size = Vector2(260, 0)
+	_detail_body.custom_minimum_size = Vector2(CHRONICLE_W, 0)
 	_detail_body.size_flags_vertical = Control.SIZE_EXPAND_FILL
 	col.add_child(_detail_body)
 
 	var tip := Kit.make_label("Click a coloured realm on the map.", 12, Kit.INK_SOFT, HORIZONTAL_ALIGNMENT_CENTER)
 	tip.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
-	tip.custom_minimum_size = Vector2(260, 0)
+	tip.custom_minimum_size = Vector2(CHRONICLE_W, 0)
 	col.add_child(tip)
 
 	call_deferred("_layout_map")

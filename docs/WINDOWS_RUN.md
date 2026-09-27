@@ -4,41 +4,27 @@ Empires of Olympus — Windows 10 / 11
 This build is a single file: EmpiresOfOlympus.exe
 (game data is embedded; you do not need a separate .pck)
 
+The exe is Authenticode-signed with a **self-signed** certificate
+(publisher name: "Empires of Olympus"). That proves the file was not
+randomly altered after build, but Windows SmartScreen still may warn
+because the cert is not from a paid Certificate Authority (DigiCert,
+Sectigo, etc.). A commercially trusted publisher signature requires
+buying that CA cert.
+
 ------------------------------------------------------------
-"Windows protected your PC" / "Publisher: Unknown"
+"Windows protected your PC" / SmartScreen
 ------------------------------------------------------------
-That message is Windows SmartScreen. It appears for ANY new
-unsigned desktop game — it is not a bug in the game itself.
+1. Double-click EmpiresOfOlympus.exe
+2. If SmartScreen appears, click "More info"
+3. Click "Run anyway"
 
-This .exe is not code-signed with a paid publisher certificate
-(Authenticode). Signing requires a commercial code-signing cert
-from a CA (DigiCert, Sectigo, etc.). Until then, Windows will
-always say the publisher is unknown.
+Also try:
+  Right-click the .exe → Properties
+  - If you see "Unblock", tick it → OK
+  - Then run again
 
-How to run it anyway on Windows 10:
-
-  1. Double-click EmpiresOfOlympus.exe
-  2. If SmartScreen appears, click "More info"
-  3. Click "Run anyway"
-
-If Windows says the app "can't run on this PC", also try:
-
-  A) Right-click the .exe → Properties
-     - If you see an "Unblock" checkbox at the bottom, tick it → OK
-     - Then run again
-
-  B) Right-click → Properties → Compatibility
-     - Tick "Run this program in compatibility mode for: Windows 8"
-     - Tick "Run this program as an administrator" (optional)
-     - Apply → OK
-
-  C) Windows Security → Virus & threat protection → Protection history
-     - If SmartScreen / Defender quarantined the file, restore it
-       and allow it on this device
-
-Antivirus note: single-file Godot exports are often flagged as
-"unknown" the first time. That is a false positive for unsigned
-indie builds. Adding an exception for the folder helps.
+If Defender quarantines it: Windows Security → Protection history
+→ restore / allow on this device.
 
 ------------------------------------------------------------
 Where to put the file
@@ -46,5 +32,4 @@ Where to put the file
 Extract the zip to a normal folder, for example:
   C:\Games\EmpiresOfOlympus\
 
-Do not run it from inside the zip, and prefer a path without
-OneDrive / Downloads sync locks if Windows keeps re-blocking it.
+Do not run it from inside the zip.
