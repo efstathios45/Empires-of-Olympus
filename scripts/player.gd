@@ -9,10 +9,9 @@ signal respawned
 signal skill_cooldown_started(duration: float)
 signal combo_performed
 
-## Greek Tripo hoplite — looks like a Spartan; UAL clips + LegPlant for motion.
-const CharacterGLB := "res://assets/characters/quaternius_hero_king/hero_king.glb"
-## Embedded Quaternius clips — do not overwrite with a legacy UAL library.
-const CharacterLib := ""
+## Ancient Greek Tripo hoplite (Corinthian + cape + greaves) with UAL combat clips.
+const CharacterGLB := "res://assets/characters/spartan_hoplite/spartan_hoplite.glb"
+const CharacterLib := "res://assets/characters/spartan_hoplite/spartan_hoplite_animations.tres"
 const GearGrip = preload("res://scripts/gear_grip.gd")
 const GearPaint = preload("res://scripts/gear_paint.gd")
 const HeroAnim = preload("res://scripts/utils/hero_anim.gd")
@@ -350,6 +349,7 @@ func _resolved_shield_path() -> String:
 
 
 func _attach_helmet(model: Node3D) -> void:
+	## Spartan mesh already wears a Corinthian — only attach inventory helms.
 	var helm_path: String = GameState.equipped_glb("helmet")
 	if helm_path == "" or not ResourceLoader.exists(helm_path):
 		return

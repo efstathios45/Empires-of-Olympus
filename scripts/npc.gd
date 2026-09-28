@@ -21,6 +21,8 @@ var spawn_yaw: float = 0.0
 var _base_yaw: float = 0.0
 ## Which looping clip this NPC idles in (townsfolk vary so the crowd isn't clones).
 var idle_clip: String = "Idle_Neutral"
+## Hellenic paint role for GreekLook (hoplite/guard/smith/merchant/citizen/oracle).
+var greek_role: String = "citizen"
 ## Non-empty = this NPC is townsfolk: E shows this remark instead of a panel.
 var flavour_line: String = ""
 

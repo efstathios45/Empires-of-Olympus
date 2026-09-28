@@ -37,8 +37,8 @@ No zip extract needed — this download is the .exe alone.
 ------------------------------------------------------------
 Download
 ------------------------------------------------------------
-Windows build (current — Quaternius humanoids):
-  https://gofile.io/d/6jap7Pt5
+Windows build (current — Ancient Greek Tripo cast):
+  https://gofile.io/d/ySo2OjUS
 
 File name: EmpiresOfOlympus.exe
 

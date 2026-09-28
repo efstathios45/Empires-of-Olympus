@@ -45,7 +45,7 @@ const CLASSES := {
 	"hoplite": {
 		"name": "Hoplite",
 		"desc": "Spear and shield. A wall of bronze that strikes back.",
-		"character": "res://assets/characters/quaternius_hero_king/hero_king.glb",
+		"character": "res://assets/characters/spartan_hoplite/spartan_hoplite.glb",
 		"weapon": "res://assets/props/weapons/dory_spear.glb",
 		"weapon_name": "Dory Spear",
 		"shield": "res://assets/props/gear/aspis_shield.glb",
@@ -59,7 +59,7 @@ const CLASSES := {
 	"toxotes": {
 		"name": "Toxotes",
 		"desc": "Cretan bow. Death arrives before the whisper of the string.",
-		"character": "res://assets/characters/quaternius_guard_adventurer/guard_adventurer.glb",
+		"character": "res://assets/characters/spartan_hoplite/spartan_hoplite.glb",
 		"weapon": "res://assets/props/weapons/cretan_bow.glb",
 		"weapon_name": "Cretan Bow",
 		"base_dmg": 11.0, "base_hp": 100, "base_mp": 80,
@@ -72,7 +72,7 @@ const CLASSES := {
 	"magos": {
 		"name": "Magos",
 		"desc": "Theurgist of storm and shadow. Olympus answers his call.",
-		"character": "res://assets/characters/quaternius_citizen_casual/citizen_casual.glb",
+		"character": "res://assets/characters/spartan_hoplite/spartan_hoplite.glb",
 		"weapon": "res://assets/props/weapons/theurgist_staff.glb",
 		"weapon_name": "Theurgist Staff",
 		"base_dmg": 12.0, "base_hp": 90, "base_mp": 110,
