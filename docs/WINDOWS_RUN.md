@@ -38,7 +38,7 @@ No zip extract needed — this download is the .exe alone.
 Download
 ------------------------------------------------------------
 Windows build (current — Hellenic animated cast):
-  (uploading — see PR / latest gofile link)
+  https://gofile.io/d/ZYCS6srz
 
 File name: EmpiresOfOlympus.exe
 
