@@ -1,7 +1,7 @@
 extends Node
-## NetSession — internet-ready ENet lobby for shared Hellas presence + PvP.
-## Host opens UDP (UPnP when possible); friends Join with IP:port invite.
-## Each peer keeps a local world copy and mirrors remote champions.
+## NetSession — peer-hosted ENet presence + PvP (Minecraft-style browse via ServerBrowser).
+## Host advertises a world name on LAN; invite IP is host-only (Copy Invite).
+## Joiners see names, not raw IPs. Host gets each joiner IP once in local chat.
 
 signal session_changed
 signal peer_avatar_spawned(peer_id: int)
@@ -18,12 +18,16 @@ var _status: String = "Solo"
 var _host_port: int = DEFAULT_PORT
 var _invite: String = ""
 var _public_ip: String = ""
+var _server_name: String = "Hellas World"
+var _join_label: String = ""  # display name while connecting (hide raw IP)
+var _seen_peer_ips: Dictionary = {}  # peer_id -> true (announce IP once)
 var _upnp: UPNP
 var _upnp_mapped: bool = false
 var _http: HTTPRequest
 ## Set before loading game_world to auto-join after spawn.
 var pending_join_address: String = ""
 var pending_join_port: int = DEFAULT_PORT
+var pending_join_name: String = ""
 
 
 func status_text() -> String:
@@ -31,7 +35,14 @@ func status_text() -> String:
 
 
 func invite_text() -> String:
+	## Host-only secret. Empty for clients.
+	if not is_hosting():
+		return ""
 	return _invite
+
+
+func server_name() -> String:
+	return _server_name
 
 
 func is_online() -> bool:
@@ -63,19 +74,23 @@ func parse_address(raw: String, default_port: int = DEFAULT_PORT) -> Dictionary:
 	return {"address": host, "port": port}
 
 
-func set_pending_join(raw: String) -> String:
+func set_pending_join(raw: String, display_name: String = "") -> String:
 	var parsed := parse_address(raw)
 	if String(parsed.address).is_empty():
 		pending_join_address = ""
-		return "Enter a host IP or invite (ip:port)."
+		pending_join_name = ""
+		return "Pick a server from the browser, or add one by name."
 	pending_join_address = String(parsed.address)
 	pending_join_port = int(parsed.port)
-	return "Will join %s:%d after you enter the world." % [pending_join_address, pending_join_port]
+	pending_join_name = display_name.strip_edges()
+	var label := pending_join_name if pending_join_name != "" else "friend's world"
+	return "Will join %s after you enter the world." % label
 
 
 func clear_pending_join() -> void:
 	pending_join_address = ""
 	pending_join_port = DEFAULT_PORT
+	pending_join_name = ""
 
 
 ## Call from game_world after the local player exists.
@@ -84,13 +99,17 @@ func try_pending_join() -> String:
 		return ""
 	var addr := pending_join_address
 	var port := pending_join_port
+	var label := pending_join_name
 	clear_pending_join()
-	return join(addr, port)
+	return join(addr, port, label)
 
 
-func host(port: int = DEFAULT_PORT) -> String:
+func host(port: int = DEFAULT_PORT, world_name: String = "Hellas World") -> String:
 	disconnect_session()
 	_host_port = port
+	_server_name = world_name.strip_edges()
+	if _server_name.is_empty():
+		_server_name = "Hellas World"
 	var peer := ENetMultiplayerPeer.new()
 	var err := peer.create_server(port, 8)
 	if err != OK:
@@ -100,14 +119,17 @@ func host(port: int = DEFAULT_PORT) -> String:
 	multiplayer.multiplayer_peer = peer
 	_wire_signals()
 	_invite = "0.0.0.0:%d" % port
-	_status = "Hosting on port %d — fetching public IP…" % port
-	_announce("World open on port %d — share your invite with friends." % port)
+	_status = "Hosting '%s' — preparing invite (host only)…" % _server_name
+	_announce("World '%s' is open. Friends on your network can find it in Server Browser." % _server_name)
+	_announce("Internet friends: use Copy Invite (only you see the address), they Add Server by name.")
+	if ServerBrowser:
+		ServerBrowser.start_advertise(_server_name, port, 1, 8)
 	session_changed.emit()
 	_begin_invite_discovery(port)
 	return _status
 
 
-func join(address: String, port: int = DEFAULT_PORT) -> String:
+func join(address: String, port: int = DEFAULT_PORT, display_name: String = "") -> String:
 	disconnect_session()
 	var parsed := parse_address(address, port)
 	var host_addr := String(parsed.address)
@@ -116,6 +138,7 @@ func join(address: String, port: int = DEFAULT_PORT) -> String:
 		_status = "Join failed — empty address"
 		session_changed.emit()
 		return _status
+	_join_label = display_name.strip_edges()
 	var peer := ENetMultiplayerPeer.new()
 	var err := peer.create_client(host_addr, host_port)
 	if err != OK:
@@ -124,7 +147,8 @@ func join(address: String, port: int = DEFAULT_PORT) -> String:
 		return _status
 	multiplayer.multiplayer_peer = peer
 	_wire_signals()
-	_status = "Connecting to %s:%d…" % [host_addr, host_port]
+	var label := _join_label if _join_label != "" else "world"
+	_status = "Connecting to %s…" % label
 	session_changed.emit()
 	return _status
 
@@ -133,6 +157,10 @@ func disconnect_session() -> void:
 	_clear_avatars()
 	_release_upnp()
 	_invite = ""
+	_join_label = ""
+	_seen_peer_ips.clear()
+	if ServerBrowser:
+		ServerBrowser.stop_advertise()
 	if multiplayer.has_multiplayer_peer() and multiplayer.multiplayer_peer != null:
 		if multiplayer.peer_connected.is_connected(_on_peer_connected):
 			multiplayer.peer_connected.disconnect(_on_peer_connected)
@@ -205,9 +233,10 @@ func _on_public_ip(_result: int, code: int, _headers: PackedStringArray, body: P
 
 func _set_invite(invite: String) -> void:
 	_invite = invite
-	var upnp_note := " (UPnP open)" if _upnp_mapped else ""
-	_status = "Hosting — invite %s%s" % [_invite, upnp_note]
-	_announce("Invite friends with: %s" % _invite)
+	var upnp_note := " · UPnP open" if _upnp_mapped else ""
+	## Status for the host only — never broadcast the raw IP into public chat.
+	_status = "Hosting '%s'%s — Copy Invite to share privately" % [_server_name, upnp_note]
+	_announce("Invite ready (host only — use Copy Invite; not shown to other players).")
 	invite_ready.emit(_invite)
 	session_changed.emit()
 
@@ -226,14 +255,15 @@ func _wire_signals() -> void:
 
 
 func _on_connected_ok() -> void:
-	_status = "Joined %s" % (_invite if _invite != "" else "host")
-	_announce("Joined the world. Rivals of other empires can be fought.")
+	var label := _join_label if _join_label != "" else "the world"
+	_status = "Joined %s" % label
+	_announce("Joined %s. Rivals of other empires can be fought. Press Enter to chat." % label)
 	_hello.rpc(_identity())
 	session_changed.emit()
 
 
 func _on_connected_fail() -> void:
-	_status = "Join failed — check IP/port & firewall"
+	_status = "Join failed — is the host online / firewall open?"
 	disconnect_session()
 
 
@@ -245,18 +275,47 @@ func _on_server_disconnected() -> void:
 func _on_peer_connected(id: int) -> void:
 	_hello.rpc_id(id, _identity())
 	if multiplayer.is_server():
-		var base := _invite if _invite != "" else ("port %d" % _host_port)
-		_status = "Hosting %s — %d rival(s)" % [base, maxi(0, multiplayer.get_peers().size())]
+		_host_note_peer_ip(id)
+		var n := maxi(0, multiplayer.get_peers().size())
+		_status = "Hosting '%s' — %d player(s) connected" % [_server_name, n + 1]
+		if ServerBrowser:
+			ServerBrowser.update_advertise(n + 1, 8)
 		session_changed.emit()
 
 
 func _on_peer_disconnected(id: int) -> void:
 	_remove_avatar(id)
+	_seen_peer_ips.erase(id)
 	_announce("A champion left the world.")
 	if multiplayer.is_server():
-		var base := _invite if _invite != "" else ("port %d" % _host_port)
-		_status = "Hosting %s — %d rival(s)" % [base, multiplayer.get_peers().size()]
+		var n := multiplayer.get_peers().size()
+		_status = "Hosting '%s' — %d player(s) connected" % [_server_name, n + 1]
+		if ServerBrowser:
+			ServerBrowser.update_advertise(n + 1, 8)
 		session_changed.emit()
+
+
+## Host-only: show joiner IP once in local Herald chat (not sent to other peers).
+func _host_note_peer_ip(peer_id: int) -> void:
+	if _seen_peer_ips.get(peer_id, false):
+		return
+	_seen_peer_ips[peer_id] = true
+	var ip := _peer_remote_address(peer_id)
+	if ip == "":
+		ip = "(unknown)"
+	if ChatSystem and ChatSystem.has_method("announce_local"):
+		ChatSystem.announce_local("Player connected from %s (peer %d) — host notice only." % [ip, peer_id])
+
+
+func _peer_remote_address(peer_id: int) -> String:
+	var mp := multiplayer.multiplayer_peer
+	if mp == null or not (mp is ENetMultiplayerPeer):
+		return ""
+	var enet := mp as ENetMultiplayerPeer
+	var ep := enet.get_peer(peer_id)
+	if ep == null:
+		return ""
+	return String(ep.get_remote_address())
 
 
 func _identity() -> Dictionary:

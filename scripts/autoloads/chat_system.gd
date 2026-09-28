@@ -75,6 +75,11 @@ func _push_system(text: String) -> void:
 	_deliver("Herald", text)
 
 
+## Local-only system line (not RPC'd). Use for host-only notices like joiner IPs.
+func announce_local(text: String) -> void:
+	_push_system(text)
+
+
 func _deliver(sender: String, text: String) -> void:
 	if text == "":
 		return
