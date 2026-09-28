@@ -1,5 +1,5 @@
 extends Control
-## Rest menu — controls, local save, and the road back to the title.
+## Rest menu — controls, local save, internet Host/Join, road back to title.
 
 const Kit = preload("res://scripts/ui/ui_kit.gd")
 
@@ -8,6 +8,9 @@ const TEXT_W := 400
 
 var hud: CanvasLayer
 var _status: Label
+var _join_edit: LineEdit
+var _invite_label: Label
+
 
 func _ready() -> void:
 	set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
@@ -19,7 +22,7 @@ func _ready() -> void:
 	center.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
 
 	var panel := Kit.make_panel(false)
-	panel.custom_minimum_size = Vector2(720, 920)
+	panel.custom_minimum_size = Vector2(720, 980)
 	panel.clip_contents = true
 	center.add_child(panel)
 
@@ -27,7 +30,7 @@ func _ready() -> void:
 	panel.add_child(margin)
 	var v := VBoxContainer.new()
 	v.alignment = BoxContainer.ALIGNMENT_CENTER
-	v.add_theme_constant_override("separation", 10)
+	v.add_theme_constant_override("separation", 8)
 	margin.add_child(v)
 
 	v.add_child(Kit.make_label("Rest a Moment", 34, Kit.INK_TITLE, HORIZONTAL_ALIGNMENT_CENTER))
@@ -42,34 +45,55 @@ func _ready() -> void:
 			"Enter — chat   •   Esc — close chat / rest",
 			"1 / 2 — health & spirit potions",
 			"I — spoils   •   L — clan   •   M — map of Hellas",
-			"Rival empires can fight; fallen champions drop gear"]:
-		var l := Kit.make_label(String(line), 16, Kit.INK, HORIZONTAL_ALIGNMENT_CENTER)
+			"Host your world online — friends Join with your invite"]:
+		var l := Kit.make_label(String(line), 15, Kit.INK, HORIZONTAL_ALIGNMENT_CENTER)
 		l.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
 		l.custom_minimum_size = Vector2(TEXT_W, 0)
 		v.add_child(l)
 
-	v.add_child(Kit.spacer(6))
+	v.add_child(Kit.spacer(4))
 
 	_status = Kit.make_label("", 14, Kit.INK_GOLD, HORIZONTAL_ALIGNMENT_CENTER)
 	_status.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
 	_status.custom_minimum_size = Vector2(TEXT_W, 0)
 	v.add_child(_status)
+
+	_invite_label = Kit.make_label("", 15, Kit.INK_TITLE, HORIZONTAL_ALIGNMENT_CENTER)
+	_invite_label.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
+	_invite_label.custom_minimum_size = Vector2(TEXT_W, 0)
+	v.add_child(_invite_label)
+
 	_refresh_status()
 
 	if not AccountSystem.save_finished.is_connected(_on_save_finished):
 		AccountSystem.save_finished.connect(_on_save_finished)
 	if NetSession and not NetSession.session_changed.is_connected(_refresh_status):
 		NetSession.session_changed.connect(_refresh_status)
+	if NetSession and not NetSession.invite_ready.is_connected(_on_invite_ready):
+		NetSession.invite_ready.connect(_on_invite_ready)
 
-	var host_btn := Kit.make_button("Host Arena", true)
+	var host_btn := Kit.make_button("Host World Online", true)
 	host_btn.pressed.connect(_on_host)
 	v.add_child(host_btn)
 
-	var join_btn := Kit.make_button("Join localhost", false)
+	var copy_btn := Kit.make_button("Copy Invite", false)
+	copy_btn.pressed.connect(_on_copy_invite)
+	v.add_child(copy_btn)
+
+	_join_edit = LineEdit.new()
+	_join_edit.placeholder_text = "Friend IP:port  (e.g. 203.0.113.4:7777)"
+	_join_edit.custom_minimum_size = Vector2(Kit.BTN_SIZE.x, 40)
+	_join_edit.alignment = HORIZONTAL_ALIGNMENT_CENTER
+	_join_edit.size_flags_horizontal = Control.SIZE_SHRINK_CENTER
+	if NetSession and NetSession.pending_join_address != "":
+		_join_edit.text = "%s:%d" % [NetSession.pending_join_address, NetSession.pending_join_port]
+	v.add_child(_centered_control(_join_edit))
+
+	var join_btn := Kit.make_button("Join Friend", false)
 	join_btn.pressed.connect(_on_join)
 	v.add_child(join_btn)
 
-	var leave_net := Kit.make_button("Leave Arena", false)
+	var leave_net := Kit.make_button("Leave World", false)
 	leave_net.pressed.connect(_on_leave_net)
 	v.add_child(leave_net)
 
@@ -88,6 +112,13 @@ func _ready() -> void:
 	var menu := Kit.make_button("Quit", false)
 	menu.pressed.connect(_on_menu)
 	v.add_child(menu)
+
+
+func _centered_control(c: Control) -> CenterContainer:
+	var cc := CenterContainer.new()
+	cc.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	cc.add_child(c)
+	return cc
 
 
 func _on_settings() -> void:
@@ -129,19 +160,45 @@ func _refresh_status(_a: Variant = null) -> void:
 		bits.append("Guest — register on the title screen to save.")
 	if NetSession:
 		bits.append(NetSession.status_text())
+		var inv := NetSession.invite_text()
+		if inv != "" and NetSession.is_hosting():
+			_invite_label.text = "Invite: %s" % inv
+		elif NetSession.is_online():
+			_invite_label.text = "Connected online"
+		else:
+			_invite_label.text = "Solo — Host to invite friends over the internet"
 	_status.text = "\n".join(bits)
+
+
+func _on_invite_ready(invite: String) -> void:
+	_invite_label.text = "Invite: %s" % invite
+	_refresh_status()
 
 
 func _on_host() -> void:
 	if NetSession == null:
 		return
 	_status.text = NetSession.host()
+	_refresh_status()
+
+
+func _on_copy_invite() -> void:
+	if NetSession == null:
+		return
+	var inv := NetSession.invite_text()
+	if inv == "" or inv.begins_with("0.0.0.0"):
+		_status.text = "Host first — waiting for public IP…"
+		return
+	DisplayServer.clipboard_set(inv)
+	_status.text = "Copied invite: %s" % inv
 
 
 func _on_join() -> void:
 	if NetSession == null:
 		return
-	_status.text = NetSession.join("127.0.0.1")
+	var raw := _join_edit.text if _join_edit else ""
+	_status.text = NetSession.join(raw)
+	_refresh_status()
 
 
 func _on_leave_net() -> void:

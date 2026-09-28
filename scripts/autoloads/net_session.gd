@@ -1,22 +1,37 @@
 extends Node
-## NetSession — lightweight ENet lobby for shared Hellas presence + PvP.
-## Host / Join from the Esc rest menu. Each peer keeps a local world copy and
-## mirrors remote champions as RemoteAvatar nodes.
+## NetSession — internet-ready ENet lobby for shared Hellas presence + PvP.
+## Host opens UDP (UPnP when possible); friends Join with IP:port invite.
+## Each peer keeps a local world copy and mirrors remote champions.
 
 signal session_changed
 signal peer_avatar_spawned(peer_id: int)
 signal peer_avatar_removed(peer_id: int)
+signal invite_ready(invite: String)
 
 const DEFAULT_PORT := 7777
 const SYNC_HZ := 12.0
+const PUBLIC_IP_URL := "https://api.ipify.org"
 
 var _avatars: Dictionary = {}  # peer_id -> RemoteAvatar
 var _sync_accum: float = 0.0
 var _status: String = "Solo"
+var _host_port: int = DEFAULT_PORT
+var _invite: String = ""
+var _public_ip: String = ""
+var _upnp: UPNP
+var _upnp_mapped: bool = false
+var _http: HTTPRequest
+## Set before loading game_world to auto-join after spawn.
+var pending_join_address: String = ""
+var pending_join_port: int = DEFAULT_PORT
 
 
 func status_text() -> String:
 	return _status
+
+
+func invite_text() -> String:
+	return _invite
 
 
 func is_online() -> bool:
@@ -28,8 +43,54 @@ func is_online() -> bool:
 	return peer.get_connection_status() == MultiplayerPeer.CONNECTION_CONNECTED
 
 
+func is_hosting() -> bool:
+	return is_online() and multiplayer.is_server()
+
+
+## Parse "host", "host:port" → {address, port}.
+func parse_address(raw: String, default_port: int = DEFAULT_PORT) -> Dictionary:
+	var s := raw.strip_edges().replace(" ", "")
+	if s.is_empty():
+		return {"address": "", "port": default_port}
+	s = s.trim_prefix("http://").trim_prefix("https://")
+	var port := default_port
+	var host := s
+	if s.contains(":"):
+		var parts := s.rsplit(":", true, 1)
+		host = parts[0]
+		if parts.size() > 1 and String(parts[1]).is_valid_int():
+			port = clampi(int(parts[1]), 1, 65535)
+	return {"address": host, "port": port}
+
+
+func set_pending_join(raw: String) -> String:
+	var parsed := parse_address(raw)
+	if String(parsed.address).is_empty():
+		pending_join_address = ""
+		return "Enter a host IP or invite (ip:port)."
+	pending_join_address = String(parsed.address)
+	pending_join_port = int(parsed.port)
+	return "Will join %s:%d after you enter the world." % [pending_join_address, pending_join_port]
+
+
+func clear_pending_join() -> void:
+	pending_join_address = ""
+	pending_join_port = DEFAULT_PORT
+
+
+## Call from game_world after the local player exists.
+func try_pending_join() -> String:
+	if pending_join_address == "":
+		return ""
+	var addr := pending_join_address
+	var port := pending_join_port
+	clear_pending_join()
+	return join(addr, port)
+
+
 func host(port: int = DEFAULT_PORT) -> String:
 	disconnect_session()
+	_host_port = port
 	var peer := ENetMultiplayerPeer.new()
 	var err := peer.create_server(port, 8)
 	if err != OK:
@@ -38,29 +99,40 @@ func host(port: int = DEFAULT_PORT) -> String:
 		return _status
 	multiplayer.multiplayer_peer = peer
 	_wire_signals()
-	_status = "Hosting on port %d" % port
-	_announce("Arena open on port %d — rivals may Join." % port)
+	_invite = "0.0.0.0:%d" % port
+	_status = "Hosting on port %d — fetching public IP…" % port
+	_announce("World open on port %d — share your invite with friends." % port)
 	session_changed.emit()
+	_begin_invite_discovery(port)
 	return _status
 
 
 func join(address: String, port: int = DEFAULT_PORT) -> String:
 	disconnect_session()
+	var parsed := parse_address(address, port)
+	var host_addr := String(parsed.address)
+	var host_port := int(parsed.port)
+	if host_addr.is_empty():
+		_status = "Join failed — empty address"
+		session_changed.emit()
+		return _status
 	var peer := ENetMultiplayerPeer.new()
-	var err := peer.create_client(address.strip_edges(), port)
+	var err := peer.create_client(host_addr, host_port)
 	if err != OK:
 		_status = "Join failed (%s)" % error_string(err)
 		session_changed.emit()
 		return _status
 	multiplayer.multiplayer_peer = peer
 	_wire_signals()
-	_status = "Connecting to %s:%d…" % [address, port]
+	_status = "Connecting to %s:%d…" % [host_addr, host_port]
 	session_changed.emit()
 	return _status
 
 
 func disconnect_session() -> void:
 	_clear_avatars()
+	_release_upnp()
+	_invite = ""
 	if multiplayer.has_multiplayer_peer() and multiplayer.multiplayer_peer != null:
 		if multiplayer.peer_connected.is_connected(_on_peer_connected):
 			multiplayer.peer_connected.disconnect(_on_peer_connected)
@@ -74,6 +146,69 @@ func disconnect_session() -> void:
 			multiplayer.server_disconnected.disconnect(_on_server_disconnected)
 		multiplayer.multiplayer_peer = null
 	_status = "Solo"
+	session_changed.emit()
+
+
+func _begin_invite_discovery(port: int) -> void:
+	_try_upnp(port)
+	_fetch_public_ip()
+
+
+func _try_upnp(port: int) -> void:
+	_upnp = UPNP.new()
+	var disc := _upnp.discover(2000, 2, "InternetGatewayDevice")
+	if disc != UPNP.UPNP_RESULT_SUCCESS:
+		disc = _upnp.discover(2000, 2, "")
+	if disc != UPNP.UPNP_RESULT_SUCCESS:
+		return
+	if _upnp.get_gateway() == null or not _upnp.get_gateway().is_valid_gateway():
+		return
+	var map_err := _upnp.add_port_mapping(port, port, "EmpiresOfOlympus", "UDP")
+	if map_err != UPNP.UPNP_RESULT_SUCCESS:
+		map_err = _upnp.add_port_mapping(port, port, "", "UDP")
+	_upnp_mapped = map_err == UPNP.UPNP_RESULT_SUCCESS
+	var ext := _upnp.query_external_address()
+	if ext != "" and not ext.begins_with("0."):
+		_public_ip = ext
+		_set_invite("%s:%d" % [_public_ip, port])
+
+
+func _release_upnp() -> void:
+	if _upnp != null and _upnp_mapped:
+		_upnp.delete_port_mapping(_host_port, "UDP")
+	_upnp = null
+	_upnp_mapped = false
+
+
+func _fetch_public_ip() -> void:
+	if _http == null:
+		_http = HTTPRequest.new()
+		_http.timeout = 8.0
+		add_child(_http)
+		_http.request_completed.connect(_on_public_ip)
+	var err := _http.request(PUBLIC_IP_URL)
+	if err != OK and _invite.begins_with("0.0.0.0"):
+		_set_invite("localhost:%d" % _host_port)
+
+
+func _on_public_ip(_result: int, code: int, _headers: PackedStringArray, body: PackedByteArray) -> void:
+	if code != 200:
+		if _invite.begins_with("0.0.0.0"):
+			_set_invite("localhost:%d" % _host_port)
+		return
+	var ip := body.get_string_from_utf8().strip_edges()
+	if ip.is_empty() or not ip.contains("."):
+		return
+	_public_ip = ip
+	_set_invite("%s:%d" % [_public_ip, _host_port])
+
+
+func _set_invite(invite: String) -> void:
+	_invite = invite
+	var upnp_note := " (UPnP open)" if _upnp_mapped else ""
+	_status = "Hosting — invite %s%s" % [_invite, upnp_note]
+	_announce("Invite friends with: %s" % _invite)
+	invite_ready.emit(_invite)
 	session_changed.emit()
 
 
@@ -91,35 +226,36 @@ func _wire_signals() -> void:
 
 
 func _on_connected_ok() -> void:
-	_status = "Joined arena"
-	_announce("Joined the arena. Rivals of other empires can be fought.")
+	_status = "Joined %s" % (_invite if _invite != "" else "host")
+	_announce("Joined the world. Rivals of other empires can be fought.")
 	_hello.rpc(_identity())
 	session_changed.emit()
 
 
 func _on_connected_fail() -> void:
-	_status = "Join failed"
+	_status = "Join failed — check IP/port & firewall"
 	disconnect_session()
 
 
 func _on_server_disconnected() -> void:
-	_announce("Host closed the arena.")
+	_announce("Host closed the world.")
 	disconnect_session()
 
 
 func _on_peer_connected(id: int) -> void:
-	## Tell the newcomer who we are; they will hello back / host broadcasts.
 	_hello.rpc_id(id, _identity())
 	if multiplayer.is_server():
-		_status = "Hosting — %d rival(s)" % maxi(0, multiplayer.get_peers().size())
+		var base := _invite if _invite != "" else ("port %d" % _host_port)
+		_status = "Hosting %s — %d rival(s)" % [base, maxi(0, multiplayer.get_peers().size())]
 		session_changed.emit()
 
 
 func _on_peer_disconnected(id: int) -> void:
 	_remove_avatar(id)
-	_announce("A champion left the arena.")
+	_announce("A champion left the world.")
 	if multiplayer.is_server():
-		_status = "Hosting — %d rival(s)" % multiplayer.get_peers().size()
+		var base := _invite if _invite != "" else ("port %d" % _host_port)
+		_status = "Hosting %s — %d rival(s)" % [base, multiplayer.get_peers().size()]
 		session_changed.emit()
 
 
@@ -155,7 +291,6 @@ func _hello(data: Dictionary) -> void:
 	if id == 0 or id == multiplayer.get_unique_id():
 		return
 	_spawn_or_update_avatar(id, data)
-	## Reply so the greeter also sees us.
 	_hello_ack.rpc_id(id, _identity())
 
 
