@@ -8,18 +8,18 @@ const WeaponGrip = preload("res://scripts/weapon_grip.gd")
 # Prefer LeftLowerArm for shields (WeaponGrip default) — LeftHand + wild eulers
 # twisted the forearm and made the champion look broken.
 const GRIP_BY_GLB := {
-	## Hellenic / Quaternius — Wrist.L / Wrist.R (tuned after +π facing align).
-	## Idle_Neutral hangs the hand with bone +Y ≈ world −Y; identity keeps the
-	## aspis face along bone +Z (outboard). Old (−90,0,90) aimed the face down.
+	## Hellenic / Quaternius — aspis on LowerArm.L (forearm strap), spear on Wrist.R.
+	## After +π facing align, bone +Z on the left arm points outboard; identity
+	## keeps the aspis face out. Old Wrist+(−90,0,90) hung the face downward.
 	"res://assets/props/gear/aspis_shield.glb": {
-		"bone": "Wrist.L",
-		"position": Vector3(0.02, 0.05, 0.02),
+		"bone": "LowerArm.L",
+		"position": Vector3(0.0, 0.14, 0.04),
 		"rotation_deg": Vector3(0.0, 0.0, 0.0),
 		"scale": 1.0,
 	},
 	"res://assets/props/gear/tower_shield.glb": {
-		"bone": "Wrist.L",
-		"position": Vector3(0.02, 0.05, 0.02),
+		"bone": "LowerArm.L",
+		"position": Vector3(0.0, 0.14, 0.04),
 		"rotation_deg": Vector3(0.0, 0.0, 0.0),
 		"scale": 1.08,
 	},

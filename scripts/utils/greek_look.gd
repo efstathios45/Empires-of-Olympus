@@ -266,9 +266,9 @@ static func _ensure_corinthian_helm(model: Node3D) -> void:
 static func _build_corinthian_mesh() -> Node3D:
 	var root := Node3D.new()
 	root.name = "CorinthianHelm"
-	## Seat on Quaternius Head bone; slightly forward to cover the face bowl.
-	root.position = Vector3(0.0, 0.04, 0.03)
-	root.scale = Vector3(1.05, 1.05, 1.05)
+	## Seat on Quaternius Head bone; enlarge to cover modular hair/crown stump.
+	root.position = Vector3(0.0, 0.06, 0.04)
+	root.scale = Vector3(1.12, 1.12, 1.12)
 
 	var bronze := StandardMaterial3D.new()
 	bronze.albedo_color = Color(0.74, 0.55, 0.28)
@@ -284,14 +284,14 @@ static func _build_corinthian_mesh() -> Node3D:
 	var dome := MeshInstance3D.new()
 	dome.name = "Helm_Dome"
 	var sphere := SphereMesh.new()
-	sphere.radius = 0.15
-	sphere.height = 0.22
+	sphere.radius = 0.16
+	sphere.height = 0.24
 	sphere.radial_segments = 10
 	sphere.rings = 6
 	dome.mesh = sphere
 	dome.material_override = bronze
-	dome.scale = Vector3(1.05, 0.85, 1.1)
-	dome.position = Vector3(0.0, 0.02, 0.0)
+	dome.scale = Vector3(1.1, 0.9, 1.15)
+	dome.position = Vector3(0.0, 0.03, 0.0)
 	root.add_child(dome)
 
 	## Brow / face bowl (slightly forward)
