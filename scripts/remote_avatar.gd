@@ -1,9 +1,9 @@
 extends CharacterBody3D
 ## Lightweight remote champion — mesh, nameplate, PvP hitbox. Driven by NetSession.
 
-const CharacterGLB := "res://assets/characters/spartan_hoplite/spartan_hoplite.glb"
-const CharacterLib := "res://assets/characters/spartan_hoplite/spartan_hoplite_animations.tres"
+const CharacterGLB := "res://assets/characters/kaykit_knight/Knight.glb"
 const NameplateScript = preload("res://scripts/player_nameplate.gd")
+const HeroAnim = preload("res://scripts/utils/hero_anim.gd")
 
 var peer_id: int = 0
 var empire_id: String = "sparta"
@@ -60,15 +60,9 @@ func _build_body() -> void:
 		mesh_root.add_child(model)
 		ModelUtils.setup_character_for_movement(model, 1.85)
 		anim = model.find_child("AnimationPlayer", true) as AnimationPlayer
-		if anim and ResourceLoader.exists(CharacterLib):
-			var lib := load(CharacterLib) as AnimationLibrary
-			if lib:
-				if anim.has_animation_library(""):
-					anim.remove_animation_library("")
-				anim.add_animation_library("", lib)
+		if anim:
 			ModelUtils.set_animation_loops(anim)
-			if anim.has_animation("ual1_Idle"):
-				anim.play("ual1_Idle")
+			HeroAnim.play(anim, "idle")
 	_tint_empire(empire_id)
 
 
@@ -100,10 +94,8 @@ func apply_state(pos: Vector3, yaw: float, p_hp: float, p_max_hp: float, p_level
 		set_meta("level", level)
 		if _nameplate:
 			_nameplate.call("set_plate", display_name, level, empire_id)
-	if anim:
-		var want := "ual1_Walk" if moving else "ual1_Idle"
-		if anim.has_animation(want) and anim.current_animation != want and not dead:
-			anim.play(want)
+	if anim and not dead:
+		HeroAnim.play(anim, "walk" if moving else "idle")
 
 
 func _physics_process(delta: float) -> void:
@@ -125,5 +117,5 @@ func take_damage(amount: float, from_position: Vector3) -> void:
 
 func mark_dead() -> void:
 	dead = true
-	if anim and anim.has_animation("ual1_Death01"):
-		anim.play("ual1_Death01")
+	if anim:
+		HeroAnim.play(anim, "death", false)

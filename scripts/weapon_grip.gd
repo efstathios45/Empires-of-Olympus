@@ -62,14 +62,19 @@ static func attach(
 		push_warning("WeaponGrip: weapon is not a PackedScene " + weapon_glb_path)
 		return null
 	var inst := scene.instantiate() as Node3D
-	var normalized := normalize(inst, weapon_class)
+	## KayKit socket props are authored for handslot / Round_Shield / 1H_Sword —
+	## skip Tesana normalize so the mesh sits in the designed socket frame.
+	var skip_norm := bool(g.get("skip_normalize", false))
+	var held: Node3D = inst if skip_norm else normalize(inst, weapon_class)
 
 	# Character models are scaled before attachment. Cancel that inherited scale
-	# so class lengths and grip offsets stay in real-world metres.
+	# so class lengths and grip offsets stay in real-world metres — except for
+	# KayKit socket props, which share the character's authored units and should
+	# inherit the model scale (cancelling it makes swords ~human-height).
 	var comp := 1.0 / maxf(0.0001, model.scale.x)
 	var attachment := BoneAttachment3D.new()
 	attachment.name = "WeaponMount"
-	attachment.bone_name = String(g.get("bone", "RightHand"))
+	attachment.bone_name = _resolve_bone(skel, String(g.get("bone", "RightHand")), weapon_class)
 	skel.add_child(attachment)
 
 	var holder := Node3D.new()
@@ -82,13 +87,17 @@ static func attach(
 		deg_to_rad(rotation_degrees.y),
 		deg_to_rad(rotation_degrees.z)
 	))
-	var scale_factor := float(g.get("scale", 1.0)) * comp
+	var scale_factor := float(g.get("scale", 1.0))
+	var pos_scale := 1.0
+	if not skip_norm:
+		scale_factor *= comp
+		pos_scale = comp
 	basis = basis.scaled(Vector3.ONE * scale_factor)
 	holder.transform = Transform3D(
 		basis,
-		(g.get("position", Vector3.ZERO) as Vector3) * comp
+		(g.get("position", Vector3.ZERO) as Vector3) * pos_scale
 	)
-	holder.add_child(normalized)
+	holder.add_child(held)
 	return attachment
 
 
@@ -172,6 +181,26 @@ static func _find_skeleton(model: Node3D) -> Skeleton3D:
 	for node in model.find_children("*", "Skeleton3D", true, false):
 		return node as Skeleton3D
 	return null
+
+
+## Map UAL bone names onto KayKit Adventurers sockets when present.
+static func _resolve_bone(skel: Skeleton3D, preferred: String, weapon_class: String) -> String:
+	if skel == null:
+		return preferred
+	if skel.find_bone(preferred) >= 0:
+		return preferred
+	var alts: Array = []
+	var wclass := weapon_class.to_lower()
+	if wclass == "shield" or preferred in ["LeftLowerArm", "LeftHand", "LeftUpperArm"]:
+		alts = ["Round_Shield", "handslot.l", "hand.l", "wrist.l", "Badge_Shield", "Rectangle_Shield"]
+	elif preferred in ["RightHand", "RightLowerArm", "RightUpperArm"] or wclass in ["melee", "gun", "pistol"]:
+		alts = ["1H_Sword", "handslot.r", "hand.r", "wrist.r", "2H_Sword"]
+	elif preferred == "Head":
+		alts = ["head", "Knight_Helmet"]
+	for name in alts:
+		if skel.find_bone(String(name)) >= 0:
+			return String(name)
+	return preferred
 
 
 static func _xf_to_root(node: Node3D, root: Node3D) -> Transform3D:

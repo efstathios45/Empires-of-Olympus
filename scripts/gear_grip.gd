@@ -20,6 +20,35 @@ const GRIP_BY_GLB := {
 		"rotation_deg": Vector3(-24.0, -12.0, 6.0),
 		"scale": 1.08,
 	},
+	## KayKit Adventurers — sockets handslot.l / Round_Shield / 1H_Sword.
+	"res://assets/props/kaykit/shield_round.glb": {
+		"bone": "Round_Shield",
+		"position": Vector3.ZERO,
+		"rotation_deg": Vector3.ZERO,
+		"scale": 1.0,
+		"skip_normalize": true,
+	},
+	"res://assets/props/kaykit/shield_round_color.glb": {
+		"bone": "Round_Shield",
+		"position": Vector3.ZERO,
+		"rotation_deg": Vector3.ZERO,
+		"scale": 1.0,
+		"skip_normalize": true,
+	},
+	"res://assets/props/kaykit/shield_square.glb": {
+		"bone": "Rectangle_Shield",
+		"position": Vector3.ZERO,
+		"rotation_deg": Vector3.ZERO,
+		"scale": 1.0,
+		"skip_normalize": true,
+	},
+	"res://assets/props/kaykit/sword_1handed.glb": {
+		"bone": "1H_Sword",
+		"position": Vector3.ZERO,
+		"rotation_deg": Vector3.ZERO,
+		"scale": 1.0,
+		"skip_normalize": true,
+	},
 	"res://assets/props/gear/xiphos_sword.glb": {
 		"position": Vector3(0.006, -0.118, 0.0),
 		"rotation_deg": Vector3(-90.0, -90.0, 0.0),
@@ -98,6 +127,8 @@ static func attach_helmet(model: Node3D, glb_path: String) -> Node3D:
 	var att := BoneAttachment3D.new()
 	att.name = "HelmetBone"
 	att.bone_name = "Head"
+	if skel.find_bone("Head") < 0 and skel.find_bone("head") >= 0:
+		att.bone_name = "head"
 	skel.add_child(att)
 	var holder := Node3D.new()
 	holder.name = "HelmetMount"

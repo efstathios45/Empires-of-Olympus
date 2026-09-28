@@ -37,8 +37,8 @@ No zip extract needed — this download is the .exe alone.
 ------------------------------------------------------------
 Download
 ------------------------------------------------------------
-Windows build (current — walk + hit restored):
-  https://gofile.io/d/6lil4FQ6
+Windows build (current — KayKit hero walk/hit/block):
+  https://gofile.io/d/PENDING
 
 File name: EmpiresOfOlympus.exe
 
@@ -50,10 +50,10 @@ Shared/cloud multiplayer persistence is documented in docs/ACCOUNTS.md.
 In-world: Enter opens player chat (see docs/CHAT.md).
 Metin2-style camera: hold middle-mouse to orbit. Mouse-wheel zoom is removed
 (fixed over-shoulder distance).
-Hero/guard Tripo mesh: UAL melts the bind — LegPlant binds the hero's own
-AnimationPlayer (not a plaza NPC), plants a human base, then drives
-procedural walk and sword slash. Open Panoply with I — right-click pouch
-items to Equip / Sell.
+Hero uses KayKit Adventurers Knight (CC0) with real Walking / melee /
+Blocking clips and sword+shield sockets. Hold F to raise the shield and
+block (damage cut). Plaza NPCs still use the Tripo plant path.
+Open Panoply with I — right-click pouch items to Equip / Sell.
 Nameplates show name/level in empire colours.
 Multiplayer: title/Esc → Browse Servers (LAN names + saved friend worlds).
 Only the host can Copy Invite; joiners never see raw IPs. Host gets each
