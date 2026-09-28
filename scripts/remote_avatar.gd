@@ -1,11 +1,12 @@
 extends CharacterBody3D
 ## Lightweight remote champion — mesh, nameplate, PvP hitbox. Driven by NetSession.
 
-const CharacterGLB := "res://assets/characters/quaternius_hero_king/hero_king.glb"
+const CharacterGLB := "res://assets/characters/greek_hoplite/greek_hoplite.glb"
 const CharacterLib := ""
 const GreekLook = preload("res://scripts/utils/greek_look.gd")
 const NameplateScript = preload("res://scripts/player_nameplate.gd")
 const HeroAnim = preload("res://scripts/utils/hero_anim.gd")
+const USE_GREEK_LOOK := false
 
 var peer_id: int = 0
 var empire_id: String = "sparta"
@@ -61,7 +62,8 @@ func _build_body() -> void:
 		var model: Node3D = load(CharacterGLB).instantiate()
 		mesh_root.add_child(model)
 		ModelUtils.setup_character_for_movement(model, 1.85)
-		GreekLook.apply(model, "hoplite")
+		if USE_GREEK_LOOK:
+			GreekLook.apply(model, "hoplite")
 		anim = model.find_child("AnimationPlayer", true) as AnimationPlayer
 		if anim == null:
 			anim = AnimationPlayer.new()

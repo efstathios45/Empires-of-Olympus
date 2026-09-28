@@ -9,14 +9,15 @@ signal respawned
 signal skill_cooldown_started(duration: float)
 signal combo_performed
 
-## Quaternius hero_king + GreekLook (Corinthian/bronze) — authored Walk/Slash, no LegPlant.
-## Achilles auto-bind moonwalked and collapsed the arms; do not use it in-game.
-const CharacterGLB := "res://assets/characters/quaternius_hero_king/hero_king.glb"
+## CC0 Achilles Spartan hoplite (hang-rest) + Quaternius Walk/Idle — authentic Hellenic look.
+## Arm clips stripped at setup (T-pose arm tracks melt the hang bind); legs/spine still animate.
+const CharacterGLB := "res://assets/characters/greek_hoplite/greek_hoplite.glb"
 const CharacterLib := ""
 const GearGrip = preload("res://scripts/gear_grip.gd")
 const GearPaint = preload("res://scripts/gear_paint.gd")
 const GreekLook = preload("res://scripts/utils/greek_look.gd")
 const HeroAnim = preload("res://scripts/utils/hero_anim.gd")
+const USE_GREEK_LOOK := false
 const ProjectileScript = preload("res://scripts/projectile.gd")
 const VfxHelper = preload("res://scripts/vfx_helper.gd")
 const NameplateScript = preload("res://scripts/player_nameplate.gd")
@@ -236,8 +237,9 @@ func _build_body() -> void:
 	var model: Node3D = load(char_path).instantiate()
 	mesh_root.add_child(model)
 	ModelUtils.setup_character_for_movement(model, 1.85)
-	## Hellenic bronze / crimson / Corinthian — before gear so helm sockets stay clean.
-	GreekLook.apply(model, "hoplite")
+	## Achilles already has authored Hellenic textures — skip GreekLook paint.
+	if USE_GREEK_LOOK:
+		GreekLook.apply(model, "hoplite")
 	_apply_class_tint(model, cd0)
 
 	anim = model.find_child("AnimationPlayer", true) as AnimationPlayer
@@ -253,6 +255,9 @@ func _build_body() -> void:
 				anim.remove_animation_library("")
 			anim.add_animation_library("", lib)
 	ModelUtils.set_animation_loops(anim)
+	## Ensure hang-rest Achilles keeps arms (setup also strips when name matches).
+	if "greek_hoplite" in char_path:
+		ModelUtils.strip_arm_animation_tracks(anim)
 	ModelUtils.bind_leg_plant_anim(model, anim)
 
 	var weapon_path: String = _resolved_weapon_path()

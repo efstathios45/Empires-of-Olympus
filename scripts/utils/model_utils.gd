@@ -1,7 +1,7 @@
 class_name ModelUtils
 
 ## Baked into exports so we can verify the PCK actually contains this revision.
-const BUILD_FIX_TOKEN := "EOO_FIX_QUATERNIUS_FACING_ARMS_V2"
+const BUILD_FIX_TOKEN := "EOO_FIX_ACHILLES_HOPLITE_HANG_ARMS_V1"
 
 ## Tripo mesh id shared by spartan_hoplite + city_guard — UAL melts this bind.
 const _BROKEN_UAL_MESH := "95ce6ed4"
@@ -101,6 +101,39 @@ static func set_animation_loops(anim_player: AnimationPlayer) -> void:
 			anim.loop_mode = Animation.LOOP_NONE
 		else:
 			anim.loop_mode = Animation.LOOP_LINEAR
+
+
+## Achilles hang-rest hero: Quaternius arm tracks are authored for T-pose rest and
+## melt the hang bind. Strip shoulder→finger tracks so arms stay at hang rest while
+## legs/spine still play Walk / Idle / Slash.
+const _ARM_TRACK_KEYS := [
+	"Shoulder", "UpperArm", "LowerArm", "Wrist",
+	"Thumb", "Index", "Middle", "Ring", "Pinky",
+]
+
+static func strip_arm_animation_tracks(anim_player: AnimationPlayer) -> void:
+	if anim_player == null:
+		return
+	## Duplicate clips so we don't mutate the imported .glb cache.
+	for lib_name in anim_player.get_animation_library_list():
+		var lib: AnimationLibrary = anim_player.get_animation_library(lib_name)
+		if lib == null:
+			continue
+		for anim_name in lib.get_animation_list():
+			var src := lib.get_animation(anim_name)
+			if src == null:
+				continue
+			var anim: Animation = src.duplicate(true)
+			for ti in range(anim.get_track_count() - 1, -1, -1):
+				var path := String(anim.track_get_path(ti))
+				var hit := false
+				for key in _ARM_TRACK_KEYS:
+					if key in path:
+						hit = true
+						break
+				if hit:
+					anim.remove_track(ti)
+			lib.add_animation(anim_name, anim)
 
 
 ## Copy keys from `src` that fall in [start_s, end_s) into a new Animation,
@@ -344,6 +377,11 @@ static func setup_character_for_movement(node: Node3D, target_height: float = 1.
 	## Quaternius meshes face +Z; gameplay MODEL_FRONT is −Z. Rotate the
 	## armature (not the scene root) so mesh_root / NPC yaw stays canonical.
 	_align_quaternius_visual_facing(node)
+	## Hang-rest Achilles: drop arm clips so hang bind stays intact.
+	if _is_achilles_hoplite(node):
+		var ap := node.find_child("AnimationPlayer", true, false) as AnimationPlayer
+		if ap != null:
+			strip_arm_animation_tracks(ap)
 	## KayKit (and similar) often have AABB below the soles — pin by foot bones.
 	if _is_kaykit_model(node):
 		ground_by_feet(node)
@@ -573,6 +611,20 @@ static func _is_quaternius_model(model: Node3D) -> bool:
 		var skel := n as Skeleton3D
 		if skel != null and skel.find_bone("Wrist.R") >= 0 and skel.find_bone("Foot.L") >= 0 \
 				and skel.find_bone("LeftUpperArm") < 0:
+			return true
+	return false
+
+
+## CC0 Achilles Spartan mesh skinned to Quaternius hang-rest arms.
+static func _is_achilles_hoplite(model: Node3D) -> bool:
+	if model == null:
+		return false
+	var nlow := String(model.name).to_lower()
+	if "greek_hoplite" in nlow or "greekhoplite" in nlow:
+		return true
+	for n in model.find_children("*", "MeshInstance3D", true, false):
+		var mn := String(n.name).to_lower()
+		if "greekhoplite" in mn or "greek_hoplite" in mn:
 			return true
 	return false
 
