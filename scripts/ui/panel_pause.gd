@@ -88,7 +88,7 @@ func _ready() -> void:
 	browser_btn.pressed.connect(_on_open_browser)
 	v.add_child(browser_btn)
 
-	var copy_btn := Kit.make_button("Copy Invite (host)", false)
+	var copy_btn := Kit.make_button("Copy Invite", false)
 	copy_btn.pressed.connect(_on_copy_invite)
 	v.add_child(copy_btn)
 

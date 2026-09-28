@@ -72,7 +72,7 @@ func _ready() -> void:
 	var host_btn := Kit.make_button("Host World", true)
 	host_btn.pressed.connect(_on_host)
 	root.add_child(_centered(host_btn))
-	var copy_btn := Kit.make_button("Copy Invite (host only)", false)
+	var copy_btn := Kit.make_button("Copy Invite", false)
 	copy_btn.pressed.connect(_on_copy_invite)
 	root.add_child(_centered(copy_btn))
 
@@ -94,7 +94,7 @@ func _ready() -> void:
 	var add_btn := Kit.make_button("Add Server", false)
 	add_btn.pressed.connect(_on_add_saved)
 	root.add_child(_centered(add_btn))
-	var rem_btn := Kit.make_button("Remove Selected Saved", false)
+	var rem_btn := Kit.make_button("Remove Saved", false)
 	rem_btn.pressed.connect(_on_remove_saved)
 	root.add_child(_centered(rem_btn))
 
@@ -155,7 +155,10 @@ func _make_row(row: Dictionary) -> Button:
 	btn.add_theme_font_override("font", Kit.font())
 	btn.add_theme_font_size_override("font_size", 14)
 	btn.add_theme_color_override("font_color", Kit.INK)
-	var selected := _selected.get("name", "") == nm and _selected.get("source", "") == row.get("source", "")
+	var selected: bool = (
+		String(_selected.get("name", "")) == nm
+		and String(_selected.get("source", "")) == String(row.get("source", ""))
+	)
 	if selected:
 		btn.add_theme_color_override("font_color", Kit.INK_TITLE)
 	btn.pressed.connect(func() -> void:
