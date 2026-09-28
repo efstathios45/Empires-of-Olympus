@@ -9,9 +9,9 @@ signal respawned
 signal skill_cooldown_started(duration: float)
 signal combo_performed
 
-## Ancient Greek Tripo hoplite (Corinthian + cape + greaves) with UAL combat clips.
-const CharacterGLB := "res://assets/characters/spartan_hoplite/spartan_hoplite.glb"
-const CharacterLib := "res://assets/characters/spartan_hoplite/spartan_hoplite_animations.tres"
+## CC0 Achilles Spartan (gamekorp) + Quaternius Walk/Sword_Slash/Idle (no LegPlant).
+const CharacterGLB := "res://assets/characters/greek_hoplite/greek_hoplite.glb"
+const CharacterLib := ""
 const GearGrip = preload("res://scripts/gear_grip.gd")
 const GearPaint = preload("res://scripts/gear_paint.gd")
 const HeroAnim = preload("res://scripts/utils/hero_anim.gd")

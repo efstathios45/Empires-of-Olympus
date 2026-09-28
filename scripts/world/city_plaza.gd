@@ -165,9 +165,9 @@ static func _temple_precinct(world) -> void:
 
 	# Priestess Melite — the quest giver, by the altar.
 	var priestess = NpcScript.create("priestess", "Priestess Melite",
-		"res://assets/characters/oracle_priestess/oracle_priestess.glb",
-		"res://assets/characters/oracle_priestess/oracle_priestess_animations.tres",
-		Vector3(-7.4, 0.0, -5.8), 1.72, 130.0)
+		"res://assets/characters/greek_oracle/greek_oracle.glb",
+		"",
+		Vector3(-7.4, 0.0, -5.8), 1.68, 130.0)
 	world.add_child(priestess)
 	world.add_interactable(priestess)
 
@@ -268,9 +268,9 @@ static func _smith_yard(world) -> void:
 
 	# Brontes the smith — refinement and wares.
 	var smith = NpcScript.create("smith", "Brontes the Smith",
-		"res://assets/characters/blacksmith_npc/blacksmith_npc.glb",
-		"res://assets/characters/blacksmith_npc/blacksmith_npc_animations.tres",
-		Vector3(9.4, 0.0, 14.2), 1.8, 150.0)
+		"res://assets/characters/greek_smith/greek_smith.glb",
+		"",
+		Vector3(9.4, 0.0, 14.2), 1.75, 150.0)
 	world.add_child(smith)
 	world.add_interactable(smith)
 
@@ -306,42 +306,42 @@ static func _amphora(world, x: float, z: float) -> void:
 ## Nine citizens: merchants at the stalls, neighbours gossiping by the fountain,
 ## guards on the gate and the temple steps. Decsheets only — an idle clip each
 ## and one remark on E. Missing models are skipped silently.
-## Ancient Greek Tripo cast (chiton / Corinthian / laurel).
-const MERCHANT_GLB := "res://assets/characters/citizen_merchant/citizen_merchant.glb"
-const MERCHANT_LIB := "res://assets/characters/citizen_merchant/citizen_merchant_animations.tres"
-const WOMAN_GLB := "res://assets/characters/citizen_woman/citizen_woman.glb"
-const WOMAN_LIB := "res://assets/characters/citizen_woman/citizen_woman_animations.tres"
-const GUARD_GLB := "res://assets/characters/city_guard/city_guard.glb"
-const GUARD_LIB := "res://assets/characters/city_guard/city_guard_animations.tres"
+## Hellenic cast: Greek meshes + Quaternius authored Walk/Idle (no UAL / LegPlant).
+const MERCHANT_GLB := "res://assets/characters/greek_merchant/greek_merchant.glb"
+const MERCHANT_LIB := ""
+const WOMAN_GLB := "res://assets/characters/greek_citizen_woman/greek_citizen_woman.glb"
+const WOMAN_LIB := ""
+const GUARD_GLB := "res://assets/characters/greek_guard/greek_guard.glb"
+const GUARD_LIB := ""
 
 static func _townsfolk(world) -> void:
 	var folk := [
 		{"kind": "merchant", "name": "Hesiod the Oil Merchant",
-			"at": Vector3(13.9, 0.0, -3.8), "yaw": 100.0, "idle": "ual2_Idle_FoldArms",
+			"at": Vector3(13.9, 0.0, -3.8), "yaw": 100.0, "idle": "Idle",
 			"line": "Finest olive oil in Hellas — pressed this very morning!"},
 		{"kind": "merchant", "name": "Kleon the Potter",
-			"at": Vector3(13.9, 0.0, 5.4), "yaw": 80.0, "idle": "ual1_Idle",
+			"at": Vector3(13.9, 0.0, 5.4), "yaw": 80.0, "idle": "Idle_Neutral",
 			"line": "Amphorae, hero! Sturdy enough to outlive your grandchildren."},
 		{"kind": "merchant", "name": "Xanthos the Fruit-Seller",
-			"at": Vector3(17.0, 0.0, 9.8), "yaw": 130.0, "idle": "ual1_Idle_Talking",
+			"at": Vector3(17.0, 0.0, 9.8), "yaw": 130.0, "idle": "Wave",
 			"line": "Figs, dates, honey cakes! Coin first, glory later."},
 		{"kind": "woman", "name": "Thalia", "at": Vector3(2.9, 0.0, 3.2),
-			"yaw": 205.0, "idle": "ual1_Idle_Talking",
+			"yaw": 205.0, "idle": "Interact",
 			"line": "They say the priestess had another vision at dawn. Awful omens."},
 		{"kind": "woman", "name": "Eirene", "at": Vector3(-2.6, 0.0, 4.6),
-			"yaw": 25.0, "idle": "ual1_Idle_LookAround",
+			"yaw": 25.0, "idle": "Idle_Neutral",
 			"line": "The fountain runs cold as Boreas' breath. Blessed be Athena."},
 		{"kind": "woman", "name": "Old Myrrine", "at": Vector3(-11.4, 0.0, 8.2),
-			"yaw": 90.0, "idle": "ual1_Idle_LookAround",
+			"yaw": 90.0, "idle": "Idle",
 			"line": "In my day the agora had twice the stalls. And better bread."},
 		{"kind": "guard", "name": "Guard Lysandros", "at": Vector3(-3.4, 0.0, 22.0),
-			"yaw": 0.0, "idle": "ual2_Idle_Rail",
+			"yaw": 0.0, "idle": "Idle_Sword",
 			"line": "Wolves beyond that gate, and worse. Sharpen your spear first."},
 		{"kind": "guard", "name": "Guard Nikanor", "at": Vector3(3.4, 0.0, 22.0),
-			"yaw": 0.0, "idle": "ual1_Idle",
+			"yaw": 0.0, "idle": "Idle_Neutral",
 			"line": "The Minotaur's arena lies south. Nobody who goes comes back."},
 		{"kind": "guard", "name": "Sentry Damon", "at": Vector3(-4.2, 0.0, -10.6),
-			"yaw": 175.0, "idle": "ual2_Idle_Rail",
+			"yaw": 175.0, "idle": "Idle_Sword",
 			"line": "Mind the sacred steps, stranger. Athena watches this square."},
 	]
 	var idx := 0

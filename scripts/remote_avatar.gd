@@ -1,8 +1,8 @@
 extends CharacterBody3D
 ## Lightweight remote champion — mesh, nameplate, PvP hitbox. Driven by NetSession.
 
-const CharacterGLB := "res://assets/characters/spartan_hoplite/spartan_hoplite.glb"
-const CharacterLib := "res://assets/characters/spartan_hoplite/spartan_hoplite_animations.tres"
+const CharacterGLB := "res://assets/characters/greek_hoplite/greek_hoplite.glb"
+const CharacterLib := ""
 const NameplateScript = preload("res://scripts/player_nameplate.gd")
 const HeroAnim = preload("res://scripts/utils/hero_anim.gd")
 

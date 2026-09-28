@@ -321,8 +321,8 @@ static func setup_maya_cm_animal(node: Node3D, target_height: float) -> void:
 	ground_model(node)
 
 ## One-call setup for movement-driven characters.
-## Pre-zoom camera/gaze: no SkyGaze bone twists. Tripo+UAL still needs LegPlant
-## (raw UAL melts limbs); plant drives a procedural walk instead of melted clips.
+## Hellenic cast (greek_*) uses Quaternius bones + authored clips — never LegPlant.
+## Legacy Tripo+UAL meshes still plant as a last resort.
 static func setup_character_for_movement(node: Node3D, target_height: float = 1.8) -> void:
 	# Keep BUILD_FIX_TOKEN live in exported bytecode (unused consts are stripped).
 	if node == null and BUILD_FIX_TOKEN.is_empty():
@@ -503,15 +503,17 @@ static func bind_leg_plant_anim(model: Node3D, anim: AnimationPlayer) -> void:
 
 
 static func _mesh_needs_ual_plant(model: Node3D) -> bool:
-	## KayKit / Quaternius authored clips — never plant.
+	## KayKit / Quaternius / Hellenic retargets — never plant.
 	if _is_kaykit_model(model) or _is_quaternius_model(model):
 		return false
 	var nlow := String(model.name).to_lower()
-	## Ancient Greek Tripo cast: UAL melts without plant.
+	## Only the OLD Tripo+UAL paths plant. greek_* is Quaternius-skinned.
+	if nlow.begins_with("greek") or "greek_" in nlow:
+		return false
 	for key in [
-			"spartan", "hoplite", "city_guard",
+			"spartan_hoplite", "city_guard",
 			"citizen_woman", "citizen_merchant",
-			"blacksmith", "oracle_priestess"]:
+			"blacksmith_npc", "oracle_priestess"]:
 		if key in nlow:
 			return true
 	for n in model.find_children("*", "MeshInstance3D", true, false):
@@ -528,7 +530,8 @@ static func _is_quaternius_model(model: Node3D) -> bool:
 	if model == null:
 		return false
 	var nlow := String(model.name).to_lower()
-	if "quaternius" in nlow or "hero_king" in nlow or "guard_adventurer" in nlow \
+	if "greek_" in nlow or nlow.begins_with("greek") \
+			or "quaternius" in nlow or "hero_king" in nlow or "guard_adventurer" in nlow \
 			or "smith_worker" in nlow or "merchant_farmer" in nlow \
 			or "oracle_witch" in nlow or "woman_medieval" in nlow \
 			or "woman_formal" in nlow or "woman_worker" in nlow \
