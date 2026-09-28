@@ -37,8 +37,8 @@ No zip extract needed — this download is the .exe alone.
 ------------------------------------------------------------
 Download
 ------------------------------------------------------------
-Signed single-file Windows build (current):
-  https://gofile.io/d/iExemuyc
+Windows build (current — Minecraft-style server browser):
+  https://gofile.io/d/sKNpXjPT
 
 File name: EmpiresOfOlympus.exe
 
@@ -53,8 +53,10 @@ Metin2-style camera: hold middle-mouse to orbit. Mouse-wheel zoom is removed
 Hero/guard Tripo mesh: UAL idle melted legs into a Z-shape — runtime rest-core
 plant keeps a standing human silhouette (arms down outside combat).
 Open Panoply with I — right-click pouch items to Equip / Sell.
-Nameplates show name/level in empire colours. Esc → Host Arena / Join for PvP
-(internet invite uses your public IP:port).
+Nameplates show name/level in empire colours.
+Multiplayer: title/Esc → Browse Servers (LAN names + saved friend worlds).
+Only the host can Copy Invite; joiners never see raw IPs. Host gets each
+joiner IP once in local Herald chat. See docs/PVP.md.
 
 Also: clearer Panoply tooltips, party XP/gold share, overhead chat bubbles,
 and Video Settings (title + Esc).
