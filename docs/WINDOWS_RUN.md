@@ -38,7 +38,7 @@ No zip extract needed — this download is the .exe alone.
 Download
 ------------------------------------------------------------
 Signed single-file Windows build (current):
-  https://gofile.io/d/6kQBFwsM
+  https://gofile.io/d/rUfCO040
 
 File name: EmpiresOfOlympus.exe
 
@@ -49,3 +49,6 @@ Shared/cloud multiplayer persistence is documented in docs/ACCOUNTS.md.
 
 In-world: Enter opens player chat (see docs/CHAT.md).
 Hold RMB + drag to look; open Panoply with I and drag gear onto slots.
+
+Also: clearer Panoply tooltips, party XP/gold share, overhead chat bubbles,
+and Video Settings (title + Esc).

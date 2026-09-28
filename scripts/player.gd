@@ -78,6 +78,11 @@ var spring_arm: SpringArm3D
 var camera: Camera3D
 var world: Node3D
 
+## Overhead yellow say bubble (ChatSystem → Label3D).
+const CHAT_BUBBLE_SECONDS := 6.5
+var _chat_bubble: Label3D = null
+var _chat_bubble_token: int = 0
+
 func _ready() -> void:
 	add_to_group("player")
 	collision_layer = 2
@@ -88,11 +93,59 @@ func _ready() -> void:
 	mp = GameState.max_mp()
 	GameState.level_up.connect(_on_level_up)
 	GameState.weapon_refined.connect(_on_weapon_refined)
+	if ChatSystem != null and not ChatSystem.message_received.is_connected(_on_chat_message):
+		ChatSystem.message_received.connect(_on_chat_message)
 	call_deferred("_late_ready")
 
 func _late_ready() -> void:
 	health_changed.emit(hp, GameState.max_hp())
 	mana_changed.emit(mp, GameState.max_mp())
+
+
+func _on_chat_message(sender: String, text: String, _stamp: float) -> void:
+	## Yellow overhead letters for this champion's own say lines.
+	if text == "" or sender == "Herald":
+		return
+	var mine := ""
+	if ChatSystem:
+		mine = ChatSystem.display_name()
+	if mine == "":
+		mine = GameState.player_name
+	var tagged := String(get_meta("chat_name", ""))
+	var for_me := (sender == mine) or (tagged != "" and sender == tagged)
+	if not for_me:
+		return
+	_show_chat_bubble(text)
+
+
+func _show_chat_bubble(line: String) -> void:
+	if _chat_bubble == null or not is_instance_valid(_chat_bubble):
+		_chat_bubble = Label3D.new()
+		_chat_bubble.billboard = BaseMaterial3D.BILLBOARD_ENABLED
+		_chat_bubble.shaded = false
+		_chat_bubble.double_sided = true
+		_chat_bubble.no_depth_test = true
+		_chat_bubble.pixel_size = 0.0042
+		_chat_bubble.font_size = 110
+		_chat_bubble.outline_size = 28
+		_chat_bubble.outline_modulate = Color(0.05, 0.04, 0.03, 0.95)
+		_chat_bubble.modulate = Color(1.0, 0.92, 0.25)
+		_chat_bubble.width = 1000.0
+		_chat_bubble.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
+		_chat_bubble.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+		add_child(_chat_bubble)
+		_chat_bubble.position = Vector3(0.0, 2.35, 0.0)
+	_chat_bubble.text = line
+	_chat_bubble.visible = true
+	_chat_bubble_token += 1
+	var token := _chat_bubble_token
+	var tree := get_tree()
+	if tree:
+		tree.create_timer(CHAT_BUBBLE_SECONDS).timeout.connect(
+			func() -> void:
+				if token == _chat_bubble_token and _chat_bubble != null and is_instance_valid(_chat_bubble):
+					_chat_bubble.visible = false
+		)
 
 func _build_body() -> void:
 	var shape := CollisionShape3D.new()

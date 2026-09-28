@@ -754,6 +754,39 @@ func sell_bag_entry(index: int, amount: int = 1) -> int:
 
 # ── Equipment (paperdoll panoply) ────────────────────────────────────────
 
+## Hover / detail text: name, description, wear slot, ATK/DEF/HP bonuses, sell.
+func item_tooltip_text(item_id: String) -> String:
+	if item_id == "":
+		return ""
+	var def := item_def(item_id)
+	var lines: PackedStringArray = []
+	lines.append(str(def.get("name", item_id)))
+	var desc := str(def.get("desc", "")).strip_edges()
+	if desc != "":
+		lines.append(desc)
+	var kind := str(def.get("kind", ""))
+	var slot := slot_for_kind(kind)
+	if slot != "":
+		lines.append("Slot: %s" % slot.capitalize())
+	var bonus := _equip_bonus_for(item_id)
+	var bits: PackedStringArray = []
+	if float(bonus.get("atk", 0.0)) != 0.0:
+		bits.append("ATK +%d" % int(bonus["atk"]))
+	if float(bonus.get("def", 0.0)) != 0.0:
+		bits.append("DEF +%d" % int(bonus["def"]))
+	if float(bonus.get("hp", 0.0)) != 0.0:
+		bits.append("HP +%d" % int(bonus["hp"]))
+	if not bits.is_empty():
+		lines.append(" · ".join(bits))
+	var min_lv := int(def.get("min_level", 0))
+	if min_lv > 1:
+		lines.append("Requires level %d" % min_lv)
+	var sell := item_sell_price(item_id)
+	if sell > 0:
+		lines.append("Sell: %d δ" % sell)
+	return "\n".join(lines)
+
+
 func slot_for_kind(kind: String) -> String:
 	match kind:
 		"helmet":

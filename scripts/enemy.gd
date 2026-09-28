@@ -595,6 +595,9 @@ func set_targeted(on: bool) -> void:
 
 func _telegraph_aggro() -> void:
 	## IDLE→CHASE: notice growl/howl (not the bite/lunge attack sample).
+	if player != null and is_instance_valid(player):
+		PartyShare.note(self, player)
+	PartyShare.note_nearby(self, global_position, float(cfg.get("aggro", 10.0)))
 	if _telegraph_cd > 0.0:
 		return
 	_telegraph_cd = 5.0
@@ -812,6 +815,10 @@ func take_damage(amount: float, from_position: Vector3) -> void:
 	damaged = true
 	_plate_timer = 0.0
 	_update_plate()
+	## Tag attackers (and nearby allies) for XP/gold share.
+	if player != null and is_instance_valid(player):
+		PartyShare.note(self, player)
+	PartyShare.note_nearby(self, from_position, 5.0)
 	# Hit-stop kick on the player's camera (covers melee, arrows and skills).
 	if player != null and is_instance_valid(player) and player.has_method("add_camera_shake"):
 		player.add_camera_shake(0.05, 0.14)
@@ -819,6 +826,8 @@ func take_damage(amount: float, from_position: Vector3) -> void:
 	if state == State.IDLE:
 		state = State.CHASE
 		_telegraph_aggro()
+		if player != null:
+			PartyShare.note(self, player)
 	if hp <= 0.0:
 		_die()
 		return
@@ -846,10 +855,17 @@ func _die() -> void:
 	if beacon != null:
 		beacon.visible = false
 
-	# Loot: XP instant; gold + gear + mats as Metin2-style ground drops.
+	# Loot: shared XP/gold among contributors; gear stays as ground drops.
 	var foe_lvl: int = int(cfg.get("level", 1))
-	GameState.add_xp(cfg["xp"])
-	_spawn_world_loot(foe_lvl)
+	if player != null:
+		PartyShare.note(self, player)
+	PartyShare.note_nearby(self, global_position, float(cfg.get("aggro", 10.0)) * 1.5)
+	var gold_range: Array = cfg["gold"]
+	var gold_amount: int = GameState.roll_gold_drop(
+		int(gold_range[0]), int(gold_range[1]), foe_lvl)
+	## Gold goes to wallets (split); skip gold pile when shared to wallets.
+	PartyShare.award_xp_and_gold(self, int(cfg["xp"]), gold_amount)
+	_spawn_world_loot(foe_lvl, false)
 	GameState.register_kill(String(cfg.get("quest_id", enemy_id)))
 	if is_boss:
 		GameState.register_minotaur_kill()
@@ -866,18 +882,19 @@ func _die() -> void:
 		t.timeout.connect(_fade_out)
 
 
-## Metin2-style world loot: gold pile, material, chance of level-gated gear.
-func _spawn_world_loot(foe_lvl: int) -> void:
+## Metin2-style world loot: material + gear on the ground (gold is wallet-split).
+func _spawn_world_loot(foe_lvl: int, include_gold: bool = false) -> void:
 	var parent := get_parent()
 	if parent == null:
 		return
 	var LootPickup := load("res://scripts/loot_pickup.gd")
 	if LootPickup == null:
 		return
-	var gold_range: Array = cfg["gold"]
-	var gold_amount: int = GameState.roll_gold_drop(
-		int(gold_range[0]), int(gold_range[1]), foe_lvl)
-	_spawn_one_drop(LootPickup, parent, "gold_coin", gold_amount)
+	if include_gold:
+		var gold_range: Array = cfg["gold"]
+		var gold_amount: int = GameState.roll_gold_drop(
+			int(gold_range[0]), int(gold_range[1]), foe_lvl)
+		_spawn_one_drop(LootPickup, parent, "gold_coin", gold_amount)
 
 	## Crafting mat almost always drops on the ground with an icon.
 	var mat_name: String = String(cfg.get("material", ""))

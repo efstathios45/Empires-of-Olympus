@@ -19,7 +19,7 @@ func _ready() -> void:
 	center.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
 
 	var panel := Kit.make_panel(false)
-	panel.custom_minimum_size = Vector2(720, 700)
+	panel.custom_minimum_size = Vector2(720, 780)
 	panel.clip_contents = true
 	center.add_child(panel)
 
@@ -61,6 +61,10 @@ func _ready() -> void:
 	if not AccountSystem.save_finished.is_connected(_on_save_finished):
 		AccountSystem.save_finished.connect(_on_save_finished)
 
+	var settings_btn := Kit.make_button("Settings", false)
+	settings_btn.pressed.connect(_on_settings)
+	v.add_child(settings_btn)
+
 	var save_btn := Kit.make_button("Save", true)
 	save_btn.pressed.connect(_on_save)
 	v.add_child(save_btn)
@@ -72,6 +76,15 @@ func _ready() -> void:
 	var menu := Kit.make_button("Quit", false)
 	menu.pressed.connect(_on_menu)
 	v.add_child(menu)
+
+
+func _on_settings() -> void:
+	var SettingsPanel := load("res://scripts/ui/panel_settings.gd")
+	if SettingsPanel == null:
+		return
+	var panel: Control = SettingsPanel.new()
+	add_child(panel)
+	panel.closed.connect(func() -> void: pass)
 
 
 func _on_save() -> void:
