@@ -380,11 +380,21 @@ static func install_leg_plant_fix(model: Node3D) -> void:
 
 
 static func _mesh_needs_ual_plant(model: Node3D) -> bool:
+	## All plaza / hero Tripo humanoids melt under UAL — plant them all.
 	var nlow := String(model.name).to_lower()
-	if "spartan" in nlow or "hoplite" in nlow or "city_guard" in nlow or "guard" in nlow:
-		return true
+	for key in [
+			"spartan", "hoplite", "city_guard", "guard",
+			"citizen_woman", "citizen_merchant", "merchant",
+			"blacksmith", "oracle_priestess", "priestess"]:
+		if key in nlow:
+			return true
 	for n in model.find_children("*", "MeshInstance3D", true, false):
 		if _BROKEN_UAL_MESH in String(n.name):
+			return true
+	## Fallback: any skeleton that looks like a UAL humanoid (has Hips + UpperArm).
+	for n in model.find_children("*", "Skeleton3D", true, false):
+		var skel := n as Skeleton3D
+		if skel != null and skel.find_bone("Hips") >= 0 and skel.find_bone("LeftUpperArm") >= 0:
 			return true
 	return false
 
