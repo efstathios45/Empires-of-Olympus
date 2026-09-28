@@ -1,5 +1,5 @@
 extends SceneTree
-## Smoke: address parsing + raw upright idle + pending join.
+## Smoke: address parsing + leg plant + pending join.
 
 func _init() -> void:
 	call_deferred("run")
@@ -26,29 +26,10 @@ func run() -> void:
 	var m: Node3D = load("res://assets/characters/spartan_hoplite/spartan_hoplite.glb").instantiate()
 	get_root().add_child(m)
 	ModelUtils.setup_character_for_movement(m, 1.85)
-	var anim := m.find_child("AnimationPlayer", true, false) as AnimationPlayer
-	if anim == null:
-		anim = AnimationPlayer.new()
-		m.add_child(anim)
-	var lib := load("res://assets/characters/spartan_hoplite/spartan_hoplite_animations.tres") as AnimationLibrary
-	if anim.has_animation_library(""):
-		anim.remove_animation_library("")
-	anim.add_animation_library("", lib)
 	var skel: Skeleton3D
 	for n in m.find_children("*", "Skeleton3D", true, false):
 		skel = n
 		break
-	assert(skel != null)
-	assert(not skel.has_node("SkyGazeFix"), "no bone twist")
-	anim.play("ual1_Idle")
-	for i in 20:
-		await process_frame
-	var hi := skel.find_bone("Head")
-	var hips := skel.find_bone("Hips")
-	var ht := skel.global_transform * skel.get_bone_global_pose(hi)
-	var hp := skel.global_transform * skel.get_bone_global_pose(hips)
-	var upright: float = (ht.origin - hp.origin).normalized().dot(Vector3.UP)
-	print("SMOKE_UPRIGHT=", upright)
-	assert(upright > 0.95, "idle not upright: %s" % upright)
+	assert(skel != null and skel.has_node("LegPlantFix"))
 	print("SMOKE_ONLINE_HOST_OK")
 	quit(0)

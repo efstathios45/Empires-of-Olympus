@@ -49,8 +49,9 @@ Shared/cloud multiplayer persistence is documented in docs/ACCOUNTS.md.
 
 In-world: Enter opens player chat (see docs/CHAT.md).
 Metin2-style camera: hold middle-mouse to orbit. Mouse-wheel zoom is removed
-(fixed over-shoulder distance) so close zoom cannot warp the silhouette.
-No bone "sky-gaze" twist — raw UAL idle stands upright.
+(fixed over-shoulder distance).
+Hero/guard Tripo mesh: UAL idle melted legs into a Z-shape — runtime rest-core
+plant keeps a standing human silhouette (arms down outside combat).
 Open Panoply with I — right-click pouch items to Equip / Sell.
 Nameplates show name/level in empire colours. Esc → Host Arena / Join for PvP
 (internet invite uses your public IP:port).

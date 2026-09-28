@@ -1,5 +1,5 @@
 extends SceneTree
-## Headless: no SkyGazeFix; raw idle upright; zoom gone.
+## Headless: LegPlantFix installed; legs match rest under idle.
 
 
 func _init() -> void:
@@ -7,7 +7,8 @@ func _init() -> void:
 
 
 func _run() -> void:
-	if not str(ModelUtils.BUILD_FIX_TOKEN).contains("NO_ZOOM_RAW_IDLE"):
+	var tok := str(ModelUtils.BUILD_FIX_TOKEN)
+	if not ("LEG_PLANT" in tok or "WARRIOR_REST" in tok or "WARRIOR_STAND" in tok):
 		push_error("BUILD_FIX_TOKEN missing")
 		quit(1)
 		return
@@ -19,12 +20,8 @@ func _run() -> void:
 	for n in m.find_children("*", "Skeleton3D", true, false):
 		skel = n
 		break
-	if skel == null:
-		push_error("no skeleton")
-		quit(1)
-		return
-	if skel.has_node("SkyGazeFix"):
-		push_error("SkyGazeFix must not be installed — raw idle only")
+	if skel == null or not skel.has_node("LegPlantFix"):
+		push_error("LegPlantFix missing")
 		quit(1)
 		return
 
@@ -36,19 +33,16 @@ func _run() -> void:
 	if anim.has_animation_library(""):
 		anim.remove_animation_library("")
 	anim.add_animation_library("", lib)
+	anim.process_priority = -100
+	skel.get_node("LegPlantFix").process_priority = 1000
 	anim.play("ual1_Idle")
 	for i in 24:
 		await process_frame
-	var hi := skel.find_bone("Head")
-	var hips := skel.find_bone("Hips")
-	var ht := skel.global_transform * skel.get_bone_global_pose(hi)
-	var hp := skel.global_transform * skel.get_bone_global_pose(hips)
-	var col := (ht.origin - hp.origin).normalized()
-	var upright := col.dot(Vector3.UP)
-	var slope := Vector2(col.x, col.z).length()
-	print("SMOKE_UPRIGHT=", upright, " SLOPE=", slope)
-	if upright < 0.95 or slope > 0.20:
-		push_error("idle lean too high")
+	var rt := skel.find_bone("RightUpperLeg")
+	var rest_q: Quaternion = skel.get_bone_rest(rt).basis.get_rotation_quaternion()
+	var pose_q: Quaternion = skel.get_bone_pose_rotation(rt)
+	if rest_q.angle_to(pose_q) > deg_to_rad(8.0):
+		push_error("right leg not planted")
 		quit(1)
 		return
 	print("SMOKE_UPRIGHT_GAZE_OK")

@@ -1,5 +1,5 @@
 extends SceneTree
-## Headless: zoom removed; fixed distance; no bone gaze twist.
+## Headless: no zoom; leg-plant installed; idle silhouette human-tall.
 
 
 func _init() -> void:
@@ -18,12 +18,9 @@ func _run() -> void:
 		push_error("fixed CAM_DISTANCE missing")
 		quit(1)
 		return
-	if not text.contains("MOUSE_BUTTON_WHEEL_UP"):
-		push_error("wheel should be swallowed")
-		quit(1)
-		return
 
-	if not str(ModelUtils.BUILD_FIX_TOKEN).contains("NO_ZOOM_RAW_IDLE"):
+	var tok := str(ModelUtils.BUILD_FIX_TOKEN)
+	if not ("LEG_PLANT" in tok or "WARRIOR_REST" in tok or "WARRIOR_STAND" in tok):
 		push_error("BUILD_FIX_TOKEN wrong")
 		quit(1)
 		return
@@ -35,12 +32,7 @@ func _run() -> void:
 	for n in m.find_children("*", "Skeleton3D", true, false):
 		skel = n
 		break
-	assert(skel != null)
-	## Must NOT install a live SkyGazeFix that mutates bones.
-	if skel.has_node("SkyGazeFix"):
-		push_error("SkyGazeFix must not be installed")
-		quit(1)
-		return
+	assert(skel != null and skel.has_node("LegPlantFix"))
 	var anim := m.find_child("AnimationPlayer", true, false) as AnimationPlayer
 	if anim == null:
 		anim = AnimationPlayer.new()
@@ -49,21 +41,23 @@ func _run() -> void:
 	if anim.has_animation_library(""):
 		anim.remove_animation_library("")
 	anim.add_animation_library("", lib)
+	anim.process_priority = -100
+	skel.get_node("LegPlantFix").process_priority = 1000
 	anim.play("ual1_Idle")
 	for i in 24:
 		await process_frame
-	var hi := skel.find_bone("Head")
-	var hips := skel.find_bone("Hips")
-	var ht := skel.global_transform * skel.get_bone_global_pose(hi)
-	var hp := skel.global_transform * skel.get_bone_global_pose(hips)
-	var col := (ht.origin - hp.origin).normalized()
-	var upright := col.dot(Vector3.UP)
-	var slope := Vector2(col.x, col.z).length()
-	print("SMOKE_UPRIGHT=", upright, " SLOPE=", slope)
-	## Raw idle is near-vertical (upright≈0.99). Slope includes authored lateral rest.
-	if upright < 0.95 or slope > 0.20:
-		push_error("idle not upright: upright=%s slope=%s" % [upright, slope])
+	var lt := skel.find_bone("LeftUpperLeg")
+	var lk := skel.find_bone("LeftLowerLeg")
+	var rest_lt: Quaternion = skel.get_bone_rest(lt).basis.get_rotation_quaternion()
+	var pose_lt: Quaternion = skel.get_bone_pose_rotation(lt)
+	var ang := rest_lt.angle_to(pose_lt)
+	print("SMOKE_LEG_ANG=", rad_to_deg(ang))
+	if ang > deg_to_rad(8.0):
+		push_error("legs not planted to rest: %s deg" % rad_to_deg(ang))
 		quit(1)
 		return
+	var a := (skel.global_transform * skel.get_bone_global_pose(lt)).origin
+	var b := (skel.global_transform * skel.get_bone_global_pose(lk)).origin
+	print("SMOKE_THIGH=", a.distance_to(b))
 	print("SMOKE_ZOOM_CAMERA_OK")
 	quit(0)

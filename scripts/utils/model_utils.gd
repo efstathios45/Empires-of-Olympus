@@ -1,7 +1,10 @@
 class_name ModelUtils
 
 ## Baked into exports so we can verify the PCK actually contains this revision.
-const BUILD_FIX_TOKEN := "EOO_FIX_NO_ZOOM_RAW_IDLE_V1"
+const BUILD_FIX_TOKEN := "EOO_FIX_WARRIOR_STAND_V7"
+
+## Tripo mesh id shared by spartan_hoplite + city_guard — UAL melts this bind.
+const _BROKEN_UAL_MESH := "95ce6ed4"
 
 ## Ground a model so its mesh bottom sits at y_offset above its parent origin.
 ##
@@ -326,11 +329,11 @@ static func setup_character_for_movement(node: Node3D, target_height: float = 1.
 	if node.is_inside_tree():
 		node.force_update_transform()
 	ground_model(node)
-	## Do NOT install SkyGazeFix. Bone dampen/straighten twisted the silhouette
-	## (raw UAL idle |slope|≈0.035 vs twist ≈0.20). Camera zoom is removed instead.
+	## Tripo+UAL melts legs into a Z-shape. Plant legs to rest after every pose.
+	install_leg_plant_fix(node)
 
 
-## Legacy no-op — bone pitch hacks made heroes look less human, not more.
+## Legacy no-op — hip/chest pitch hacks made heroes look less human.
 static func correct_sky_gaze(_skel: Skeleton3D, _strength: float = 1.0) -> void:
 	return
 
@@ -347,9 +350,43 @@ static func _dampen_local_pitch(skel: Skeleton3D, bone_name: String, strength: f
 	skel.set_bone_pose_rotation(bone_i, Quaternion.from_euler(e))
 
 
-## Legacy no-op installer — kept so old callers still resolve.
-static func install_sky_gaze_fix(_model: Node3D) -> void:
-	return
+## Legacy alias.
+static func install_sky_gaze_fix(model: Node3D) -> void:
+	install_leg_plant_fix(model)
+
+
+## Plant torso+legs to rest after AnimationPlayer (broken Tripo warrior only).
+static func install_leg_plant_fix(model: Node3D) -> void:
+	if model == null:
+		return
+	if not _mesh_needs_ual_plant(model):
+		return
+	var skel: Skeleton3D = null
+	for n in model.find_children("*", "Skeleton3D", true, false):
+		skel = n as Skeleton3D
+		break
+	if skel == null:
+		return
+	if skel.has_node("LegPlantFix"):
+		return
+	var anim := model.find_child("AnimationPlayer", true, false) as AnimationPlayer
+	if anim != null:
+		anim.process_priority = -100
+	var fix := Node.new()
+	fix.name = "LegPlantFix"
+	fix.set_script(load("res://scripts/utils/leg_plant_fix.gd"))
+	fix.process_priority = 1000
+	skel.add_child(fix)
+
+
+static func _mesh_needs_ual_plant(model: Node3D) -> bool:
+	var nlow := String(model.name).to_lower()
+	if "spartan" in nlow or "hoplite" in nlow or "city_guard" in nlow or "guard" in nlow:
+		return true
+	for n in model.find_children("*", "MeshInstance3D", true, false):
+		if _BROKEN_UAL_MESH in String(n.name):
+			return true
+	return false
 
 ## Return the Godot yaw that aims canonical MODEL_FRONT (-Z) along direction.
 static func yaw_from_direction(direction: Vector3) -> float:
