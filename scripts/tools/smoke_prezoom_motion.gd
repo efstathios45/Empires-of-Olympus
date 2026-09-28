@@ -27,8 +27,9 @@ func run() -> void:
 		plant = model.find_child("LegPlantFix", true, false) != null
 		nlow = model.name.to_lower()
 	print("name=", nlow, " idle=", idle, " walk=", walk, " attack=", atk, " plant=", plant)
+	## Plant must be ON for Tripo (raw UAL melts). Clips still resolve to UAL names.
 	var ok: bool = model != null and "spartan" in nlow \
 		and idle.begins_with("ual") and walk.begins_with("ual") and atk.begins_with("ual") \
-		and not plant
+		and plant
 	print("SMOKE_PREZOOM_MOTION=", "PASS" if ok else "FAIL")
 	quit(0 if ok else 1)

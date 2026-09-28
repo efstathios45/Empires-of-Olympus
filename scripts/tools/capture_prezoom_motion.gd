@@ -16,7 +16,7 @@ func run() -> void:
 	stage.add_child(hero)
 	ModelUtils.setup_character_for_movement(hero, 1.85)
 	var plant := hero.find_child("LegPlantFix", true, false)
-	print("hero plant=", plant != null)
+	print("hero plant=", plant != null, " (expected true — Tripo needs plant)")
 	var anim := hero.find_child("AnimationPlayer", true) as AnimationPlayer
 	if anim == null:
 		anim = AnimationPlayer.new()
