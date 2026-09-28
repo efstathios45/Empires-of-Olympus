@@ -17,7 +17,7 @@ func run() -> void:
 	var hero: Node3D = load("res://assets/characters/spartan_hoplite/spartan_hoplite.glb").instantiate()
 	stage.add_child(hero)
 	ModelUtils.setup_character_for_movement(hero, 1.85)
-	hero.rotation.y = PI
+	## Tripo meshes face opposite the UAL bone forward — leave authored yaw.
 	var anim := hero.find_child("AnimationPlayer", true) as AnimationPlayer
 	if anim == null:
 		anim = AnimationPlayer.new()
@@ -45,7 +45,7 @@ func run() -> void:
 	stage.add_child(cam)
 	cam.current = true
 	cam.fov = 36
-	cam.position = Vector3(2.3, 1.45, 3.1)
+	cam.position = Vector3(2.3, 1.45, -3.1)
 	cam.look_at(Vector3(0, 1.1, 0), Vector3.UP)
 
 	HeroAnim.play(anim, "idle")
@@ -71,7 +71,7 @@ func run() -> void:
 	stage.add_child(cam)
 	cam.current = true
 	cam.fov = 36
-	cam.position = Vector3(0, 1.7, 14.0)
+	cam.position = Vector3(0, 1.7, -14.0)
 	cam.look_at(Vector3(0, 0.95, 0), Vector3.UP)
 
 	var entries := [
@@ -94,7 +94,6 @@ func run() -> void:
 		stage.add_child(n)
 		n.position = Vector3(x, 0, 0)
 		ModelUtils.setup_character_for_movement(n, float(e[2]))
-		n.rotation.y = PI
 		var a := n.find_child("AnimationPlayer", true) as AnimationPlayer
 		if a == null:
 			a = AnimationPlayer.new()

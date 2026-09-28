@@ -7,9 +7,6 @@ func _init() -> void:
 
 
 func run() -> void:
-	var gs := get_node_or_null("/root/GameState")
-	if gs:
-		gs.set("player_class", "hoplite")
 	var PlayerScript = load("res://scripts/player.gd")
 	var player = PlayerScript.new()
 	root.add_child(player)
