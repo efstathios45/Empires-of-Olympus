@@ -40,7 +40,7 @@ func run() -> void:
 	print("name=", nlow, " idle=", idle, " walk=", walk, " attack=", atk,
 		" block=", block, " plant=", plant, " helm=", helm,
 		" wrists_ok=", wrists_ok, " weapon=", weapon_ok, " shield=", shield_ok)
-	var ok: bool = model != null and ("guard" in nlow or "adventurer" in nlow or "quaternius" in nlow) \
+	var ok: bool = model != null and ("king" in nlow or "hero" in nlow or "quaternius" in nlow) \
 		and walk == "Walk" and block == "Idle_Sword" and not plant \
 		and helm and wrists_ok and weapon_ok and shield_ok and atk != ""
 	print("SMOKE_HELLENIC_FIX=", "PASS" if ok else "FAIL")

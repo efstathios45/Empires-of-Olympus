@@ -15,8 +15,8 @@ func run() -> void:
 	var vp := _stage(900, 900)
 	var stage: Node3D = vp.get_child(0)
 
-	var hero: Node3D = load("res://assets/characters/quaternius_guard_adventurer/guard_adventurer.glb").instantiate()
-	hero.name = "guard_adventurer"
+	var hero: Node3D = load("res://assets/characters/quaternius_hero_king/hero_king.glb").instantiate()
+	hero.name = "hero_king"
 	stage.add_child(hero)
 	ModelUtils.setup_character_for_movement(hero, 1.85)
 	GreekLook.apply(hero, "hoplite")
@@ -31,16 +31,16 @@ func run() -> void:
 	if sh:
 		GearPaint.paint_attached(sh, "res://assets/props/gear/aspis_shield.glb")
 
-	## Marker: red arrow along MODEL_FRONT (-Z) in front of the hero.
-	var arrow := MeshInstance3D.new()
+	## Green ground stripe along MODEL_FRONT (-Z) — walk should advance that way.
+	var stripe := MeshInstance3D.new()
 	var box := BoxMesh.new()
-	box.size = Vector3(0.08, 0.08, 1.2)
-	arrow.mesh = box
-	var amat := StandardMaterial3D.new()
-	amat.albedo_color = Color(0.9, 0.15, 0.1)
-	arrow.material_override = amat
-	stage.add_child(arrow)
-	arrow.position = Vector3(0.0, 1.1, -1.4)
+	box.size = Vector3(0.35, 0.02, 3.0)
+	stripe.mesh = box
+	var smat := StandardMaterial3D.new()
+	smat.albedo_color = Color(0.2, 0.75, 0.35)
+	stripe.material_override = smat
+	stage.add_child(stripe)
+	stripe.position = Vector3(0.0, 0.02, -1.5)
 
 	var cam := Camera3D.new()
 	stage.add_child(cam)

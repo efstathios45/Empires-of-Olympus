@@ -62,11 +62,11 @@ const GRIP_BY_GLB := {
 		"rotation_deg": Vector3(-90.0, 0.0, 0.0),
 		"scale": 1.12,
 	},
-	## Tuned on guard_adventurer Idle_Sword — tip forward, grip in palm.
+	## Tuned on hero_king Idle_Neutral — tip up/forward, grip in palm (QUAT_final).
 	"res://assets/props/weapons/dory_spear.glb": {
 		"bone": "Wrist.R",
-		"position": Vector3(0.0, 0.04, 0.0),
-		"rotation_deg": Vector3(-90.0, 0.0, 0.0),
+		"position": Vector3(0.0, 0.05, 0.0),
+		"rotation_deg": Vector3(0.0, 0.0, -90.0),
 		"scale": 1.05,
 	},
 	"res://assets/props/weapons/cretan_bow.glb": {

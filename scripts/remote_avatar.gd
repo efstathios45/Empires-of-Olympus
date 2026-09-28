@@ -1,7 +1,7 @@
 extends CharacterBody3D
 ## Lightweight remote champion — mesh, nameplate, PvP hitbox. Driven by NetSession.
 
-const CharacterGLB := "res://assets/characters/quaternius_guard_adventurer/guard_adventurer.glb"
+const CharacterGLB := "res://assets/characters/quaternius_hero_king/hero_king.glb"
 const CharacterLib := ""
 const GreekLook = preload("res://scripts/utils/greek_look.gd")
 const NameplateScript = preload("res://scripts/player_nameplate.gd")

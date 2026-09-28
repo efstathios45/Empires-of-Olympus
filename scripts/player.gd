@@ -9,9 +9,9 @@ signal respawned
 signal skill_cooldown_started(duration: float)
 signal combo_performed
 
-## Quaternius guard + GreekLook (Corinthian/bronze) — authored Walk/Slash, no LegPlant.
+## Quaternius hero_king + GreekLook (Corinthian/bronze) — authored Walk/Slash, no LegPlant.
 ## Achilles auto-bind moonwalked and collapsed the arms; do not use it in-game.
-const CharacterGLB := "res://assets/characters/quaternius_guard_adventurer/guard_adventurer.glb"
+const CharacterGLB := "res://assets/characters/quaternius_hero_king/hero_king.glb"
 const CharacterLib := ""
 const GearGrip = preload("res://scripts/gear_grip.gd")
 const GearPaint = preload("res://scripts/gear_paint.gd")
