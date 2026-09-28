@@ -38,7 +38,7 @@ No zip extract needed — this download is the .exe alone.
 Download
 ------------------------------------------------------------
 Windows build (current — KayKit hero walk/hit/block):
-  https://gofile.io/d/PENDING
+  https://gofile.io/d/xo5RL0Am
 
 File name: EmpiresOfOlympus.exe
 
