@@ -9,10 +9,12 @@ signal respawned
 signal skill_cooldown_started(duration: float)
 signal combo_performed
 
-const CharacterGLB := "res://assets/characters/spartan_hoplite/spartan_hoplite.glb"
-const CharacterLib := "res://assets/characters/spartan_hoplite/spartan_hoplite_animations.tres"
+## KayKit Adventurers Knight — real walk/hit/block clips + sword/shield sockets.
+const CharacterGLB := "res://assets/characters/kaykit_knight/Knight.glb"
+const CharacterLib := "" ## Embedded KayKit AnimationPlayer; no UAL overlay.
 const GearGrip = preload("res://scripts/gear_grip.gd")
 const GearPaint = preload("res://scripts/gear_paint.gd")
+const HeroAnim = preload("res://scripts/utils/hero_anim.gd")
 const ProjectileScript = preload("res://scripts/projectile.gd")
 const VfxHelper = preload("res://scripts/vfx_helper.gd")
 const NameplateScript = preload("res://scripts/player_nameplate.gd")
@@ -34,8 +36,8 @@ const CAM_PITCH_MAX := -0.18
 const CAM_PITCH_DEFAULT := -0.28
 const CAM_SPRING_MARGIN := 0.35
 
-const COMBO_CLIPS := ["ual2_Sword_Light_A", "ual2_Sword_Light_B", "ual2_Sword_Light_C"]
-const HEAVY_CLIP := "ual2_Sword_Heavy_A"
+const COMBO_ALIASES := ["attack_1", "attack_2", "attack_3"]
+const HEAVY_ALIAS := "attack_heavy"
 
 # Footsteps are driven by distance travelled, so they always match the stride
 # no matter how the move speed is tuned. Longer spacing + a cooldown keeps
@@ -231,6 +233,7 @@ func _build_body() -> void:
 		char_path = CharacterGLB
 	var model: Node3D = load(char_path).instantiate()
 	mesh_root.add_child(model)
+	## KayKit is authored ~human height; Tripo plant must NOT run on it.
 	ModelUtils.setup_character_for_movement(model, 1.85)
 	_apply_class_tint(model, cd0)
 
@@ -239,15 +242,16 @@ func _build_body() -> void:
 		anim = AnimationPlayer.new()
 		anim.name = "AnimationPlayer"
 		model.add_child(anim)
-	# Always use the full combat UAL library (shared GeneralSkeleton across class meshes).
-	if ResourceLoader.exists(CharacterLib):
+	## Only overlay a library when the mesh has no combat clips of its own.
+	if CharacterLib != "" and ResourceLoader.exists(CharacterLib) and not HeroAnim.is_kaykit(model):
 		var lib := load(CharacterLib) as AnimationLibrary
 		if lib:
 			if anim.has_animation_library(""):
 				anim.remove_animation_library("")
 			anim.add_animation_library("", lib)
 	ModelUtils.set_animation_loops(anim)
-	ModelUtils.bind_leg_plant_anim(model, anim)
+	if not HeroAnim.is_kaykit(model):
+		ModelUtils.bind_leg_plant_anim(model, anim)
 
 	var weapon_path: String = _resolved_weapon_path()
 	if ResourceLoader.exists(weapon_path):
@@ -265,7 +269,7 @@ func _build_body() -> void:
 
 	_attach_helmet(model)
 
-	anim.play("ual1_Idle")
+	HeroAnim.play(anim, "idle")
 	if not GameState.inventory_changed.is_connected(_on_gear_changed):
 		GameState.inventory_changed.connect(_on_gear_changed)
 
@@ -467,7 +471,7 @@ func _process_free(delta: float) -> void:
 	if _ui_open():
 		velocity.x = move_toward(velocity.x, 0.0, 24.0 * delta)
 		velocity.z = move_toward(velocity.z, 0.0, 24.0 * delta)
-		_play_anim("ual1_Idle")
+		_play_alias("idle")
 		return
 	var input_dir := Input.get_vector("move_left", "move_right", "move_forward", "move_back")
 	var cam_basis := camera_pivot.global_transform.basis
@@ -482,18 +486,18 @@ func _process_free(delta: float) -> void:
 		velocity.x = dir.x * speed
 		velocity.z = dir.z * speed
 		_face_direction(dir, delta)
-		_play_anim("ual1_Sprint" if sprinting else "ual1_Walk")
+		_play_alias("sprint" if sprinting else "walk")
 		_tick_footsteps(delta, sprinting)
 	else:
 		velocity.x = move_toward(velocity.x, 0.0, 24.0 * delta)
 		velocity.z = move_toward(velocity.z, 0.0, 24.0 * delta)
-		_play_anim("ual1_Idle")
+		_play_alias("idle")
 		# Prime the accumulator so the first step lands soon after moving off.
 		_step_accum = maxf(_step_accum, STEP_DIST_WALK * 0.7)
 
 	if Input.is_action_just_pressed("jump") and is_on_floor():
 		velocity.y = JUMP_VELOCITY
-		_play_anim("ual1_Jump", false)
+		_play_alias("jump", false)
 
 	if Input.is_action_just_pressed("attack_light"):
 		_try_light_attack()
@@ -502,9 +506,10 @@ func _process_free(delta: float) -> void:
 		_try_skill()
 	elif Input.is_action_just_pressed("dodge") and dir.length() > 0.1:
 		_start_dodge(dir)
-	elif Input.is_action_just_pressed("block"):
+	elif Input.is_action_pressed("block"):
+		## Hold F — raise shield (KayKit Blocking loop). Releases in _process_block.
 		state = State.BLOCK
-		_play_anim("ual2_Sword_Block")
+		_play_alias("block")
 	elif Input.is_action_just_pressed("potion_1"):
 		_drink_health_potion()
 	elif Input.is_action_just_pressed("potion_2"):
@@ -599,8 +604,11 @@ func _process_dodge(delta: float) -> void:
 func _process_block(delta: float) -> void:
 	velocity.x = move_toward(velocity.x, 0.0, 20.0 * delta)
 	velocity.z = move_toward(velocity.z, 0.0, 20.0 * delta)
+	## Keep the shield-up clip looping while F is held.
+	_play_alias("block")
 	if not Input.is_action_pressed("block"):
 		state = State.FREE
+		_play_alias("idle")
 
 func _apply_gravity(delta: float) -> void:
 	if not is_on_floor():
@@ -625,21 +633,29 @@ func _play_anim(clip: String, loop_ok: bool = true) -> void:
 		return
 	anim.play(clip)
 
+
+func _play_alias(alias: String, loop_ok: bool = true) -> void:
+	HeroAnim.play(anim, alias, loop_ok)
+
+
+func _clip_for_alias(alias: String) -> String:
+	return HeroAnim.resolve(anim, alias)
+
 # ── Combat ───────────────────────────────────────────────────────────────
 func _try_light_attack() -> void:
 	var cd := GameState.class_data()
 	if cd["ranged"]:
-		_start_attack("ual1_Sword_Attack", 0.55)
+		_start_attack(_clip_for_alias("attack_ranged"), 0.55)
 	else:
 		if combo_window <= 0.0:
 			combo_index = 0
-		_start_attack(COMBO_CLIPS[combo_index], 0.5)
-		combo_index = (combo_index + 1) % COMBO_CLIPS.size()
+		_start_attack(_clip_for_alias(COMBO_ALIASES[combo_index]), 0.55)
+		combo_index = (combo_index + 1) % COMBO_ALIASES.size()
 		combo_window = 1.1
 	_play_attack_swing_sfx(false)
 
 func _try_heavy_attack() -> void:
-	_start_attack(HEAVY_CLIP, 0.85)
+	_start_attack(_clip_for_alias(HEAVY_ALIAS), 0.85)
 	_play_attack_swing_sfx(true)
 
 func _play_attack_swing_sfx(heavy: bool) -> void:
@@ -659,7 +675,8 @@ func _start_attack(clip: String, duration: float) -> void:
 	_attack_hit_time = duration * 0.55
 	attack_hit_done = false
 	_face_camera()
-	anim.play(clip)
+	if clip != "" and anim != null and anim.has_animation(clip):
+		anim.play(clip)
 	combo_performed.emit()
 
 var _heavy_next: bool = false
@@ -667,7 +684,7 @@ var _heavy_next: bool = false
 func _apply_attack_hit() -> void:
 	var cd := GameState.class_data()
 	var dmg := GameState.attack_damage()
-	if anim.current_animation == HEAVY_CLIP:
+	if anim != null and anim.current_animation == _clip_for_alias(HEAVY_ALIAS):
 		dmg *= 1.8
 	if cd["ranged"]:
 		_fire_projectile(dmg, cd["projectile_speed"])
@@ -761,7 +778,7 @@ func _try_skill() -> void:
 	skill_cooldown_started.emit(skill_cd)
 	mana_changed.emit(mp, GameState.max_mp())
 	_face_camera()
-	anim.play("ual1_Sword_Attack")
+	_play_alias("attack_heavy", false)
 
 	match GameState.player_class:
 		"hoplite":
@@ -821,7 +838,7 @@ func _start_dodge(dir: Vector3) -> void:
 	invuln_timer = 0.5
 	dodge_dir = dir.normalized()
 	_face_direction(dodge_dir, 1.0)
-	anim.play("ual1_Roll")
+	_play_alias("dodge", false)
 	AudioManager.play_sfx("dodge_roll", -4.0)
 
 func _drink_health_potion() -> void:
@@ -859,6 +876,7 @@ func _apply_damage(amount: float, from_position: Vector3, attacker_peer: int) ->
 	if state == State.BLOCK:
 		dmg *= 0.35
 		AudioManager.play_sfx("spear_clash", -2.0)
+		_play_alias("block_hit", false)
 	hp -= dmg
 	health_changed.emit(hp, GameState.max_hp())
 	# Taking a hit kicks the camera harder than landing one.
@@ -867,7 +885,7 @@ func _apply_damage(amount: float, from_position: Vector3, attacker_peer: int) ->
 		_die()
 	else:
 		if state == State.FREE:
-			anim.play("ual1_Hit_Chest")
+			_play_alias("hit", false)
 		AudioManager.play_sfx("hit_flesh", -4.0, 0.8)
 		_play_male_voice(MALE_HURT_VOICES, -3.5)
 
@@ -877,7 +895,7 @@ func _die() -> void:
 	death_timer = 4.0
 	_set_target(null)
 	add_camera_shake(0.26, 0.5)
-	anim.play("ual1_Death01")
+	_play_alias("death", false)
 	Input.mouse_mode = Input.MOUSE_MODE_VISIBLE
 	AudioManager.play_music_once("defeat")
 	## Rival kill: scatter random worn + bag gear onto the field.
@@ -905,7 +923,7 @@ func _respawn() -> void:
 	if world and world.has_method("get_respawn_point"):
 		global_position = world.get_respawn_point()
 	velocity = Vector3.ZERO
-	anim.play("ual1_Idle")
+	_play_alias("idle")
 	AudioManager.play_music("exploration")
 	health_changed.emit(hp, GameState.max_hp())
 	mana_changed.emit(mp, GameState.max_mp())

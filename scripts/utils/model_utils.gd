@@ -1,7 +1,7 @@
 class_name ModelUtils
 
 ## Baked into exports so we can verify the PCK actually contains this revision.
-const BUILD_FIX_TOKEN := "EOO_FIX_WARRIOR_STAND_V8"
+const BUILD_FIX_TOKEN := "EOO_FIX_KAYKIT_HERO_V1"
 
 ## Tripo mesh id shared by spartan_hoplite + city_guard — UAL melts this bind.
 const _BROKEN_UAL_MESH := "95ce6ed4"
@@ -325,12 +325,117 @@ static func setup_character_for_movement(node: Node3D, target_height: float = 1.
 	# Keep BUILD_FIX_TOKEN live in exported bytecode (unused consts are stripped).
 	if node == null and BUILD_FIX_TOKEN.is_empty():
 		return
-	scale_to_height(node, target_height)
+	## KayKit chibi AABBs include IK helpers below the soles — scale by foot→head.
+	if _is_kaykit_model(node):
+		scale_by_foot_to_head(node, target_height)
+	else:
+		scale_to_height(node, target_height)
 	if node.is_inside_tree():
 		node.force_update_transform()
 	ground_model(node)
+	## KayKit (and similar) often have AABB below the soles — pin by foot bones.
+	ground_by_feet(node)
+	if _is_kaykit_model(node):
+		## Foot bones sit ~15cm above the mesh soles / walk root-bob bias.
+		node.position.y -= 0.16
+		install_kaykit_foot_ground(node)
 	## Tripo+UAL melts legs into a Z-shape. Plant legs to rest after every pose.
 	install_leg_plant_fix(node)
+
+
+## Keep KayKit soles on the MeshRoot ground as walk/root bob plays.
+static func install_kaykit_foot_ground(model: Node3D) -> void:
+	if model == null:
+		return
+	var skel: Skeleton3D = null
+	for n in model.find_children("*", "Skeleton3D", true, false):
+		skel = n as Skeleton3D
+		break
+	if skel == null or skel.has_node("KaykitFootGround"):
+		return
+	var fix := SkeletonModifier3D.new()
+	fix.name = "KaykitFootGround"
+	fix.set_script(load("res://scripts/utils/kaykit_foot_ground.gd"))
+	skel.add_child(fix)
+	if fix.has_method("setup"):
+		fix.call("setup", model)
+
+
+static func _is_kaykit_model(model: Node3D) -> bool:
+	if model == null:
+		return false
+	var nlow := String(model.name).to_lower()
+	if "knight" in nlow or "barbarian" in nlow or "rogue" in nlow or "mage" in nlow:
+		return true
+	for n in model.find_children("*", "Skeleton3D", true, false):
+		var skel := n as Skeleton3D
+		if skel != null and skel.find_bone("handslot.r") >= 0:
+			return true
+	return false
+
+
+## Scale so the vertical span from soles to head equals target_meters.
+static func scale_by_foot_to_head(node: Node3D, target_meters: float) -> void:
+	if node == null or target_meters <= 0.01:
+		return
+	if node.is_inside_tree():
+		node.force_update_transform()
+	var skel: Skeleton3D = null
+	for n in node.find_children("*", "Skeleton3D", true, false):
+		skel = n as Skeleton3D
+		break
+	if skel == null:
+		scale_to_height(node, target_meters)
+		return
+	var head_i := skel.find_bone("head")
+	if head_i < 0:
+		head_i = skel.find_bone("Head")
+	var foot_y := INF
+	for bone_name in ["foot.l", "foot.r", "toes.l", "toes.r", "LeftFoot", "RightFoot"]:
+		var bi := skel.find_bone(bone_name)
+		if bi < 0:
+			continue
+		foot_y = minf(foot_y, (skel.global_transform * skel.get_bone_global_pose(bi)).origin.y)
+	if head_i < 0 or foot_y == INF:
+		scale_to_height(node, target_meters)
+		return
+	var head_y: float = (skel.global_transform * skel.get_bone_global_pose(head_i)).origin.y
+	var span := head_y - foot_y
+	if span < 0.2:
+		scale_to_height(node, target_meters)
+		return
+	node.scale *= target_meters / span
+
+
+## Lower/raise the model so the lowest foot/toe bone sits on the parent ground.
+static func ground_by_feet(node: Node3D, y_offset: float = 0.0) -> void:
+	if node == null or not node.is_inside_tree():
+		return
+	var skel: Skeleton3D = null
+	for n in node.find_children("*", "Skeleton3D", true, false):
+		skel = n as Skeleton3D
+		break
+	if skel == null:
+		return
+	var foot_names := [
+		"foot.l", "foot.r", "toes.l", "toes.r",
+		"LeftFoot", "RightFoot", "LeftToes", "RightToes",
+	]
+	var min_y := INF
+	for bone_name in foot_names:
+		var bi := skel.find_bone(bone_name)
+		if bi < 0:
+			continue
+		var y: float = (skel.global_transform * skel.get_bone_global_pose(bi)).origin.y
+		min_y = minf(min_y, y)
+	if min_y == INF:
+		return
+	var parent_y := 0.0
+	var parent := node.get_parent()
+	if parent is Node3D:
+		parent_y = (parent as Node3D).global_position.y
+	var target_y: float = parent_y + y_offset
+	node.global_position.y += target_y - min_y
 
 
 ## Legacy no-op — hip/chest pitch hacks made heroes look less human.
@@ -397,8 +502,11 @@ static func bind_leg_plant_anim(model: Node3D, anim: AnimationPlayer) -> void:
 
 
 static func _mesh_needs_ual_plant(model: Node3D) -> bool:
-	## All plaza / hero Tripo humanoids melt under UAL — plant them all.
+	## KayKit Adventurers have real walk/hit/block — never plant them.
+	if _is_kaykit_model(model):
+		return false
 	var nlow := String(model.name).to_lower()
+	## Plaza / legacy Tripo humanoids melt under UAL — plant those only.
 	for key in [
 			"spartan", "hoplite", "city_guard", "guard",
 			"citizen_woman", "citizen_merchant", "merchant",
