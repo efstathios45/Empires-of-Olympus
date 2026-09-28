@@ -32,6 +32,9 @@ var _anim: AnimationPlayer
 var _player: Node3D
 var _bubble: Label3D = null
 var _face_tween: Tween = null
+var _idle_variants: PackedStringArray = PackedStringArray()
+var _idle_timer: float = 0.0
+var _idle_idx: int = 0
 
 static func create(p_id: String, p_name: String, p_glb: String, p_lib: String,
 		at: Vector3, p_height: float, yaw_deg: float) -> StaticBody3D:
@@ -79,6 +82,7 @@ func _ready() -> void:
 		_anim = _model.find_child("AnimationPlayer", true) as AnimationPlayer
 		if _anim == null:
 			_anim = AnimationPlayer.new()
+			_anim.name = "AnimationPlayer"
 			_model.add_child(_anim)
 		if ResourceLoader.exists(lib_path):
 			var lib := load(lib_path) as AnimationLibrary
@@ -87,13 +91,42 @@ func _ready() -> void:
 		ModelUtils.set_animation_loops(_anim)
 		if not _anim.has_animation(idle_clip):
 			idle_clip = "ual1_Idle"
+		_idle_variants = _collect_idle_variants()
 		if _anim.has_animation(idle_clip):
 			_anim.play(idle_clip)
+		_idle_timer = randf_range(2.5, 5.0)
+		set_process(true)
 
 	# Ground on the terrain.
 	var world := get_tree().get_first_node_in_group("game_world")
 	if world and world.has_method("sample_height"):
 		global_position.y = world.sample_height(global_position.x, global_position.z)
+
+
+func _collect_idle_variants() -> PackedStringArray:
+	var out: PackedStringArray = PackedStringArray()
+	if _anim == null:
+		return out
+	for clip in [idle_clip, "ual1_Idle", "ual1_Idle_Talking", "ual1_Idle_LookAround", "ual2_Idle_FoldArms", "ual2_Idle_Rail"]:
+		if _anim.has_animation(clip) and not out.has(clip):
+			out.append(clip)
+	return out
+
+
+func _process(delta: float) -> void:
+	if _anim == null or _idle_variants.is_empty():
+		return
+	## Don't interrupt face-turn / spoken line with fidget swaps.
+	if _face_tween != null and _face_tween.is_running():
+		return
+	_idle_timer -= delta
+	if _idle_timer > 0.0:
+		return
+	_idle_timer = randf_range(3.0, 6.5)
+	_idle_idx = (_idle_idx + 1 + randi() % maxi(1, _idle_variants.size())) % _idle_variants.size()
+	var next := _idle_variants[_idle_idx]
+	if _anim.current_animation != next:
+		_anim.play(next)
 
 func get_prompt() -> String:
 	return "Speak with %s" % display_name

@@ -237,6 +237,7 @@ func _build_body() -> void:
 	anim = model.find_child("AnimationPlayer", true) as AnimationPlayer
 	if anim == null:
 		anim = AnimationPlayer.new()
+		anim.name = "AnimationPlayer"
 		model.add_child(anim)
 	# Always use the full combat UAL library (shared GeneralSkeleton across class meshes).
 	if ResourceLoader.exists(CharacterLib):
