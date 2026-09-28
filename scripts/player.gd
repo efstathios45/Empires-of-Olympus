@@ -11,7 +11,7 @@ signal combo_performed
 
 const CharacterGLB := "res://assets/characters/spartan_hoplite/spartan_hoplite.glb"
 const CharacterLib := "res://assets/characters/spartan_hoplite/spartan_hoplite_animations.tres"
-const WeaponGrip = preload("res://scripts/weapon_grip.gd")
+const GearGrip = preload("res://scripts/gear_grip.gd")
 const GearPaint = preload("res://scripts/gear_paint.gd")
 const ProjectileScript = preload("res://scripts/projectile.gd")
 const VfxHelper = preload("res://scripts/vfx_helper.gd")
@@ -25,6 +25,10 @@ const JUMP_VELOCITY := 7.0
 const GRAVITY := 22.0
 const TURN_RATE := 14.0
 const MOUSE_SENS := 0.0022
+const CAM_ZOOM_MIN := 2.4
+const CAM_ZOOM_MAX := 9.5
+const CAM_ZOOM_STEP := 0.38
+const CAM_ZOOM_DEFAULT := 5.6
 
 const COMBO_CLIPS := ["ual2_Sword_Light_A", "ual2_Sword_Light_B", "ual2_Sword_Light_C"]
 const HEAVY_CLIP := "ual2_Sword_Heavy_A"
@@ -58,6 +62,7 @@ var invuln_timer: float = 0.0
 var death_timer: float = 0.0
 var cam_yaw: float = 0.0
 var cam_pitch: float = -0.28
+var _cam_zoom: float = CAM_ZOOM_DEFAULT
 
 # Feedback state: footstep accumulator, camera shake, soft lock-on target.
 var _step_accum: float = 0.0
@@ -181,30 +186,19 @@ func _build_body() -> void:
 			anim.add_animation_library("", lib)
 	ModelUtils.set_animation_loops(anim)
 
-	# Class weapon in the right hand.
-	var weapon_path: String = GameState.class_data()["weapon"]
-	# Hoplite with xiphos sidearm swaps the spear mesh.
-	if GameState.player_class == "hoplite":
-		var side_glb: String = GameState.equipped_glb("sidearm")
-		if side_glb != "" and ResourceLoader.exists(side_glb):
-			weapon_path = side_glb
+	var weapon_path: String = _resolved_weapon_path()
 	if ResourceLoader.exists(weapon_path):
-		var grip_class := "melee"
-		weapon_node = WeaponGrip.attach(model, weapon_path, grip_class, {})
+		weapon_node = GearGrip.attach_weapon(model, weapon_path)
 		if weapon_node:
 			GearPaint.paint_attached(weapon_node, weapon_path)
 		_update_weapon_glow()
 
-	# Hoplites always carry an aspis (or upgraded shield) on the left arm.
-	if GameState.player_class == "hoplite":
-		var shield_path: String = GameState.equipped_glb("shield")
-		if shield_path == "":
-			shield_path = String(GameState.class_data().get("shield", ""))
-		if shield_path != "" and ResourceLoader.exists(shield_path):
-			shield_node = WeaponGrip.attach(model, shield_path, "shield", {})
-			if shield_node:
-				shield_node.name = "ShieldMount"
-				GearPaint.paint_attached(shield_node, shield_path)
+	var shield_path: String = _resolved_shield_path()
+	if shield_path != "" and ResourceLoader.exists(shield_path):
+		shield_node = GearGrip.attach_shield(model, shield_path)
+		if shield_node:
+			shield_node.name = "ShieldMount"
+			GearPaint.paint_attached(shield_node, shield_path)
 
 	_attach_helmet(model)
 
@@ -259,55 +253,46 @@ func _refresh_held_gear() -> void:
 	if helmet_node != null and is_instance_valid(helmet_node):
 		helmet_node.queue_free()
 		helmet_node = null
-	var weapon_path: String = GameState.class_data()["weapon"]
-	if GameState.player_class == "hoplite":
-		var side_glb: String = GameState.equipped_glb("sidearm")
-		if side_glb != "" and ResourceLoader.exists(side_glb):
-			weapon_path = side_glb
+	var weapon_path: String = _resolved_weapon_path()
 	if ResourceLoader.exists(weapon_path):
-		weapon_node = WeaponGrip.attach(model, weapon_path, "melee", {})
+		weapon_node = GearGrip.attach_weapon(model, weapon_path)
 		if weapon_node:
 			GearPaint.paint_attached(weapon_node, weapon_path)
 		_update_weapon_glow()
-	if GameState.player_class == "hoplite":
-		var shield_path: String = GameState.equipped_glb("shield")
-		if shield_path == "":
-			shield_path = String(GameState.class_data().get("shield", ""))
-		if shield_path != "" and ResourceLoader.exists(shield_path):
-			shield_node = WeaponGrip.attach(model, shield_path, "shield", {})
-			if shield_node:
-				shield_node.name = "ShieldMount"
-				GearPaint.paint_attached(shield_node, shield_path)
+	var shield_path: String = _resolved_shield_path()
+	if shield_path != "" and ResourceLoader.exists(shield_path):
+		shield_node = GearGrip.attach_shield(model, shield_path)
+		if shield_node:
+			shield_node.name = "ShieldMount"
+			GearPaint.paint_attached(shield_node, shield_path)
 	_attach_helmet(model)
+
+
+func _resolved_weapon_path() -> String:
+	var eq: String = GameState.equipped_glb("weapon")
+	if eq != "" and ResourceLoader.exists(eq):
+		return eq
+	return String(GameState.class_data().get("weapon", ""))
+
+
+func _resolved_shield_path() -> String:
+	var eq: String = GameState.equipped_glb("shield")
+	if eq != "":
+		return eq
+	if GameState.player_class == "hoplite":
+		return "res://assets/props/gear/aspis_shield.glb"
+	return ""
 
 
 func _attach_helmet(model: Node3D) -> void:
 	var helm_path: String = GameState.equipped_glb("helmet")
 	if helm_path == "" or not ResourceLoader.exists(helm_path):
 		return
-	# Prefer head bone; fall back to a tall offset on the mesh root.
-	var skel: Skeleton3D = null
-	for node in model.find_children("*", "Skeleton3D", true, false):
-		skel = node as Skeleton3D
-		break
-	var holder := Node3D.new()
-	holder.name = "HelmetMount"
-	if skel != null and skel.find_bone("Head") >= 0:
-		var att := BoneAttachment3D.new()
-		att.name = "HelmetBone"
-		att.bone_name = "Head"
-		skel.add_child(att)
-		att.add_child(holder)
-		helmet_node = att
-	else:
-		model.add_child(holder)
-		holder.position = Vector3(0, 1.72, 0)
-		helmet_node = holder
-	var inst: Node3D = load(helm_path).instantiate()
-	holder.add_child(inst)
-	inst.scale = Vector3.ONE * 0.42
-	inst.position = Vector3(0, 0.04, 0)
-	GearPaint.paint_attached(inst, helm_path)
+	helmet_node = GearGrip.attach_helmet(model, helm_path)
+	if helmet_node != null:
+		var painted: Node3D = helmet_node.find_child("HelmetMount", true, false) as Node3D
+		if painted != null and painted.get_child_count() > 0:
+			GearPaint.paint_attached(painted.get_child(0) as Node3D, helm_path)
 
 
 func _build_camera() -> void:
@@ -316,7 +301,8 @@ func _build_camera() -> void:
 	add_child(camera_pivot)
 	camera_pivot.position.y = 1.55
 	spring_arm = SpringArm3D.new()
-	spring_arm.spring_length = 5.6
+	_cam_zoom = CAM_ZOOM_DEFAULT
+	spring_arm.spring_length = _cam_zoom
 	spring_arm.collision_mask = 1
 	camera_pivot.add_child(spring_arm)
 	camera = Camera3D.new()
@@ -336,6 +322,13 @@ func _unhandled_input(event: InputEvent) -> void:
 		_rmb_down = false
 		_rmb_looking = false
 		return
+	if event is InputEventMouseButton:
+		if event.pressed and (event.button_index == MOUSE_BUTTON_WHEEL_UP or event.button_index == MOUSE_BUTTON_WHEEL_DOWN):
+			var dir := -1.0 if event.button_index == MOUSE_BUTTON_WHEEL_UP else 1.0
+			_cam_zoom = clampf(_cam_zoom + dir * CAM_ZOOM_STEP, CAM_ZOOM_MIN, CAM_ZOOM_MAX)
+			if spring_arm != null:
+				spring_arm.spring_length = _cam_zoom
+			return
 	if event is InputEventMouseButton and event.button_index == MOUSE_BUTTON_RIGHT:
 		if event.pressed:
 			_rmb_down = true

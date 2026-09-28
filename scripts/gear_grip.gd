@@ -1,0 +1,113 @@
+extends RefCounted
+## Per-gear grip tuning for the player paperdoll (helmet, shield, weapons).
+## WeaponGrip stays provisioned; this layer only supplies overrides and head attach.
+
+const WeaponGrip = preload("res://scripts/weapon_grip.gd")
+
+# Euler degrees in bone space; positions in metres (pre character-scale compensation).
+const GRIP_BY_GLB := {
+	"res://assets/props/gear/aspis_shield.glb": {
+		"position": Vector3(0.04, -0.10, 0.05),
+		"rotation_deg": Vector3(-72.0, -88.0, 8.0),
+		"scale": 1.02,
+	},
+	"res://assets/props/gear/tower_shield.glb": {
+		"position": Vector3(0.02, -0.14, 0.08),
+		"rotation_deg": Vector3(-78.0, -92.0, 4.0),
+		"scale": 1.12,
+	},
+	"res://assets/props/gear/xiphos_sword.glb": {
+		"position": Vector3(0.006, -0.118, 0.0),
+		"rotation_deg": Vector3(-90.0, -90.0, 0.0),
+		"scale": 0.98,
+	},
+	"res://assets/props/gear/kontos_spear.glb": {
+		"position": Vector3(0.004, -0.15, -0.001),
+		"rotation_deg": Vector3(-90.0, -90.0, 0.0),
+		"scale": 1.18,
+	},
+	"res://assets/props/weapons/dory_spear.glb": {
+		"position": Vector3(0.003, -0.138, -0.0005),
+		"rotation_deg": Vector3(-90.0, -90.0, 0.0),
+		"scale": 1.06,
+	},
+	"res://assets/props/weapons/cretan_bow.glb": {
+		"position": Vector3(-0.06, 0.02, 0.0),
+		"rotation_deg": Vector3(-68.0, 6.0, -92.0),
+		"scale": 1.05,
+	},
+	"res://assets/props/weapons/theurgist_staff.glb": {
+		"position": Vector3(0.0, -0.18, 0.0),
+		"rotation_deg": Vector3(-90.0, -90.0, 0.0),
+		"scale": 1.08,
+	},
+}
+
+const HELMET_BY_GLB := {
+	"res://assets/props/gear/corinthian_helmet.glb": {
+		"position": Vector3(0.0, 0.05, 0.03),
+		"rotation_deg": Vector3(-90.0, 180.0, 0.0),
+		"target_extent": 0.24,
+	},
+}
+
+
+static func grip_for_glb(glb_path: String) -> Dictionary:
+	var g: Dictionary = GRIP_BY_GLB.get(glb_path, {})
+	return g.duplicate(true)
+
+
+static func weapon_class_for(glb_path: String) -> String:
+	var lower := glb_path.to_lower()
+	if lower.find("shield") >= 0 or lower.find("aspis") >= 0:
+		return "shield"
+	if lower.find("bow") >= 0:
+		return "gun"
+	return "melee"
+
+
+static func attach_weapon(model: Node3D, glb_path: String) -> Node3D:
+	if glb_path == "" or not ResourceLoader.exists(glb_path):
+		return null
+	var wclass := weapon_class_for(glb_path)
+	return WeaponGrip.attach(model, glb_path, wclass, grip_for_glb(glb_path))
+
+
+static func attach_shield(model: Node3D, glb_path: String) -> Node3D:
+	if glb_path == "" or not ResourceLoader.exists(glb_path):
+		return null
+	return WeaponGrip.attach(model, glb_path, "shield", grip_for_glb(glb_path))
+
+
+static func attach_helmet(model: Node3D, glb_path: String) -> Node3D:
+	if glb_path == "" or not ResourceLoader.exists(glb_path):
+		return null
+	var skel: Skeleton3D = _find_skeleton(model)
+	if skel == null:
+		return null
+	var cfg: Dictionary = HELMET_BY_GLB.get(glb_path, {
+		"position": Vector3(0.0, 0.04, 0.02),
+		"rotation_deg": Vector3(-90.0, 180.0, 0.0),
+		"target_extent": 0.24,
+	})
+	var att := BoneAttachment3D.new()
+	att.name = "HelmetBone"
+	att.bone_name = "Head"
+	skel.add_child(att)
+	var holder := Node3D.new()
+	holder.name = "HelmetMount"
+	att.add_child(holder)
+	var inst: Node3D = load(glb_path).instantiate()
+	holder.add_child(inst)
+	var target: float = float(cfg.get("target_extent", 0.24))
+	ModelUtils.scale_to_max_extent(inst, target)
+	var rot: Vector3 = cfg.get("rotation_deg", Vector3.ZERO)
+	inst.rotation_degrees = rot
+	inst.position = cfg.get("position", Vector3.ZERO)
+	return att
+
+
+static func _find_skeleton(model: Node3D) -> Skeleton3D:
+	for node in model.find_children("*", "Skeleton3D", true, false):
+		return node as Skeleton3D
+	return null
