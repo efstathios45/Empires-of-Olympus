@@ -8,18 +8,18 @@ const WeaponGrip = preload("res://scripts/weapon_grip.gd")
 # Prefer LeftLowerArm for shields (WeaponGrip default) — LeftHand + wild eulers
 # twisted the forearm and made the champion look broken.
 const GRIP_BY_GLB := {
-	## Hellenic / Quaternius — aspis on LowerArm.L (forearm strap), spear on Wrist.R.
-	## After +π facing align, bone +Z on the left arm points outboard; identity
-	## keeps the aspis face out. Old Wrist+(−90,0,90) hung the face downward.
+	## Achilles hang-rest: mesh palms sit ~0.24m along bone +Z (outboard of the
+	## short Quaternius Wrist/LowerArm). Old near-zero offsets left gear at the
+	## bone while hands stayed empty. Aspis strap ≈ mid-forearm toward palm.
 	"res://assets/props/gear/aspis_shield.glb": {
 		"bone": "LowerArm.L",
-		"position": Vector3(0.0, 0.14, 0.04),
+		"position": Vector3(0.03, 0.10, 0.14),
 		"rotation_deg": Vector3(0.0, 0.0, 0.0),
 		"scale": 1.0,
 	},
 	"res://assets/props/gear/tower_shield.glb": {
 		"bone": "LowerArm.L",
-		"position": Vector3(0.0, 0.14, 0.04),
+		"position": Vector3(0.03, 0.10, 0.14),
 		"rotation_deg": Vector3(0.0, 0.0, 0.0),
 		"scale": 1.08,
 	},
@@ -52,22 +52,23 @@ const GRIP_BY_GLB := {
 		"scale": 1.0,
 		"skip_normalize": true,
 	},
+	## Palm centroid in Wrist.R hang-rest ≈ (−0.05, −0.06, 0.24).
+	## Idle_Neutral: bone +Y hangs world-down — Rx(90) maps aim +Z → bone −Y (tip up).
 	"res://assets/props/gear/xiphos_sword.glb": {
 		"bone": "Wrist.R",
-		"position": Vector3(0.02, 0.08, 0.0),
+		"position": Vector3(-0.05, -0.05, 0.24),
 		"rotation_deg": Vector3(90.0, 0.0, 0.0),
 		"scale": 0.98,
 	},
 	"res://assets/props/gear/kontos_spear.glb": {
 		"bone": "Wrist.R",
-		"position": Vector3(0.02, 0.08, 0.0),
+		"position": Vector3(-0.05, -0.05, 0.24),
 		"rotation_deg": Vector3(90.0, 0.0, 0.0),
 		"scale": 1.12,
 	},
-	## Idle_Neutral: bone +Y hangs world-down — Rx(90) aims tip world-up from palm.
 	"res://assets/props/weapons/dory_spear.glb": {
 		"bone": "Wrist.R",
-		"position": Vector3(0.02, 0.08, 0.0),
+		"position": Vector3(-0.05, -0.05, 0.24),
 		"rotation_deg": Vector3(90.0, 0.0, 0.0),
 		"scale": 1.05,
 	},
