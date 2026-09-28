@@ -23,7 +23,7 @@ func run() -> void:
 	net.clear_pending_join()
 	assert(net.pending_join_address == "")
 
-	## Sky gaze: idle look-up must collapse with the dampener.
+	## Characters stay upright without SkyGazeFix (which twisted the silhouette).
 	var m: Node3D = load("res://assets/characters/spartan_hoplite/spartan_hoplite.glb").instantiate()
 	get_root().add_child(m)
 	ModelUtils.setup_character_for_movement(m, 1.85)
@@ -39,20 +39,17 @@ func run() -> void:
 	for n in m.find_children("*", "Skeleton3D", true, false):
 		skel = n
 		break
-	assert(skel != null and skel.has_node("SkyGazeFix"))
-	anim.process_priority = -100
-	skel.get_node("SkyGazeFix").process_priority = 1000
+	assert(skel != null)
+	assert(not skel.has_node("SkyGazeFix"), "SkyGazeFix must stay off")
 	anim.play("ual1_Idle")
 	for i in 20:
 		await process_frame
 	var hi := skel.find_bone("Head")
-	var chest := skel.find_bone("UpperChest")
+	var hips := skel.find_bone("Hips")
 	var ht := skel.global_transform * skel.get_bone_global_pose(hi)
-	var ct := skel.get_bone_pose(chest)
-	var fwd_up: float = (-ht.basis.z).normalized().dot(Vector3.UP)
-	var chest_pitch: float = ct.basis.get_euler().x
-	print("SMOKE_FWD_UP=", fwd_up, " CHEST_PITCH=", rad_to_deg(chest_pitch))
-	assert(absf(fwd_up) < 0.08, "head not level: %s" % fwd_up)
-	assert(absf(chest_pitch) < 0.15, "chest still pitched: %s" % chest_pitch)
+	var hp := skel.global_transform * skel.get_bone_global_pose(hips)
+	var upright: float = (ht.origin - hp.origin).normalized().dot(Vector3.UP)
+	print("SMOKE_UPRIGHT=", upright)
+	assert(upright > 0.97, "unexpected lean: %s" % upright)
 	print("SMOKE_ONLINE_HOST_OK")
 	quit(0)

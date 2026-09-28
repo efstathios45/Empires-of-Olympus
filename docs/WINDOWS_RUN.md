@@ -49,7 +49,8 @@ Shared/cloud multiplayer persistence is documented in docs/ACCOUNTS.md.
 
 In-world: Enter opens player chat (see docs/CHAT.md).
 Metin2-style camera: hold middle-mouse to orbit; wheel only zooms distance
-(pitch stays look-down). Hero and NPCs stand upright — no sky-tilt lean.
+(pitch stays look-down — no worm's-eye). Removed the bone "sky-gaze" twist
+that was making hero/NPCs lean; raw idle stands upright.
 Open Panoply with I — right-click pouch items to Equip / Sell.
 Nameplates show name/level in empire colours. Esc → Host Arena / Join for PvP
 (internet invite uses your public IP:port).
