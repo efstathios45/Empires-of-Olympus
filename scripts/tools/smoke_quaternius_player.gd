@@ -39,7 +39,8 @@ func run() -> void:
 		" attack=", atk, " block=", block,
 		" shield=", shield != null, " weapon=", weapon != null,
 		" plant=", plant, " greek_helm=", helm, " pack_vis=", pack_vis)
-	var ok: bool = model != null and ("king" in nlow or "hero" in nlow) \
+	var ok: bool = model != null \
+		and ("adventurer" in nlow or "king" in nlow or "hero" in nlow or "guard" in nlow) \
 		and idle == "Idle_Neutral" and walk == "Walk" and atk == "Sword_Slash" \
 		and block == "Idle_Sword" \
 		and shield != null and weapon != null and not plant and helm and not pack_vis

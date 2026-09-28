@@ -317,9 +317,9 @@ const MERCHANT_C := "res://assets/characters/quaternius_citizen_casual/citizen_c
 const WOMAN_A := "res://assets/characters/quaternius_woman_worker/woman_worker.glb"
 const WOMAN_B := "res://assets/characters/quaternius_woman_casual/woman_casual.glb"
 const WOMAN_C := "res://assets/characters/quaternius_woman_formal/woman_formal.glb"
-const GUARD_A := "res://assets/characters/quaternius_hero_king/hero_king.glb"
-const GUARD_B := "res://assets/characters/quaternius_guard_adventurer/guard_adventurer.glb"
-const GUARD_C := "res://assets/characters/quaternius_hero_king/hero_king.glb"
+const GUARD_A := "res://assets/characters/quaternius_guard_adventurer/guard_adventurer.glb"
+const GUARD_B := "res://assets/characters/quaternius_guard_soldier_f/guard_soldier_f.glb"
+const GUARD_C := "res://assets/characters/quaternius_guard_adventurer/guard_adventurer.glb"
 
 static func _townsfolk(world) -> void:
 	var folk := [

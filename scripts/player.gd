@@ -10,7 +10,8 @@ signal skill_cooldown_started(duration: float)
 signal combo_performed
 
 ## Greek Tripo hoplite — looks like a Spartan; UAL clips + LegPlant for motion.
-const CharacterGLB := "res://assets/characters/quaternius_hero_king/hero_king.glb"
+## Adventurer base (no medieval crown) + GreekLook Corinthian / bronze paint.
+const CharacterGLB := "res://assets/characters/quaternius_guard_adventurer/guard_adventurer.glb"
 ## Embedded Quaternius clips — do not overwrite with a legacy UAL library.
 const CharacterLib := ""
 const GearGrip = preload("res://scripts/gear_grip.gd")
@@ -237,7 +238,7 @@ func _build_body() -> void:
 	ModelUtils.setup_character_for_movement(model, 1.85)
 	var GreekLook = load("res://scripts/utils/greek_look.gd")
 	var role := "hoplite"
-	var cls := String(GameState.selected_class)
+	var cls := String(GameState.player_class)
 	if cls == "toxotes":
 		role = "guard"
 	elif cls == "magos":
@@ -364,7 +365,7 @@ func _attach_helmet(model: Node3D) -> void:
 	var helm_path: String = GameState.equipped_glb("helmet")
 	if helm_path == "" or not ResourceLoader.exists(helm_path):
 		## No inventory helm — restore Hellenic Corinthian for warriors.
-		var cls := String(GameState.selected_class)
+		var cls := String(GameState.player_class)
 		var role := "hoplite"
 		if cls == "toxotes":
 			role = "guard"

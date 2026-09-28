@@ -15,7 +15,7 @@ func run() -> void:
 	var vp := _stage(1400, 800)
 	var stage: Node3D = vp.get_child(0)
 
-	var hero: Node3D = load("res://assets/characters/quaternius_hero_king/hero_king.glb").instantiate()
+	var hero: Node3D = load("res://assets/characters/quaternius_guard_adventurer/guard_adventurer.glb").instantiate()
 	hero.name = "hero_hoplite"
 	stage.add_child(hero)
 	ModelUtils.setup_character_for_movement(hero, 1.85)
@@ -35,8 +35,17 @@ func run() -> void:
 		"rotation_deg": Vector3(-90.0, 0.0, 0.0),
 		"scale": 1.05,
 	})
-	if sh and GearPaint:
-		GearPaint.paint_attached(sh, "res://assets/props/gear/aspis_shield.glb")
+	if sh:
+		## Force bronze face in headless capture (PBR albedos often blank in SubViewport).
+		for mi in sh.find_children("*", "MeshInstance3D", true, false):
+			var mat := StandardMaterial3D.new()
+			mat.albedo_color = Color(0.72, 0.55, 0.28)
+			mat.metallic = 0.55
+			mat.roughness = 0.4
+			if ResourceLoader.exists("res://assets/props/gear/aspis_face.png"):
+				mat.albedo_texture = load("res://assets/props/gear/aspis_face.png")
+				mat.albedo_color = Color(1, 1, 1)
+			mi.material_override = mat
 	if wp and GearPaint:
 		GearPaint.paint_attached(wp, "res://assets/props/weapons/dory_spear.glb")
 	var helm := hero.find_child("CorinthianHelmMount", true, false)
@@ -96,8 +105,8 @@ func run() -> void:
 		["res://assets/characters/quaternius_woman_casual/woman_casual.glb", 1.68, "citizen"],
 		["res://assets/characters/quaternius_woman_formal/woman_formal.glb", 1.68, "citizen"],
 		["res://assets/characters/quaternius_woman_worker/woman_worker.glb", 1.68, "citizen"],
-		["res://assets/characters/quaternius_guard_adventurer/guard_adventurer.glb", 1.84, "guard"],
-		["res://assets/characters/quaternius_hero_king/hero_king.glb", 1.85, "hoplite"],
+		["res://assets/characters/quaternius_guard_soldier_f/guard_soldier_f.glb", 1.78, "guard"],
+		["res://assets/characters/quaternius_guard_adventurer/guard_adventurer.glb", 1.85, "hoplite"],
 	]
 	var x := -12.0
 	for e in entries:

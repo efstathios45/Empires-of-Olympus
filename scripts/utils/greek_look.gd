@@ -1,7 +1,7 @@
 extends RefCounted
 ## Paint Quaternius modular humans to read as Hellenic — bronze, crimson,
 ## linen, olive — and hide modern/fantasy props (backpacks). Warriors get a
-## Corinthian helm that covers crowns.
+## procedural Corinthian helm (the stock GLB is an exploded placeholder).
 
 
 const ROLE_COLORS := {
@@ -74,7 +74,6 @@ static func _hide_anachronisms(model: Node3D) -> void:
 				or "hardhat" in nm or "hard_hat" in nm \
 				or nm == "crown" or nm.ends_with("_crown"):
 			n.visible = false
-		## Quaternius backpack is a MeshInstance3D under the skeleton.
 		if n is MeshInstance3D and "backpack" in nm:
 			(n as MeshInstance3D).visible = false
 
@@ -85,27 +84,29 @@ static func _paint_meshes(model: Node3D, palette: Dictionary) -> void:
 		if mi == null or mi.mesh == null:
 			continue
 		var nm := String(mi.name).to_lower()
-		var parent_nm := String(mi.get_parent().name).to_lower() if mi.get_parent() else ""
 		if "backpack" in nm:
 			mi.visible = false
 			continue
+		## Never recolor the procedural Corinthian (or inventory helm).
+		if mi.get_parent() != null and "Corinthian" in String(mi.get_parent().name):
+			continue
+		if "corinthian" in nm or "helm_crest" in nm or "helm_cheek" in nm \
+				or "helm_dome" in nm or "helm_nose" in nm:
+			continue
 		var key := "cloth"
-		if "head" in nm or "head" in parent_nm:
+		if "head" in nm:
 			key = "skin"
-		elif "feet" in nm or "feet" in parent_nm or "boot" in nm:
+		elif "feet" in nm or "boot" in nm:
 			key = "leather"
-		elif "pant" in nm or "leg" in nm or "leg" in parent_nm:
+		elif "pant" in nm or "leg" in nm:
 			key = "cloth"
-		elif "body" in nm or "body" in parent_nm:
-			## Warriors: bronze cuirass read. Civilians: linen chiton.
+		elif "body" in nm:
 			key = "armor"
 		var col: Color = palette.get(key, palette["cloth"])
-		## Slight per-slot metalness for armor/metal.
 		var metal := 0.55 if key in ["armor", "metal"] else 0.05
 		var rough := 0.45 if key in ["armor", "metal"] else 0.75
-		## Citizens / merchants / oracle: body reads as cloth not plate.
+		## Non-warrior bodies read as linen / wool, not plate.
 		if key == "armor" and not ("king" in nm or "adventurer" in nm or "soldier" in nm):
-			## Soft linen / wool for non-warrior bodies.
 			if "witch" in nm or "formal" in nm or "casual" in nm \
 					or "beach" in nm or "farmer" in nm or "worker" in nm \
 					or "medieval" in nm:
@@ -116,7 +117,6 @@ static func _paint_meshes(model: Node3D, palette: Dictionary) -> void:
 		mat.albedo_color = col
 		mat.metallic = metal
 		mat.roughness = rough
-		## Keep any albedo texture as a multiply tint if present.
 		var base: Material = mi.get_active_material(0)
 		if base is StandardMaterial3D and (base as StandardMaterial3D).albedo_texture != null:
 			mat.albedo_texture = (base as StandardMaterial3D).albedo_texture
@@ -136,25 +136,116 @@ static func remove_corinthian_helm(model: Node3D) -> void:
 static func _ensure_corinthian_helm(model: Node3D) -> void:
 	if model.find_child("CorinthianHelmMount", true, false) != null:
 		return
-	## Don't stack on an inventory-equipped helmet bone.
 	if model.find_child("HelmetBone", true, false) != null:
 		return
-	var path := "res://assets/props/gear/corinthian_helmet.glb"
-	if not ResourceLoader.exists(path):
+	var skel: Skeleton3D = null
+	for node in model.find_children("*", "Skeleton3D", true, false):
+		skel = node as Skeleton3D
+		break
+	if skel == null:
 		return
-	var GearGrip = load("res://scripts/gear_grip.gd")
-	if GearGrip == null:
-		return
-	var helm: Node3D = GearGrip.attach_helmet(model, path)
-	if helm:
-		helm.name = "CorinthianHelmMount"
-		## Enlarge so it covers Quaternius crowns / modern hats.
-		if helm.get_child_count() > 0:
-			var holder := helm.get_child(0) as Node3D
-			if holder:
-				holder.scale *= 1.22
-				holder.position.y += 0.03
-				holder.position.z += 0.01
-	var GearPaint = load("res://scripts/gear_paint.gd")
-	if GearPaint and helm:
-		GearPaint.paint_attached(helm, path)
+	var bone := "Head"
+	if skel.find_bone(bone) < 0:
+		if skel.find_bone("head") >= 0:
+			bone = "head"
+		else:
+			return
+	var att := BoneAttachment3D.new()
+	att.name = "CorinthianHelmMount"
+	att.bone_name = bone
+	skel.add_child(att)
+	var helm := _build_corinthian_mesh()
+	att.add_child(helm)
+
+
+## Low-poly Corinthian: dome + cheek plates + nose + crimson crest.
+## Sized for Quaternius modular heads (~0.35–0.4 m extent).
+static func _build_corinthian_mesh() -> Node3D:
+	var root := Node3D.new()
+	root.name = "CorinthianHelm"
+	## Sit above Quaternius Head bone so the dome covers hair, not the neck.
+	root.position = Vector3(0.0, 0.08, 0.02)
+	root.scale = Vector3(1.0, 1.0, 1.0)
+
+	var bronze := StandardMaterial3D.new()
+	bronze.albedo_color = Color(0.74, 0.55, 0.28)
+	bronze.metallic = 0.72
+	bronze.roughness = 0.38
+
+	var crest_mat := StandardMaterial3D.new()
+	crest_mat.albedo_color = Color(0.78, 0.12, 0.12)
+	crest_mat.roughness = 0.85
+	crest_mat.metallic = 0.05
+
+	## Skull dome
+	var dome := MeshInstance3D.new()
+	dome.name = "Helm_Dome"
+	var sphere := SphereMesh.new()
+	sphere.radius = 0.15
+	sphere.height = 0.22
+	sphere.radial_segments = 10
+	sphere.rings = 6
+	dome.mesh = sphere
+	dome.material_override = bronze
+	dome.scale = Vector3(1.05, 0.85, 1.1)
+	dome.position = Vector3(0.0, 0.02, 0.0)
+	root.add_child(dome)
+
+	## Brow / face bowl (slightly forward)
+	var brow := MeshInstance3D.new()
+	brow.name = "Helm_Brow"
+	var brow_mesh := SphereMesh.new()
+	brow_mesh.radius = 0.13
+	brow_mesh.height = 0.18
+	brow_mesh.radial_segments = 10
+	brow_mesh.rings = 5
+	brow.mesh = brow_mesh
+	brow.material_override = bronze
+	brow.scale = Vector3(1.0, 0.7, 0.85)
+	brow.position = Vector3(0.0, -0.02, 0.04)
+	root.add_child(brow)
+
+	## Nose guard
+	var nose := MeshInstance3D.new()
+	nose.name = "Helm_Nose"
+	var nose_box := BoxMesh.new()
+	nose_box.size = Vector3(0.035, 0.12, 0.04)
+	nose.mesh = nose_box
+	nose.material_override = bronze
+	nose.position = Vector3(0.0, -0.06, 0.13)
+	root.add_child(nose)
+
+	## Cheek plates
+	for side in [-1.0, 1.0]:
+		var cheek := MeshInstance3D.new()
+		cheek.name = "Helm_Cheek_%s" % ("L" if side < 0.0 else "R")
+		var cheek_box := BoxMesh.new()
+		cheek_box.size = Vector3(0.05, 0.14, 0.1)
+		cheek.mesh = cheek_box
+		cheek.material_override = bronze
+		cheek.position = Vector3(0.11 * side, -0.08, 0.06)
+		cheek.rotation_degrees = Vector3(8.0, -18.0 * side, 6.0 * side)
+		root.add_child(cheek)
+
+	## Crimson horsehair crest
+	var crest := MeshInstance3D.new()
+	crest.name = "Helm_Crest"
+	var crest_box := BoxMesh.new()
+	crest_box.size = Vector3(0.04, 0.16, 0.28)
+	crest.mesh = crest_box
+	crest.material_override = crest_mat
+	crest.position = Vector3(0.0, 0.16, -0.02)
+	crest.rotation_degrees = Vector3(-12.0, 0.0, 0.0)
+	root.add_child(crest)
+
+	## Crest base ridge
+	var ridge := MeshInstance3D.new()
+	ridge.name = "Helm_CrestRidge"
+	var ridge_box := BoxMesh.new()
+	ridge_box.size = Vector3(0.03, 0.04, 0.22)
+	ridge.mesh = ridge_box
+	ridge.material_override = bronze
+	ridge.position = Vector3(0.0, 0.1, -0.01)
+	root.add_child(ridge)
+
+	return root
