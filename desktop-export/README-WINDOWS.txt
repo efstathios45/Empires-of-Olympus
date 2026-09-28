@@ -38,7 +38,7 @@ No zip extract needed — this download is the .exe alone.
 Download
 ------------------------------------------------------------
 Signed single-file Windows build (current):
-  https://gofile.io/d/ITF91PsY
+  https://gofile.io/d/6MiqRS1S
 
 File name: EmpiresOfOlympus.exe
 
@@ -48,5 +48,5 @@ Enter-to-chat, visible in-game cursor, and bag→panoply drag-and-drop.
 Hold middle-mouse (scroll-wheel button) + drag to look; wheel scroll zooms.
 Open Panoply with I — right-click pouch items to Equip / Sell.
 
-Also: party XP/gold share, overhead chat bubbles, Video Settings (title + Esc),
-GLB-rendered gear icons, and tuned helmet/shield attachment on the hoplite.
+Nameplates show name/level in empire colours. Esc → Host Arena / Join localhost
+for multiplayer; rival empires can fight and drop worn + pouch gear.

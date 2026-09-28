@@ -1024,6 +1024,69 @@ func roll_loot_drop(chance: float = 0.28, boss: bool = false, enemy_level: int =
 	return String(pool.back().get("id", ""))
 
 
+## Pull random worn + bag gear for a PvP death scatter (removes from inventory).
+## Returns item id strings to spawn as ground loot.
+func take_pvp_death_drops(max_equipped: int = 2, max_bag: int = 3) -> Array:
+	var drops: Array = []
+	## Equipped first — up to max_equipped random filled slots.
+	var worn: Array = []
+	for slot in equipped.keys():
+		var id := String(equipped[slot])
+		if id != "":
+			worn.append(slot)
+	worn.shuffle()
+	var eq_n := mini(max_equipped, worn.size())
+	## Always scatter at least one worn piece when the panoply is not empty.
+	if worn.size() > 0:
+		eq_n = maxi(1, eq_n)
+	eq_n = mini(eq_n, worn.size())
+	for i in eq_n:
+		var slot: String = String(worn[i])
+		var id := String(equipped[slot])
+		if id == "":
+			continue
+		equipped[slot] = ""
+		drops.append(id)
+	## Bag: random unique entries (prefer gear over mats/pots slightly).
+	var bag_idx: Array = []
+	for i in range(bag.size()):
+		bag_idx.append(i)
+	bag_idx.shuffle()
+	var bag_taken := 0
+	var remove_plan: Array = []  # {index, id}
+	for i in bag_idx:
+		if bag_taken >= max_bag:
+			break
+		var e: Dictionary = bag[i]
+		var id := String(e.get("id", ""))
+		if id == "" or id == "gold_coin":
+			continue
+		var kind := String(item_def(id).get("kind", ""))
+		if kind in ["consumable", "scroll"] and randf() < 0.45:
+			continue
+		remove_plan.append({"index": i, "id": id})
+		bag_taken += 1
+	## Remove high indices first so bag positions stay valid.
+	remove_plan.sort_custom(func(a, b): return int(a["index"]) > int(b["index"]))
+	for row in remove_plan:
+		var idx := int(row["index"])
+		var id := String(row["id"])
+		if idx < 0 or idx >= bag.size():
+			continue
+		if String(bag[idx].get("id", "")) != id:
+			continue
+		var count := int(bag[idx].get("count", 1))
+		if count > 1:
+			bag[idx]["count"] = count - 1
+		else:
+			bag.remove_at(idx)
+		drops.append(id)
+	if not drops.is_empty():
+		inventory_changed.emit()
+		stats_changed.emit()
+	return drops
+
+
 ## Gold amount scaled by foe level (empire gold_mult applied by add_gold).
 func roll_gold_drop(base_min: int, base_max: int, enemy_level: int = 1) -> int:
 	var lvl := maxi(enemy_level, 1)
