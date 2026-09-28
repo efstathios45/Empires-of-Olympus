@@ -321,6 +321,8 @@ static func setup_maya_cm_animal(node: Node3D, target_height: float) -> void:
 	ground_model(node)
 
 ## One-call setup for movement-driven characters.
+## Pre-zoom camera/gaze: no SkyGaze bone twists. Tripo+UAL still needs LegPlant
+## (raw UAL melts limbs); plant drives a procedural walk instead of melted clips.
 static func setup_character_for_movement(node: Node3D, target_height: float = 1.8) -> void:
 	# Keep BUILD_FIX_TOKEN live in exported bytecode (unused consts are stripped).
 	if node == null and BUILD_FIX_TOKEN.is_empty():
@@ -334,12 +336,11 @@ static func setup_character_for_movement(node: Node3D, target_height: float = 1.
 		node.force_update_transform()
 	ground_model(node)
 	## KayKit (and similar) often have AABB below the soles — pin by foot bones.
-	ground_by_feet(node)
 	if _is_kaykit_model(node):
+		ground_by_feet(node)
 		## Foot bones sit ~15cm above the mesh soles / walk root-bob bias.
 		node.position.y -= 0.16
 		install_kaykit_foot_ground(node)
-	## Tripo+UAL melts legs into a Z-shape. Plant legs to rest after every pose.
 	install_leg_plant_fix(node)
 
 
@@ -502,11 +503,11 @@ static func bind_leg_plant_anim(model: Node3D, anim: AnimationPlayer) -> void:
 
 
 static func _mesh_needs_ual_plant(model: Node3D) -> bool:
-	## KayKit / Quaternius have real authored clips — never plant them.
+	## KayKit / Quaternius authored clips — never plant.
 	if _is_kaykit_model(model) or _is_quaternius_model(model):
 		return false
 	var nlow := String(model.name).to_lower()
-	## Plaza / legacy Tripo humanoids melt under UAL — plant those only.
+	## Ancient Greek Tripo cast: UAL melts without plant.
 	for key in [
 			"spartan", "hoplite", "city_guard",
 			"citizen_woman", "citizen_merchant",
@@ -516,8 +517,6 @@ static func _mesh_needs_ual_plant(model: Node3D) -> bool:
 	for n in model.find_children("*", "MeshInstance3D", true, false):
 		if _BROKEN_UAL_MESH in String(n.name):
 			return true
-	## Fallback: any skeleton that looks like a UAL humanoid (has Hips + LeftUpperArm).
-	## Quaternius uses UpperArm.L — excluded above.
 	for n in model.find_children("*", "Skeleton3D", true, false):
 		var skel := n as Skeleton3D
 		if skel != null and skel.find_bone("Hips") >= 0 and skel.find_bone("LeftUpperArm") >= 0:

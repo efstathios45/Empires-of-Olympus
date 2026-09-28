@@ -37,16 +37,17 @@ const FINGER_BONES := [
 	"RightLittleProximal", "RightLittleIntermediate", "RightLittleDistal",
 ]
 
-const APOSE_OUT := 0.22
-const SWAY_HZ := 0.35
-const SWAY_ARM := 0.04
-const SWAY_SPINE := 0.028
-const WALK_HZ := 1.35
-const WALK_LEG := 0.55
-const WALK_KNEE := 0.45
-const WALK_ARM := 0.35
-const SPRINT_HZ := 1.85
-const SPRINT_LEG := 0.7
+const APOSE_OUT := 0.18
+const SWAY_HZ := 0.28
+const SWAY_ARM := 0.03
+const SWAY_SPINE := 0.022
+## Stronger stride so walk reads as real locomotion (not a stiff A-pose bob).
+const WALK_HZ := 1.15
+const WALK_LEG := 0.72
+const WALK_KNEE := 0.62
+const WALK_ARM := 0.42
+const SPRINT_HZ := 1.65
+const SPRINT_LEG := 0.88
 
 var _anim: AnimationPlayer
 var _t: float = 0.0
