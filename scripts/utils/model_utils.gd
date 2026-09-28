@@ -1,7 +1,7 @@
 class_name ModelUtils
 
 ## Baked into exports so we can verify the PCK actually contains this revision.
-const BUILD_FIX_TOKEN := "EOO_FIX_VISIBLE_ENEMIES_V3"
+const BUILD_FIX_TOKEN := "EOO_FIX_METIN2_UPRIGHT_V2"
 
 ## Ground a model so its mesh bottom sits at y_offset above its parent origin.
 ##
@@ -329,20 +329,41 @@ static func setup_character_for_movement(node: Node3D, target_height: float = 1.
 	install_sky_gaze_fix(node)
 
 
-## UAL humanoid clips pitch the spine/head skyward (retarget bias).
-## Rest pose is upright; idle/walk add ~10–35° local +X on Chest/UpperChest.
+## UAL humanoid clips lean the whole torso skyward (retarget bias).
+## Metin2-style: keep the Hips→Head column upright and face on the horizon.
 ## Call each frame AFTER AnimationPlayer has posed the skeleton.
 static func correct_sky_gaze(skel: Skeleton3D, strength: float = 1.0) -> void:
 	if skel == null or strength <= 0.0:
 		return
-	# Soften torso local pitch (don't touch Head here — child tips too far).
-	_dampen_local_pitch(skel, "Chest", strength * 0.9)
-	_dampen_local_pitch(skel, "UpperChest", strength * 0.9)
-	# Snap Head face (−Z) exactly to the horizon (both sky and chin-down).
-	_level_bone_forward(skel, "Head", strength, true)
+	var s := clampf(strength, 0.0, 1.0)
+	## 1) Pull upper-spine pitch toward rest (UAL sky lean). Skip Hips — the
+	## authored rest already leans ~6°, so hips-to-rest fights world upright.
+	for bone_name in ["Spine", "Chest", "UpperChest", "Neck"]:
+		_blend_bone_pitch_to_rest(skel, bone_name, s)
+	## Modifier stack needs fresh globals between steps.
+	skel.force_update_all_bone_transforms()
+	## 2) Straighten Hips→Head to world-up (may need 2 passes for lateral lean).
+	for _i in 2:
+		_straighten_hip_head_column(skel, s)
+		skel.force_update_all_bone_transforms()
+	## 3) Face looks along the horizon — never sky / never into the dirt.
+	_level_bone_forward(skel, "Head", s, true)
 
 
-## Soften positive local-X pitch (skyward lean on these humanoid bones).
+## Blend only local pitch (euler X) toward the bone rest pose.
+static func _blend_bone_pitch_to_rest(skel: Skeleton3D, bone_name: String, strength: float) -> void:
+	var bone_i := skel.find_bone(bone_name)
+	if bone_i < 0:
+		return
+	var pose_e: Vector3 = skel.get_bone_pose_rotation(bone_i).get_euler()
+	var rest_e: Vector3 = skel.get_bone_rest(bone_i).basis.get_rotation_quaternion().get_euler()
+	if absf(pose_e.x - rest_e.x) < 0.002:
+		return
+	pose_e.x = lerpf(pose_e.x, rest_e.x, strength)
+	skel.set_bone_pose_rotation(bone_i, Quaternion.from_euler(pose_e))
+
+
+## Soften positive local-X pitch (kept for older smoke callers).
 static func _dampen_local_pitch(skel: Skeleton3D, bone_name: String, strength: float) -> void:
 	var bone_i := skel.find_bone(bone_name)
 	if bone_i < 0:
@@ -352,6 +373,39 @@ static func _dampen_local_pitch(skel: Skeleton3D, bone_name: String, strength: f
 		return
 	e.x = lerpf(e.x, 0.0, clampf(strength, 0.0, 1.0))
 	skel.set_bone_pose_rotation(bone_i, Quaternion.from_euler(e))
+
+
+## Rotate Hips so Hips→Head aligns with world up (fixes forward AND lateral lean).
+## Then strip local roll so legs don't twist.
+static func _straighten_hip_head_column(skel: Skeleton3D, strength: float) -> void:
+	var hips_i := skel.find_bone("Hips")
+	var head_i := skel.find_bone("Head")
+	if hips_i < 0 or head_i < 0:
+		return
+	var hips_g: Transform3D = skel.global_transform * skel.get_bone_global_pose(hips_i)
+	var head_g: Transform3D = skel.global_transform * skel.get_bone_global_pose(head_i)
+	var col: Vector3 = head_g.origin - hips_g.origin
+	if col.length_squared() < 0.0001:
+		return
+	col = col.normalized()
+	var up_comp: float = col.dot(Vector3.UP)
+	## cos(2.5°) ≈ 0.999 — authored rest still leans ~6°, so keep pushing.
+	if up_comp >= 0.999:
+		return
+	var axis: Vector3 = col.cross(Vector3.UP)
+	if axis.length_squared() < 0.00000001:
+		return
+	axis = axis.normalized()
+	var angle: float = acos(clampf(up_comp, -1.0, 1.0)) * strength
+	angle = clampf(angle, 0.0, deg_to_rad(45.0))
+	var world_correct := Basis(Quaternion(axis, angle))
+	var parent_i: int = skel.get_bone_parent(hips_i)
+	var parent_g: Transform3D = skel.global_transform
+	if parent_i >= 0:
+		parent_g = skel.global_transform * skel.get_bone_global_pose(parent_i)
+	var new_basis: Basis = world_correct * hips_g.basis
+	var local: Transform3D = parent_g.affine_inverse() * Transform3D(new_basis, hips_g.origin)
+	skel.set_bone_pose_rotation(hips_i, local.basis.get_rotation_quaternion())
 
 
 ## Pitch a bone so its −Z (humanoid face/front) lies on the horizon.
@@ -387,7 +441,8 @@ static func _level_bone_forward(
 	skel.set_bone_pose_rotation(bone_i, local.basis.get_rotation_quaternion())
 
 
-## Attach a late-process helper so gaze correction runs after AnimationPlayer.
+## Attach a SkeletonModifier3D so gaze correction runs in the modifier stack
+## after AnimationPlayer (Node._process was too early for skinned draw).
 static func install_sky_gaze_fix(model: Node3D) -> void:
 	if model == null:
 		return
@@ -401,12 +456,13 @@ static func install_sky_gaze_fix(model: Node3D) -> void:
 		return
 	var anim := model.find_child("AnimationPlayer", true, false) as AnimationPlayer
 	if anim != null:
-		## Lower number = earlier. Anim poses bones, then SkyGazeFix corrects.
 		anim.process_priority = -100
-	var fix := Node.new()
+	## Must .new() the script so _process_modification binds (set_script on a
+	## bare SkeletonModifier3D silently skips the virtual override).
+	var FixScript := load("res://scripts/utils/sky_gaze_fix.gd") as GDScript
+	var fix: SkeletonModifier3D = FixScript.new() as SkeletonModifier3D
 	fix.name = "SkyGazeFix"
-	fix.set_script(load("res://scripts/utils/sky_gaze_fix.gd"))
-	fix.process_priority = 1000
+	fix.active = true
 	skel.add_child(fix)
 
 ## Return the Godot yaw that aims canonical MODEL_FRONT (-Z) along direction.

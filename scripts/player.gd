@@ -26,20 +26,16 @@ const JUMP_VELOCITY := 7.0
 const GRAVITY := 22.0
 const TURN_RATE := 14.0
 const MOUSE_SENS := 0.0022
-## Close zoom used to allow ~2.4m arm + look-up pitch, putting the lens near
-## the feet (worm's-eye). That made every character look sky-staring.
-const CAM_ZOOM_MIN := 4.2
-const CAM_ZOOM_MAX := 9.5
-const CAM_ZOOM_STEP := 0.38
-const CAM_ZOOM_DEFAULT := 5.6
-const CAM_PIVOT_HEIGHT := 1.55
-## Keep the lens at least this high so close zoom never goes worm's-eye.
-const CAM_MIN_HEIGHT := 1.15
-const CAM_PITCH_MIN := -1.05
-## Close zoom: keep a mild look-down so framing stays over-shoulder, not sky-heavy.
-## Far zoom may tilt up a bit; SpringArm blocks ground.
-const CAM_PITCH_MAX_CLOSE := -0.18
-const CAM_PITCH_MAX_FAR := 0.42
+## Metin2-style orbit: wheel only changes distance; pitch stays look-down.
+const CAM_ZOOM_MIN := 3.6
+const CAM_ZOOM_MAX := 12.0
+const CAM_ZOOM_STEP := 0.45
+const CAM_ZOOM_DEFAULT := 6.5
+const CAM_PIVOT_HEIGHT := 1.45
+## Always look down at the hero (never worm's-eye / sky framing).
+const CAM_PITCH_MIN := -0.95
+const CAM_PITCH_MAX := -0.32
+const CAM_PITCH_DEFAULT := -0.52
 const CAM_SPRING_MARGIN := 0.35
 
 const COMBO_CLIPS := ["ual2_Sword_Light_A", "ual2_Sword_Light_B", "ual2_Sword_Light_C"]
@@ -73,7 +69,7 @@ var skill_cd: float = 0.0
 var invuln_timer: float = 0.0
 var death_timer: float = 0.0
 var cam_yaw: float = 0.0
-var cam_pitch: float = -0.28
+var cam_pitch: float = CAM_PITCH_DEFAULT
 var _cam_zoom: float = CAM_ZOOM_DEFAULT
 
 # Feedback state: footstep accumulator, camera shake, soft lock-on target.
@@ -387,26 +383,20 @@ func _build_camera() -> void:
 	spring_arm.add_child(camera)
 	_apply_cam_zoom(_cam_zoom)
 
-## Orbit: hold middle-mouse (scroll-wheel button) and drag. Wheel scroll zooms.
-## RMB click (no look) still heavy-attacks.
+## Orbit: hold middle-mouse and drag (yaw + limited look-down pitch).
+## Wheel only zooms distance — Metin2 style. RMB click still heavy-attacks.
 var _mmb_down: bool = false
 var _mmb_looking: bool = false
 var _mmb_press_pos: Vector2 = Vector2.ZERO
 const MMB_LOOK_SLOP := 4.0
 
 
-## Close zoom: no look-up (keeps an over-shoulder framing). Far zoom: allow more
-## look-up; SpringArm env collision shortens the arm before the lens hits ground.
-func _max_pitch_for_zoom(zoom: float) -> float:
-	var t: float = inverse_lerp(CAM_ZOOM_MIN, CAM_ZOOM_MAX, clampf(zoom, CAM_ZOOM_MIN, CAM_ZOOM_MAX))
-	return lerpf(CAM_PITCH_MAX_CLOSE, CAM_PITCH_MAX_FAR, t)
-
-
 func _apply_cam_zoom(zoom: float) -> void:
 	_cam_zoom = clampf(zoom, CAM_ZOOM_MIN, CAM_ZOOM_MAX)
 	if spring_arm != null:
 		spring_arm.spring_length = _cam_zoom
-	cam_pitch = clampf(cam_pitch, CAM_PITCH_MIN, _max_pitch_for_zoom(_cam_zoom))
+	## Pitch is independent of zoom; always stay in the look-down band.
+	cam_pitch = clampf(cam_pitch, CAM_PITCH_MIN, CAM_PITCH_MAX)
 
 
 func _unhandled_input(event: InputEvent) -> void:
@@ -438,7 +428,7 @@ func _unhandled_input(event: InputEvent) -> void:
 			_mmb_looking = true
 		if _mmb_looking:
 			cam_yaw -= event.relative.x * MOUSE_SENS
-			cam_pitch = clampf(cam_pitch - event.relative.y * MOUSE_SENS, CAM_PITCH_MIN, _max_pitch_for_zoom(_cam_zoom))
+			cam_pitch = clampf(cam_pitch - event.relative.y * MOUSE_SENS, CAM_PITCH_MIN, CAM_PITCH_MAX)
 
 func _physics_process(delta: float) -> void:
 	if world == null:
@@ -457,8 +447,7 @@ func _physics_process(delta: float) -> void:
 			_respawn()
 		return
 
-	## Re-clamp each tick — zoom may have tightened the look-up ceiling.
-	cam_pitch = clampf(cam_pitch, CAM_PITCH_MIN, _max_pitch_for_zoom(_cam_zoom))
+	cam_pitch = clampf(cam_pitch, CAM_PITCH_MIN, CAM_PITCH_MAX)
 	camera_pivot.rotation.y = cam_yaw
 	camera_pivot.rotation.x = cam_pitch
 

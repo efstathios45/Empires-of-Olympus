@@ -31,7 +31,7 @@ func run() -> void:
 		return
 
 	player._apply_cam_zoom(0.1)  ## clamp to min
-	player.cam_pitch = player._max_pitch_for_zoom(player._cam_zoom)
+	player.cam_pitch = player.CAM_PITCH_MAX  ## shallowest look-down
 	player.cam_yaw = 0.0
 	player.camera_pivot.rotation.y = player.cam_yaw
 	player.camera_pivot.rotation.x = player.cam_pitch
@@ -51,8 +51,8 @@ func run() -> void:
 		" SPRING_MASK=", player.spring_arm.collision_mask,
 		" MARGIN=", player.spring_arm.margin
 	)
-	if cam_y < 0.9:
-		push_error("camera still worm's-eye at min zoom: %s" % cam_y)
+	if cam_y < pivot_y - 0.05:
+		push_error("min zoom should stay at/above pivot (look-down): %s < %s" % [cam_y, pivot_y])
 		quit(1)
 		return
 
@@ -60,9 +60,9 @@ func run() -> void:
 	img.save_png("/opt/cursor/artifacts/zoom_min_lookup.png")
 	print("SAVED zoom_min_lookup.png")
 
-	## Also capture a slightly pulled-back default framing for comparison.
-	player._apply_cam_zoom(5.6)
-	player.cam_pitch = -0.28
+	## Default Metin2 framing.
+	player._apply_cam_zoom(player.CAM_ZOOM_DEFAULT)
+	player.cam_pitch = player.CAM_PITCH_DEFAULT
 	player.camera_pivot.rotation.x = player.cam_pitch
 	for i in 12:
 		await process_frame
