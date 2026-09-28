@@ -26,10 +26,18 @@ const JUMP_VELOCITY := 7.0
 const GRAVITY := 22.0
 const TURN_RATE := 14.0
 const MOUSE_SENS := 0.0022
-const CAM_ZOOM_MIN := 2.4
+## Close zoom used to allow ~2.4m arm + look-up pitch, putting the lens near
+## the feet (worm's-eye). That made every character look sky-staring.
+const CAM_ZOOM_MIN := 3.8
 const CAM_ZOOM_MAX := 9.5
 const CAM_ZOOM_STEP := 0.38
 const CAM_ZOOM_DEFAULT := 5.6
+const CAM_PIVOT_HEIGHT := 1.55
+## Keep the lens at least this high so close zoom never goes worm's-eye.
+const CAM_MIN_HEIGHT := 0.95
+const CAM_PITCH_MIN := -1.05
+const CAM_PITCH_MAX_FAR := 0.42
+const CAM_SPRING_MARGIN := 0.35
 
 const COMBO_CLIPS := ["ual2_Sword_Light_A", "ual2_Sword_Light_B", "ual2_Sword_Light_C"]
 const HEAVY_CLIP := "ual2_Sword_Heavy_A"
@@ -359,17 +367,22 @@ func _build_camera() -> void:
 	camera_pivot = Node3D.new()
 	camera_pivot.name = "CameraPivot"
 	add_child(camera_pivot)
-	camera_pivot.position.y = 1.55
+	camera_pivot.position.y = CAM_PIVOT_HEIGHT
 	spring_arm = SpringArm3D.new()
 	_cam_zoom = CAM_ZOOM_DEFAULT
 	spring_arm.spring_length = _cam_zoom
-	## Ignore environment so the arm never collapses under terrain (camera under
-	## the feet makes every character look like they are staring at the sky).
-	spring_arm.collision_mask = 0
+	## Collide with environment only (layer 1). Player is layer 2, so the arm
+	## never collapses into the body. Margin keeps the lens off terrain.
+	spring_arm.collision_mask = 1
+	spring_arm.margin = CAM_SPRING_MARGIN
+	var spring_shape := SphereShape3D.new()
+	spring_shape.radius = 0.22
+	spring_arm.shape = spring_shape
 	camera_pivot.add_child(spring_arm)
 	camera = Camera3D.new()
 	camera.current = true
 	spring_arm.add_child(camera)
+	_apply_cam_zoom(_cam_zoom)
 
 ## Orbit: hold middle-mouse (scroll-wheel button) and drag. Wheel scroll zooms.
 ## RMB click (no look) still heavy-attacks.
@@ -377,6 +390,23 @@ var _mmb_down: bool = false
 var _mmb_looking: bool = false
 var _mmb_press_pos: Vector2 = Vector2.ZERO
 const MMB_LOOK_SLOP := 4.0
+
+
+## Close zoom: hard height budget (no worm's-eye). Far zoom: allow more look-up;
+## SpringArm env collision shortens the arm before the lens goes underground.
+func _max_pitch_for_zoom(zoom: float) -> float:
+	var drop_budget: float = CAM_PIVOT_HEIGHT - CAM_MIN_HEIGHT
+	var close_max: float = asin(clampf(drop_budget / maxf(CAM_ZOOM_MIN, 0.1), 0.0, 0.95))
+	var t: float = inverse_lerp(CAM_ZOOM_MIN, CAM_ZOOM_MAX, clampf(zoom, CAM_ZOOM_MIN, CAM_ZOOM_MAX))
+	return lerpf(close_max, CAM_PITCH_MAX_FAR, t)
+
+
+func _apply_cam_zoom(zoom: float) -> void:
+	_cam_zoom = clampf(zoom, CAM_ZOOM_MIN, CAM_ZOOM_MAX)
+	if spring_arm != null:
+		spring_arm.spring_length = _cam_zoom
+	cam_pitch = clampf(cam_pitch, CAM_PITCH_MIN, _max_pitch_for_zoom(_cam_zoom))
+
 
 func _unhandled_input(event: InputEvent) -> void:
 	if state == State.DEAD:
@@ -388,9 +418,7 @@ func _unhandled_input(event: InputEvent) -> void:
 	if event is InputEventMouseButton:
 		if event.pressed and (event.button_index == MOUSE_BUTTON_WHEEL_UP or event.button_index == MOUSE_BUTTON_WHEEL_DOWN):
 			var dir := -1.0 if event.button_index == MOUSE_BUTTON_WHEEL_UP else 1.0
-			_cam_zoom = clampf(_cam_zoom + dir * CAM_ZOOM_STEP, CAM_ZOOM_MIN, CAM_ZOOM_MAX)
-			if spring_arm != null:
-				spring_arm.spring_length = _cam_zoom
+			_apply_cam_zoom(_cam_zoom + dir * CAM_ZOOM_STEP)
 			return
 		if event.button_index == MOUSE_BUTTON_MIDDLE:
 			if event.pressed:
@@ -409,7 +437,7 @@ func _unhandled_input(event: InputEvent) -> void:
 			_mmb_looking = true
 		if _mmb_looking:
 			cam_yaw -= event.relative.x * MOUSE_SENS
-			cam_pitch = clampf(cam_pitch - event.relative.y * MOUSE_SENS, -1.05, 0.55)
+			cam_pitch = clampf(cam_pitch - event.relative.y * MOUSE_SENS, CAM_PITCH_MIN, _max_pitch_for_zoom(_cam_zoom))
 
 func _physics_process(delta: float) -> void:
 	if world == null:
@@ -428,6 +456,8 @@ func _physics_process(delta: float) -> void:
 			_respawn()
 		return
 
+	## Re-clamp each tick — zoom may have tightened the look-up ceiling.
+	cam_pitch = clampf(cam_pitch, CAM_PITCH_MIN, _max_pitch_for_zoom(_cam_zoom))
 	camera_pivot.rotation.y = cam_yaw
 	camera_pivot.rotation.x = cam_pitch
 
