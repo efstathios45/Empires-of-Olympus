@@ -69,6 +69,11 @@ func _physics_process(delta: float) -> void:
 				var player := get_tree().get_first_node_in_group("player")
 				var from_pos: Vector3 = player.global_position if player else global_position
 				enemy.take_damage(damage, from_pos)
+			## Distinct impact — different from the fire/swing whoosh.
+			AudioManager.play_sfx(
+				"thunderbolt" if is_magic else "bronze_hit",
+				-2.5 if is_magic else -1.5,
+				randf_range(0.9, 1.12))
 			var vfx := preload("res://scripts/vfx_helper.gd")
 			vfx.spawn_hit(global_position, get_parent())
 			queue_free()

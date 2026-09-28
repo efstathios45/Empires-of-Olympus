@@ -5,7 +5,8 @@ extends Control
 
 const Kit = preload("res://scripts/ui/ui_kit.gd")
 
-const TEXT_W := 640
+## panel_scroll content_margin ~118×2 + inner margin 20×2 → keep text inside cream.
+const TEXT_W := 520
 
 var hud: CanvasLayer
 
@@ -29,7 +30,7 @@ func _ready() -> void:
 	panel.custom_minimum_size = Vector2(820, 560)
 	center.add_child(panel)
 
-	var margin := Kit.make_margin(34)
+	var margin := Kit.make_margin(20)
 	panel.add_child(margin)
 	var v := VBoxContainer.new()
 	v.add_theme_constant_override("separation", 8)
@@ -82,13 +83,11 @@ func _ready() -> void:
 	row.add_theme_constant_override("separation", 20)
 	v.add_child(row)
 
-	_complete_btn = Kit.make_button("Complete Trial", true)
-	_complete_btn.custom_minimum_size = Vector2(280, 64)
+	_complete_btn = Kit.make_button("Complete", true)
 	_complete_btn.pressed.connect(_on_complete)
 	row.add_child(_complete_btn)
 
 	var close_btn := Kit.make_button("Farewell", false)
-	close_btn.custom_minimum_size = Vector2(260, 62)
 	close_btn.pressed.connect(func() -> void: hud.close_panel_from_click())
 	row.add_child(close_btn)
 

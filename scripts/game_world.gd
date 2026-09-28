@@ -26,6 +26,8 @@ const HUB_H := 0.45
 ## Paved/bare radius of the plaza: drives the splatmap, the grass mask, footstep
 ## surface and the town music zone. One number, one source of truth.
 const PLAZA_R := HUB_RADIUS * 0.55
+## Sanctuary radius — enemies will not enter; chasing foes turn home here.
+const SANCTUARY_R := PLAZA_R
 const ARENA_POS := Vector2(0.0, 105.0)
 const ARENA_RADIUS := 26.0
 const ARENA_H := 0.42
@@ -43,8 +45,8 @@ const GROVES := [
 # 40 s respawn tops the hunting grounds back up as the player clears them.
 const ZONES := [
 	{"c": Vector2(0.0, -80.0), "r": 17.0,
-		"ids": ["wolf_enemy", "wolf_enemy", "wolf_enemy",
-				"boar_enemy", "boar_enemy"]},
+		"ids": ["wolf_enemy", "wolf_enemy", "wolf_black_enemy",
+				"wolf_dire_enemy", "boar_enemy", "boar_enemy"]},
 	{"c": Vector2(80.0, -20.0), "r": 17.0,
 		"ids": ["satyr_enemy", "satyr_enemy", "satyr_enemy",
 				"harpy_enemy", "harpy_enemy"]},
@@ -57,6 +59,11 @@ const RESPAWN_DELAY := 40.0
 const BOSS_MUSIC_RANGE := 34.0
 ## Inside this radius of the plaza the town theme + market crowd take over.
 const CITY_AUDIO_RANGE := 44.0
+## Titan Seeds: random crawl-from-earth spawns (chance checked on this interval).
+const STONE_SPAWN_INTERVAL := 22.0
+const STONE_SPAWN_CHANCE := 0.38
+const STONE_MAX_ALIVE := 5
+const STONE_TIERS := [1, 1, 5, 5, 10, 15]
 
 var _terrain: HTerrain = null
 var _splatmap: Image = null
@@ -66,6 +73,8 @@ var player: Node3D = null
 var interactables: Array[Node3D] = []
 var _music_timer: float = 0.0
 var _boss_node: Node3D = null
+var _stone_timer: float = 8.0
+var _autosave_timer: float = 45.0
 
 ## Adapter the grass field samples: heights as Vector3, plus a grass mask.
 class GrassTerrain extends RefCounted:
@@ -99,11 +108,28 @@ func _ready() -> void:
 
 func _setup_environment() -> void:
 	var env := Environment.new()
+	## Never leave the default grey clear colour — if the panorama sky fails
+	## to load (common on some GL Compatibility builds), fall back to a warm
+	## Hellas procedural sky so spawn never looks like an empty viewport.
+	var sky_ok := false
 	if ResourceLoader.exists("res://assets/textures/skyboxes/olympus_sky_sky.tres"):
-		env.sky = load("res://assets/textures/skyboxes/olympus_sky_sky.tres")
-		env.background_mode = Environment.BG_SKY
-		env.ambient_light_source = Environment.AMBIENT_SOURCE_SKY
-		env.ambient_light_energy = 0.55
+		var sky_res = load("res://assets/textures/skyboxes/olympus_sky_sky.tres")
+		if sky_res is Sky:
+			env.sky = sky_res
+			sky_ok = true
+	if not sky_ok:
+		var proc := ProceduralSkyMaterial.new()
+		proc.sky_top_color = Color(0.45, 0.62, 0.88)
+		proc.sky_horizon_color = Color(0.95, 0.82, 0.62)
+		proc.ground_bottom_color = Color(0.35, 0.28, 0.18)
+		proc.ground_horizon_color = Color(0.78, 0.62, 0.42)
+		proc.sun_angle_max = 30.0
+		var sky := Sky.new()
+		sky.sky_material = proc
+		env.sky = sky
+	env.background_mode = Environment.BG_SKY
+	env.ambient_light_source = Environment.AMBIENT_SOURCE_SKY
+	env.ambient_light_energy = 0.55
 	env.tonemap_mode = Environment.TONE_MAPPER_ACES
 	env.tonemap_exposure = 1.06
 	env.glow_enabled = true
@@ -279,6 +305,21 @@ func ground_kind(x: float, z: float) -> String:
 func get_respawn_point() -> Vector3:
 	return Vector3(0.0, sample_height(0.0, 7.0) + 1.0, 7.0)
 
+
+## City plaza sanctuary — no hunting. Enemies must turn back to their sectors.
+func is_sanctuary(pos: Vector3) -> bool:
+	var d2 := Vector2(pos.x, pos.z).distance_squared_to(HUB_POS)
+	return d2 < SANCTUARY_R * SANCTUARY_R
+
+
+## True if moving from `from` toward `to` would cross into the sanctuary.
+func would_enter_sanctuary(from: Vector3, to: Vector3) -> bool:
+	if is_sanctuary(to):
+		return true
+	# Block steps that clip the ring even if the destination is just outside.
+	var mid := (from + to) * 0.5
+	return is_sanctuary(mid)
+
 # ── Bounds ───────────────────────────────────────────────────────────────
 
 func _build_bounds() -> void:
@@ -335,6 +376,7 @@ func _place_glb(path: String, wx: float, wz: float, height_m: float, yaw_deg: fl
 	var y := sample_height(wx, wz)
 	obj.global_position = Vector3(wx, y, wz)
 	obj.rotation.y = deg_to_rad(yaw_deg)
+	# World-root parent is at y=0, so pass terrain height as the offset above parent.
 	ModelUtils.ground_model(obj, y)
 	if tier == 1:
 		ModelUtils.add_collision(obj)
@@ -462,11 +504,13 @@ func _build_wilds() -> void:
 			rng.randf_range(1.8, 4.2), rng.randf() * 360.0, 2)
 		placed += 1
 
-	# The three cursed Oracle Stones.
-	for pos in [Vector2(40.0, -70.0), Vector2(-70.0, -25.0), Vector2(35.0, 55.0)]:
-		var stone := OracleStoneScript.create(Vector3(pos.x, sample_height(pos.x, pos.y), pos.y))
-		add_child(stone)
-		add_interactable(stone)
+	# Seed the wilds with a few Titan Seeds; more crawl up at random over time.
+	for entry in [
+		[Vector2(40.0, -70.0), 1],
+		[Vector2(-70.0, -25.0), 5],
+		[Vector2(35.0, 55.0), 10],
+	]:
+		_spawn_oracle_stone(entry[0] as Vector2, int(entry[1]))
 
 	# Hidden treasure.
 	for pos in [Vector2(30.0, -58.0), Vector2(-62.0, 10.0), Vector2(18.0, 88.0)]:
@@ -517,6 +561,13 @@ func _spawn_player() -> void:
 	add_child(player)
 	player.add_to_group("player")
 	player.global_position = get_respawn_point()
+	## Resume at last saved world position when continuing a legend.
+	var save := AccountSystem.read_local_save()
+	if typeof(save.get("pos", null)) == TYPE_DICTIONARY:
+		var p: Dictionary = save["pos"]
+		var x := float(p.get("x", player.global_position.x))
+		var z := float(p.get("z", player.global_position.z))
+		player.global_position = Vector3(x, sample_height(x, z) + 1.0, z)
 
 func _spawn_zones() -> void:
 	for zi in ZONES.size():
@@ -602,15 +653,17 @@ func _build_forests() -> void:
 		var forest := TreeForest.new()
 		add_child(forest)
 		var c: Vector2 = g["c"]
-		forest.global_position = Vector3(c.x, sample_height(c.x, c.y), c.y)
+		var base_y: float = sample_height(c.x, c.y)
+		forest.global_position = Vector3(c.x, base_y, c.y)
+		# Per-tree terrain snap — stops trunks floating on slopes at grove edges.
+		var height_fn := func(lx: float, lz: float) -> float:
+			return sample_height(c.x + lx, c.y + lz) - base_y
 		forest.setup(params, 2, leaf_mat, bark_mat, int(g["count"]), float(g["r"]), {
 			"seed": int(g["seed"]), "scale_jitter": 0.3,
 			"variant_jitter": {"trunk_height": 0.2, "leaf_card_size": 0.15},
-			# Collapse to the cheap impostor tier close in, and let the groves
-			# skip the leaf shadow pass — they are wilderness, far from the sun's
-			# 80 m shadow range anyway.
 			"lod_distance": 34.0, "lod_blend_band": 14.0,
 			"cast_leaf_shadows": false,
+			"height_sampler": height_fn,
 		})
 		forest.build()
 
@@ -653,6 +706,62 @@ func _process(delta: float) -> void:
 	if _music_timer <= 0.0:
 		_music_timer = 0.6
 		_update_music()
+
+	_stone_timer -= delta
+	if _stone_timer <= 0.0:
+		_stone_timer = STONE_SPAWN_INTERVAL
+		if randf() < STONE_SPAWN_CHANCE:
+			_try_random_stone_spawn()
+
+	if AccountSystem.is_logged_in():
+		_autosave_timer -= delta
+		if _autosave_timer <= 0.0:
+			_autosave_timer = 45.0
+			_autosave()
+
+
+func _autosave() -> void:
+	if not AccountSystem.is_logged_in():
+		return
+	var extra := {}
+	if player != null and is_instance_valid(player):
+		extra["pos"] = {
+			"x": player.global_position.x,
+			"y": player.global_position.y,
+			"z": player.global_position.z,
+		}
+	AccountSystem.save_game(extra)
+
+
+func _alive_oracle_stones() -> int:
+	var n := 0
+	for s in get_tree().get_nodes_in_group("oracle_stones"):
+		if is_instance_valid(s) and not s.get("dead"):
+			n += 1
+	return n
+
+
+func _spawn_oracle_stone(pos: Vector2, tier: int) -> void:
+	var stone := OracleStoneScript.create(
+		Vector3(pos.x, sample_height(pos.x, pos.y), pos.y), tier)
+	add_child(stone)
+
+
+func _try_random_stone_spawn() -> void:
+	if _alive_oracle_stones() >= STONE_MAX_ALIVE:
+		return
+	# Prefer wilds away from the plaza and arena.
+	for _i in 12:
+		var wx := randf_range(-95.0, 95.0)
+		var wz := randf_range(-95.0, 95.0)
+		if Vector2(wx, wz).distance_to(HUB_POS) < HUB_RADIUS + 18.0:
+			continue
+		if Vector2(wx, wz).distance_to(ARENA_POS) < 28.0:
+			continue
+		var tier: int = int(STONE_TIERS[randi() % STONE_TIERS.size()])
+		_spawn_oracle_stone(Vector2(wx, wz), tier)
+		return
+
 
 ## Zone soundtrack, polled every 0.6 s from _process. Priority: the Minotaur
 ## first, then the city, then the open country. AudioManager.play_music /

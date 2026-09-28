@@ -40,6 +40,17 @@ func interact() -> void:
 	GameState.add_gold(gold)
 	GameState.health_potions += 1
 	GameState.potions_changed.emit()
+	# Guaranteed gear from ancient chests.
+	var loot_id: String = GameState.roll_loot_drop(0.92, false)
+	if loot_id != "":
+		var LootPickup := load("res://scripts/loot_pickup.gd")
+		if LootPickup:
+			var drop: Node = LootPickup.new()
+			var parent := get_parent()
+			if parent:
+				parent.add_child(drop)
+				if drop.has_method("setup"):
+					drop.setup(loot_id, global_position + Vector3(0, 0.3, 0))
 	AudioManager.play_sfx("gold_pickup")
 	VfxHelper.spawn_hit(global_position + Vector3(0, 0.8, 0), get_parent())
 	DamageNumbers.spawn(get_parent(), global_position + Vector3(0, 1.4, 0), gold, Color(1.0, 0.85, 0.3))
