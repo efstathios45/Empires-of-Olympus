@@ -191,8 +191,8 @@ func _aim_upper_arm_a_pose(skel: Skeleton3D, arm_bone: String, hand_bone: String
 
 ## Tripo rest stares upward; local +X negative pitch aims near the horizon.
 func _level_head(skel: Skeleton3D) -> void:
-	_add_local_rot(skel, "Neck", Vector3(1, 0, 0), -0.08)
-	_add_local_rot(skel, "Head", Vector3(1, 0, 0), -0.16)
+	_add_local_rot(skel, "Neck", Vector3(1, 0, 0), -0.12)
+	_add_local_rot(skel, "Head", Vector3(1, 0, 0), -0.20)
 
 
 ## Simple in-place walk/sprint on the planted human base.

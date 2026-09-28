@@ -37,8 +37,8 @@ No zip extract needed — this download is the .exe alone.
 ------------------------------------------------------------
 Download
 ------------------------------------------------------------
-Windows build (current — NPC stand-plant fix):
-  https://gofile.io/d/Qb72hteo
+Windows build (current — walk + natural NPC idle):
+  https://gofile.io/d/PRdeetB0
 
 File name: EmpiresOfOlympus.exe
 
