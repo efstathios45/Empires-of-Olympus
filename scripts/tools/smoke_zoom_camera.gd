@@ -1,6 +1,5 @@
 extends SceneTree
-## Headless: Metin2 zoom — distance only; pitch always look-down.
-## Run: godot --headless --path . -s res://scripts/tools/smoke_zoom_camera.gd
+## Headless: zoom removed; fixed distance; no bone gaze twist.
 
 
 func _init() -> void:
@@ -9,33 +8,61 @@ func _init() -> void:
 
 func _run() -> void:
 	var src := FileAccess.open("res://scripts/player.gd", FileAccess.READ)
-	if src == null:
-		push_error("cannot read player.gd")
-		quit(1)
-		return
 	var text := src.get_as_text()
 	src.close()
-	for needle in [
-		"const CAM_ZOOM_MIN := 3.6",
-		"const CAM_PITCH_MAX := -0.32",
-		"const CAM_PITCH_MIN := -0.95",
-		"spring_arm.collision_mask = 1",
-	]:
-		if not text.contains(needle):
-			push_error("missing camera const/setup: " + needle)
-			quit(1)
-			return
-	## Old worm's-eye: zoom 2.4 + pitch +0.55 → cam_y ≈ 0.30
-	var old_bug_y := 1.55 - 2.4 * sin(0.55)
-	## New: min zoom + shallowest look-down still keeps lens above shoulders.
-	var new_y := 1.45 - 3.6 * sin(-0.32)  ## sin(-0.32)<0 → raises lens
-	print("SMOKE_OLD_BUG_Y=", old_bug_y, " NEW_MIN_CAM_Y=", new_y)
-	if old_bug_y >= 0.5:
-		push_error("old bug sanity failed")
+	if "CAM_ZOOM_MIN" in text or "_apply_cam_zoom" in text:
+		push_error("zoom helpers must be removed")
 		quit(1)
 		return
-	if new_y < 1.3:
-		push_error("metin2 min framing too low: %s" % new_y)
+	if not text.contains("const CAM_DISTANCE := 5.6"):
+		push_error("fixed CAM_DISTANCE missing")
+		quit(1)
+		return
+	if not text.contains("MOUSE_BUTTON_WHEEL_UP"):
+		push_error("wheel should be swallowed")
+		quit(1)
+		return
+
+	if not str(ModelUtils.BUILD_FIX_TOKEN).contains("NO_ZOOM_RAW_IDLE"):
+		push_error("BUILD_FIX_TOKEN wrong")
+		quit(1)
+		return
+
+	var m: Node3D = load("res://assets/characters/spartan_hoplite/spartan_hoplite.glb").instantiate()
+	get_root().add_child(m)
+	ModelUtils.setup_character_for_movement(m, 1.85)
+	var skel: Skeleton3D
+	for n in m.find_children("*", "Skeleton3D", true, false):
+		skel = n
+		break
+	assert(skel != null)
+	## Must NOT install a live SkyGazeFix that mutates bones.
+	if skel.has_node("SkyGazeFix"):
+		push_error("SkyGazeFix must not be installed")
+		quit(1)
+		return
+	var anim := m.find_child("AnimationPlayer", true, false) as AnimationPlayer
+	if anim == null:
+		anim = AnimationPlayer.new()
+		m.add_child(anim)
+	var lib := load("res://assets/characters/spartan_hoplite/spartan_hoplite_animations.tres") as AnimationLibrary
+	if anim.has_animation_library(""):
+		anim.remove_animation_library("")
+	anim.add_animation_library("", lib)
+	anim.play("ual1_Idle")
+	for i in 24:
+		await process_frame
+	var hi := skel.find_bone("Head")
+	var hips := skel.find_bone("Hips")
+	var ht := skel.global_transform * skel.get_bone_global_pose(hi)
+	var hp := skel.global_transform * skel.get_bone_global_pose(hips)
+	var col := (ht.origin - hp.origin).normalized()
+	var upright := col.dot(Vector3.UP)
+	var slope := Vector2(col.x, col.z).length()
+	print("SMOKE_UPRIGHT=", upright, " SLOPE=", slope)
+	## Raw idle is near-vertical (upright≈0.99). Slope includes authored lateral rest.
+	if upright < 0.95 or slope > 0.20:
+		push_error("idle not upright: upright=%s slope=%s" % [upright, slope])
 		quit(1)
 		return
 	print("SMOKE_ZOOM_CAMERA_OK")

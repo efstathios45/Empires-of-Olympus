@@ -26,16 +26,12 @@ const JUMP_VELOCITY := 7.0
 const GRAVITY := 22.0
 const TURN_RATE := 14.0
 const MOUSE_SENS := 0.0022
-## Metin2-style orbit: wheel only changes distance; pitch stays look-down.
-const CAM_ZOOM_MIN := 3.6
-const CAM_ZOOM_MAX := 12.0
-const CAM_ZOOM_STEP := 0.45
-const CAM_ZOOM_DEFAULT := 6.5
+## Fixed third-person camera (zoom removed — close zoom made poses look broken).
+const CAM_DISTANCE := 5.6
 const CAM_PIVOT_HEIGHT := 1.45
-## Always look down at the hero (never worm's-eye / sky framing).
-const CAM_PITCH_MIN := -0.95
-const CAM_PITCH_MAX := -0.32
-const CAM_PITCH_DEFAULT := -0.52
+const CAM_PITCH_MIN := -0.85
+const CAM_PITCH_MAX := -0.18
+const CAM_PITCH_DEFAULT := -0.28
 const CAM_SPRING_MARGIN := 0.35
 
 const COMBO_CLIPS := ["ual2_Sword_Light_A", "ual2_Sword_Light_B", "ual2_Sword_Light_C"]
@@ -70,7 +66,6 @@ var invuln_timer: float = 0.0
 var death_timer: float = 0.0
 var cam_yaw: float = 0.0
 var cam_pitch: float = CAM_PITCH_DEFAULT
-var _cam_zoom: float = CAM_ZOOM_DEFAULT
 
 # Feedback state: footstep accumulator, camera shake, soft lock-on target.
 var _step_accum: float = 0.0
@@ -368,10 +363,8 @@ func _build_camera() -> void:
 	add_child(camera_pivot)
 	camera_pivot.position.y = CAM_PIVOT_HEIGHT
 	spring_arm = SpringArm3D.new()
-	_cam_zoom = CAM_ZOOM_DEFAULT
-	spring_arm.spring_length = _cam_zoom
-	## Collide with environment only (layer 1). Player is layer 2, so the arm
-	## never collapses into the body. Margin keeps the lens off terrain.
+	spring_arm.spring_length = CAM_DISTANCE
+	## Environment only (layer 1). Player is layer 2.
 	spring_arm.collision_mask = 1
 	spring_arm.margin = CAM_SPRING_MARGIN
 	var spring_shape := SphereShape3D.new()
@@ -381,22 +374,13 @@ func _build_camera() -> void:
 	camera = Camera3D.new()
 	camera.current = true
 	spring_arm.add_child(camera)
-	_apply_cam_zoom(_cam_zoom)
 
-## Orbit: hold middle-mouse and drag (yaw + limited look-down pitch).
-## Wheel only zooms distance — Metin2 style. RMB click still heavy-attacks.
+## Orbit: hold middle-mouse and drag. No wheel zoom.
+## RMB click still heavy-attacks.
 var _mmb_down: bool = false
 var _mmb_looking: bool = false
 var _mmb_press_pos: Vector2 = Vector2.ZERO
 const MMB_LOOK_SLOP := 4.0
-
-
-func _apply_cam_zoom(zoom: float) -> void:
-	_cam_zoom = clampf(zoom, CAM_ZOOM_MIN, CAM_ZOOM_MAX)
-	if spring_arm != null:
-		spring_arm.spring_length = _cam_zoom
-	## Pitch is independent of zoom; always stay in the look-down band.
-	cam_pitch = clampf(cam_pitch, CAM_PITCH_MIN, CAM_PITCH_MAX)
 
 
 func _unhandled_input(event: InputEvent) -> void:
@@ -407,9 +391,8 @@ func _unhandled_input(event: InputEvent) -> void:
 		_mmb_looking = false
 		return
 	if event is InputEventMouseButton:
-		if event.pressed and (event.button_index == MOUSE_BUTTON_WHEEL_UP or event.button_index == MOUSE_BUTTON_WHEEL_DOWN):
-			var dir := -1.0 if event.button_index == MOUSE_BUTTON_WHEEL_UP else 1.0
-			_apply_cam_zoom(_cam_zoom + dir * CAM_ZOOM_STEP)
+		## Swallow wheel so it cannot change camera distance.
+		if event.button_index == MOUSE_BUTTON_WHEEL_UP or event.button_index == MOUSE_BUTTON_WHEEL_DOWN:
 			return
 		if event.button_index == MOUSE_BUTTON_MIDDLE:
 			if event.pressed:

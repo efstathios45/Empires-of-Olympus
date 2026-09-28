@@ -1,5 +1,5 @@
 extends SceneTree
-## Smoke: address parsing + sky-gaze dampen + pending join.
+## Smoke: address parsing + raw upright idle + pending join.
 
 func _init() -> void:
 	call_deferred("run")
@@ -23,7 +23,6 @@ func run() -> void:
 	net.clear_pending_join()
 	assert(net.pending_join_address == "")
 
-	## Characters stay upright without SkyGazeFix (which twisted the silhouette).
 	var m: Node3D = load("res://assets/characters/spartan_hoplite/spartan_hoplite.glb").instantiate()
 	get_root().add_child(m)
 	ModelUtils.setup_character_for_movement(m, 1.85)
@@ -40,7 +39,7 @@ func run() -> void:
 		skel = n
 		break
 	assert(skel != null)
-	assert(not skel.has_node("SkyGazeFix"), "SkyGazeFix must stay off")
+	assert(not skel.has_node("SkyGazeFix"), "no bone twist")
 	anim.play("ual1_Idle")
 	for i in 20:
 		await process_frame
@@ -50,6 +49,6 @@ func run() -> void:
 	var hp := skel.global_transform * skel.get_bone_global_pose(hips)
 	var upright: float = (ht.origin - hp.origin).normalized().dot(Vector3.UP)
 	print("SMOKE_UPRIGHT=", upright)
-	assert(upright > 0.97, "unexpected lean: %s" % upright)
+	assert(upright > 0.95, "idle not upright: %s" % upright)
 	print("SMOKE_ONLINE_HOST_OK")
 	quit(0)

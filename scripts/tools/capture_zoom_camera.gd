@@ -1,5 +1,5 @@
 extends SceneTree
-## Boot world, force min zoom + max look-up, capture player camera framing.
+## Capture fixed-camera in-world framing (no zoom).
 
 
 func _init() -> void:
@@ -15,7 +15,7 @@ func run() -> void:
 		return
 	gs.empire = "sparta"
 	gs.player_class = "hoplite"
-	gs.player_name = "ZoomHero"
+	gs.player_name = "Hero"
 	change_scene_to_file("res://scenes/game_world.tscn")
 	for i in 150:
 		await process_frame
@@ -30,44 +30,32 @@ func run() -> void:
 		quit(1)
 		return
 
-	player._apply_cam_zoom(0.1)  ## clamp to min
-	player.cam_pitch = player.CAM_PITCH_MAX  ## shallowest look-down
+	player.cam_pitch = player.CAM_PITCH_DEFAULT
 	player.cam_yaw = 0.0
-	player.camera_pivot.rotation.y = player.cam_yaw
+	player.camera_pivot.rotation.y = 0.0
 	player.camera_pivot.rotation.x = player.cam_pitch
 	if player.camera:
 		player.camera.current = true
 	for i in 20:
 		await process_frame
 
-	var cam: Camera3D = player.camera
-	var cam_y: float = cam.global_position.y
-	var pivot_y: float = player.camera_pivot.global_position.y
 	print(
-		"ZOOM=", player._cam_zoom,
+		"DIST=", player.spring_arm.spring_length,
 		" PITCH=", rad_to_deg(player.cam_pitch),
-		" CAM_Y=", cam_y,
-		" PIVOT_Y=", pivot_y,
-		" SPRING_MASK=", player.spring_arm.collision_mask,
-		" MARGIN=", player.spring_arm.margin
+		" CAM_Y=", player.camera.global_position.y,
+		" PIVOT_Y=", player.camera_pivot.global_position.y
 	)
-	if cam_y < pivot_y - 0.05:
-		push_error("min zoom should stay at/above pivot (look-down): %s < %s" % [cam_y, pivot_y])
-		quit(1)
-		return
-
 	var img = root.get_texture().get_image()
-	img.save_png("/opt/cursor/artifacts/zoom_min_lookup.png")
-	print("SAVED zoom_min_lookup.png")
+	img.save_png("/opt/cursor/artifacts/FIXED_cam_default.png")
+	print("SAVED FIXED_cam_default.png")
 
-	## Default Metin2 framing.
-	player._apply_cam_zoom(player.CAM_ZOOM_DEFAULT)
-	player.cam_pitch = player.CAM_PITCH_DEFAULT
-	player.camera_pivot.rotation.x = player.cam_pitch
+	## Orbit 45° for a clear human silhouette check
+	player.cam_yaw = deg_to_rad(40.0)
+	player.camera_pivot.rotation.y = player.cam_yaw
 	for i in 12:
 		await process_frame
 	img = root.get_texture().get_image()
-	img.save_png("/opt/cursor/artifacts/zoom_default.png")
-	print("SAVED zoom_default.png CAM_Y=", player.camera.global_position.y)
-	print("CAPTURE_ZOOM_CAMERA_OK")
+	img.save_png("/opt/cursor/artifacts/FIXED_cam_orbit.png")
+	print("SAVED FIXED_cam_orbit.png")
+	print("CAPTURE_FIXED_CAM_OK")
 	quit(0)

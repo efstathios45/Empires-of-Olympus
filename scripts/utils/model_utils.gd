@@ -1,7 +1,7 @@
 class_name ModelUtils
 
 ## Baked into exports so we can verify the PCK actually contains this revision.
-const BUILD_FIX_TOKEN := "EOO_FIX_METIN2_NO_GAZE_TWIST_V1"
+const BUILD_FIX_TOKEN := "EOO_FIX_NO_ZOOM_RAW_IDLE_V1"
 
 ## Ground a model so its mesh bottom sits at y_offset above its parent origin.
 ##
@@ -326,14 +326,12 @@ static func setup_character_for_movement(node: Node3D, target_height: float = 1.
 	if node.is_inside_tree():
 		node.force_update_transform()
 	ground_model(node)
-	## Do NOT install SkyGazeFix here. Bone straighten twisted hips/legs and made
-	## the silhouette lean worse. UAL idle is already upright; Metin2 look-down
-	## camera prevents the worm's-eye framing that looked like "sky stare".
+	## Do NOT install SkyGazeFix. Bone dampen/straighten twisted the silhouette
+	## (raw UAL idle |slope|≈0.035 vs twist ≈0.20). Camera zoom is removed instead.
 
 
-## Legacy no-op — kept so old callers/smoke scripts still resolve.
-## Hip straighten previously made characters look MORE tilted.
-static func correct_sky_gaze(skel: Skeleton3D, strength: float = 1.0) -> void:
+## Legacy no-op — bone pitch hacks made heroes look less human, not more.
+static func correct_sky_gaze(_skel: Skeleton3D, _strength: float = 1.0) -> void:
 	return
 
 
@@ -343,46 +341,14 @@ static func _dampen_local_pitch(skel: Skeleton3D, bone_name: String, strength: f
 	if bone_i < 0:
 		return
 	var e: Vector3 = skel.get_bone_pose_rotation(bone_i).get_euler()
-	if e.x <= 0.02:
+	if e.x <= 0.01:
 		return
 	e.x = lerpf(e.x, 0.0, clampf(strength, 0.0, 1.0))
 	skel.set_bone_pose_rotation(bone_i, Quaternion.from_euler(e))
 
 
-## Pitch a bone so its −Z lies on the horizon (unused; kept for older tools).
-static func _level_bone_forward(
-	skel: Skeleton3D, bone_name: String, strength: float, both_ways: bool = false
-) -> void:
-	var bone_i := skel.find_bone(bone_name)
-	if bone_i < 0:
-		return
-	var bone_g: Transform3D = skel.global_transform * skel.get_bone_global_pose(bone_i)
-	var fwd: Vector3 = (-bone_g.basis.z).normalized()
-	var up_comp: float = fwd.dot(Vector3.UP)
-	if both_ways:
-		if absf(up_comp) <= 0.02:
-			return
-	elif up_comp <= 0.02:
-		return
-	var pitch_err: float = asin(clampf(up_comp, -1.0, 1.0)) * strength
-	pitch_err = clampf(pitch_err, deg_to_rad(-42.0), deg_to_rad(42.0))
-	var flat_fwd := Vector3(fwd.x, 0.0, fwd.z)
-	if flat_fwd.length_squared() < 0.0001:
-		return
-	flat_fwd = flat_fwd.normalized()
-	var world_right: Vector3 = Vector3.UP.cross(flat_fwd).normalized()
-	var world_correct := Basis(Quaternion(world_right, pitch_err))
-	var parent_i: int = skel.get_bone_parent(bone_i)
-	var parent_g: Transform3D = skel.global_transform
-	if parent_i >= 0:
-		parent_g = skel.global_transform * skel.get_bone_global_pose(parent_i)
-	var new_basis: Basis = world_correct * bone_g.basis
-	var local: Transform3D = parent_g.affine_inverse() * Transform3D(new_basis, bone_g.origin)
-	skel.set_bone_pose_rotation(bone_i, local.basis.get_rotation_quaternion())
-
-
-## No-op installer — SkyGazeFix disabled (see setup_character_for_movement).
-static func install_sky_gaze_fix(model: Node3D) -> void:
+## Legacy no-op installer — kept so old callers still resolve.
+static func install_sky_gaze_fix(_model: Node3D) -> void:
 	return
 
 ## Return the Godot yaw that aims canonical MODEL_FRONT (-Z) along direction.
