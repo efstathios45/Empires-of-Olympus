@@ -38,7 +38,7 @@ No zip extract needed — this download is the .exe alone.
 Download
 ------------------------------------------------------------
 Windows build (current — Ancient Greek Tripo cast):
-  https://gofile.io/d/ySo2OjUS
+  https://gofile.io/d/ZYCS6srz
 
 File name: EmpiresOfOlympus.exe
 
