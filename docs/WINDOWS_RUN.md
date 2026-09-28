@@ -37,8 +37,8 @@ No zip extract needed — this download is the .exe alone.
 ------------------------------------------------------------
 Download
 ------------------------------------------------------------
-Windows build (current — Minecraft-style server browser):
-  https://gofile.io/d/sKNpXjPT
+Windows build (current — NPC stand-plant fix):
+  https://gofile.io/d/Qb72hteo
 
 File name: EmpiresOfOlympus.exe
 
