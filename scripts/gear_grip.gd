@@ -85,9 +85,10 @@ const GRIP_BY_GLB := {
 # Helmets are NOT run through WeaponGrip.normalize (melee/shield frames twist them).
 const HELMET_BY_GLB := {
 	"res://assets/props/gear/corinthian_helmet.glb": {
-		"position": Vector3(0.0, 0.035, 0.01),
+		"position": Vector3(0.0, 0.06, 0.02),
 		"rotation_deg": Vector3(0.0, 0.0, 0.0),
-		"target_extent": 0.26,
+		## Large enough to cover Quaternius crowns / modern hats.
+		"target_extent": 0.38,
 	},
 }
 

@@ -21,6 +21,8 @@ var spawn_yaw: float = 0.0
 var _base_yaw: float = 0.0
 ## Which looping clip this NPC idles in (townsfolk vary so the crowd isn't clones).
 var idle_clip: String = "Idle_Neutral"
+## Hellenic paint role for GreekLook (hoplite/guard/smith/merchant/citizen/oracle).
+var greek_role: String = "citizen"
 ## Non-empty = this NPC is townsfolk: E shows this remark instead of a panel.
 var flavour_line: String = ""
 
@@ -78,6 +80,8 @@ func _ready() -> void:
 		## Keep the GLB's authored yaw (many UAL rigs ship at −π) then add spawn facing.
 		_base_yaw = _model.rotation.y
 		ModelUtils.setup_character_for_movement(_model, height_m)
+		var GreekLook = load("res://scripts/utils/greek_look.gd")
+		GreekLook.apply(_model, greek_role)
 		_model.rotation.y = _base_yaw + spawn_yaw
 		_anim = _model.find_child("AnimationPlayer", true) as AnimationPlayer
 		if _anim == null:

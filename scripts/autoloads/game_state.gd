@@ -72,7 +72,7 @@ const CLASSES := {
 	"magos": {
 		"name": "Magos",
 		"desc": "Theurgist of storm and shadow. Olympus answers his call.",
-		"character": "res://assets/characters/quaternius_citizen_casual/citizen_casual.glb",
+		"character": "res://assets/characters/quaternius_oracle_witch/oracle_witch.glb",
 		"weapon": "res://assets/props/weapons/theurgist_staff.glb",
 		"weapon_name": "Theurgist Staff",
 		"base_dmg": 12.0, "base_hp": 90, "base_mp": 110,
