@@ -20,6 +20,7 @@ inspired by classical Greek pebble mosaics (Pella, Olynthos).
 | `props/decorations/free_antique_ceramic_vase_01/antique_ceramic_vase_01.glb` | [Poly Haven — antique_ceramic_vase_01](https://polyhaven.com/a/antique_ceramic_vase_01) | CC0 |
 | `props/decorations/free_marble_bust_01/marble_bust_01.glb` | [Poly Haven — marble_bust_01](https://polyhaven.com/a/marble_bust_01) | CC0 |
 | `characters/kaykit_knight/`, `kaykit_mage/`, `kaykit_rogue/` + `props/kaykit/*` | [KayKit Adventurers](https://github.com/KayKit-Game-Assets/KayKit-Character-Pack-Adventures-1.0) by Kay Lousberg | CC0 |
+| `characters/quaternius_*` (hero, guards, townsfolk, oracle, smith) | [Quaternius Ultimate Modular Men / Women](https://quaternius.com/) | CC0 |
 
 More CC0 props/textures can be dropped under `assets/` the same way (GLB or
 PNG) and referenced from layout scripts such as `scripts/world/city_plaza.gd`.

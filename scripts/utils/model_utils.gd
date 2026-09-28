@@ -1,7 +1,7 @@
 class_name ModelUtils
 
 ## Baked into exports so we can verify the PCK actually contains this revision.
-const BUILD_FIX_TOKEN := "EOO_FIX_HOPLITE_RESTORE_V1"
+const BUILD_FIX_TOKEN := "EOO_FIX_QUATERNIUS_HUMANOIDS_V1"
 
 ## Tripo mesh id shared by spartan_hoplite + city_guard — UAL melts this bind.
 const _BROKEN_UAL_MESH := "95ce6ed4"
@@ -391,7 +391,7 @@ static func scale_by_foot_to_head(node: Node3D, target_meters: float) -> void:
 	if head_i < 0:
 		head_i = skel.find_bone("Head")
 	var foot_y := INF
-	for bone_name in ["foot.l", "foot.r", "toes.l", "toes.r", "LeftFoot", "RightFoot"]:
+	for bone_name in ["Foot.L", "Foot.R", "foot.l", "foot.r", "toes.l", "toes.r", "LeftFoot", "RightFoot"]:
 		var bi := skel.find_bone(bone_name)
 		if bi < 0:
 			continue
@@ -418,7 +418,7 @@ static func ground_by_feet(node: Node3D, y_offset: float = 0.0) -> void:
 	if skel == null:
 		return
 	var foot_names := [
-		"foot.l", "foot.r", "toes.l", "toes.r",
+		"Foot.L", "Foot.R", "foot.l", "foot.r", "toes.l", "toes.r",
 		"LeftFoot", "RightFoot", "LeftToes", "RightToes",
 	]
 	var min_y := INF
@@ -502,24 +502,43 @@ static func bind_leg_plant_anim(model: Node3D, anim: AnimationPlayer) -> void:
 
 
 static func _mesh_needs_ual_plant(model: Node3D) -> bool:
-	## KayKit Adventurers have real walk/hit/block — never plant them.
-	if _is_kaykit_model(model):
+	## KayKit / Quaternius have real authored clips — never plant them.
+	if _is_kaykit_model(model) or _is_quaternius_model(model):
 		return false
 	var nlow := String(model.name).to_lower()
 	## Plaza / legacy Tripo humanoids melt under UAL — plant those only.
 	for key in [
-			"spartan", "hoplite", "city_guard", "guard",
-			"citizen_woman", "citizen_merchant", "merchant",
-			"blacksmith", "oracle_priestess", "priestess"]:
+			"spartan", "hoplite", "city_guard",
+			"citizen_woman", "citizen_merchant",
+			"blacksmith", "oracle_priestess"]:
 		if key in nlow:
 			return true
 	for n in model.find_children("*", "MeshInstance3D", true, false):
 		if _BROKEN_UAL_MESH in String(n.name):
 			return true
-	## Fallback: any skeleton that looks like a UAL humanoid (has Hips + UpperArm).
+	## Fallback: any skeleton that looks like a UAL humanoid (has Hips + LeftUpperArm).
+	## Quaternius uses UpperArm.L — excluded above.
 	for n in model.find_children("*", "Skeleton3D", true, false):
 		var skel := n as Skeleton3D
 		if skel != null and skel.find_bone("Hips") >= 0 and skel.find_bone("LeftUpperArm") >= 0:
+			return true
+	return false
+
+
+static func _is_quaternius_model(model: Node3D) -> bool:
+	if model == null:
+		return false
+	var nlow := String(model.name).to_lower()
+	if "quaternius" in nlow or "hero_king" in nlow or "guard_adventurer" in nlow \
+			or "smith_worker" in nlow or "merchant_farmer" in nlow \
+			or "oracle_witch" in nlow or "woman_medieval" in nlow \
+			or "woman_formal" in nlow or "woman_worker" in nlow \
+			or "citizen_casual" in nlow or "guard_soldier" in nlow:
+		return true
+	for n in model.find_children("*", "Skeleton3D", true, false):
+		var skel := n as Skeleton3D
+		if skel != null and skel.find_bone("Wrist.R") >= 0 and skel.find_bone("Foot.L") >= 0 \
+				and skel.find_bone("LeftUpperArm") < 0:
 			return true
 	return false
 

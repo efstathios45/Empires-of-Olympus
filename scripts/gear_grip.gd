@@ -8,16 +8,17 @@ const WeaponGrip = preload("res://scripts/weapon_grip.gd")
 # Prefer LeftLowerArm for shields (WeaponGrip default) — LeftHand + wild eulers
 # twisted the forearm and made the champion look broken.
 const GRIP_BY_GLB := {
+	## Quaternius Ultimate Modular — Wrist.L / Wrist.R (tuned).
 	"res://assets/props/gear/aspis_shield.glb": {
-		"bone": "LeftLowerArm",
-		"position": Vector3(0.02, -0.06, 0.04),
-		"rotation_deg": Vector3(-20.0, -10.0, 8.0),
+		"bone": "Wrist.L",
+		"position": Vector3(0.0, 0.04, 0.08),
+		"rotation_deg": Vector3(-90.0, 0.0, 90.0),
 		"scale": 1.0,
 	},
 	"res://assets/props/gear/tower_shield.glb": {
-		"bone": "LeftLowerArm",
-		"position": Vector3(0.02, -0.10, 0.05),
-		"rotation_deg": Vector3(-24.0, -12.0, 6.0),
+		"bone": "Wrist.L",
+		"position": Vector3(0.0, 0.05, 0.09),
+		"rotation_deg": Vector3(-90.0, 0.0, 90.0),
 		"scale": 1.08,
 	},
 	## KayKit Adventurers — sockets handslot.l / Round_Shield / 1H_Sword.
@@ -50,28 +51,33 @@ const GRIP_BY_GLB := {
 		"skip_normalize": true,
 	},
 	"res://assets/props/gear/xiphos_sword.glb": {
-		"position": Vector3(0.006, -0.118, 0.0),
-		"rotation_deg": Vector3(-90.0, -90.0, 0.0),
+		"bone": "Wrist.R",
+		"position": Vector3(0.0, 0.04, 0.0),
+		"rotation_deg": Vector3(-90.0, 0.0, 0.0),
 		"scale": 0.98,
 	},
 	"res://assets/props/gear/kontos_spear.glb": {
-		"position": Vector3(0.004, -0.15, -0.001),
-		"rotation_deg": Vector3(-90.0, -90.0, 0.0),
+		"bone": "Wrist.R",
+		"position": Vector3(0.0, 0.04, 0.0),
+		"rotation_deg": Vector3(-90.0, 0.0, 0.0),
 		"scale": 1.18,
 	},
 	"res://assets/props/weapons/dory_spear.glb": {
-		"position": Vector3(0.003, -0.138, -0.0005),
-		"rotation_deg": Vector3(-90.0, -90.0, 0.0),
-		"scale": 1.06,
+		"bone": "Wrist.R",
+		"position": Vector3(0.0, 0.04, 0.0),
+		"rotation_deg": Vector3(-90.0, 0.0, 0.0),
+		"scale": 1.05,
 	},
 	"res://assets/props/weapons/cretan_bow.glb": {
-		"position": Vector3(-0.06, 0.02, 0.0),
-		"rotation_deg": Vector3(-68.0, 6.0, -92.0),
+		"bone": "Wrist.L",
+		"position": Vector3(0.0, 0.04, 0.02),
+		"rotation_deg": Vector3(0.0, 90.0, 0.0),
 		"scale": 1.05,
 	},
 	"res://assets/props/weapons/theurgist_staff.glb": {
-		"position": Vector3(0.0, -0.18, 0.0),
-		"rotation_deg": Vector3(-90.0, -90.0, 0.0),
+		"bone": "Wrist.R",
+		"position": Vector3(0.0, 0.05, 0.0),
+		"rotation_deg": Vector3(-90.0, 0.0, 0.0),
 		"scale": 1.08,
 	},
 }

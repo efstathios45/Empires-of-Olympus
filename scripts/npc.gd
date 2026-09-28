@@ -20,7 +20,7 @@ var spawn_yaw: float = 0.0
 ## Authored GLB yaw (often −π for UAL humanoids); spawn_yaw is added on top.
 var _base_yaw: float = 0.0
 ## Which looping clip this NPC idles in (townsfolk vary so the crowd isn't clones).
-var idle_clip: String = "ual1_Idle"
+var idle_clip: String = "Idle_Neutral"
 ## Non-empty = this NPC is townsfolk: E shows this remark instead of a panel.
 var flavour_line: String = ""
 
@@ -91,7 +91,12 @@ func _ready() -> void:
 		ModelUtils.set_animation_loops(_anim)
 		ModelUtils.bind_leg_plant_anim(_model, _anim)
 		if not _anim.has_animation(idle_clip):
-			idle_clip = "ual1_Idle"
+			if _anim.has_animation("Idle"):
+				idle_clip = "Idle"
+			elif _anim.has_animation("Idle_Neutral"):
+				idle_clip = "Idle_Neutral"
+			elif _anim.has_animation("ual1_Idle"):
+				idle_clip = "ual1_Idle"
 		_idle_variants = _collect_idle_variants()
 		if _anim.has_animation(idle_clip):
 			_anim.play(idle_clip)
@@ -108,7 +113,8 @@ func _collect_idle_variants() -> PackedStringArray:
 	var out: PackedStringArray = PackedStringArray()
 	if _anim == null:
 		return out
-	for clip in [idle_clip, "ual1_Idle", "ual1_Idle_Talking", "ual1_Idle_LookAround", "ual2_Idle_FoldArms", "ual2_Idle_Rail"]:
+	for clip in [idle_clip, "Idle", "Idle_Neutral", "Idle_Sword", "Wave", "Interact",
+			"ual1_Idle", "ual1_Idle_Talking", "ual1_Idle_LookAround", "ual2_Idle_FoldArms", "ual2_Idle_Rail"]:
 		if _anim.has_animation(clip) and not out.has(clip):
 			out.append(clip)
 	return out

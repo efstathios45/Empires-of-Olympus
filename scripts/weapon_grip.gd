@@ -183,7 +183,7 @@ static func _find_skeleton(model: Node3D) -> Skeleton3D:
 	return null
 
 
-## Map UAL bone names onto KayKit Adventurers sockets when present.
+## Map UAL bone names onto Quaternius / KayKit sockets when present.
 static func _resolve_bone(skel: Skeleton3D, preferred: String, weapon_class: String) -> String:
 	if skel == null:
 		return preferred
@@ -191,12 +191,19 @@ static func _resolve_bone(skel: Skeleton3D, preferred: String, weapon_class: Str
 		return preferred
 	var alts: Array = []
 	var wclass := weapon_class.to_lower()
-	if wclass == "shield" or preferred in ["LeftLowerArm", "LeftHand", "LeftUpperArm"]:
-		alts = ["Round_Shield", "handslot.l", "hand.l", "wrist.l", "Badge_Shield", "Rectangle_Shield"]
-	elif preferred in ["RightHand", "RightLowerArm", "RightUpperArm"] or wclass in ["melee", "gun", "pistol"]:
-		alts = ["1H_Sword", "handslot.r", "hand.r", "wrist.r", "2H_Sword"]
+	if wclass == "shield" or preferred in ["LeftLowerArm", "LeftHand", "LeftUpperArm", "LowerArm.L", "Wrist.L"]:
+		alts = [
+			"LowerArm.L", "Wrist.L", "hand.l", "wrist.l",
+			"Round_Shield", "handslot.l", "Badge_Shield", "Rectangle_Shield",
+		]
+	elif preferred in ["RightHand", "RightLowerArm", "RightUpperArm", "Wrist.R", "LowerArm.R"] \
+			or wclass in ["melee", "gun", "pistol"]:
+		alts = [
+			"Wrist.R", "LowerArm.R", "hand.r", "wrist.r",
+			"1H_Sword", "handslot.r", "2H_Sword",
+		]
 	elif preferred == "Head":
-		alts = ["head", "Knight_Helmet"]
+		alts = ["head", "Head", "Knight_Helmet"]
 	for name in alts:
 		if skel.find_bone(String(name)) >= 0:
 			return String(name)

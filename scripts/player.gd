@@ -10,8 +10,9 @@ signal skill_cooldown_started(duration: float)
 signal combo_performed
 
 ## Greek Tripo hoplite — looks like a Spartan; UAL clips + LegPlant for motion.
-const CharacterGLB := "res://assets/characters/spartan_hoplite/spartan_hoplite.glb"
-const CharacterLib := "res://assets/characters/spartan_hoplite/spartan_hoplite_animations.tres"
+const CharacterGLB := "res://assets/characters/quaternius_hero_king/hero_king.glb"
+## Embedded Quaternius clips — do not overwrite with a legacy UAL library.
+const CharacterLib := ""
 const GearGrip = preload("res://scripts/gear_grip.gd")
 const GearPaint = preload("res://scripts/gear_paint.gd")
 const HeroAnim = preload("res://scripts/utils/hero_anim.gd")
