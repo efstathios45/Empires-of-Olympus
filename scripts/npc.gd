@@ -80,8 +80,6 @@ func _ready() -> void:
 		## Keep the GLB's authored yaw (many UAL rigs ship at −π) then add spawn facing.
 		_base_yaw = _model.rotation.y
 		ModelUtils.setup_character_for_movement(_model, height_m)
-		var GreekLook = load("res://scripts/utils/greek_look.gd")
-		GreekLook.apply(_model, greek_role)
 		_model.rotation.y = _base_yaw + spawn_yaw
 		_anim = _model.find_child("AnimationPlayer", true) as AnimationPlayer
 		if _anim == null:

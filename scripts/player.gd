@@ -9,11 +9,9 @@ signal respawned
 signal skill_cooldown_started(duration: float)
 signal combo_performed
 
-## Greek Tripo hoplite — looks like a Spartan; UAL clips + LegPlant for motion.
-## Adventurer base (no medieval crown) + GreekLook Corinthian / bronze paint.
-const CharacterGLB := "res://assets/characters/quaternius_guard_adventurer/guard_adventurer.glb"
-## Embedded Quaternius clips — do not overwrite with a legacy UAL library.
-const CharacterLib := ""
+## Ancient Greek Tripo hoplite (Corinthian + cape + greaves) with UAL combat clips.
+const CharacterGLB := "res://assets/characters/spartan_hoplite/spartan_hoplite.glb"
+const CharacterLib := "res://assets/characters/spartan_hoplite/spartan_hoplite_animations.tres"
 const GearGrip = preload("res://scripts/gear_grip.gd")
 const GearPaint = preload("res://scripts/gear_paint.gd")
 const HeroAnim = preload("res://scripts/utils/hero_anim.gd")
@@ -236,14 +234,6 @@ func _build_body() -> void:
 	var model: Node3D = load(char_path).instantiate()
 	mesh_root.add_child(model)
 	ModelUtils.setup_character_for_movement(model, 1.85)
-	var GreekLook = load("res://scripts/utils/greek_look.gd")
-	var role := "hoplite"
-	var cls := String(GameState.player_class)
-	if cls == "toxotes":
-		role = "guard"
-	elif cls == "magos":
-		role = "oracle"
-	GreekLook.apply(model, role)
 	_apply_class_tint(model, cd0)
 
 	anim = model.find_child("AnimationPlayer", true) as AnimationPlayer
@@ -359,20 +349,9 @@ func _resolved_shield_path() -> String:
 
 
 func _attach_helmet(model: Node3D) -> void:
-	var GreekLook = load("res://scripts/utils/greek_look.gd")
-	## Inventory helm replaces the GreekLook default Corinthian (no double stack).
-	GreekLook.remove_corinthian_helm(model)
+	## Spartan mesh already wears a Corinthian — only attach inventory helms.
 	var helm_path: String = GameState.equipped_glb("helmet")
 	if helm_path == "" or not ResourceLoader.exists(helm_path):
-		## No inventory helm — restore Hellenic Corinthian for warriors.
-		var cls := String(GameState.player_class)
-		var role := "hoplite"
-		if cls == "toxotes":
-			role = "guard"
-		elif cls == "magos":
-			role = "oracle"
-		if role in ["hoplite", "guard"]:
-			GreekLook.apply(model, role)
 		return
 	helmet_node = GearGrip.attach_helmet(model, helm_path)
 	if helmet_node != null:
