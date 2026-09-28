@@ -38,7 +38,7 @@ No zip extract needed — this download is the .exe alone.
 Download
 ------------------------------------------------------------
 Signed single-file Windows build (current):
-  https://gofile.io/d/rUfCO040
+  https://gofile.io/d/ITF91PsY
 
 File name: EmpiresOfOlympus.exe
 
@@ -48,7 +48,8 @@ bag→panoply drag-and-drop (boots, weapon, and other worn slots).
 Shared/cloud multiplayer persistence is documented in docs/ACCOUNTS.md.
 
 In-world: Enter opens player chat (see docs/CHAT.md).
-Hold RMB + drag to look; open Panoply with I and drag gear onto slots.
+Hold middle-mouse (scroll-wheel button) + drag to look; wheel scroll zooms.
+Open Panoply with I — right-click pouch items to Equip / Sell.
 
 Also: clearer Panoply tooltips, party XP/gold share, overhead chat bubbles,
 and Video Settings (title + Esc).

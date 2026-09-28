@@ -17,6 +17,8 @@ var glb_path: String = ""
 var lib_path: String = ""
 var height_m: float = 1.75
 var spawn_yaw: float = 0.0
+## Authored GLB yaw (often −π for UAL humanoids); spawn_yaw is added on top.
+var _base_yaw: float = 0.0
 ## Which looping clip this NPC idles in (townsfolk vary so the crowd isn't clones).
 var idle_clip: String = "ual1_Idle"
 ## Non-empty = this NPC is townsfolk: E shows this remark instead of a panel.
@@ -70,8 +72,10 @@ func _ready() -> void:
 	if scene != null:
 		_model = scene.instantiate()
 		add_child(_model)
+		## Keep the GLB's authored yaw (many UAL rigs ship at −π) then add spawn facing.
+		_base_yaw = _model.rotation.y
 		ModelUtils.setup_character_for_movement(_model, height_m)
-		_model.rotation.y = spawn_yaw
+		_model.rotation.y = _base_yaw + spawn_yaw
 		_anim = _model.find_child("AnimationPlayer", true) as AnimationPlayer
 		if _anim == null:
 			_anim = AnimationPlayer.new()
@@ -121,16 +125,15 @@ func _face_local_player() -> void:
 	dir.y = 0.0
 	if dir.length_squared() < 0.0001:
 		return
-	# Humanoid UAL rigs face +Z in these GLBs; yaw_from_direction aims -Z.
-	# Without the PI flip, E turns them so the player sees the back of the head.
-	var target_yaw: float = ModelUtils.yaw_from_direction(dir.normalized()) + PI
+	# yaw_from_direction aims MODEL_FRONT (−Z). UAL GLBs often ship with base −π.
+	var target_yaw: float = _base_yaw + ModelUtils.yaw_from_direction(dir.normalized())
 	if _face_tween != null and _face_tween.is_valid():
 		_face_tween.kill()
 	_face_tween = create_tween()
 	_face_tween.tween_property(_model, "rotation:y", target_yaw, 0.28) \
 		.set_trans(Tween.TRANS_SINE).set_ease(Tween.EASE_OUT)
 	_face_tween.tween_interval(FACE_SECONDS)
-	_face_tween.tween_property(_model, "rotation:y", spawn_yaw, 0.45) \
+	_face_tween.tween_property(_model, "rotation:y", _base_yaw + spawn_yaw, 0.45) \
 		.set_trans(Tween.TRANS_SINE).set_ease(Tween.EASE_IN_OUT)
 
 # ── Flavour chatter ──────────────────────────────────────────────────────

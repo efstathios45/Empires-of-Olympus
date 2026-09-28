@@ -36,12 +36,10 @@ var _equip_name_labs: Dictionary = {}
 var _bag_cells: Array = []
 var _selected_bag: int = -1
 var _selected_slot: String = ""
-var _btn_equip: Button
-var _btn_unequip: Button
-var _btn_sell: Button
 var _stat_labels: Dictionary = {}
 var _hover_tip: PanelContainer
 var _hover_tip_label: Label
+var _ctx_menu: PanelContainer = null
 ## Manual Metin2-style drag (more reliable than Control.set_drag_forwarding).
 var _drag_armed: bool = false
 var _dragging: bool = false
@@ -77,18 +75,18 @@ func _build_shell() -> void:
 	center.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
 
 	var panel := Kit.make_panel(false)
-	## Wider cream field: larger paperdoll + 6×52 bag + action column.
-	panel.custom_minimum_size = Vector2(980, 820)
-	panel.clip_contents = true
+	## Tall enough for paperdoll + pouch without clipping labels.
+	panel.custom_minimum_size = Vector2(1080, 900)
+	panel.clip_contents = false
 	center.add_child(panel)
 
 	## Stylebox already insets past the ornate border — keep only a light gap.
-	var margin := Kit.make_margin(10)
-	margin.clip_contents = true
+	var margin := Kit.make_margin(14)
+	margin.clip_contents = false
 	panel.add_child(margin)
 	var v := VBoxContainer.new()
-	v.add_theme_constant_override("separation", 8)
-	v.clip_contents = true
+	v.add_theme_constant_override("separation", 10)
+	v.clip_contents = false
 	margin.add_child(v)
 
 	var top := HBoxContainer.new()
@@ -98,7 +96,7 @@ func _build_shell() -> void:
 	var title := Kit.make_label("Panoply & Pouch", 24, Kit.INK_TITLE)
 	title.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	top.add_child(title)
-	var close_btn := _make_inv_button("Close", false)
+	var close_btn := Kit.make_button("Close", false)
 	close_btn.pressed.connect(_close)
 	top.add_child(close_btn)
 
@@ -110,45 +108,42 @@ func _build_shell() -> void:
 
 	_body = Control.new()
 	_body.size_flags_vertical = Control.SIZE_EXPAND_FILL
-	_body.custom_minimum_size = Vector2(0, 420)
-	_body.clip_contents = true
+	_body.custom_minimum_size = Vector2(0, 560)
+	_body.clip_contents = false
 	v.add_child(_body)
 
 	_build_hover_tip()
 
 
 func _add_tab(id: String, text: String) -> void:
-	var b := _make_inv_button(text, id == "gear")
+	var b := Kit.make_button(text, id == "gear")
 	b.set_meta("tab_id", id)
 	b.pressed.connect(func() -> void: _show(id))
 	_tabs.add_child(b)
 
 
-func _make_inv_button(text: String, primary: bool) -> Button:
-	## Compact plaques so Equip / Unequip / Sell sit in a tidy column.
+func _make_ctx_button(text: String) -> Button:
+	## Flat list row for the right-click item menu (no baked "BACK" plaque art).
 	var b := Button.new()
 	b.text = text
-	b.custom_minimum_size = Vector2(168, 48)
+	b.custom_minimum_size = Vector2(200, 36)
 	b.focus_mode = Control.FOCUS_NONE
+	b.alignment = HORIZONTAL_ALIGNMENT_LEFT
 	b.add_theme_font_override("font", Kit.font())
-	b.add_theme_font_size_override("font_size", 15)
-	b.add_theme_color_override("font_color", Kit.INK)
-	b.add_theme_color_override("font_hover_color", Kit.INK_TITLE)
-	b.add_theme_color_override("font_pressed_color", Kit.INK_GOLD)
-	var tex_path := "res://assets/ui/btn_primary.png" if primary else "res://assets/ui/btn_secondary.png"
-	if not ResourceLoader.exists(tex_path):
-		tex_path = "res://assets/ui/btn_blank.png"
-	if ResourceLoader.exists(tex_path):
-		var tex: Texture2D = load(tex_path)
-		var sb := StyleBoxTexture.new()
-		sb.texture = tex
-		sb.content_margin_left = 18
-		sb.content_margin_right = 18
-		sb.content_margin_top = 10
-		sb.content_margin_bottom = 10
-		b.add_theme_stylebox_override("normal", sb)
-		b.add_theme_stylebox_override("hover", sb)
-		b.add_theme_stylebox_override("pressed", sb)
+	b.add_theme_font_size_override("font_size", 16)
+	b.add_theme_color_override("font_color", Color(1.0, 0.94, 0.78))
+	b.add_theme_color_override("font_hover_color", Kit.INK_GOLD)
+	var sb := StyleBoxFlat.new()
+	sb.bg_color = Color(0.0, 0.0, 0.0, 0.0)
+	sb.content_margin_left = 12
+	sb.content_margin_right = 12
+	sb.content_margin_top = 6
+	sb.content_margin_bottom = 6
+	var sb_h := sb.duplicate()
+	sb_h.bg_color = Color(0.78, 0.62, 0.28, 0.28)
+	b.add_theme_stylebox_override("normal", sb)
+	b.add_theme_stylebox_override("hover", sb_h)
+	b.add_theme_stylebox_override("pressed", sb_h)
 	return b
 
 
@@ -316,28 +311,15 @@ func _build_panoply() -> void:
 		left.add_child(lab)
 		_stat_labels[key] = lab
 
-	var actions_col := VBoxContainer.new()
-	actions_col.add_theme_constant_override("separation", 8)
-	left.add_child(actions_col)
-	_btn_equip = _make_inv_button("Equip", true)
-	_btn_equip.pressed.connect(_do_equip)
-	actions_col.add_child(_btn_equip)
-	_btn_unequip = _make_inv_button("Unequip", false)
-	_btn_unequip.pressed.connect(_do_unequip)
-	actions_col.add_child(_btn_unequip)
-	_btn_sell = _make_inv_button("Sell", false)
-	_btn_sell.pressed.connect(_do_sell)
-	actions_col.add_child(_btn_sell)
-
 	var right := VBoxContainer.new()
 	right.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	right.size_flags_stretch_ratio = 1.0
-	right.clip_contents = true
+	right.clip_contents = false
 	right.add_theme_constant_override("separation", 6)
 	row.add_child(right)
 
 	right.add_child(Kit.make_label("Traveler's Pouch", 18, Kit.INK_GOLD))
-	right.add_child(Kit.make_label("Hover for bonuses · Drag onto slots", 13, Kit.INK_SOFT))
+	right.add_child(Kit.make_label("Right-click item: Equip / Sell · Drag to wear", 13, Kit.INK_SOFT))
 
 	var grid_wrap := CenterContainer.new()
 	grid_wrap.size_flags_horizontal = Control.SIZE_SHRINK_CENTER
@@ -507,30 +489,54 @@ func _tint_for_kind(kind: String) -> Color:
 
 
 func _on_bag_cell_input(event: InputEvent, cell_idx: int) -> void:
-	if event is InputEventMouseButton and event.button_index == MOUSE_BUTTON_LEFT:
-		if event.pressed:
-			var ei: int = int(_bag_cells[cell_idx]["entry"])
+	if event is InputEventMouseButton:
+		var ei: int = int(_bag_cells[cell_idx]["entry"])
+		if event.button_index == MOUSE_BUTTON_RIGHT and event.pressed:
 			if ei < 0:
+				_hide_ctx_menu()
 				return
 			_selected_bag = ei
 			_selected_slot = ""
 			_refresh_panoply()
-			_arm_bag_drag(ei, event.global_position)
-		else:
-			_finish_drag(event.global_position)
+			_show_bag_ctx(ei, event.global_position)
+			accept_event()
+			return
+		if event.button_index == MOUSE_BUTTON_LEFT:
+			_hide_ctx_menu()
+			if event.pressed:
+				if ei < 0:
+					return
+				_selected_bag = ei
+				_selected_slot = ""
+				_refresh_panoply()
+				_arm_bag_drag(ei, event.global_position)
+			else:
+				_finish_drag(event.global_position)
 
 
 func _on_slot_gui_input(event: InputEvent, key: String) -> void:
-	if event is InputEventMouseButton and event.button_index == MOUSE_BUTTON_LEFT:
-		if event.pressed:
-			var id := str(GameState.equipped.get(key, ""))
+	if event is InputEventMouseButton:
+		var id := str(GameState.equipped.get(key, ""))
+		if event.button_index == MOUSE_BUTTON_RIGHT and event.pressed:
 			if id == "":
+				_hide_ctx_menu()
 				return
 			_selected_slot = key
 			_selected_bag = -1
-			_arm_slot_drag(key, id, event.global_position)
-		else:
-			_finish_drag(event.global_position)
+			_refresh_panoply()
+			_show_slot_ctx(key, event.global_position)
+			accept_event()
+			return
+		if event.button_index == MOUSE_BUTTON_LEFT:
+			_hide_ctx_menu()
+			if event.pressed:
+				if id == "":
+					return
+				_selected_slot = key
+				_selected_bag = -1
+				_arm_slot_drag(key, id, event.global_position)
+			else:
+				_finish_drag(event.global_position)
 
 
 func _arm_bag_drag(entry_index: int, press_pos: Vector2) -> void:
@@ -574,6 +580,9 @@ func _process(_delta: float) -> void:
 
 
 func _input(event: InputEvent) -> void:
+	if event is InputEventMouseButton and event.pressed and _ctx_menu != null and is_instance_valid(_ctx_menu):
+		if not _ctx_menu.get_global_rect().has_point(event.global_position):
+			_hide_ctx_menu()
 	if not _drag_armed and not _dragging:
 		return
 	if event is InputEventMouseMotion:
@@ -797,51 +806,120 @@ func _update_detail_slot(key: String) -> void:
 	_detail.text = "%s (worn)\n%s" % [SLOT_LABELS.get(key, key), GameState.item_tooltip_text(id)]
 
 
-func _do_equip() -> void:
-	if _selected_bag < 0:
-		if _detail:
-			_detail.text = "Select a pouch item first."
+func _hide_ctx_menu() -> void:
+	if _ctx_menu != null and is_instance_valid(_ctx_menu):
+		_ctx_menu.queue_free()
+	_ctx_menu = null
+
+
+func _place_ctx_menu(at_global: Vector2) -> void:
+	if _ctx_menu == null:
 		return
-	if GameState.equip_from_bag(_selected_bag):
-		AudioManager.play_sfx("ui_confirm")
-		_selected_bag = -1
-		_refresh_panoply()
-	else:
-		AudioManager.play_sfx("ui_click")
-		if _detail:
-			_detail.text = "That piece cannot be worn."
+	_ctx_menu.reset_size()
+	var tip_size := _ctx_menu.get_combined_minimum_size()
+	if tip_size == Vector2.ZERO:
+		tip_size = Vector2(220, 100)
+	var vp := get_viewport_rect().size
+	var pos := at_global + Vector2(8, 8)
+	pos.x = minf(pos.x, vp.x - tip_size.x - 8)
+	pos.y = minf(pos.y, vp.y - tip_size.y - 8)
+	_ctx_menu.global_position = pos
 
 
-func _do_unequip() -> void:
-	if _selected_slot == "":
-		if _detail:
-			_detail.text = "Select a worn slot first."
+func _make_ctx_shell() -> VBoxContainer:
+	_hide_ctx_menu()
+	_ctx_menu = PanelContainer.new()
+	_ctx_menu.z_index = 90
+	_ctx_menu.mouse_filter = Control.MOUSE_FILTER_STOP
+	var sb := StyleBoxFlat.new()
+	sb.bg_color = Color(0.12, 0.09, 0.06, 0.96)
+	sb.border_color = Color(0.78, 0.62, 0.28, 0.95)
+	sb.set_border_width_all(2)
+	sb.set_corner_radius_all(6)
+	sb.content_margin_left = 4
+	sb.content_margin_right = 4
+	sb.content_margin_top = 6
+	sb.content_margin_bottom = 6
+	_ctx_menu.add_theme_stylebox_override("panel", sb)
+	var col := VBoxContainer.new()
+	col.add_theme_constant_override("separation", 2)
+	_ctx_menu.add_child(col)
+	add_child(_ctx_menu)
+	return col
+
+
+func _show_bag_ctx(entry_index: int, at_global: Vector2) -> void:
+	if entry_index < 0 or entry_index >= GameState.bag.size():
 		return
-	if GameState.unequip_slot(_selected_slot):
-		AudioManager.play_sfx("ui_confirm")
-		_refresh_panoply()
-	else:
-		AudioManager.play_sfx("ui_click")
-		if _detail:
-			_detail.text = "Cannot unequip — pouch may be full."
+	var id := str(GameState.bag[entry_index].get("id", ""))
+	var def := GameState.item_def(id)
+	var slot := GameState.slot_for_kind(str(def.get("kind", "")))
+	var col := _make_ctx_shell()
+	var title := Kit.make_label(GameState.item_name(id), 14, Kit.INK_GOLD)
+	col.add_child(title)
+	if slot != "":
+		var eq := _make_ctx_button("Equip")
+		eq.pressed.connect(func() -> void:
+			_hide_ctx_menu()
+			if GameState.equip_from_bag(entry_index):
+				AudioManager.play_sfx("ui_confirm")
+				_selected_bag = -1
+				_selected_slot = slot
+				_refresh_panoply()
+			else:
+				AudioManager.play_sfx("ui_click")
+				if _detail:
+					_detail.text = "That piece cannot be worn."
+		)
+		col.add_child(eq)
+	var sell_price := GameState.item_sell_price(id)
+	if sell_price > 0:
+		var sell := _make_ctx_button("Sell (%d δ)" % sell_price)
+		sell.pressed.connect(func() -> void:
+			_hide_ctx_menu()
+			_selected_bag = entry_index
+			var gained: int = GameState.sell_bag_entry(entry_index)
+			if gained > 0:
+				AudioManager.play_sfx("ui_confirm")
+				if _detail:
+					_detail.text = "Sold for %d δ." % gained
+				_selected_bag = -1
+				_refresh_panoply()
+			else:
+				AudioManager.play_sfx("ui_click")
+				if _detail:
+					_detail.text = "That item cannot be sold."
+		)
+		col.add_child(sell)
+	var cancel := _make_ctx_button("Cancel")
+	cancel.pressed.connect(_hide_ctx_menu)
+	col.add_child(cancel)
+	_place_ctx_menu(at_global)
 
 
-func _do_sell() -> void:
-	if _selected_bag < 0:
-		if _detail:
-			_detail.text = "Select a pouch item to sell."
+func _show_slot_ctx(key: String, at_global: Vector2) -> void:
+	var id := str(GameState.equipped.get(key, ""))
+	if id == "":
 		return
-	var gained: int = GameState.sell_bag_entry(_selected_bag)
-	if gained > 0:
-		AudioManager.play_sfx("ui_confirm")
-		if _detail:
-			_detail.text = "Sold for %d δ." % gained
-		_selected_bag = -1
-		_refresh_panoply()
-	else:
-		AudioManager.play_sfx("ui_click")
-		if _detail:
-			_detail.text = "That item cannot be sold."
+	var col := _make_ctx_shell()
+	col.add_child(Kit.make_label(GameState.item_name(id), 14, Kit.INK_GOLD))
+	var uneq := _make_ctx_button("Unequip")
+	uneq.pressed.connect(func() -> void:
+		_hide_ctx_menu()
+		if GameState.unequip_slot(key):
+			AudioManager.play_sfx("ui_confirm")
+			_selected_slot = ""
+			_refresh_panoply()
+		else:
+			AudioManager.play_sfx("ui_click")
+			if _detail:
+				_detail.text = "Cannot unequip — pouch may be full."
+	)
+	col.add_child(uneq)
+	var cancel := _make_ctx_button("Cancel")
+	cancel.pressed.connect(_hide_ctx_menu)
+	col.add_child(cancel)
+	_place_ctx_menu(at_global)
 
 
 func _on_inv() -> void:
