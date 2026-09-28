@@ -50,6 +50,7 @@ Shared/cloud multiplayer persistence is documented in docs/ACCOUNTS.md.
 In-world: Enter opens player chat (see docs/CHAT.md).
 Hold middle-mouse (scroll-wheel button) + drag to look; wheel scroll zooms.
 Open Panoply with I — right-click pouch items to Equip / Sell.
+Nameplates show name/level in empire colours. Esc → Host Arena / Join for PvP.
 
 Also: clearer Panoply tooltips, party XP/gold share, overhead chat bubbles,
 and Video Settings (title + Esc).

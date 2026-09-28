@@ -15,6 +15,7 @@ const GearGrip = preload("res://scripts/gear_grip.gd")
 const GearPaint = preload("res://scripts/gear_paint.gd")
 const ProjectileScript = preload("res://scripts/projectile.gd")
 const VfxHelper = preload("res://scripts/vfx_helper.gd")
+const NameplateScript = preload("res://scripts/player_nameplate.gd")
 
 const MALE_ATTACK_VOICES := ["male_attack_a", "male_attack_b", "attack_grunt"]
 const MALE_HURT_VOICES := ["male_hurt_a", "male_hurt_b", "male_hurt_c"]
@@ -87,6 +88,9 @@ var world: Node3D
 const CHAT_BUBBLE_SECONDS := 6.5
 var _chat_bubble: Label3D = null
 var _chat_bubble_token: int = 0
+var _nameplate: Node3D = null
+## Peer id of last PvP attacker (0 = PvE / environment).
+var _last_pvp_attacker: int = 0
 
 func _ready() -> void:
 	add_to_group("player")
@@ -96,8 +100,13 @@ func _ready() -> void:
 	_build_camera()
 	hp = GameState.max_hp()
 	mp = GameState.max_mp()
+	_sync_identity_meta()
+	_nameplate = NameplateScript.new()
+	add_child(_nameplate)
+	_refresh_nameplate()
 	GameState.level_up.connect(_on_level_up)
 	GameState.weapon_refined.connect(_on_weapon_refined)
+	GameState.stats_changed.connect(_refresh_nameplate)
 	if ChatSystem != null and not ChatSystem.message_received.is_connected(_on_chat_message):
 		ChatSystem.message_received.connect(_on_chat_message)
 	call_deferred("_late_ready")
@@ -105,6 +114,56 @@ func _ready() -> void:
 func _late_ready() -> void:
 	health_changed.emit(hp, GameState.max_hp())
 	mana_changed.emit(mp, GameState.max_mp())
+	_refresh_nameplate()
+
+
+func _sync_identity_meta() -> void:
+	set_meta("empire", GameState.empire)
+	set_meta("chat_name", GameState.player_name)
+	set_meta("level", GameState.level)
+
+
+func _refresh_nameplate(_a: Variant = null) -> void:
+	_sync_identity_meta()
+	if _nameplate != null:
+		_nameplate.call("set_plate", GameState.player_name, GameState.level, GameState.empire)
+
+
+func empire_id() -> String:
+	return String(get_meta("empire", GameState.empire))
+
+
+func is_rival_player(other: Node) -> bool:
+	if other == null or other == self or not is_instance_valid(other):
+		return false
+	if not other.is_in_group("player"):
+		return false
+	if other.get("dead") == true or other.get("state") == State.DEAD:
+		return false
+	var their_emp := String(other.get_meta("empire", ""))
+	if their_emp == "" and other.has_method("empire_id"):
+		their_emp = String(other.call("empire_id"))
+	if their_emp == "":
+		return false
+	return their_emp != empire_id()
+
+
+func _pvp_attacker_id() -> int:
+	if NetSession and NetSession.is_online():
+		return multiplayer.get_unique_id()
+	return 1
+
+
+func _deal_pvp_hit(other: Node, dmg: float) -> void:
+	if other == null:
+		return
+	if other.is_in_group("remote_player") and other.has_method("take_damage"):
+		other.take_damage(dmg, global_position)
+		return
+	if other.has_method("take_pvp_damage"):
+		other.call("take_pvp_damage", dmg, global_position, _pvp_attacker_id())
+	elif other.has_method("take_damage"):
+		other.take_damage(dmg, global_position)
 
 
 func _on_chat_message(sender: String, text: String, _stamp: float) -> void:
@@ -630,6 +689,20 @@ func _melee_hit(dmg: float, reach: float, arc: float) -> void:
 		enemy.take_damage(dmg, global_position)
 		VfxHelper.spawn_hit(enemy.global_position + Vector3(0, 1.2, 0), self)
 		hit_any = true
+	## Cross-empire PvP — rivals only.
+	for other in get_tree().get_nodes_in_group("player"):
+		if not is_rival_player(other) or not other.has_method("take_damage"):
+			continue
+		var to_p: Vector3 = other.global_position - global_position
+		to_p.y = 0
+		var dist_p := to_p.length()
+		if dist_p > reach + 0.6:
+			continue
+		if dist_p > 0.3 and forward.angle_to(to_p.normalized()) > arc:
+			continue
+		_deal_pvp_hit(other, dmg)
+		VfxHelper.spawn_hit(other.global_position + Vector3(0, 1.2, 0), self)
+		hit_any = true
 	if hit_any:
 		## Distinct impact (never reuse the swing whoosh) — bronze ring on hit.
 		AudioManager.play_sfx("bronze_hit", -1.0, randf_range(0.88, 1.12))
@@ -650,12 +723,16 @@ func _fire_projectile(dmg: float, speed: float) -> void:
 	AudioManager.play_sfx("sword_swing" if not is_magic else "thunderbolt", -6.0)
 
 func _find_aim_target(max_dist: float = 30.0, min_dot: float = 0.85) -> Node3D:
-	## Nearest-to-centre living enemy inside the view cone. Defaults are the
-	## ranged-aim assist; the lock-on highlight passes a wider, shorter cone.
+	## Nearest-to-centre living enemy (or rival champion) inside the view cone.
 	var best: Node3D = null
 	var best_score: float = min_dot  # min dot toward camera forward
 	var cam_forward := -camera.global_transform.basis.z
-	for enemy in get_tree().get_nodes_in_group("enemies"):
+	var candidates: Array = []
+	candidates.append_array(get_tree().get_nodes_in_group("enemies"))
+	for p in get_tree().get_nodes_in_group("player"):
+		if is_rival_player(p):
+			candidates.append(p)
+	for enemy in candidates:
 		if not is_instance_valid(enemy) or enemy.get("dead"):
 			continue
 		if not enemy.is_inside_tree():
@@ -693,6 +770,14 @@ func _try_skill() -> void:
 				if to.length() <= 4.5:
 					enemy.take_damage(dmg, global_position)
 					VfxHelper.spawn_hit(enemy.global_position + Vector3(0, 1.2, 0), self)
+			for other in get_tree().get_nodes_in_group("player"):
+				if not is_rival_player(other):
+					continue
+				var to_p: Vector3 = other.global_position - global_position
+				to_p.y = 0
+				if to_p.length() <= 4.5:
+					_deal_pvp_hit(other, dmg)
+					VfxHelper.spawn_hit(other.global_position + Vector3(0, 1.2, 0), self)
 			VfxHelper.spawn_strike(global_position + Vector3(0, 0.4, 0), -mesh_root.global_transform.basis.z, self)
 			AudioManager.play_sfx("spear_clash", 0.0)
 		"toxotes":
@@ -719,6 +804,11 @@ func _try_skill() -> void:
 					continue
 				if enemy.global_position.distance_to(target_pos) <= 4.0:
 					enemy.take_damage(dmg, global_position)
+			for other in get_tree().get_nodes_in_group("player"):
+				if not is_rival_player(other):
+					continue
+				if other.global_position.distance_to(target_pos) <= 4.0:
+					_deal_pvp_hit(other, dmg)
 
 func _start_dodge(dir: Vector3) -> void:
 	state = State.DODGE
@@ -747,8 +837,19 @@ func _drink_mana_potion() -> void:
 
 # ── Damage intake ────────────────────────────────────────────────────────
 func take_damage(amount: float, from_position: Vector3) -> void:
+	_apply_damage(amount, from_position, 0)
+
+
+## PvP blow from another peer (via NetSession RPC).
+func take_pvp_damage(amount: float, from_position: Vector3, attacker_peer: int) -> void:
+	_apply_damage(amount, from_position, attacker_peer)
+
+
+func _apply_damage(amount: float, from_position: Vector3, attacker_peer: int) -> void:
 	if state == State.DEAD or invuln_timer > 0.0:
 		return
+	if attacker_peer != 0:
+		_last_pvp_attacker = attacker_peer
 	var dmg := amount * GameState.damage_taken_mult()
 	if state == State.BLOCK:
 		dmg *= 0.35
@@ -774,6 +875,15 @@ func _die() -> void:
 	anim.play("ual1_Death01")
 	Input.mouse_mode = Input.MOUSE_MODE_VISIBLE
 	AudioManager.play_music_once("defeat")
+	## Rival kill: scatter random worn + bag gear onto the field.
+	if _last_pvp_attacker != 0:
+		var drops: Array = GameState.take_pvp_death_drops(2, 3)
+		if not drops.is_empty():
+			if NetSession:
+				NetSession.notify_death_loot(drops, global_position)
+			if ChatSystem:
+				ChatSystem.call("_push_system", "Defeated in rival combat — spoils scatter on the ground.")
+	_last_pvp_attacker = 0
 	died.emit()
 
 func _respawn() -> void:
@@ -786,6 +896,7 @@ func _respawn() -> void:
 	state = State.FREE
 	_set_target(null)
 	_step_accum = 0.0
+	_last_pvp_attacker = 0
 	if world and world.has_method("get_respawn_point"):
 		global_position = world.get_respawn_point()
 	velocity = Vector3.ZERO
@@ -793,10 +904,12 @@ func _respawn() -> void:
 	AudioManager.play_music("exploration")
 	health_changed.emit(hp, GameState.max_hp())
 	mana_changed.emit(mp, GameState.max_mp())
+	_refresh_nameplate()
 	respawned.emit()
 
 func _on_level_up(_new_level: int) -> void:
 	hp = minf(hp + GameState.max_hp() * 0.35, GameState.max_hp())
+	_refresh_nameplate()
 	mp = GameState.max_mp()
 	health_changed.emit(hp, GameState.max_hp())
 	mana_changed.emit(mp, GameState.max_mp())
