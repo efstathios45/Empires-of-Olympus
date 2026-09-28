@@ -38,7 +38,7 @@ No zip extract needed — this download is the .exe alone.
 Download
 ------------------------------------------------------------
 Windows build (current — Greek hoplite restored):
-  https://gofile.io/d/PENDING
+  https://gofile.io/d/pLwavRer
 
 File name: EmpiresOfOlympus.exe
 

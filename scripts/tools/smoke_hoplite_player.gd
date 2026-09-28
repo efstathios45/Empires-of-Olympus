@@ -30,7 +30,7 @@ func run() -> void:
 	var anim: AnimationPlayer = player.get("anim")
 	var HeroAnim = load("res://scripts/utils/hero_anim.gd")
 	print("walk=", HeroAnim.resolve(anim, "walk"), " block=", HeroAnim.resolve(anim, "block"))
-	var ok := ("spartan" in nlow or "hoplite" in nlow) and player.get("shield_node") != null \
+	var ok: bool = ("spartan" in nlow or "hoplite" in nlow) and player.get("shield_node") != null \
 		and HeroAnim.resolve(anim, "block") != ""
 	print("SMOKE_HOPLITE OK=", ok)
 	quit(0 if ok else 1)
