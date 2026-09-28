@@ -16,10 +16,11 @@ func run() -> void:
 	var p3: Dictionary = net.parse_address("http://10.0.0.2:9000")
 	assert(String(p3.address) == "10.0.0.2")
 	assert(int(p3.port) == 9000)
-	var msg: String = net.set_pending_join("1.2.3.4:7778")
+	var msg: String = net.set_pending_join("1.2.3.4:7778", "Friend World")
 	assert(net.pending_join_address == "1.2.3.4")
 	assert(net.pending_join_port == 7778)
-	assert(msg.contains("1.2.3.4"))
+	assert(msg.contains("Friend World"))
+	assert(not msg.contains("1.2.3.4"), "pending join message must not show raw IP")
 	net.clear_pending_join()
 	assert(net.pending_join_address == "")
 

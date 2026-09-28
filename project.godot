@@ -18,6 +18,7 @@ ChatSystem="*res://scripts/autoloads/chat_system.gd"
 DisplaySettings="*res://scripts/autoloads/display_settings.gd"
 PartyShare="*res://scripts/autoloads/party_share.gd"
 NetSession="*res://scripts/autoloads/net_session.gd"
+ServerBrowser="*res://scripts/autoloads/server_browser.gd"
 TesanaWorldEditor="*res://addons/tesana_world_editor/scene_export.gd"
 
 [audio]

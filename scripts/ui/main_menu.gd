@@ -359,17 +359,9 @@ func _build_auth_form(page: VBoxContainer) -> void:
 	)
 	form.add_child(guest)
 
-	var guest_join := LineEdit.new()
-	guest_join.placeholder_text = "Or join friend  ip:port"
-	guest_join.custom_minimum_size = Vector2(Kit.BTN_SIZE.x, 40)
-	guest_join.alignment = HORIZONTAL_ALIGNMENT_CENTER
-	guest_join.size_flags_horizontal = Control.SIZE_SHRINK_CENTER
-	form.add_child(guest_join)
-	var guest_join_btn := Kit.make_button("Guest Join Online", false)
-	guest_join_btn.pressed.connect(func() -> void:
-		_on_join_friend_online(guest_join.text)
-	)
-	form.add_child(guest_join_btn)
+	var guest_browse := Kit.make_button("Browse Servers", false)
+	guest_browse.pressed.connect(_open_server_browser)
+	form.add_child(guest_browse)
 
 
 func _build_logged_in_actions(page: VBoxContainer) -> void:
@@ -378,9 +370,9 @@ func _build_logged_in_actions(page: VBoxContainer) -> void:
 		"Signed in as %s" % AccountSystem.display_name,
 		18, Color(0.85, 1.0, 0.75), HORIZONTAL_ALIGNMENT_CENTER))
 	if AccountSystem.has_local_save():
-		page.add_child(_sub_line("Continue alone, or join a friend's world online."))
+		page.add_child(_sub_line("Continue alone, or browse named multiplayer worlds."))
 	else:
-		page.add_child(_sub_line("No save yet — start a new legend, or join a friend."))
+		page.add_child(_sub_line("No save yet — start a new legend, or browse servers."))
 
 	page.add_child(Kit.spacer(10))
 	var actions := VBoxContainer.new()
@@ -401,21 +393,10 @@ func _build_logged_in_actions(page: VBoxContainer) -> void:
 	)
 	actions.add_child(begin)
 
-	## Join a friend's hosted world over the internet (IP:port invite).
-	var join_edit := LineEdit.new()
-	join_edit.placeholder_text = "Friend invite  ip:port"
-	join_edit.custom_minimum_size = Vector2(Kit.BTN_SIZE.x, 40)
-	join_edit.alignment = HORIZONTAL_ALIGNMENT_CENTER
-	join_edit.size_flags_horizontal = Control.SIZE_SHRINK_CENTER
-	if NetSession and NetSession.pending_join_address != "":
-		join_edit.text = "%s:%d" % [NetSession.pending_join_address, NetSession.pending_join_port]
-	actions.add_child(join_edit)
-
-	var join_btn := Kit.make_button("Join Friend Online", false)
-	join_btn.pressed.connect(func() -> void:
-		_on_join_friend_online(join_edit.text)
-	)
-	actions.add_child(join_btn)
+	## Minecraft-style browser: LAN names + saved friend worlds (IPs not shown in the list).
+	var browse_btn := Kit.make_button("Browse Servers", true)
+	browse_btn.pressed.connect(_open_server_browser)
+	actions.add_child(browse_btn)
 
 	var logout := Kit.make_button("Sign Out", false)
 	logout.pressed.connect(func() -> void:
@@ -486,27 +467,13 @@ func _on_continue_legend() -> void:
 	LoadingScreen.preload_and_change_scene("res://scenes/game_world.tscn", 1.2)
 
 
-## Join a friend's hosted world: load your hero (or start fresh), then auto-connect.
-func _on_join_friend_online(raw_invite: String) -> void:
-	if NetSession == null:
-		_set_auth_status("Network unavailable.")
+func _open_server_browser() -> void:
+	var Browser := load("res://scripts/ui/panel_server_browser.gd")
+	if Browser == null:
+		_set_auth_status("Server browser unavailable.")
 		return
-	var msg := NetSession.set_pending_join(raw_invite)
-	if NetSession.pending_join_address == "":
-		_set_auth_status(msg)
-		return
-	_set_auth_status(msg)
-	## Prefer saved hero so you bring your own legend into their world.
-	if AccountSystem.has_local_save() and AccountSystem.load_game():
-		_load_from_save = true
-		_empire = GameState.empire
-		_class = GameState.player_class
-		AudioManager.play_sfx("ui_confirm")
-		GameCursor.apply()
-		LoadingScreen.preload_and_change_scene("res://scenes/game_world.tscn", 1.2)
-	else:
-		_load_from_save = false
-		_show_step(2)
+	var panel: Control = Browser.new()
+	add_child(panel)
 
 
 func _open_settings() -> void:

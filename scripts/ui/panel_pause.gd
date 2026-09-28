@@ -1,5 +1,5 @@
 extends Control
-## Rest menu — controls, local save, internet Host/Join, road back to title.
+## Rest menu — controls, local save, multiplayer browser, road back to title.
 
 const Kit = preload("res://scripts/ui/ui_kit.gd")
 
@@ -8,8 +8,8 @@ const TEXT_W := 400
 
 var hud: CanvasLayer
 var _status: Label
-var _join_edit: LineEdit
 var _invite_label: Label
+var _host_name_edit: LineEdit
 
 
 func _ready() -> void:
@@ -38,14 +38,14 @@ func _ready() -> void:
 	v.add_child(Kit.spacer(4))
 
 	for line in [
-			"WASD — move   •   Middle-mouse drag — look   •   Wheel — zoom",
+			"WASD — move   •   Middle-mouse drag — look",
 			"Left click — strike   •   RMB — heavy blow",
 			"Q — god-skill   •   F — raise shield   •   C — dodge roll",
 			"Shift — sprint   •   Space — leap   •   E — speak / touch",
 			"Enter — chat   •   Esc — close chat / rest",
 			"1 / 2 — health & spirit potions",
 			"I — spoils   •   L — clan   •   M — map of Hellas",
-			"Host your world online — friends Join with your invite"]:
+			"Multiplayer — browse named worlds (IPs hidden from players)"]:
 		var l := Kit.make_label(String(line), 15, Kit.INK, HORIZONTAL_ALIGNMENT_CENTER)
 		l.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
 		l.custom_minimum_size = Vector2(TEXT_W, 0)
@@ -72,26 +72,25 @@ func _ready() -> void:
 	if NetSession and not NetSession.invite_ready.is_connected(_on_invite_ready):
 		NetSession.invite_ready.connect(_on_invite_ready)
 
-	var host_btn := Kit.make_button("Host World Online", true)
+	_host_name_edit = LineEdit.new()
+	_host_name_edit.placeholder_text = "World name for browser"
+	_host_name_edit.text = "Hellas Arena"
+	_host_name_edit.custom_minimum_size = Vector2(Kit.BTN_SIZE.x, 40)
+	_host_name_edit.alignment = HORIZONTAL_ALIGNMENT_CENTER
+	_host_name_edit.size_flags_horizontal = Control.SIZE_SHRINK_CENTER
+	v.add_child(_centered_control(_host_name_edit))
+
+	var host_btn := Kit.make_button("Host World", true)
 	host_btn.pressed.connect(_on_host)
 	v.add_child(host_btn)
 
-	var copy_btn := Kit.make_button("Copy Invite", false)
+	var browser_btn := Kit.make_button("Server Browser", true)
+	browser_btn.pressed.connect(_on_open_browser)
+	v.add_child(browser_btn)
+
+	var copy_btn := Kit.make_button("Copy Invite (host)", false)
 	copy_btn.pressed.connect(_on_copy_invite)
 	v.add_child(copy_btn)
-
-	_join_edit = LineEdit.new()
-	_join_edit.placeholder_text = "Friend IP:port  (e.g. 203.0.113.4:7777)"
-	_join_edit.custom_minimum_size = Vector2(Kit.BTN_SIZE.x, 40)
-	_join_edit.alignment = HORIZONTAL_ALIGNMENT_CENTER
-	_join_edit.size_flags_horizontal = Control.SIZE_SHRINK_CENTER
-	if NetSession and NetSession.pending_join_address != "":
-		_join_edit.text = "%s:%d" % [NetSession.pending_join_address, NetSession.pending_join_port]
-	v.add_child(_centered_control(_join_edit))
-
-	var join_btn := Kit.make_button("Join Friend", false)
-	join_btn.pressed.connect(_on_join)
-	v.add_child(join_btn)
 
 	var leave_net := Kit.make_button("Leave World", false)
 	leave_net.pressed.connect(_on_leave_net)
@@ -130,6 +129,16 @@ func _on_settings() -> void:
 	panel.closed.connect(func() -> void: pass)
 
 
+func _on_open_browser() -> void:
+	var Browser := load("res://scripts/ui/panel_server_browser.gd")
+	if Browser == null:
+		return
+	var panel: Control = Browser.new()
+	add_child(panel)
+	if panel.has_signal("closed"):
+		panel.closed.connect(func() -> void: _refresh_status())
+
+
 func _on_save() -> void:
 	if not AccountSystem.is_logged_in():
 		_status.text = "Register on the title screen to save."
@@ -160,45 +169,44 @@ func _refresh_status(_a: Variant = null) -> void:
 		bits.append("Guest — register on the title screen to save.")
 	if NetSession:
 		bits.append(NetSession.status_text())
-		var inv := NetSession.invite_text()
-		if inv != "" and NetSession.is_hosting():
-			_invite_label.text = "Invite: %s" % inv
+		if NetSession.is_hosting():
+			var inv := NetSession.invite_text()
+			var sname := NetSession.server_name()
+			if inv != "" and not inv.begins_with("0.0.0.0"):
+				_invite_label.text = "Hosting '%s' · invite ready (Copy Invite — host only)" % sname
+			else:
+				_invite_label.text = "Hosting '%s' · fetching invite…" % sname
 		elif NetSession.is_online():
-			_invite_label.text = "Connected online"
+			_invite_label.text = "Connected online — Enter to chat"
 		else:
-			_invite_label.text = "Solo — Host to invite friends over the internet"
+			_invite_label.text = "Solo — Host or open Server Browser"
 	_status.text = "\n".join(bits)
 
 
-func _on_invite_ready(invite: String) -> void:
-	_invite_label.text = "Invite: %s" % invite
+func _on_invite_ready(_invite: String) -> void:
 	_refresh_status()
 
 
 func _on_host() -> void:
 	if NetSession == null:
 		return
-	_status.text = NetSession.host()
+	var nm := _host_name_edit.text if _host_name_edit else "Hellas Arena"
+	_status.text = NetSession.host(NetSession.DEFAULT_PORT, nm)
 	_refresh_status()
 
 
 func _on_copy_invite() -> void:
 	if NetSession == null:
 		return
+	if not NetSession.is_hosting():
+		_status.text = "Only the host can copy the invite."
+		return
 	var inv := NetSession.invite_text()
 	if inv == "" or inv.begins_with("0.0.0.0"):
 		_status.text = "Host first — waiting for public IP…"
 		return
 	DisplayServer.clipboard_set(inv)
-	_status.text = "Copied invite: %s" % inv
-
-
-func _on_join() -> void:
-	if NetSession == null:
-		return
-	var raw := _join_edit.text if _join_edit else ""
-	_status.text = NetSession.join(raw)
-	_refresh_status()
+	_status.text = "Copied invite (host only). Friends Add Server by name in the browser."
 
 
 func _on_leave_net() -> void:
