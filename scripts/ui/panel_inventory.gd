@@ -1,11 +1,13 @@
 extends Control
 ## Panoply & Pouch — Metin2-style equipment window.
-## Left: compact paperdoll with helm / weapon / armor / shield / boots /
-## necklace / earring / bracelet. Right: smaller bag grid with item icons.
+## Larger icons, readable labels, hover tooltips with bonuses.
 
 const Kit = preload("res://scripts/ui/ui_kit.gd")
 
-const CELL := 36
+const CELL := 52
+const SLOT_W := 72
+const SLOT_H := 64
+const ICON_SLOT := 40
 ## Classic Metin2-ish slot set around the silhouette.
 const SLOT_KEYS := [
 	"helmet", "necklace", "earring", "bracelet",
@@ -30,6 +32,7 @@ var _body: Control
 var _detail: Label
 var _equip_btns: Dictionary = {}
 var _equip_icons: Dictionary = {}
+var _equip_name_labs: Dictionary = {}
 var _bag_cells: Array = []
 var _selected_bag: int = -1
 var _selected_slot: String = ""
@@ -37,6 +40,8 @@ var _btn_equip: Button
 var _btn_unequip: Button
 var _btn_sell: Button
 var _stat_labels: Dictionary = {}
+var _hover_tip: PanelContainer
+var _hover_tip_label: Label
 ## Manual Metin2-style drag (more reliable than Control.set_drag_forwarding).
 var _drag_armed: bool = false
 var _dragging: bool = false
@@ -72,50 +77,126 @@ func _build_shell() -> void:
 	center.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
 
 	var panel := Kit.make_panel(false)
-	## panel_scroll content_margin is ~118×2 / 136+128. Usable cream must fit
-	## paperdoll (220) + gap + 6×36 bag (226) without spilling past the gold frame.
-	panel.custom_minimum_size = Vector2(880, 760)
+	## Wider cream field: larger paperdoll + 6×52 bag + action column.
+	panel.custom_minimum_size = Vector2(980, 820)
 	panel.clip_contents = true
 	center.add_child(panel)
 
 	## Stylebox already insets past the ornate border — keep only a light gap.
-	var margin := Kit.make_margin(8)
+	var margin := Kit.make_margin(10)
 	margin.clip_contents = true
 	panel.add_child(margin)
 	var v := VBoxContainer.new()
-	v.add_theme_constant_override("separation", 6)
+	v.add_theme_constant_override("separation", 8)
 	v.clip_contents = true
 	margin.add_child(v)
 
 	var top := HBoxContainer.new()
-	top.add_theme_constant_override("separation", 8)
+	top.add_theme_constant_override("separation", 10)
 	v.add_child(top)
-	top.add_child(Kit.make_icon("icon_laurel", 26))
-	var title := Kit.make_label("Panoply & Pouch", 20, Kit.INK_TITLE)
+	top.add_child(Kit.make_icon("icon_laurel", 30))
+	var title := Kit.make_label("Panoply & Pouch", 24, Kit.INK_TITLE)
 	title.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	top.add_child(title)
-	var close_btn := Kit.make_button("Close", false)
+	var close_btn := _make_inv_button("Close", false)
 	close_btn.pressed.connect(_close)
 	top.add_child(close_btn)
 
 	_tabs = HBoxContainer.new()
-	_tabs.add_theme_constant_override("separation", 8)
+	_tabs.add_theme_constant_override("separation", 10)
 	v.add_child(_tabs)
 	_add_tab("gear", "Panoply")
 	_add_tab("clan", "Clan")
 
 	_body = Control.new()
 	_body.size_flags_vertical = Control.SIZE_EXPAND_FILL
-	_body.custom_minimum_size = Vector2(0, 360)
+	_body.custom_minimum_size = Vector2(0, 420)
 	_body.clip_contents = true
 	v.add_child(_body)
 
+	_build_hover_tip()
+
 
 func _add_tab(id: String, text: String) -> void:
-	var b := Kit.make_button(text, id == "gear")
+	var b := _make_inv_button(text, id == "gear")
 	b.set_meta("tab_id", id)
 	b.pressed.connect(func() -> void: _show(id))
 	_tabs.add_child(b)
+
+
+func _make_inv_button(text: String, primary: bool) -> Button:
+	## Compact plaques so Equip / Unequip / Sell sit in a tidy column.
+	var b := Button.new()
+	b.text = text
+	b.custom_minimum_size = Vector2(168, 48)
+	b.focus_mode = Control.FOCUS_NONE
+	b.add_theme_font_override("font", Kit.font())
+	b.add_theme_font_size_override("font_size", 15)
+	b.add_theme_color_override("font_color", Kit.INK)
+	b.add_theme_color_override("font_hover_color", Kit.INK_TITLE)
+	b.add_theme_color_override("font_pressed_color", Kit.INK_GOLD)
+	var tex_path := "res://assets/ui/btn_primary.png" if primary else "res://assets/ui/btn_secondary.png"
+	if not ResourceLoader.exists(tex_path):
+		tex_path = "res://assets/ui/btn_blank.png"
+	if ResourceLoader.exists(tex_path):
+		var tex: Texture2D = load(tex_path)
+		var sb := StyleBoxTexture.new()
+		sb.texture = tex
+		sb.content_margin_left = 18
+		sb.content_margin_right = 18
+		sb.content_margin_top = 10
+		sb.content_margin_bottom = 10
+		b.add_theme_stylebox_override("normal", sb)
+		b.add_theme_stylebox_override("hover", sb)
+		b.add_theme_stylebox_override("pressed", sb)
+	return b
+
+
+func _build_hover_tip() -> void:
+	_hover_tip = PanelContainer.new()
+	_hover_tip.visible = false
+	_hover_tip.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	_hover_tip.z_index = 80
+	var sb := StyleBoxFlat.new()
+	sb.bg_color = Color(0.12, 0.09, 0.06, 0.94)
+	sb.border_color = Color(0.78, 0.62, 0.28, 0.95)
+	sb.set_border_width_all(2)
+	sb.set_corner_radius_all(6)
+	sb.content_margin_left = 12
+	sb.content_margin_right = 12
+	sb.content_margin_top = 10
+	sb.content_margin_bottom = 10
+	_hover_tip.add_theme_stylebox_override("panel", sb)
+	_hover_tip_label = Label.new()
+	_hover_tip_label.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
+	_hover_tip_label.custom_minimum_size = Vector2(260, 0)
+	_hover_tip_label.add_theme_font_override("font", Kit.font())
+	_hover_tip_label.add_theme_font_size_override("font_size", 15)
+	_hover_tip_label.add_theme_color_override("font_color", Color(1.0, 0.94, 0.78))
+	_hover_tip.add_child(_hover_tip_label)
+	add_child(_hover_tip)
+
+
+func _show_item_tip(item_id: String, at_global: Vector2) -> void:
+	if item_id == "" or _hover_tip == null:
+		_hide_item_tip()
+		return
+	_hover_tip_label.text = GameState.item_tooltip_text(item_id)
+	_hover_tip.visible = true
+	_hover_tip.reset_size()
+	var pos := at_global + Vector2(18, 18)
+	var vp := get_viewport_rect().size
+	var tip_size := _hover_tip.get_combined_minimum_size()
+	if tip_size == Vector2.ZERO:
+		tip_size = Vector2(280, 120)
+	pos.x = minf(pos.x, vp.x - tip_size.x - 12)
+	pos.y = minf(pos.y, vp.y - tip_size.y - 12)
+	_hover_tip.global_position = pos
+
+
+func _hide_item_tip() -> void:
+	if _hover_tip:
+		_hover_tip.visible = false
 
 
 func _show(which: String) -> void:
@@ -127,6 +208,7 @@ func _show(which: String) -> void:
 	_bag_cells.clear()
 	_equip_btns.clear()
 	_equip_icons.clear()
+	_equip_name_labs.clear()
 	_stat_labels.clear()
 	_selected_bag = -1
 	_selected_slot = ""
@@ -147,107 +229,127 @@ func _paint_tabs() -> void:
 
 
 func _build_panoply() -> void:
+	_equip_name_labs.clear()
 	var row := HBoxContainer.new()
 	row.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
-	row.add_theme_constant_override("separation", 16)
+	row.add_theme_constant_override("separation", 18)
 	row.clip_contents = true
 	_body.add_child(row)
 
 	var left := VBoxContainer.new()
-	left.custom_minimum_size = Vector2(230, 0)
+	left.custom_minimum_size = Vector2(300, 0)
 	left.size_flags_horizontal = Control.SIZE_SHRINK_BEGIN
-	left.add_theme_constant_override("separation", 4)
+	left.add_theme_constant_override("separation", 6)
 	row.add_child(left)
 
-	left.add_child(Kit.make_label("Worn Panoply", 15, Kit.INK_GOLD))
+	left.add_child(Kit.make_label("Worn Panoply", 18, Kit.INK_GOLD))
 	var emp := GameState.empire_data()
 	var cls := GameState.class_data()
-	left.add_child(Kit.make_label("%s · %s" % [emp.get("name", "?"), cls.get("name", "?")], 11, Kit.INK_SOFT))
+	left.add_child(Kit.make_label("%s · %s" % [emp.get("name", "?"), cls.get("name", "?")], 14, Kit.INK_SOFT))
 
-	## Metin2 paperdoll: slots around a simple silhouette.
+	## Paperdoll: larger slots with icon + short name under each.
 	var doll := CenterContainer.new()
 	left.add_child(doll)
 	var doll_box := Control.new()
-	doll_box.custom_minimum_size = Vector2(220, 200)
+	doll_box.custom_minimum_size = Vector2(290, 340)
 	doll.add_child(doll_box)
 
 	var body := ColorRect.new()
 	body.color = Color(0.62, 0.52, 0.38, 0.55)
-	body.position = Vector2(86, 48)
-	body.size = Vector2(48, 100)
+	body.position = Vector2(118, 70)
+	body.size = Vector2(54, 120)
 	doll_box.add_child(body)
 	var head := ColorRect.new()
 	head.color = Color(0.72, 0.58, 0.42, 0.7)
-	head.position = Vector2(94, 22)
-	head.size = Vector2(32, 28)
+	head.position = Vector2(128, 36)
+	head.size = Vector2(34, 32)
 	doll_box.add_child(head)
 
-	## Slot layout (Metin2-ish): jewelry left, body center-right, boots bottom.
 	var slot_pos := {
-		"helmet": Vector2(86, 0),
-		"necklace": Vector2(8, 28),
-		"earring": Vector2(8, 72),
-		"bracelet": Vector2(8, 116),
-		"weapon": Vector2(8, 160),
-		"armor": Vector2(158, 72),
-		"shield": Vector2(158, 116),
-		"boots": Vector2(86, 156),
+		"helmet": Vector2(109, 0),
+		"necklace": Vector2(8, 40),
+		"earring": Vector2(8, 112),
+		"bracelet": Vector2(8, 184),
+		"weapon": Vector2(8, 256),
+		"armor": Vector2(210, 112),
+		"shield": Vector2(210, 184),
+		"boots": Vector2(109, 236),
 	}
 	for key in SLOT_KEYS:
+		var wrap := VBoxContainer.new()
+		wrap.position = slot_pos[key]
+		wrap.add_theme_constant_override("separation", 2)
+		doll_box.add_child(wrap)
+
 		var slot_btn := Button.new()
-		slot_btn.custom_minimum_size = Vector2(52, 40)
-		slot_btn.position = slot_pos[key]
+		slot_btn.custom_minimum_size = Vector2(SLOT_W, SLOT_H)
 		slot_btn.focus_mode = Control.FOCUS_NONE
 		slot_btn.clip_text = true
 		slot_btn.add_theme_font_override("font", Kit.font())
-		slot_btn.add_theme_font_size_override("font_size", 9)
+		slot_btn.add_theme_font_size_override("font_size", 12)
 		slot_btn.add_theme_color_override("font_color", Kit.INK)
-		slot_btn.tooltip_text = SLOT_LABELS[key]
 		slot_btn.pressed.connect(_select_equip_slot.bind(key))
 		slot_btn.gui_input.connect(_on_slot_gui_input.bind(key))
-		doll_box.add_child(slot_btn)
+		slot_btn.mouse_entered.connect(_on_slot_hover.bind(key))
+		slot_btn.mouse_exited.connect(_hide_item_tip)
+		wrap.add_child(slot_btn)
 		_equip_btns[key] = slot_btn
+
 		var ico := TextureRect.new()
 		ico.expand_mode = TextureRect.EXPAND_IGNORE_SIZE
 		ico.stretch_mode = TextureRect.STRETCH_KEEP_ASPECT_CENTERED
-		ico.custom_minimum_size = Vector2(22, 22)
+		ico.custom_minimum_size = Vector2(ICON_SLOT, ICON_SLOT)
+		ico.size = Vector2(ICON_SLOT, ICON_SLOT)
 		ico.mouse_filter = Control.MOUSE_FILTER_IGNORE
-		ico.position = Vector2(2, 2)
+		ico.position = Vector2((SLOT_W - ICON_SLOT) * 0.5, 6)
 		slot_btn.add_child(ico)
 		_equip_icons[key] = ico
 
-	left.add_child(Kit.spacer(4))
+		var name_lab := Kit.make_label(SLOT_LABELS[key], 12, Kit.INK_SOFT, HORIZONTAL_ALIGNMENT_CENTER)
+		name_lab.custom_minimum_size = Vector2(SLOT_W, 0)
+		wrap.add_child(name_lab)
+		_equip_name_labs[key] = name_lab
+
+	left.add_child(Kit.spacer(6))
 	for key in ["atk", "def", "hp", "gold"]:
-		var lab := Kit.make_label("", 11, Kit.INK)
+		var lab := Kit.make_label("", 15, Kit.INK)
 		left.add_child(lab)
 		_stat_labels[key] = lab
 
-	_btn_unequip = Kit.make_button("Unequip", false)
+	var actions_col := VBoxContainer.new()
+	actions_col.add_theme_constant_override("separation", 8)
+	left.add_child(actions_col)
+	_btn_equip = _make_inv_button("Equip", true)
+	_btn_equip.pressed.connect(_do_equip)
+	actions_col.add_child(_btn_equip)
+	_btn_unequip = _make_inv_button("Unequip", false)
 	_btn_unequip.pressed.connect(_do_unequip)
-	left.add_child(_btn_unequip)
+	actions_col.add_child(_btn_unequip)
+	_btn_sell = _make_inv_button("Sell", false)
+	_btn_sell.pressed.connect(_do_sell)
+	actions_col.add_child(_btn_sell)
 
 	var right := VBoxContainer.new()
 	right.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	right.size_flags_stretch_ratio = 1.0
 	right.clip_contents = true
-	right.add_theme_constant_override("separation", 4)
+	right.add_theme_constant_override("separation", 6)
 	row.add_child(right)
 
-	right.add_child(Kit.make_label("Traveler's Pouch", 15, Kit.INK_GOLD))
-	right.add_child(Kit.make_label("Drag onto slots · or Select → Equip", 11, Kit.INK_SOFT))
+	right.add_child(Kit.make_label("Traveler's Pouch", 18, Kit.INK_GOLD))
+	right.add_child(Kit.make_label("Hover for bonuses · Drag onto slots", 13, Kit.INK_SOFT))
 
-	## Keep the 6×6 grid inside the cream field (never past the gold frame).
 	var grid_wrap := CenterContainer.new()
 	grid_wrap.size_flags_horizontal = Control.SIZE_SHRINK_CENTER
 	grid_wrap.clip_contents = true
 	right.add_child(grid_wrap)
 	var grid := GridContainer.new()
 	grid.columns = GameState.BAG_W
-	grid.add_theme_constant_override("h_separation", 2)
-	grid.add_theme_constant_override("v_separation", 2)
+	grid.add_theme_constant_override("h_separation", 4)
+	grid.add_theme_constant_override("v_separation", 4)
 	grid.custom_minimum_size = Vector2(
-		GameState.BAG_W * CELL + (GameState.BAG_W - 1) * 2,
-		GameState.BAG_H * CELL + (GameState.BAG_H - 1) * 2)
+		GameState.BAG_W * CELL + (GameState.BAG_W - 1) * 4,
+		GameState.BAG_H * CELL + (GameState.BAG_H - 1) * 4)
 	grid_wrap.add_child(grid)
 
 	for _i in range(GameState.BAG_W * GameState.BAG_H):
@@ -257,14 +359,13 @@ func _build_panoply() -> void:
 		sb.bg_color = Color(0.93, 0.88, 0.76, 0.95)
 		sb.border_color = Color(0.55, 0.42, 0.22, 0.85)
 		sb.set_border_width_all(1)
-		sb.set_corner_radius_all(2)
-		sb.content_margin_left = 1
-		sb.content_margin_right = 1
-		sb.content_margin_top = 1
-		sb.content_margin_bottom = 1
+		sb.set_corner_radius_all(3)
+		sb.content_margin_left = 2
+		sb.content_margin_right = 2
+		sb.content_margin_top = 2
+		sb.content_margin_bottom = 2
 		cell.add_theme_stylebox_override("panel", sb)
 
-		## Ignore mouse on children so the cell receives drag / clicks.
 		var stack := Control.new()
 		stack.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
 		stack.mouse_filter = Control.MOUSE_FILTER_IGNORE
@@ -281,7 +382,7 @@ func _build_panoply() -> void:
 		lab.horizontal_alignment = HORIZONTAL_ALIGNMENT_RIGHT
 		lab.vertical_alignment = VERTICAL_ALIGNMENT_BOTTOM
 		lab.add_theme_font_override("font", Kit.font())
-		lab.add_theme_font_size_override("font_size", 9)
+		lab.add_theme_font_size_override("font_size", 12)
 		lab.add_theme_color_override("font_color", Kit.INK)
 		lab.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
 		lab.mouse_filter = Control.MOUSE_FILTER_IGNORE
@@ -289,24 +390,16 @@ func _build_panoply() -> void:
 
 		var idx: int = _bag_cells.size()
 		cell.gui_input.connect(_on_bag_cell_input.bind(idx))
+		cell.mouse_entered.connect(_on_bag_hover.bind(idx))
+		cell.mouse_exited.connect(_hide_item_tip)
 		grid.add_child(cell)
 		_bag_cells.append({"panel": cell, "label": lab, "icon": ico, "entry": -1})
 
-	_detail = Kit.make_label("Select an item.", 12, Kit.INK_SOFT)
+	_detail = Kit.make_label("Select or hover an item.", 15, Kit.INK_SOFT)
 	_detail.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
-	_detail.custom_minimum_size = Vector2(226, 0)
+	_detail.custom_minimum_size = Vector2(300, 0)
 	_detail.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	right.add_child(_detail)
-
-	var actions := HBoxContainer.new()
-	actions.add_theme_constant_override("separation", 8)
-	right.add_child(actions)
-	_btn_equip = Kit.make_button("Equip", true)
-	_btn_equip.pressed.connect(_do_equip)
-	actions.add_child(_btn_equip)
-	_btn_sell = Kit.make_button("Sell", false)
-	_btn_sell.pressed.connect(_do_sell)
-	actions.add_child(_btn_sell)
 
 	_refresh_panoply()
 
@@ -333,9 +426,13 @@ func _refresh_panoply() -> void:
 		if btn == null:
 			continue
 		var id := String(GameState.equipped.get(key, ""))
-		btn.text = "  %s" % SLOT_LABELS[key] if id == "" else ""
+		btn.text = "" if id != "" else SLOT_LABELS[key]
 		_set_slot_icon(key, id)
-		btn.tooltip_text = "%s: %s" % [SLOT_LABELS[key], GameState.equipped_name(key)]
+		var nlab: Label = _equip_name_labs.get(key)
+		if nlab:
+			nlab.text = GameState.item_name(id) if id != "" else SLOT_LABELS[key]
+			nlab.add_theme_color_override("font_color", Kit.INK if id != "" else Kit.INK_SOFT)
+		btn.tooltip_text = GameState.item_tooltip_text(id) if id != "" else "%s slot (empty)" % SLOT_LABELS[key]
 		btn.modulate = Color(1.15, 1.08, 0.85) if key == _selected_slot else Color.WHITE
 
 	if _stat_labels.has("atk"):
@@ -664,23 +761,30 @@ func _highlight_selection() -> void:
 			(_bag_cells[i]["panel"] as PanelContainer).modulate = Color(1.25, 1.12, 0.75)
 
 
+func _on_bag_hover(cell_idx: int) -> void:
+	if cell_idx < 0 or cell_idx >= _bag_cells.size():
+		return
+	var ei: int = int(_bag_cells[cell_idx]["entry"])
+	if ei < 0 or ei >= GameState.bag.size():
+		_hide_item_tip()
+		return
+	var id := str(GameState.bag[ei].get("id", ""))
+	_show_item_tip(id, get_global_mouse_position())
+
+
+func _on_slot_hover(key: String) -> void:
+	var id := str(GameState.equipped.get(key, ""))
+	if id == "":
+		_hide_item_tip()
+		return
+	_show_item_tip(id, get_global_mouse_position())
+
+
 func _update_detail_bag(ei: int) -> void:
 	if ei < 0 or ei >= GameState.bag.size() or _detail == null:
 		return
-	var e: Dictionary = GameState.bag[ei]
-	var id := str(e.get("id", ""))
-	var def: Dictionary = GameState.item_def(id)
-	var kind := str(def.get("kind", "item"))
-	var price := GameState.item_sell_price(id)
-	var lines := "%s\n%s\nSell: %d δ" % [
-		str(def.get("name", id)),
-		str(def.get("desc", "")),
-		price,
-	]
-	var slot := GameState.slot_for_kind(kind)
-	if slot != "":
-		lines += "\nWear: %s" % SLOT_LABELS.get(slot, slot)
-	_detail.text = lines
+	var id := str(GameState.bag[ei].get("id", ""))
+	_detail.text = GameState.item_tooltip_text(id)
 
 
 func _update_detail_slot(key: String) -> void:
@@ -688,10 +792,9 @@ func _update_detail_slot(key: String) -> void:
 		return
 	var id := str(GameState.equipped.get(key, ""))
 	if id == "":
-		_detail.text = "%s slot empty." % SLOT_LABELS.get(key, key)
+		_detail.text = "%s slot empty — drag matching gear here." % SLOT_LABELS.get(key, key)
 		return
-	var def: Dictionary = GameState.item_def(id)
-	_detail.text = "%s (worn)\n%s" % [str(def.get("name", id)), str(def.get("desc", ""))]
+	_detail.text = "%s (worn)\n%s" % [SLOT_LABELS.get(key, key), GameState.item_tooltip_text(id)]
 
 
 func _do_equip() -> void:

@@ -280,13 +280,16 @@ func interact() -> void:
 	pass
 
 
-func take_damage(amount: float, _from_position: Vector3) -> void:
+func take_damage(amount: float, from_position: Vector3) -> void:
 	if dead or emerging:
 		return
 	hp -= amount
 	DamageNumbers.spawn(get_parent(), global_position + Vector3(0, 2.2, 0), int(amount))
 	_set_bar_fraction(hp / max_hp)
-	GameState.add_xp(int(cfg["xp_hit"]))
+	PartyShare.note_nearby(self, from_position, 6.0)
+	PartyShare.note_nearby(self, global_position, 12.0)
+	## Hit XP is shared among contributors (solo = full).
+	PartyShare.award_xp_and_gold(self, int(cfg["xp_hit"]), 0)
 	AudioManager.play_sfx("oracle_pulse", -12.0, randf_range(0.95, 1.1))
 	VfxHelper.spawn_hit(global_position + Vector3(0, 1.3, 0), get_parent())
 	_try_spawn_guardians()
@@ -322,9 +325,10 @@ func _shatter() -> void:
 	destroyed = true
 	collision_layer = 0
 	GameState.register_stone_destroyed()
-	GameState.add_xp(int(cfg["xp_break"]))
+	PartyShare.note_nearby(self, global_position, 16.0)
 	var gold_range: Array = cfg["gold"]
-	GameState.add_gold(randi_range(int(gold_range[0]), int(gold_range[1])))
+	var gold_amt: int = randi_range(int(gold_range[0]), int(gold_range[1]))
+	PartyShare.award_xp_and_gold(self, int(cfg["xp_break"]), gold_amt)
 	AudioManager.play_sfx("stone_shatter", -2.0)
 	AudioManager.play_sfx("oracle_pulse", -4.0)
 	VfxHelper.spawn_explosion(global_position + Vector3(0, 1.2, 0), get_parent())

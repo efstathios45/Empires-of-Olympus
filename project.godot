@@ -15,6 +15,8 @@ AudioManager="*res://scripts/autoloads/audio_manager.gd"
 GameState="*res://scripts/autoloads/game_state.gd"
 AccountSystem="*res://scripts/autoloads/account_system.gd"
 ChatSystem="*res://scripts/autoloads/chat_system.gd"
+DisplaySettings="*res://scripts/autoloads/display_settings.gd"
+PartyShare="*res://scripts/autoloads/party_share.gd"
 TesanaWorldEditor="*res://addons/tesana_world_editor/scene_export.gd"
 
 [audio]

@@ -279,6 +279,10 @@ func _build_title_step() -> void:
 		"Three empires. Three paths. One legend cut in bronze.",
 		20, Color(1.0, 0.94, 0.8), HORIZONTAL_ALIGNMENT_CENTER))
 
+	var video_btn := Kit.make_button("Settings", false)
+	video_btn.pressed.connect(_open_settings)
+	page.add_child(_centered(video_btn))
+
 	if AccountSystem.is_logged_in():
 		_build_logged_in_actions(page)
 	else:
@@ -444,6 +448,14 @@ func _on_continue_legend() -> void:
 	AudioManager.play_sfx("ui_confirm")
 	GameCursor.apply()
 	LoadingScreen.preload_and_change_scene("res://scenes/game_world.tscn", 1.2)
+
+
+func _open_settings() -> void:
+	var SettingsPanel := load("res://scripts/ui/panel_settings.gd")
+	if SettingsPanel == null:
+		return
+	var panel: Control = SettingsPanel.new()
+	add_child(panel)
 
 
 # ── Step 2: the empires of Hellas ────────────────────────────────────────
