@@ -65,7 +65,8 @@ static func is_quaternius(model: Node3D) -> bool:
 	if model == null:
 		return false
 	var nlow := String(model.name).to_lower()
-	if "quaternius" in nlow or "hero_king" in nlow or "guard_adventurer" in nlow \
+	if "greek_" in nlow or nlow.begins_with("greek") \
+			or "quaternius" in nlow or "hero_king" in nlow or "guard_adventurer" in nlow \
 			or "smith_worker" in nlow or "merchant_farmer" in nlow \
 			or "oracle_witch" in nlow or "woman_medieval" in nlow \
 			or "woman_formal" in nlow or "woman_worker" in nlow \

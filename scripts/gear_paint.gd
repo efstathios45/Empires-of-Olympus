@@ -12,15 +12,13 @@ static func paint_attached(root: Node3D, glb_path: String = "") -> void:
 	if root == null:
 		return
 	var path := glb_path.to_lower()
-	# Real Greek aspis / xiphos / kontos GLBs already ship with PBR albedo —
-	# do NOT flatten them to a Kenney face stamp (that looked like a bracelet sticker).
-	if path.find("aspis_shield") >= 0:
+	# Aspis often imports as flat grey in captures — stamp the bronze face.
+	if path.find("aspis_shield") >= 0 or (path.find("aspis") >= 0 and path.find("tower") < 0):
+		_paint_textured(root, ASPIS_FACE, Color(1, 1, 1), 0.55, 0.35)
 		return
 	if path.find("xiphos_sword") >= 0 or path.find("kontos_spear") >= 0:
 		return
-	if path.find("aspis") >= 0 and path.find("tower") < 0:
-		_paint_textured(root, ASPIS_FACE, Color(1, 1, 1), 0.55, 0.35)
-	elif path.find("tower") >= 0:
+	if path.find("tower") >= 0:
 		_paint_textured(root, TOWER_FACE, Color(1, 1, 1), 0.6, 0.25)
 	elif path.find("xiphos") >= 0 or path.find("kontos") >= 0 or path.find("sword") >= 0 \
 			or path.find("spear") >= 0 or path.find("knife") >= 0:

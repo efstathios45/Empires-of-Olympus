@@ -8,17 +8,19 @@ const WeaponGrip = preload("res://scripts/weapon_grip.gd")
 # Prefer LeftLowerArm for shields (WeaponGrip default) — LeftHand + wild eulers
 # twisted the forearm and made the champion look broken.
 const GRIP_BY_GLB := {
-	## Ancient Greek Tripo / UAL — LeftLowerArm / RightHand (tuned).
+	## Hellenic / Quaternius — aspis on LowerArm.L (forearm strap), spear on Wrist.R.
+	## After +π facing align, bone +Z on the left arm points outboard; identity
+	## keeps the aspis face out. Old Wrist+(−90,0,90) hung the face downward.
 	"res://assets/props/gear/aspis_shield.glb": {
-		"bone": "LeftLowerArm",
-		"position": Vector3(0.02, -0.06, 0.04),
-		"rotation_deg": Vector3(-20.0, -10.0, 8.0),
+		"bone": "LowerArm.L",
+		"position": Vector3(0.0, 0.14, 0.04),
+		"rotation_deg": Vector3(0.0, 0.0, 0.0),
 		"scale": 1.0,
 	},
 	"res://assets/props/gear/tower_shield.glb": {
-		"bone": "LeftLowerArm",
-		"position": Vector3(0.02, -0.10, 0.05),
-		"rotation_deg": Vector3(-24.0, -12.0, 6.0),
+		"bone": "LowerArm.L",
+		"position": Vector3(0.0, 0.14, 0.04),
+		"rotation_deg": Vector3(0.0, 0.0, 0.0),
 		"scale": 1.08,
 	},
 	## KayKit Adventurers — sockets handslot.l / Round_Shield / 1H_Sword.
@@ -51,19 +53,23 @@ const GRIP_BY_GLB := {
 		"skip_normalize": true,
 	},
 	"res://assets/props/gear/xiphos_sword.glb": {
-		"position": Vector3(0.006, -0.118, 0.0),
-		"rotation_deg": Vector3(-90.0, -90.0, 0.0),
+		"bone": "Wrist.R",
+		"position": Vector3(0.02, 0.08, 0.0),
+		"rotation_deg": Vector3(90.0, 0.0, 0.0),
 		"scale": 0.98,
 	},
 	"res://assets/props/gear/kontos_spear.glb": {
-		"position": Vector3(0.004, -0.15, -0.001),
-		"rotation_deg": Vector3(-90.0, -90.0, 0.0),
-		"scale": 1.18,
+		"bone": "Wrist.R",
+		"position": Vector3(0.02, 0.08, 0.0),
+		"rotation_deg": Vector3(90.0, 0.0, 0.0),
+		"scale": 1.12,
 	},
+	## Idle_Neutral: bone +Y hangs world-down — Rx(90) aims tip world-up from palm.
 	"res://assets/props/weapons/dory_spear.glb": {
-		"position": Vector3(0.003, -0.138, -0.0005),
-		"rotation_deg": Vector3(-90.0, -90.0, 0.0),
-		"scale": 1.06,
+		"bone": "Wrist.R",
+		"position": Vector3(0.02, 0.08, 0.0),
+		"rotation_deg": Vector3(90.0, 0.0, 0.0),
+		"scale": 1.05,
 	},
 	"res://assets/props/weapons/cretan_bow.glb": {
 		"position": Vector3(-0.06, 0.02, 0.0),

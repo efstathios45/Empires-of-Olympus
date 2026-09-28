@@ -37,8 +37,8 @@ No zip extract needed — this download is the .exe alone.
 ------------------------------------------------------------
 Download
 ------------------------------------------------------------
-Windows build (current — Quaternius humanoids):
-  https://gofile.io/d/6jap7Pt5
+Windows build (current — Quaternius facing/grip fix):
+  https://gofile.io/d/4mWGwATA
 
 File name: EmpiresOfOlympus.exe
 
@@ -50,10 +50,10 @@ Shared/cloud multiplayer persistence is documented in docs/ACCOUNTS.md.
 In-world: Enter opens player chat (see docs/CHAT.md).
 Metin2-style camera: hold middle-mouse to orbit. Mouse-wheel zoom is removed
 (fixed over-shoulder distance).
-Hero + plaza NPCs use Quaternius Ultimate Modular (CC0). Hold F to raise
-the shield (Idle_Sword). Walk/hit use authored Quaternius clips (no Tripo
-LegPlant; no KayKit chibi). Open Panoply with I — right-click pouch items to
-Equip / Sell.
+Hero is Quaternius King + GreekLook (Corinthian/bronze/crimson) with authored
+Walk / Idle_Sword / Sword_Slash. Facing aligned to move direction; dory tip-up;
+aspis on the left forearm. No Tripo LegPlant / KayKit chibi. Open Panoply with I —
+right-click pouch items to Equip / Sell.
 Nameplates show name/level in empire colours.
 Multiplayer: title/Esc → Browse Servers (LAN names + saved friend worlds).
 Only the host can Copy Invite; joiners never see raw IPs. Host gets each

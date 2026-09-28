@@ -1,11 +1,12 @@
 extends SceneTree
-
 func _init() -> void:
-	print("HAS_CLASS=", ClassDB.class_exists("SkeletonModifier3D"))
-	if ClassDB.class_exists("SkeletonModifier3D"):
-		for m in ClassDB.class_get_method_list("SkeletonModifier3D", true):
-			var n := str(m.get("name", ""))
-			if "modif" in n.to_lower() or "process" in n.to_lower() or "skeleton" in n.to_lower():
-				print("M=", n)
-	print("PARENT=", ClassDB.get_parent_class("SkeletonModifier3D") if ClassDB.class_exists("SkeletonModifier3D") else "?")
-	quit()
+	print("HAS_MOD=", ClassDB.class_exists("SkeletonModifier3D"))
+	for s in ClassDB.class_get_signal_list("Skeleton3D"):
+		var nm := String(s.name)
+		if "update" in nm.to_lower() or "mod" in nm.to_lower():
+			print("SIG ", nm)
+	for m in ClassDB.class_get_method_list("Skeleton3D", true):
+		var nm := String(m.name)
+		if "modif" in nm.to_lower() or "skeleton_update" in nm.to_lower():
+			print("METH ", nm)
+	quit(0)

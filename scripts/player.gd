@@ -9,12 +9,15 @@ signal respawned
 signal skill_cooldown_started(duration: float)
 signal combo_performed
 
-## Ancient Greek Tripo hoplite (Corinthian + cape + greaves) with UAL combat clips.
-const CharacterGLB := "res://assets/characters/spartan_hoplite/spartan_hoplite.glb"
-const CharacterLib := "res://assets/characters/spartan_hoplite/spartan_hoplite_animations.tres"
+## CC0 Achilles Spartan hoplite (hang-rest) + Quaternius Walk/Idle — authentic Hellenic look.
+## Arm clips stripped at setup (T-pose arm tracks melt the hang bind); legs/spine still animate.
+const CharacterGLB := "res://assets/characters/greek_hoplite/greek_hoplite.glb"
+const CharacterLib := ""
 const GearGrip = preload("res://scripts/gear_grip.gd")
 const GearPaint = preload("res://scripts/gear_paint.gd")
+const GreekLook = preload("res://scripts/utils/greek_look.gd")
 const HeroAnim = preload("res://scripts/utils/hero_anim.gd")
+const USE_GREEK_LOOK := false
 const ProjectileScript = preload("res://scripts/projectile.gd")
 const VfxHelper = preload("res://scripts/vfx_helper.gd")
 const NameplateScript = preload("res://scripts/player_nameplate.gd")
@@ -234,6 +237,9 @@ func _build_body() -> void:
 	var model: Node3D = load(char_path).instantiate()
 	mesh_root.add_child(model)
 	ModelUtils.setup_character_for_movement(model, 1.85)
+	## Achilles already has authored Hellenic textures — skip GreekLook paint.
+	if USE_GREEK_LOOK:
+		GreekLook.apply(model, "hoplite")
 	_apply_class_tint(model, cd0)
 
 	anim = model.find_child("AnimationPlayer", true) as AnimationPlayer
@@ -241,7 +247,7 @@ func _build_body() -> void:
 		anim = AnimationPlayer.new()
 		anim.name = "AnimationPlayer"
 		model.add_child(anim)
-	## Full combat UAL library on the hoplite GeneralSkeleton (shared across classes).
+	## Optional external library (empty for Quaternius — clips ship in the GLB).
 	if CharacterLib != "" and ResourceLoader.exists(CharacterLib):
 		var lib := load(CharacterLib) as AnimationLibrary
 		if lib:
@@ -249,6 +255,9 @@ func _build_body() -> void:
 				anim.remove_animation_library("")
 			anim.add_animation_library("", lib)
 	ModelUtils.set_animation_loops(anim)
+	## Ensure hang-rest Achilles keeps arms (setup also strips when name matches).
+	if "greek_hoplite" in char_path:
+		ModelUtils.strip_arm_animation_tracks(anim)
 	ModelUtils.bind_leg_plant_anim(model, anim)
 
 	var weapon_path: String = _resolved_weapon_path()
@@ -265,7 +274,9 @@ func _build_body() -> void:
 			shield_node.name = "ShieldMount"
 			GearPaint.paint_attached(shield_node, shield_path)
 
-	_attach_helmet(model)
+	## GreekLook already adds a Corinthian helm for hoplite — skip duplicate GLB helm.
+	if model.find_child("CorinthianHelmMount", true, false) == null:
+		_attach_helmet(model)
 
 	HeroAnim.play(anim, "idle")
 	if not GameState.inventory_changed.is_connected(_on_gear_changed):

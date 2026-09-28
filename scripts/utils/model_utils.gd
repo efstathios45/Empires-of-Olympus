@@ -1,7 +1,7 @@
 class_name ModelUtils
 
 ## Baked into exports so we can verify the PCK actually contains this revision.
-const BUILD_FIX_TOKEN := "EOO_FIX_QUATERNIUS_HUMANOIDS_V1"
+const BUILD_FIX_TOKEN := "EOO_FIX_ACHILLES_HOPLITE_HANG_ARMS_V1"
 
 ## Tripo mesh id shared by spartan_hoplite + city_guard — UAL melts this bind.
 const _BROKEN_UAL_MESH := "95ce6ed4"
@@ -101,6 +101,39 @@ static func set_animation_loops(anim_player: AnimationPlayer) -> void:
 			anim.loop_mode = Animation.LOOP_NONE
 		else:
 			anim.loop_mode = Animation.LOOP_LINEAR
+
+
+## Achilles hang-rest hero: Quaternius arm tracks are authored for T-pose rest and
+## melt the hang bind. Strip shoulder→finger tracks so arms stay at hang rest while
+## legs/spine still play Walk / Idle / Slash.
+const _ARM_TRACK_KEYS := [
+	"Shoulder", "UpperArm", "LowerArm", "Wrist",
+	"Thumb", "Index", "Middle", "Ring", "Pinky",
+]
+
+static func strip_arm_animation_tracks(anim_player: AnimationPlayer) -> void:
+	if anim_player == null:
+		return
+	## Duplicate clips so we don't mutate the imported .glb cache.
+	for lib_name in anim_player.get_animation_library_list():
+		var lib: AnimationLibrary = anim_player.get_animation_library(lib_name)
+		if lib == null:
+			continue
+		for anim_name in lib.get_animation_list():
+			var src := lib.get_animation(anim_name)
+			if src == null:
+				continue
+			var anim: Animation = src.duplicate(true)
+			for ti in range(anim.get_track_count() - 1, -1, -1):
+				var path := String(anim.track_get_path(ti))
+				var hit := false
+				for key in _ARM_TRACK_KEYS:
+					if key in path:
+						hit = true
+						break
+				if hit:
+					anim.remove_track(ti)
+			lib.add_animation(anim_name, anim)
 
 
 ## Copy keys from `src` that fall in [start_s, end_s) into a new Animation,
@@ -321,8 +354,8 @@ static func setup_maya_cm_animal(node: Node3D, target_height: float) -> void:
 	ground_model(node)
 
 ## One-call setup for movement-driven characters.
-## Pre-zoom camera/gaze: no SkyGaze bone twists. Tripo+UAL still needs LegPlant
-## (raw UAL melts limbs); plant drives a procedural walk instead of melted clips.
+## Hellenic cast (greek_*) uses Quaternius bones + authored clips — never LegPlant.
+## Legacy Tripo+UAL meshes still plant as a last resort.
 static func setup_character_for_movement(node: Node3D, target_height: float = 1.8) -> void:
 	# Keep BUILD_FIX_TOKEN live in exported bytecode (unused consts are stripped).
 	if node == null and BUILD_FIX_TOKEN.is_empty():
@@ -330,11 +363,25 @@ static func setup_character_for_movement(node: Node3D, target_height: float = 1.
 	## KayKit chibi AABBs include IK helpers below the soles — scale by foot→head.
 	if _is_kaykit_model(node):
 		scale_by_foot_to_head(node, target_height)
+	elif _is_quaternius_model(node):
+		## Quaternius Individual Characters already sit near human height (~1.9 m).
+		## Avoid large runtime root scales — they widen modular elbow gaps.
+		var h := measure_height(node)
+		if h > 0.2 and absf(h - target_height) / target_height > 0.12:
+			scale_to_height(node, target_height)
 	else:
 		scale_to_height(node, target_height)
 	if node.is_inside_tree():
 		node.force_update_transform()
 	ground_model(node)
+	## Quaternius meshes face +Z; gameplay MODEL_FRONT is −Z. Rotate the
+	## armature (not the scene root) so mesh_root / NPC yaw stays canonical.
+	_align_quaternius_visual_facing(node)
+	## Hang-rest Achilles: drop arm clips so hang bind stays intact.
+	if _is_achilles_hoplite(node):
+		var ap := node.find_child("AnimationPlayer", true, false) as AnimationPlayer
+		if ap != null:
+			strip_arm_animation_tracks(ap)
 	## KayKit (and similar) often have AABB below the soles — pin by foot bones.
 	if _is_kaykit_model(node):
 		ground_by_feet(node)
@@ -342,6 +389,26 @@ static func setup_character_for_movement(node: Node3D, target_height: float = 1.
 		node.position.y -= 0.16
 		install_kaykit_foot_ground(node)
 	install_leg_plant_fix(node)
+
+
+## Quaternius Ultimate Modular faces +Z in rest; rotate CharacterArmature by π
+## so visual face aligns with MODEL_FRONT (−Z) under yaw_from_direction.
+static func _align_quaternius_visual_facing(node: Node3D) -> void:
+	if node == null or not _is_quaternius_model(node):
+		return
+	if node.has_meta("eoo_quat_facing"):
+		return
+	var arm: Node3D = node.find_child("CharacterArmature", true, false) as Node3D
+	if arm == null:
+		## Fallback: rotate first Skeleton3D parent chain node under root.
+		for n in node.get_children():
+			if n is Node3D and n.find_child("Skeleton3D", true, false) != null:
+				arm = n as Node3D
+				break
+	if arm == null:
+		return
+	arm.rotate_y(PI)
+	node.set_meta("eoo_quat_facing", true)
 
 
 ## Keep KayKit soles on the MeshRoot ground as walk/root bob plays.
@@ -461,10 +528,13 @@ static func install_sky_gaze_fix(model: Node3D) -> void:
 	install_leg_plant_fix(model)
 
 
-## Plant torso+legs to rest after AnimationPlayer (broken Tripo warrior only).
+## Plant torso+legs after AnimationPlayer — DISABLED.
+## Hellenic cast uses Quaternius authored clips; LegPlant looked stiff/silly.
 static func install_leg_plant_fix(model: Node3D) -> void:
 	if model == null:
 		return
+	## Hard-off: never install procedural plant on any character.
+	return
 	if not _mesh_needs_ual_plant(model):
 		return
 	var skel: Skeleton3D = null
@@ -503,15 +573,17 @@ static func bind_leg_plant_anim(model: Node3D, anim: AnimationPlayer) -> void:
 
 
 static func _mesh_needs_ual_plant(model: Node3D) -> bool:
-	## KayKit / Quaternius authored clips — never plant.
+	## KayKit / Quaternius / Hellenic retargets — never plant.
 	if _is_kaykit_model(model) or _is_quaternius_model(model):
 		return false
 	var nlow := String(model.name).to_lower()
-	## Ancient Greek Tripo cast: UAL melts without plant.
+	## Only the OLD Tripo+UAL paths plant. greek_* is Quaternius-skinned.
+	if nlow.begins_with("greek") or "greek_" in nlow:
+		return false
 	for key in [
-			"spartan", "hoplite", "city_guard",
+			"spartan_hoplite", "city_guard",
 			"citizen_woman", "citizen_merchant",
-			"blacksmith", "oracle_priestess"]:
+			"blacksmith_npc", "oracle_priestess"]:
 		if key in nlow:
 			return true
 	for n in model.find_children("*", "MeshInstance3D", true, false):
@@ -528,7 +600,8 @@ static func _is_quaternius_model(model: Node3D) -> bool:
 	if model == null:
 		return false
 	var nlow := String(model.name).to_lower()
-	if "quaternius" in nlow or "hero_king" in nlow or "guard_adventurer" in nlow \
+	if "greek_" in nlow or nlow.begins_with("greek") \
+			or "quaternius" in nlow or "hero_king" in nlow or "guard_adventurer" in nlow \
 			or "smith_worker" in nlow or "merchant_farmer" in nlow \
 			or "oracle_witch" in nlow or "woman_medieval" in nlow \
 			or "woman_formal" in nlow or "woman_worker" in nlow \
@@ -538,6 +611,20 @@ static func _is_quaternius_model(model: Node3D) -> bool:
 		var skel := n as Skeleton3D
 		if skel != null and skel.find_bone("Wrist.R") >= 0 and skel.find_bone("Foot.L") >= 0 \
 				and skel.find_bone("LeftUpperArm") < 0:
+			return true
+	return false
+
+
+## CC0 Achilles Spartan mesh skinned to Quaternius hang-rest arms.
+static func _is_achilles_hoplite(model: Node3D) -> bool:
+	if model == null:
+		return false
+	var nlow := String(model.name).to_lower()
+	if "greek_hoplite" in nlow or "greekhoplite" in nlow:
+		return true
+	for n in model.find_children("*", "MeshInstance3D", true, false):
+		var mn := String(n.name).to_lower()
+		if "greekhoplite" in mn or "greek_hoplite" in mn:
 			return true
 	return false
 
