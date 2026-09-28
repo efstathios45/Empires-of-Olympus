@@ -3,13 +3,13 @@
 importer="scene"
 importer_version=1
 type="PackedScene"
-uid="uid://c2f9943bec1222"
-path="res://.godot/imported/greek_spartan.glb-2f9943bec12223fc76b110d0c7f8da9a.scn"
+uid="uid://coieyp8cr62vp"
+path="res://.godot/imported/greek_spartan.glb-234ba10dd8786bdd3a2d284d92bbbf70.scn"
 
 [deps]
 
 source_file="res://assets/characters/greek_spartan/greek_spartan.glb"
-dest_files=["res://.godot/imported/greek_spartan.glb-2f9943bec12223fc76b110d0c7f8da9a.scn"]
+dest_files=["res://.godot/imported/greek_spartan.glb-234ba10dd8786bdd3a2d284d92bbbf70.scn"]
 
 [params]
 

@@ -5,8 +5,9 @@ extends RefCounted
 
 ## Quaternius first (real human proportions + authored Walk/Sword_Slash/Idle_Sword).
 const ALIASES := {
-	## Idle_Neutral looks straight ahead; Idle_Sword is the raised-guard (block) pose.
-	"idle": ["Idle_Neutral", "Idle", "Idle_Sword", "ual1_Idle", "ual1_Sword_Idle", "Unarmed_Idle"],
+	## Idle (arms closer) before Idle_Neutral — less underarm webbing on Achilles.
+	## Idle_Sword is the raised-guard (block) pose.
+	"idle": ["Idle", "Idle_Neutral", "Idle_Sword", "ual1_Idle", "ual1_Sword_Idle", "Unarmed_Idle"],
 	"walk": ["Walk", "ual1_Walk", "Walking_A", "Walking_B", "Walking_C"],
 	"sprint": ["Run", "ual1_Sprint", "Running_A", "Running_B"],
 	"jump": ["Jump_Start", "Jump_Full_Short", "ual1_Jump", "Roll"],
@@ -16,10 +17,11 @@ const ALIASES := {
 	## No dedicated Block clip in Quaternius — Idle_Sword is the raised-guard stance.
 	"block": ["Idle_Sword", "Blocking", "Block", "ual2_Sword_Block"],
 	"block_hit": ["HitRecieve", "HitRecieve_2", "Block_Hit", "ual1_Hit_Chest", "Hit_A"],
-	"attack_1": ["Sword_Slash", "Punch_Right", "ual2_Sword_Light_A", "ual1_Sword_Attack", "1H_Melee_Attack_Chop"],
-	"attack_2": ["Sword_Slash", "Punch_Left", "ual2_Sword_Light_B", "ual1_Sword_Attack", "1H_Melee_Attack_Slice_Diagonal"],
-	"attack_3": ["Kick_Right", "Sword_Slash", "ual2_Sword_Light_C", "ual1_Sword_Attack", "1H_Melee_Attack_Stab"],
-	"attack_heavy": ["Sword_Slash", "Kick_Left", "ual2_Sword_Heavy_A", "ual1_Sword_Attack", "2H_Melee_Attack_Chop"],
+	## Punch/Kick deform Achilles auto-weights less than Sword_Slash on the arms.
+	"attack_1": ["Punch_Right", "Sword_Slash", "ual2_Sword_Light_A", "ual1_Sword_Attack", "1H_Melee_Attack_Chop"],
+	"attack_2": ["Punch_Left", "Sword_Slash", "ual2_Sword_Light_B", "ual1_Sword_Attack", "1H_Melee_Attack_Slice_Diagonal"],
+	"attack_3": ["Kick_Right", "Punch_Right", "Sword_Slash", "ual2_Sword_Light_C", "ual1_Sword_Attack", "1H_Melee_Attack_Stab"],
+	"attack_heavy": ["Kick_Left", "Sword_Slash", "ual2_Sword_Heavy_A", "ual1_Sword_Attack", "2H_Melee_Attack_Chop"],
 	"attack_ranged": ["Gun_Shoot", "Idle_Gun_Shoot", "ual1_Sword_Attack", "1H_Ranged_Shoot", "Spellcast_Shoot"],
 }
 

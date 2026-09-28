@@ -10,6 +10,7 @@ func run() -> void:
 	var vp := _stage(1100, 700)
 	var stage: Node3D = vp.get_child(0)
 	var GearGrip = load("res://scripts/gear_grip.gd")
+	var GearPaint = load("res://scripts/gear_paint.gd")
 
 	## Hero — Achilles CC0 + Quaternius clips.
 	var hero: Node3D = load("res://assets/characters/greek_hoplite/greek_hoplite.glb").instantiate()
@@ -19,13 +20,16 @@ func run() -> void:
 	var anim := hero.find_child("AnimationPlayer", true) as AnimationPlayer
 	assert(anim != null)
 	ModelUtils.set_animation_loops(anim)
-	GearGrip.attach_weapon(hero, "res://assets/props/weapons/dory_spear.glb")
-	GearGrip.attach_shield(hero, "res://assets/props/gear/aspis_shield.glb")
+	var wp = GearGrip.attach_weapon(hero, "res://assets/props/weapons/dory_spear.glb")
+	var sh = GearGrip.attach_shield(hero, "res://assets/props/gear/aspis_shield.glb")
+	if wp: GearPaint.paint_attached(wp, "res://assets/props/weapons/dory_spear.glb")
+	if sh: GearPaint.paint_attached(sh, "res://assets/props/gear/aspis_shield.glb")
 	var plant := hero.find_child("LegPlantFix", true, false)
 	print("HERO plant=", plant != null, " clips=", anim.get_animation_list())
 	assert(plant == null)
 	assert(anim.has_animation("Walk"))
 	assert(anim.has_animation("Sword_Slash"))
+	assert(anim.has_animation("Idle"))
 	assert(anim.has_animation("Idle_Neutral"))
 
 	var cam := Camera3D.new()
@@ -45,10 +49,10 @@ func run() -> void:
 		await process_frame
 	vp.get_texture().get_image().save_png("/opt/cursor/artifacts/HELLENIC_hero_walk.png")
 
-	anim.play("Sword_Slash")
+	anim.play("Kick_Right")
 	for i in 14:
 		await process_frame
-	vp.get_texture().get_image().save_png("/opt/cursor/artifacts/HELLENIC_hero_slash.png")
+	vp.get_texture().get_image().save_png("/opt/cursor/artifacts/HELLENIC_hero_attack.png")
 
 	anim.play("Idle_Sword")
 	for i in 12:
@@ -73,12 +77,12 @@ func run() -> void:
 	cam.position = Vector3(0.0, 1.7, 7.2)
 	cam.look_at(Vector3(0, 1.0, 0), Vector3.UP)
 	var cast := [
-		["res://assets/characters/greek_hoplite/greek_hoplite.glb", 1.85],
-		["res://assets/characters/greek_guard/greek_guard.glb", 1.84],
-		["res://assets/characters/greek_merchant/greek_merchant.glb", 1.78],
-		["res://assets/characters/greek_citizen_woman/greek_citizen_woman.glb", 1.68],
-		["res://assets/characters/greek_smith/greek_smith.glb", 1.75],
-		["res://assets/characters/greek_oracle/greek_oracle.glb", 1.68],
+		["res://assets/characters/greek_hoplite/greek_hoplite.glb", 1.85, "Idle_Neutral"],
+		["res://assets/characters/greek_hoplite/greek_hoplite.glb", 1.84, "Idle_Sword"],
+		["res://assets/characters/citizen_merchant/citizen_merchant.glb", 1.78, ""],
+		["res://assets/characters/citizen_woman/citizen_woman.glb", 1.68, ""],
+		["res://assets/characters/blacksmith_npc/blacksmith_npc.glb", 1.75, ""],
+		["res://assets/characters/oracle_priestess/oracle_priestess.glb", 1.68, ""],
 	]
 	var x := -5.0
 	for entry in cast:
@@ -86,11 +90,13 @@ func run() -> void:
 		stage.add_child(n)
 		ModelUtils.setup_character_for_movement(n, float(entry[1]))
 		n.position = Vector3(x, 0.0, 0.0)
-		var a := n.find_child("AnimationPlayer", true) as AnimationPlayer
-		assert(a != null and a.has_animation("Idle_Neutral"))
 		assert(n.find_child("LegPlantFix", true, false) == null)
-		a.play("Idle_Neutral")
-		print("npc ", n.name, " plant=false ok")
+		var clip := String(entry[2])
+		if clip != "":
+			var a := n.find_child("AnimationPlayer", true) as AnimationPlayer
+			assert(a != null and a.has_animation(clip))
+			a.play(clip)
+		print("npc ", n.name, " plant=false clip=", clip)
 		x += 2.0
 	for i in 18:
 		await process_frame

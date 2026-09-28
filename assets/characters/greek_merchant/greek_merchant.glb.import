@@ -3,13 +3,13 @@
 importer="scene"
 importer_version=1
 type="PackedScene"
-uid="uid://cc0fe25f13e865"
-path="res://.godot/imported/greek_merchant.glb-c0fe25f13e865833c5c9947b9b8d68fd.scn"
+uid="uid://bf2qg4viwrike"
+path="res://.godot/imported/greek_merchant.glb-dd8f28a85de0cdb3c03b65ee28431040.scn"
 
 [deps]
 
 source_file="res://assets/characters/greek_merchant/greek_merchant.glb"
-dest_files=["res://.godot/imported/greek_merchant.glb-c0fe25f13e865833c5c9947b9b8d68fd.scn"]
+dest_files=["res://.godot/imported/greek_merchant.glb-dd8f28a85de0cdb3c03b65ee28431040.scn"]
 
 [params]
 

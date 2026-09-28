@@ -3,13 +3,13 @@
 importer="scene"
 importer_version=1
 type="PackedScene"
-uid="uid://c9577dfc2ed6ee"
-path="res://.godot/imported/greek_guard.glb-9577dfc2ed6eeb76796ab3a532d82ed5.scn"
+uid="uid://comk0xgio4foi"
+path="res://.godot/imported/greek_guard.glb-8d88a61c5a4d7a5ff201118c54737945.scn"
 
 [deps]
 
 source_file="res://assets/characters/greek_guard/greek_guard.glb"
-dest_files=["res://.godot/imported/greek_guard.glb-9577dfc2ed6eeb76796ab3a532d82ed5.scn"]
+dest_files=["res://.godot/imported/greek_guard.glb-8d88a61c5a4d7a5ff201118c54737945.scn"]
 
 [params]
 

@@ -30,8 +30,9 @@ func run() -> void:
 	print("name=", nlow, " idle=", idle, " walk=", walk, " attack=", atk,
 		" block=", block, " plant=", plant)
 	var ok: bool = model != null and ("greek" in nlow or "hoplite" in nlow) \
-		and walk == "Walk" and atk == "Sword_Slash" \
-		and (idle == "Idle_Neutral" or idle == "Idle") \
-		and block == "Idle_Sword" and not plant
+		and walk == "Walk" \
+		and (idle == "Idle" or idle == "Idle_Neutral") \
+		and block == "Idle_Sword" and not plant \
+		and atk != ""
 	print("SMOKE_HELLENIC_CAST=", "PASS" if ok else "FAIL")
 	quit(0 if ok else 1)

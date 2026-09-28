@@ -3,13 +3,13 @@
 importer="scene"
 importer_version=1
 type="PackedScene"
-uid="uid://c79352bd0acffa"
-path="res://.godot/imported/greek_citizen_woman.glb-79352bd0acffa41878611180f4d76704.scn"
+uid="uid://sijpthgk2npe"
+path="res://.godot/imported/greek_citizen_woman.glb-0ab8b9162b97f8cdc83411c5f4aed645.scn"
 
 [deps]
 
 source_file="res://assets/characters/greek_citizen_woman/greek_citizen_woman.glb"
-dest_files=["res://.godot/imported/greek_citizen_woman.glb-79352bd0acffa41878611180f4d76704.scn"]
+dest_files=["res://.godot/imported/greek_citizen_woman.glb-0ab8b9162b97f8cdc83411c5f4aed645.scn"]
 
 [params]
 

@@ -461,10 +461,13 @@ static func install_sky_gaze_fix(model: Node3D) -> void:
 	install_leg_plant_fix(model)
 
 
-## Plant torso+legs to rest after AnimationPlayer (broken Tripo warrior only).
+## Plant torso+legs after AnimationPlayer — DISABLED.
+## Hellenic cast uses Quaternius authored clips; LegPlant looked stiff/silly.
 static func install_leg_plant_fix(model: Node3D) -> void:
 	if model == null:
 		return
+	## Hard-off: never install procedural plant on any character.
+	return
 	if not _mesh_needs_ual_plant(model):
 		return
 	var skel: Skeleton3D = null

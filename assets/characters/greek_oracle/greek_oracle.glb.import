@@ -3,13 +3,13 @@
 importer="scene"
 importer_version=1
 type="PackedScene"
-uid="uid://c4ba08861937c2"
-path="res://.godot/imported/greek_oracle.glb-4ba08861937c2dd854c06b9090f01926.scn"
+uid="uid://n3ait7q52cex"
+path="res://.godot/imported/greek_oracle.glb-899f9256cfbcb3c367b4a68da9b6a69f.scn"
 
 [deps]
 
 source_file="res://assets/characters/greek_oracle/greek_oracle.glb"
-dest_files=["res://.godot/imported/greek_oracle.glb-4ba08861937c2dd854c06b9090f01926.scn"]
+dest_files=["res://.godot/imported/greek_oracle.glb-899f9256cfbcb3c367b4a68da9b6a69f.scn"]
 
 [params]
 

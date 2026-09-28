@@ -3,13 +3,13 @@
 importer="scene"
 importer_version=1
 type="PackedScene"
-uid="uid://c3f63293d3e0f0"
-path="res://.godot/imported/greek_smith.glb-3f63293d3e0f0670a6e6cc37dc93945c.scn"
+uid="uid://doe7ww1cjjy8n"
+path="res://.godot/imported/greek_smith.glb-83977088a2e92365a07792a9b359be54.scn"
 
 [deps]
 
 source_file="res://assets/characters/greek_smith/greek_smith.glb"
-dest_files=["res://.godot/imported/greek_smith.glb-3f63293d3e0f0670a6e6cc37dc93945c.scn"]
+dest_files=["res://.godot/imported/greek_smith.glb-83977088a2e92365a07792a9b359be54.scn"]
 
 [params]
 

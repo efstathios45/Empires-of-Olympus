@@ -3,13 +3,13 @@
 importer="scene"
 importer_version=1
 type="PackedScene"
-uid="uid://cce5ea7133ab97"
-path="res://.godot/imported/greek_hoplite.glb-ce5ea7133ab9793fc3f0a01365fb5788.scn"
+uid="uid://tspn7ikwmkng"
+path="res://.godot/imported/greek_hoplite.glb-0a34eb153bdfcaf05fcaa5c0d6bbea0c.scn"
 
 [deps]
 
 source_file="res://assets/characters/greek_hoplite/greek_hoplite.glb"
-dest_files=["res://.godot/imported/greek_hoplite.glb-ce5ea7133ab9793fc3f0a01365fb5788.scn"]
+dest_files=["res://.godot/imported/greek_hoplite.glb-0a34eb153bdfcaf05fcaa5c0d6bbea0c.scn"]
 
 [params]
 
