@@ -38,7 +38,7 @@ No zip extract needed — this download is the .exe alone.
 Download
 ------------------------------------------------------------
 Signed single-file Windows build (current):
-  https://gofile.io/d/3BFkPrF3
+  https://gofile.io/d/Hq3uTQnc
 
 File name: EmpiresOfOlympus.exe
 
@@ -48,9 +48,11 @@ bag→panoply drag-and-drop (boots, weapon, and other worn slots).
 Shared/cloud multiplayer persistence is documented in docs/ACCOUNTS.md.
 
 In-world: Enter opens player chat (see docs/CHAT.md).
-Hold middle-mouse (scroll-wheel button) + drag to look; wheel scroll zooms.
+Hold middle-mouse (scroll-wheel button) + drag to look; wheel scroll zooms
+(close zoom no longer drops the camera to foot height / worm's-eye sky-look).
 Open Panoply with I — right-click pouch items to Equip / Sell.
-Nameplates show name/level in empire colours. Esc → Host Arena / Join for PvP.
+Nameplates show name/level in empire colours. Esc → Host Arena / Join for PvP
+(internet invite uses your public IP:port).
 
 Also: clearer Panoply tooltips, party XP/gold share, overhead chat bubbles,
 and Video Settings (title + Esc).
