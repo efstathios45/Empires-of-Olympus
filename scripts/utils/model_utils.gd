@@ -330,18 +330,24 @@ static func setup_character_for_movement(node: Node3D, target_height: float = 1.
 
 
 ## UAL humanoid clips on these rigs pitch the head skyward (retarget bias).
-## Rest pose is upright; locomotion/combat clips add ~15–35° of look-up on Head −Z.
+## Rest pose + torso silhouette are upright; clips add ~15–35° Head −Z look-up.
 ## Call each frame AFTER AnimationPlayer has posed the skeleton.
-## Levels Head face axis (−Z) to the horizon; leaves chin-down poses alone.
+## Levels Head only — do not touch UpperChest (that warps an already-upright torso).
 static func correct_sky_gaze(skel: Skeleton3D, strength: float = 1.0) -> void:
 	if skel == null or strength <= 0.0:
 		return
-	var head_i := skel.find_bone("Head")
-	if head_i < 0:
+	_level_bone_forward(skel, "Head", strength)
+
+
+## Pitch a bone so its −Z (humanoid face/front) lies on the horizon.
+static func _level_bone_forward(skel: Skeleton3D, bone_name: String, strength: float) -> void:
+	var bone_i := skel.find_bone(bone_name)
+	if bone_i < 0:
 		return
-	var head_g: Transform3D = skel.global_transform * skel.get_bone_global_pose(head_i)
-	var fwd: Vector3 = (-head_g.basis.z).normalized()
+	var bone_g: Transform3D = skel.global_transform * skel.get_bone_global_pose(bone_i)
+	var fwd: Vector3 = (-bone_g.basis.z).normalized()
 	var up_comp: float = fwd.dot(Vector3.UP)
+	# Only correct skyward aim; leave intentional chin-down poses alone.
 	if up_comp <= 0.02:
 		return
 	var pitch_err: float = asin(clampf(up_comp, -1.0, 1.0)) * strength
@@ -353,13 +359,13 @@ static func correct_sky_gaze(skel: Skeleton3D, strength: float = 1.0) -> void:
 	var world_right: Vector3 = Vector3.UP.cross(flat_fwd).normalized()
 	# +angle about world-right pitches nose down when facing along flat_fwd (Godot Y-up).
 	var world_correct := Basis(Quaternion(world_right, pitch_err))
-	var parent_i: int = skel.get_bone_parent(head_i)
+	var parent_i: int = skel.get_bone_parent(bone_i)
 	var parent_g: Transform3D = skel.global_transform
 	if parent_i >= 0:
 		parent_g = skel.global_transform * skel.get_bone_global_pose(parent_i)
-	var new_basis: Basis = world_correct * head_g.basis
-	var local: Transform3D = parent_g.affine_inverse() * Transform3D(new_basis, head_g.origin)
-	skel.set_bone_pose_rotation(head_i, local.basis.get_rotation_quaternion())
+	var new_basis: Basis = world_correct * bone_g.basis
+	var local: Transform3D = parent_g.affine_inverse() * Transform3D(new_basis, bone_g.origin)
+	skel.set_bone_pose_rotation(bone_i, local.basis.get_rotation_quaternion())
 
 
 ## Attach a late-process helper so gaze correction runs after AnimationPlayer.
