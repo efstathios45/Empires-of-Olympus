@@ -329,29 +329,48 @@ static func setup_character_for_movement(node: Node3D, target_height: float = 1.
 	install_sky_gaze_fix(node)
 
 
-## UAL humanoid clips on these rigs pitch the head skyward (retarget bias).
-## Rest pose + torso silhouette are upright; clips add ~15–35° Head −Z look-up.
+## UAL humanoid clips pitch the spine/head skyward (retarget bias).
+## Rest pose is upright; idle/walk add ~10–35° local +X on Chest/UpperChest.
 ## Call each frame AFTER AnimationPlayer has posed the skeleton.
-## Levels Head only — do not touch UpperChest (that warps an already-upright torso).
 static func correct_sky_gaze(skel: Skeleton3D, strength: float = 1.0) -> void:
 	if skel == null or strength <= 0.0:
 		return
-	_level_bone_forward(skel, "Head", strength)
+	# Soften torso local pitch (don't touch Head here — child tips too far).
+	_dampen_local_pitch(skel, "Chest", strength * 0.9)
+	_dampen_local_pitch(skel, "UpperChest", strength * 0.9)
+	# Snap Head face (−Z) exactly to the horizon (both sky and chin-down).
+	_level_bone_forward(skel, "Head", strength, true)
+
+
+## Soften positive local-X pitch (skyward lean on these humanoid bones).
+static func _dampen_local_pitch(skel: Skeleton3D, bone_name: String, strength: float) -> void:
+	var bone_i := skel.find_bone(bone_name)
+	if bone_i < 0:
+		return
+	var e: Vector3 = skel.get_bone_pose_rotation(bone_i).get_euler()
+	if e.x <= 0.02:
+		return
+	e.x = lerpf(e.x, 0.0, clampf(strength, 0.0, 1.0))
+	skel.set_bone_pose_rotation(bone_i, Quaternion.from_euler(e))
 
 
 ## Pitch a bone so its −Z (humanoid face/front) lies on the horizon.
-static func _level_bone_forward(skel: Skeleton3D, bone_name: String, strength: float) -> void:
+static func _level_bone_forward(
+	skel: Skeleton3D, bone_name: String, strength: float, both_ways: bool = false
+) -> void:
 	var bone_i := skel.find_bone(bone_name)
 	if bone_i < 0:
 		return
 	var bone_g: Transform3D = skel.global_transform * skel.get_bone_global_pose(bone_i)
 	var fwd: Vector3 = (-bone_g.basis.z).normalized()
 	var up_comp: float = fwd.dot(Vector3.UP)
-	# Only correct skyward aim; leave intentional chin-down poses alone.
-	if up_comp <= 0.02:
+	if both_ways:
+		if absf(up_comp) <= 0.02:
+			return
+	elif up_comp <= 0.02:
 		return
 	var pitch_err: float = asin(clampf(up_comp, -1.0, 1.0)) * strength
-	pitch_err = minf(pitch_err, deg_to_rad(42.0))
+	pitch_err = clampf(pitch_err, deg_to_rad(-42.0), deg_to_rad(42.0))
 	var flat_fwd := Vector3(fwd.x, 0.0, fwd.z)
 	if flat_fwd.length_squared() < 0.0001:
 		return
@@ -380,13 +399,14 @@ static func install_sky_gaze_fix(model: Node3D) -> void:
 		return
 	if skel.has_node("SkyGazeFix"):
 		return
+	var anim := model.find_child("AnimationPlayer", true, false) as AnimationPlayer
+	if anim != null:
+		## Lower number = earlier. Anim poses bones, then SkyGazeFix corrects.
+		anim.process_priority = -100
 	var fix := Node.new()
 	fix.name = "SkyGazeFix"
 	fix.set_script(load("res://scripts/utils/sky_gaze_fix.gd"))
-	# Higher process_priority runs later in Godot 4? No — lower runs first.
-	# AnimationPlayer defaults to 0; use a large priority so we run after it.
-	# Godot: "Nodes with a lower number are processed first."
-	fix.process_priority = 100
+	fix.process_priority = 1000
 	skel.add_child(fix)
 
 ## Return the Godot yaw that aims canonical MODEL_FRONT (-Z) along direction.

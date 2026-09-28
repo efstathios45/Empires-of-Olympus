@@ -103,6 +103,16 @@ func _ready() -> void:
 	# 0.6 s poll in _process takes over from here.
 	AudioManager.play_music("city")
 	AudioManager.play_ambient("city_crowd")
+	## Title-screen "Join Friend Online" lands here with a pending invite.
+	call_deferred("_try_pending_net_join")
+
+
+func _try_pending_net_join() -> void:
+	if NetSession == null:
+		return
+	var msg := NetSession.try_pending_join()
+	if msg != "" and ChatSystem:
+		ChatSystem.call("_push_system", msg)
 
 # ── Environment ──────────────────────────────────────────────────────────
 

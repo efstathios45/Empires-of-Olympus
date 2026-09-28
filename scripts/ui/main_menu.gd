@@ -352,10 +352,24 @@ func _build_auth_form(page: VBoxContainer) -> void:
 	form.add_child(login_btn)
 	var guest := Kit.make_button("Play Guest", false)
 	guest.pressed.connect(func() -> void:
+		if NetSession:
+			NetSession.clear_pending_join()
 		_load_from_save = false
 		_show_step(2)
 	)
 	form.add_child(guest)
+
+	var guest_join := LineEdit.new()
+	guest_join.placeholder_text = "Or join friend  ip:port"
+	guest_join.custom_minimum_size = Vector2(Kit.BTN_SIZE.x, 40)
+	guest_join.alignment = HORIZONTAL_ALIGNMENT_CENTER
+	guest_join.size_flags_horizontal = Control.SIZE_SHRINK_CENTER
+	form.add_child(guest_join)
+	var guest_join_btn := Kit.make_button("Guest Join Online", false)
+	guest_join_btn.pressed.connect(func() -> void:
+		_on_join_friend_online(guest_join.text)
+	)
+	form.add_child(guest_join_btn)
 
 
 func _build_logged_in_actions(page: VBoxContainer) -> void:
@@ -364,9 +378,9 @@ func _build_logged_in_actions(page: VBoxContainer) -> void:
 		"Signed in as %s" % AccountSystem.display_name,
 		18, Color(0.85, 1.0, 0.75), HORIZONTAL_ALIGNMENT_CENTER))
 	if AccountSystem.has_local_save():
-		page.add_child(_sub_line("A saved legend awaits on this device."))
+		page.add_child(_sub_line("Continue alone, or join a friend's world online."))
 	else:
-		page.add_child(_sub_line("No save yet — start a new legend."))
+		page.add_child(_sub_line("No save yet — start a new legend, or join a friend."))
 
 	page.add_child(Kit.spacer(10))
 	var actions := VBoxContainer.new()
@@ -374,20 +388,40 @@ func _build_logged_in_actions(page: VBoxContainer) -> void:
 	page.add_child(_centered(actions))
 
 	if AccountSystem.has_local_save():
-		var cont := Kit.make_button("Continue", true)
+		var cont := Kit.make_button("Continue Alone", true)
 		cont.pressed.connect(_on_continue_legend)
 		actions.add_child(cont)
 
 	var begin := Kit.make_button("New Game", not AccountSystem.has_local_save())
 	begin.pressed.connect(func() -> void:
+		if NetSession:
+			NetSession.clear_pending_join()
 		_load_from_save = false
 		_show_step(2)
 	)
 	actions.add_child(begin)
 
+	## Join a friend's hosted world over the internet (IP:port invite).
+	var join_edit := LineEdit.new()
+	join_edit.placeholder_text = "Friend invite  ip:port"
+	join_edit.custom_minimum_size = Vector2(Kit.BTN_SIZE.x, 40)
+	join_edit.alignment = HORIZONTAL_ALIGNMENT_CENTER
+	join_edit.size_flags_horizontal = Control.SIZE_SHRINK_CENTER
+	if NetSession and NetSession.pending_join_address != "":
+		join_edit.text = "%s:%d" % [NetSession.pending_join_address, NetSession.pending_join_port]
+	actions.add_child(join_edit)
+
+	var join_btn := Kit.make_button("Join Friend Online", false)
+	join_btn.pressed.connect(func() -> void:
+		_on_join_friend_online(join_edit.text)
+	)
+	actions.add_child(join_btn)
+
 	var logout := Kit.make_button("Sign Out", false)
 	logout.pressed.connect(func() -> void:
 		AccountSystem.logout()
+		if NetSession:
+			NetSession.clear_pending_join()
 		_show_step(1)
 	)
 	actions.add_child(logout)
@@ -439,6 +473,8 @@ func _on_sync_finished(ok: bool, message: String) -> void:
 
 
 func _on_continue_legend() -> void:
+	if NetSession:
+		NetSession.clear_pending_join()
 	if not AccountSystem.load_game():
 		_set_auth_status(AccountSystem.last_error)
 		return
@@ -448,6 +484,29 @@ func _on_continue_legend() -> void:
 	AudioManager.play_sfx("ui_confirm")
 	GameCursor.apply()
 	LoadingScreen.preload_and_change_scene("res://scenes/game_world.tscn", 1.2)
+
+
+## Join a friend's hosted world: load your hero (or start fresh), then auto-connect.
+func _on_join_friend_online(raw_invite: String) -> void:
+	if NetSession == null:
+		_set_auth_status("Network unavailable.")
+		return
+	var msg := NetSession.set_pending_join(raw_invite)
+	if NetSession.pending_join_address == "":
+		_set_auth_status(msg)
+		return
+	_set_auth_status(msg)
+	## Prefer saved hero so you bring your own legend into their world.
+	if AccountSystem.has_local_save() and AccountSystem.load_game():
+		_load_from_save = true
+		_empire = GameState.empire
+		_class = GameState.player_class
+		AudioManager.play_sfx("ui_confirm")
+		GameCursor.apply()
+		LoadingScreen.preload_and_change_scene("res://scenes/game_world.tscn", 1.2)
+	else:
+		_load_from_save = false
+		_show_step(2)
 
 
 func _open_settings() -> void:
