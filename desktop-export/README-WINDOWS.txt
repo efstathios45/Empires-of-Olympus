@@ -37,8 +37,8 @@ No zip extract needed — this download is the .exe alone.
 ------------------------------------------------------------
 Download
 ------------------------------------------------------------
-Windows build (current — Hellenic animated cast):
-  https://gofile.io/d/ZYCS6srz
+Windows build (current — Quaternius facing/grip fix):
+  https://gofile.io/d/4mWGwATA
 
 File name: EmpiresOfOlympus.exe
 
@@ -50,9 +50,9 @@ Shared/cloud multiplayer persistence is documented in docs/ACCOUNTS.md.
 In-world: Enter opens player chat (see docs/CHAT.md).
 Metin2-style camera: hold middle-mouse to orbit. Mouse-wheel zoom is removed
 (fixed over-shoulder distance).
-Hero is CC0 Achilles Spartan (OpenGameArt) on Quaternius Walk / Idle_Sword.
-Plaza civilians use Hellenic rest meshes; gate guards share the hero. Hold F
-to raise the shield. No Tripo LegPlant / KayKit chibi. Open Panoply with I —
+Hero is Quaternius King + GreekLook (Corinthian/bronze/crimson) with authored
+Walk / Idle_Sword / Sword_Slash. Facing aligned to move direction; dory tip-up;
+aspis on the left forearm. No Tripo LegPlant / KayKit chibi. Open Panoply with I —
 right-click pouch items to Equip / Sell.
 Nameplates show name/level in empire colours.
 Multiplayer: title/Esc → Browse Servers (LAN names + saved friend worlds).
