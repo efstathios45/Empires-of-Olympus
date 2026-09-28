@@ -13,6 +13,12 @@ config/features=PackedStringArray("4.3", "Forward Plus")
 LoadingScreen="*res://scripts/autoloads/loading_screen.gd"
 AudioManager="*res://scripts/autoloads/audio_manager.gd"
 GameState="*res://scripts/autoloads/game_state.gd"
+AccountSystem="*res://scripts/autoloads/account_system.gd"
+ChatSystem="*res://scripts/autoloads/chat_system.gd"
+DisplaySettings="*res://scripts/autoloads/display_settings.gd"
+PartyShare="*res://scripts/autoloads/party_share.gd"
+NetSession="*res://scripts/autoloads/net_session.gd"
+ServerBrowser="*res://scripts/autoloads/server_browser.gd"
 TesanaWorldEditor="*res://addons/tesana_world_editor/scene_export.gd"
 
 [audio]
@@ -121,6 +127,11 @@ pause={
 map={
 "deadzone": 0.5,
 "events": [Object(InputEventKey,"resource_local_to_scene":false,"resource_name":"","device":-1,"window_id":0,"alt_pressed":false,"shift_pressed":false,"ctrl_pressed":false,"meta_pressed":false,"pressed":false,"keycode":0,"physical_keycode":77,"key_label":0,"unicode":109,"location":0,"echo":false,"script":null)
+]
+}
+chat={
+"deadzone": 0.5,
+"events": [Object(InputEventKey,"resource_local_to_scene":false,"resource_name":"","device":-1,"window_id":0,"alt_pressed":false,"shift_pressed":false,"ctrl_pressed":false,"meta_pressed":false,"pressed":false,"keycode":0,"physical_keycode":4194309,"key_label":0,"unicode":0,"location":0,"echo":false,"script":null), Object(InputEventKey,"resource_local_to_scene":false,"resource_name":"","device":-1,"window_id":0,"alt_pressed":false,"shift_pressed":false,"ctrl_pressed":false,"meta_pressed":false,"pressed":false,"keycode":0,"physical_keycode":4194310,"key_label":0,"unicode":0,"location":0,"echo":false,"script":null)
 ]
 }
 

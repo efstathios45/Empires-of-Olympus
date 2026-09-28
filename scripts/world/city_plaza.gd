@@ -66,34 +66,36 @@ static func build(world) -> void:
 
 
 # ── Paving ───────────────────────────────────────────────────────────────
-## ψηφιδωτό (pebble mosaic): circular court medallion + tiled road to the gate.
+## ψηφιδωτό tessera pavement on the fountain court + tiled road to the gate.
 ## Purely decorative, so no collider and no shadow casting; the top sits 2 cm
 ## over the (flattened) pad so it can never z-fight the terrain.
 static func _paving(world) -> void:
 	var court_mat := StandardMaterial3D.new()
 	# Warm, muted tint — never the old blown-out white marble.
-	court_mat.albedo_color = Color(0.72, 0.64, 0.52)
+	court_mat.albedo_color = Color(0.82, 0.74, 0.62)
 	if ResourceLoader.exists(MOSAIC_TEX):
 		court_mat.albedo_texture = load(MOSAIC_TEX)
-	# One medallion across the disc (planar UVs from _make_disc_mesh).
+	# Planar metres→UV on the disc; ~1.8 m per tile repeat reads as pavement.
 	court_mat.uv1_scale = Vector3(1.0, 1.0, 1.0)
+	court_mat.texture_filter = BaseMaterial3D.TEXTURE_FILTER_LINEAR_WITH_MIPMAPS
 	court_mat.roughness = 0.92
 	court_mat.metallic = 0.0
 
 	var road_mat := StandardMaterial3D.new()
-	road_mat.albedo_color = Color(0.68, 0.60, 0.50)
+	road_mat.albedo_color = Color(0.70, 0.62, 0.52)
 	if ResourceLoader.exists(MOSAIC_TILE_TEX):
 		road_mat.albedo_texture = load(MOSAIC_TILE_TEX)
 	elif ResourceLoader.exists(MOSAIC_TEX):
 		road_mat.albedo_texture = load(MOSAIC_TEX)
-	road_mat.uv1_scale = Vector3(3.5, 6.5, 1.0)
+	road_mat.uv1_scale = Vector3(2.5, 5.0, 1.0)
 	road_mat.roughness = 0.94
 	road_mat.metallic = 0.0
 
 	var gy: float = world.sample_height(0.0, 0.0)
 
 	var disc := MeshInstance3D.new()
-	disc.mesh = _make_disc_mesh(PAVE_R, 64)
+	# Planar XZ UVs (metres) — NOT radial UVs (those turn any tile into a shield).
+	disc.mesh = _make_disc_mesh(PAVE_R, 64, 1.8)
 	disc.material_override = court_mat
 	disc.cast_shadow = GeometryInstance3D.SHADOW_CASTING_SETTING_OFF
 	world.add_child(disc)
@@ -109,19 +111,21 @@ static func _paving(world) -> void:
 	road.global_position = Vector3(0.0, gy + 0.02, 19.0)
 
 
-## Flat circular mesh with planar UVs so a radial mosaic maps 1:1 onto the court.
-static func _make_disc_mesh(radius: float, segments: int) -> ArrayMesh:
+## Flat circular mesh with planar XZ UVs so a tessera texture tiles as pavement.
+## `metres_per_tile` controls how many world metres one texture repeat covers.
+static func _make_disc_mesh(radius: float, segments: int, metres_per_tile: float = 2.0) -> ArrayMesh:
 	var st := SurfaceTool.new()
 	st.begin(Mesh.PRIMITIVE_TRIANGLES)
 	st.set_normal(Vector3.UP)
-	st.set_uv(Vector2(0.5, 0.5))
+	st.set_uv(Vector2(0.0, 0.0))
 	st.add_vertex(Vector3.ZERO)
+	var inv: float = 1.0 / maxf(0.01, metres_per_tile)
 	for i in range(segments + 1):
 		var a: float = TAU * float(i) / float(segments)
 		var x: float = cos(a) * radius
 		var z: float = sin(a) * radius
 		st.set_normal(Vector3.UP)
-		st.set_uv(Vector2(0.5 + cos(a) * 0.5, 0.5 + sin(a) * 0.5))
+		st.set_uv(Vector2(x * inv, z * inv))
 		st.add_vertex(Vector3(x, 0.0, z))
 	for i in range(segments):
 		st.add_index(0)
@@ -148,9 +152,10 @@ static func _temple_precinct(world) -> void:
 			Vector3(0.0, gy + 0.02, front_z + 4.7),
 			Vector3(0.0, gy + TEMPLE_STEP_TOP, front_z + 0.05), 4.4)
 
-	# The altar of offerings, off the temple axis so the steps stay clear (and
-	# clear of the west plaza column at (-5.25, -9.09)).
-	world._place_glb(ALTAR, -4.6, -6.6, 2.2, 20.0, 1)
+	# The altar of offerings — tight box only (no inflated AABB).
+	var altar = world._place_glb(ALTAR, -4.6, -6.6, 2.2, 20.0, 0)
+	if altar != null:
+		world._add_box_collider(altar, Vector3(1.4, 1.1, 1.4), Vector3(0.0, 0.55, 0.0))
 	# Bronze braziers flanking the steps.
 	_brazier(world, -6.4, -10.6)
 	_brazier(world, 6.4, -10.6)
@@ -160,9 +165,10 @@ static func _temple_precinct(world) -> void:
 
 	# Priestess Melite — the quest giver, by the altar.
 	var priestess = NpcScript.create("priestess", "Priestess Melite",
-		"res://assets/characters/oracle_priestess/oracle_priestess.glb",
-		"res://assets/characters/oracle_priestess/oracle_priestess_animations.tres",
-		Vector3(-7.4, 0.0, -5.8), 1.75, 130.0)
+		"res://assets/characters/quaternius_oracle_witch/oracle_witch.glb",
+		"",
+		Vector3(-7.4, 0.0, -5.8), 1.72, 130.0)
+	priestess.idle_clip = "Idle_Neutral"
 	world.add_child(priestess)
 	world.add_interactable(priestess)
 
@@ -187,37 +193,40 @@ static func _fountain_court(world) -> void:
 	_brazier(world, -8.6, 4.6)
 	_brazier(world, 8.6, 4.6)
 
-	# Free CC0 Poly Haven props — ceramic vase by the east stalls approach,
-	# marble bust on the west edge of the court (see assets/ASSETS_CC0.md).
-	world._place_glb(FREE_VASE, 6.8, -3.2, 0.95, 25.0, 1)
-	world._place_glb(FREE_BUST, -7.2, 2.4, 1.15, 140.0, 1)
+	# Free CC0 Poly Haven props — tiny colliders so they don't wall the court.
+	var vase = world._place_glb(FREE_VASE, 6.8, -3.2, 0.95, 25.0, 0)
+	if vase != null:
+		world._add_pillar_collider(vase, 0.22, 0.95, Vector3.ZERO)
+	var bust = world._place_glb(FREE_BUST, -7.2, 2.4, 1.15, 140.0, 0)
+	if bust != null:
+		world._add_pillar_collider(bust, 0.28, 1.15, Vector3.ZERO)
 
 
 # ── East: the market row ─────────────────────────────────────────────────
 static func _market_row(world) -> void:
-	# Four awninged stalls facing west into the plaza (yaw 90 aims model -Z at -X).
+	# Four stalls facing west — footplate boxes only (no awning AABB walls).
 	for z in [-6.2, -1.6, 3.0, 7.6]:
-		world._place_glb(STALL, 15.6, float(z), 3.0, 90.0, 1)
-	# Loaded carts and stacked amphorae make it read as a working agora.
-	world._place_glb(CART, 12.9, -9.2, 1.4, 25.0, 1)
-	world._place_glb(CART, 17.4, 0.8, 1.4, 200.0, 1)
+		var stall = world._place_glb(STALL, 15.6, float(z), 3.0, 90.0, 0)
+		if stall != null:
+			## Footplate only — awning must not wall the walkway.
+			world._add_box_collider(stall, Vector3(1.6, 1.6, 1.8), Vector3(0.0, 0.8, 0.0))
+	_cart(world, 12.9, -9.2, 25.0)
+	_cart(world, 17.4, 0.8, 200.0)
 	for p in [Vector2(13.1, -6.6), Vector2(13.8, -5.5), Vector2(17.2, -4.4),
 			Vector2(13.3, 7.6), Vector2(17.4, 6.4), Vector2(13.6, 2.2)]:
-		world._place_glb(AMPHORA, p.x, p.y, 0.9, randf() * 360.0, 1)
+		_amphora(world, p.x, p.y)
 
 
 # ── West & perimeter: the stoa and the street edge ───────────────────────
 static func _stoa_and_houses(world) -> void:
-	# The stoa runs north-south along the west edge, its gallery facing the plaza.
+	# Stoa gallery faces the plaza — shallow footprint so walking lanes stay open.
 	var stoa = world._place_glb(STOA, -17.6, 0.0, 7.0, 90.0, 0)
 	if stoa != null:
-		# One box on the visible footprint (14.3 x 5.6 m) — no interior hulls, so
-		# nothing invisible reaches into the plaza.
-		world._add_box_collider(stoa, Vector3(14.3, 7.0, 5.5),
-			Vector3(0.0, 3.5, 0.0))
+		## Slim gallery footprint — leave the plaza walk lanes open.
+		world._add_box_collider(stoa, Vector3(11.0, 5.5, 2.4),
+			Vector3(0.0, 2.75, 0.0))
 
-	# Five townhouses close the plaza off like a real street front. A townhouse
-	# is a solid block, so the automatic tight box (tier 1) is exactly right.
+	# Townhouses: solid street wall with a tight footprint (not roof AABB).
 	var houses := [
 		[-25.5, -12.5, 8.0, 115.0],
 		[-24.5, 12.2, 7.6, 65.0],
@@ -226,37 +235,44 @@ static func _stoa_and_houses(world) -> void:
 		[-9.6, 22.2, 8.0, 355.0],
 	]
 	for h in houses:
-		world._place_glb(TOWNHOUSE, float(h[0]), float(h[1]), float(h[2]), float(h[3]), 1)
-	world._place_glb(CART, -13.2, -9.4, 1.4, 160.0, 1)
-	world._place_glb(AMPHORA, -13.4, 5.6, 0.9, 40.0, 1)
-	world._place_glb(AMPHORA, -12.9, 6.5, 0.9, 210.0, 1)
+		var house = world._place_glb(TOWNHOUSE, float(h[0]), float(h[1]), float(h[2]), float(h[3]), 0)
+		if house != null:
+			# Footprint only — roof/eaves must not block the street.
+			world._add_box_collider(house, Vector3(4.2, 4.8, 3.6),
+				Vector3(0.0, 2.4, 0.0))
+	_cart(world, -13.2, -9.4, 160.0)
+	_amphora(world, -13.4, 5.6)
+	_amphora(world, -12.9, 6.5)
 
 
 # ── South: the city gate ─────────────────────────────────────────────────
 static func _south_gate(world) -> void:
 	var gate = world._place_glb(GATE_ARCH, 0.0, 26.0, 9.0, 0.0, 0)
 	if gate != null:
-		# Two piers only — the archway stays walkable (3.1 m clear opening).
-		world._add_box_collider(gate, Vector3(3.1, 9.0, 2.8), Vector3(3.15, 4.5, 0.0))
-		world._add_box_collider(gate, Vector3(3.1, 9.0, 2.8), Vector3(-3.15, 4.5, 0.0))
+		# Two piers only — archway stays walkable (~3.4 m clear).
+		world._add_box_collider(gate, Vector3(2.6, 8.5, 2.2), Vector3(3.2, 4.25, 0.0))
+		world._add_box_collider(gate, Vector3(2.6, 8.5, 2.2), Vector3(-3.2, 4.25, 0.0))
 	_brazier(world, -4.8, 24.4)
 	_brazier(world, 4.8, 24.4)
 
 
 # ── South-east: the smith's yard ─────────────────────────────────────────
 static func _smith_yard(world) -> void:
-	world._place_glb(ANVIL, 10.6, 15.6, 1.1, 110.0, 1)
+	var anvil = world._place_glb(ANVIL, 10.6, 15.6, 1.1, 110.0, 0)
+	if anvil != null:
+		world._add_box_collider(anvil, Vector3(1.1, 0.9, 0.7), Vector3(0.0, 0.45, 0.0))
 	_dummy(world, 13.4, 17.6, 15.0)
 	_dummy(world, 12.2, 20.2, -25.0)
-	world._place_glb(CART, 8.3, 19.4, 1.4, 40.0, 1)
-	world._place_glb(AMPHORA, 9.0, 17.3, 0.9, 90.0, 1)
-	world._place_glb(AMPHORA, 11.9, 19.8, 0.9, 300.0, 1)
+	_cart(world, 8.3, 19.4, 40.0)
+	_amphora(world, 9.0, 17.3)
+	_amphora(world, 11.9, 19.8)
 
 	# Brontes the smith — refinement and wares.
 	var smith = NpcScript.create("smith", "Brontes the Smith",
-		"res://assets/characters/blacksmith_npc/blacksmith_npc.glb",
-		"res://assets/characters/blacksmith_npc/blacksmith_npc_animations.tres",
+		"res://assets/characters/quaternius_smith_worker/smith_worker.glb",
+		"",
 		Vector3(9.4, 0.0, 14.2), 1.8, 150.0)
+	smith.idle_clip = "Idle_Neutral"
 	world.add_child(smith)
 	world.add_interactable(smith)
 
@@ -277,67 +293,73 @@ static func _dummy(world, x: float, z: float, yaw: float) -> void:
 	if d != null:
 		world._add_pillar_collider(d, 0.3, 2.0, Vector3.ZERO)
 
+static func _cart(world, x: float, z: float, yaw: float) -> void:
+	var c = world._place_glb(CART, x, z, 1.4, yaw, 0)
+	if c != null:
+		world._add_box_collider(c, Vector3(1.6, 1.2, 2.2), Vector3(0.0, 0.6, 0.0))
+
+static func _amphora(world, x: float, z: float) -> void:
+	var a = world._place_glb(AMPHORA, x, z, 0.9, randf() * 360.0, 0)
+	if a != null:
+		world._add_pillar_collider(a, 0.22, 0.9, Vector3.ZERO)
+
 
 # ── Townsfolk ────────────────────────────────────────────────────────────
 ## Nine citizens: merchants at the stalls, neighbours gossiping by the fountain,
 ## guards on the gate and the temple steps. Decoration only — an idle clip each
 ## and one remark on E. Missing models are skipped silently.
-const MERCHANT_GLB := "res://assets/characters/citizen_merchant/citizen_merchant.glb"
-const MERCHANT_LIB := "res://assets/characters/citizen_merchant/citizen_merchant_animations.tres"
-const WOMAN_GLB := "res://assets/characters/citizen_woman/citizen_woman.glb"
-const WOMAN_LIB := "res://assets/characters/citizen_woman/citizen_woman_animations.tres"
-const GUARD_GLB := "res://assets/characters/city_guard/city_guard.glb"
-const GUARD_LIB := "res://assets/characters/city_guard/city_guard_animations.tres"
+## Quaternius Ultimate Modular (CC0) — human proportions, embedded Idle/Walk/etc.
+const MERCHANT_A := "res://assets/characters/quaternius_merchant_farmer/merchant_farmer.glb"
+const MERCHANT_B := "res://assets/characters/quaternius_citizen_casual/citizen_casual.glb"
+const MERCHANT_C := "res://assets/characters/quaternius_smith_worker/smith_worker.glb"
+const WOMAN_A := "res://assets/characters/quaternius_woman_medieval/woman_medieval.glb"
+const WOMAN_B := "res://assets/characters/quaternius_woman_formal/woman_formal.glb"
+const WOMAN_C := "res://assets/characters/quaternius_woman_worker/woman_worker.glb"
+const GUARD_A := "res://assets/characters/quaternius_guard_adventurer/guard_adventurer.glb"
+const GUARD_B := "res://assets/characters/quaternius_hero_king/hero_king.glb"
+const GUARD_C := "res://assets/characters/quaternius_guard_soldier_f/guard_soldier_f.glb"
 
 static func _townsfolk(world) -> void:
 	var folk := [
-		{"kind": "merchant", "name": "Hesiod the Oil Merchant",
-			"at": Vector3(13.9, 0.0, -3.8), "yaw": 100.0, "idle": "ual2_Idle_FoldArms",
+		{"glb": MERCHANT_A, "name": "Hesiod the Oil Merchant",
+			"at": Vector3(13.9, 0.0, -3.8), "yaw": 100.0, "idle": "Idle_Neutral",
+			"height": 1.78,
 			"line": "Finest olive oil in Hellas — pressed this very morning!"},
-		{"kind": "merchant", "name": "Kleon the Potter",
-			"at": Vector3(13.9, 0.0, 5.4), "yaw": 80.0, "idle": "ual1_Idle",
+		{"glb": MERCHANT_B, "name": "Kleon the Potter",
+			"at": Vector3(13.9, 0.0, 5.4), "yaw": 80.0, "idle": "Idle",
+			"height": 1.78,
 			"line": "Amphorae, hero! Sturdy enough to outlive your grandchildren."},
-		{"kind": "merchant", "name": "Xanthos the Fruit-Seller",
-			"at": Vector3(17.0, 0.0, 9.8), "yaw": 130.0, "idle": "ual1_Idle_Talking",
+		{"glb": MERCHANT_C, "name": "Xanthos the Fruit-Seller",
+			"at": Vector3(17.0, 0.0, 9.8), "yaw": 130.0, "idle": "Wave",
+			"height": 1.76,
 			"line": "Figs, dates, honey cakes! Coin first, glory later."},
-		{"kind": "woman", "name": "Thalia", "at": Vector3(2.9, 0.0, 3.2),
-			"yaw": 205.0, "idle": "ual1_Idle_Talking",
+		{"glb": WOMAN_A, "name": "Thalia", "at": Vector3(2.9, 0.0, 3.2),
+			"yaw": 205.0, "idle": "Idle_Neutral", "height": 1.68,
 			"line": "They say the priestess had another vision at dawn. Awful omens."},
-		{"kind": "woman", "name": "Eirene", "at": Vector3(-2.6, 0.0, 4.6),
-			"yaw": 25.0, "idle": "ual1_Idle_LookAround",
+		{"glb": WOMAN_B, "name": "Eirene", "at": Vector3(-2.6, 0.0, 4.6),
+			"yaw": 25.0, "idle": "Idle", "height": 1.68,
 			"line": "The fountain runs cold as Boreas' breath. Blessed be Athena."},
-		{"kind": "woman", "name": "Old Myrrine", "at": Vector3(-11.4, 0.0, 8.2),
-			"yaw": 90.0, "idle": "ual1_Idle_LookAround",
+		{"glb": WOMAN_C, "name": "Old Myrrine", "at": Vector3(-11.4, 0.0, 8.2),
+			"yaw": 90.0, "idle": "Interact", "height": 1.66,
 			"line": "In my day the agora had twice the stalls. And better bread."},
-		{"kind": "guard", "name": "Guard Lysandros", "at": Vector3(-3.4, 0.0, 22.0),
-			"yaw": 0.0, "idle": "ual2_Idle_Rail",
+		{"glb": GUARD_A, "name": "Guard Lysandros", "at": Vector3(-3.4, 0.0, 22.0),
+			"yaw": 0.0, "idle": "Idle_Sword", "height": 1.84,
 			"line": "Wolves beyond that gate, and worse. Sharpen your spear first."},
-		{"kind": "guard", "name": "Guard Nikanor", "at": Vector3(3.4, 0.0, 22.0),
-			"yaw": 0.0, "idle": "ual1_Idle",
+		{"glb": GUARD_B, "name": "Guard Nikanor", "at": Vector3(3.4, 0.0, 22.0),
+			"yaw": 0.0, "idle": "Idle_Sword", "height": 1.84,
 			"line": "The Minotaur's arena lies south. Nobody who goes comes back."},
-		{"kind": "guard", "name": "Sentry Damon", "at": Vector3(-4.2, 0.0, -10.6),
-			"yaw": 175.0, "idle": "ual2_Idle_Rail",
+		{"glb": GUARD_C, "name": "Sentry Damon", "at": Vector3(-4.2, 0.0, -10.6),
+			"yaw": 175.0, "idle": "Idle_Neutral", "height": 1.78,
 			"line": "Mind the sacred steps, stranger. Athena watches this square."},
 	]
 	var idx := 0
 	for f in folk:
-		var kind: String = String(f["kind"])
-		var glb: String = MERCHANT_GLB
-		var lib: String = MERCHANT_LIB
-		var height: float = 1.78
-		if kind == "woman":
-			glb = WOMAN_GLB
-			lib = WOMAN_LIB
-			height = 1.68
-		elif kind == "guard":
-			glb = GUARD_GLB
-			lib = GUARD_LIB
-			height = 1.84
+		var glb: String = String(f["glb"])
 		if not ResourceLoader.exists(glb):
 			continue
 		idx += 1
 		var n = NpcScript.create_flavour("citizen_%d" % idx, String(f["name"]),
-			glb, lib, f["at"], height, float(f["yaw"]),
+			glb, "", f["at"], float(f["height"]), float(f["yaw"]),
 			String(f["idle"]), String(f["line"]))
 		world.add_child(n)
 		world.add_interactable(n)

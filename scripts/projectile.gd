@@ -61,15 +61,37 @@ func _physics_process(delta: float) -> void:
 			queue_free()
 			return
 
-	for enemy in get_tree().get_nodes_in_group("enemies"):
+	var shooter := _find_shooter()
+	var from_pos: Vector3 = shooter.global_position if shooter else global_position
+	var targets: Array = []
+	targets.append_array(get_tree().get_nodes_in_group("enemies"))
+	for p in get_tree().get_nodes_in_group("player"):
+		if shooter != null and shooter.has_method("is_rival_player") and shooter.is_rival_player(p):
+			targets.append(p)
+		elif shooter == null and p.is_in_group("remote_player"):
+			targets.append(p)
+	for enemy in targets:
 		if not is_instance_valid(enemy) or enemy.get("dead"):
 			continue
 		if enemy.global_position.distance_to(global_position) < 1.1:
-			if enemy.has_method("take_damage"):
-				var player := get_tree().get_first_node_in_group("player")
-				var from_pos: Vector3 = player.global_position if player else global_position
+			if shooter != null and shooter.has_method("_deal_pvp_hit") and enemy.is_in_group("player"):
+				shooter.call("_deal_pvp_hit", enemy, damage)
+			elif enemy.has_method("take_damage"):
 				enemy.take_damage(damage, from_pos)
+			## Distinct impact — different from the fire/swing whoosh.
+			AudioManager.play_sfx(
+				"thunderbolt" if is_magic else "bronze_hit",
+				-2.5 if is_magic else -1.5,
+				randf_range(0.9, 1.12))
 			var vfx := preload("res://scripts/vfx_helper.gd")
 			vfx.spawn_hit(global_position, get_parent())
 			queue_free()
 			return
+
+
+func _find_shooter() -> Node:
+	for p in get_tree().get_nodes_in_group("player"):
+		if p.is_in_group("remote_player"):
+			continue
+		return p
+	return null

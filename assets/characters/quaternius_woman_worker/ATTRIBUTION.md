@@ -1,0 +1,4 @@
+# woman_worker
+
+Quaternius Ultimate Modular Characters (CC0).
+Source: https://quaternius.com/

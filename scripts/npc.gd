@@ -5,8 +5,11 @@ extends StaticBody3D
 ##   • SERVICE npcs ("priestess", "smith") — created with create(); E opens the
 ##     matching HUD panel.
 ##   • TOWNSFOLK — created with create_flavour(); E shows one short spoken line
-##     above their head (and mirrors it to the HUD if the HUD offers a
-##     notification method). No AI, no pathfinding — pure decoration.
+##     above their head. No AI, no pathfinding — pure decoration.
+##
+## Facing: NPCs stay on their authored spawn yaw. On E they turn toward the
+## local player only (client-side) — ready for multiplayer where other clients
+## should not see that turn.
 
 var npc_id: String = "priestess"
 var display_name: String = "Villager"
@@ -14,21 +17,24 @@ var glb_path: String = ""
 var lib_path: String = ""
 var height_m: float = 1.75
 var spawn_yaw: float = 0.0
+## Authored GLB yaw (often −π for UAL humanoids); spawn_yaw is added on top.
+var _base_yaw: float = 0.0
 ## Which looping clip this NPC idles in (townsfolk vary so the crowd isn't clones).
-var idle_clip: String = "ual1_Idle"
+var idle_clip: String = "Idle_Neutral"
 ## Non-empty = this NPC is townsfolk: E shows this remark instead of a panel.
 var flavour_line: String = ""
 
-const TURN_INTERVAL := 0.12   # NPC turning/anim polls at ~8 Hz, not per frame
-const NOTICE_RANGE := 4.5
-const TALK_RANGE := 3.2
 const BUBBLE_SECONDS := 4.5
+const FACE_SECONDS := 4.0
 
 var _model: Node3D
 var _anim: AnimationPlayer
 var _player: Node3D
-var _turn_accum: float = 0.0
 var _bubble: Label3D = null
+var _face_tween: Tween = null
+var _idle_variants: PackedStringArray = PackedStringArray()
+var _idle_timer: float = 0.0
+var _idle_idx: int = 0
 
 static func create(p_id: String, p_name: String, p_glb: String, p_lib: String,
 		at: Vector3, p_height: float, yaw_deg: float) -> StaticBody3D:
@@ -69,59 +75,72 @@ func _ready() -> void:
 	if scene != null:
 		_model = scene.instantiate()
 		add_child(_model)
+		## Keep the GLB's authored yaw (many UAL rigs ship at −π) then add spawn facing.
+		_base_yaw = _model.rotation.y
 		ModelUtils.setup_character_for_movement(_model, height_m)
-		_model.rotation.y = spawn_yaw
+		_model.rotation.y = _base_yaw + spawn_yaw
 		_anim = _model.find_child("AnimationPlayer", true) as AnimationPlayer
 		if _anim == null:
 			_anim = AnimationPlayer.new()
+			_anim.name = "AnimationPlayer"
 			_model.add_child(_anim)
 		if ResourceLoader.exists(lib_path):
 			var lib := load(lib_path) as AnimationLibrary
 			if lib:
 				_anim.add_animation_library("", lib)
 		ModelUtils.set_animation_loops(_anim)
+		ModelUtils.bind_leg_plant_anim(_model, _anim)
 		if not _anim.has_animation(idle_clip):
-			idle_clip = "ual1_Idle"
+			if _anim.has_animation("Idle"):
+				idle_clip = "Idle"
+			elif _anim.has_animation("Idle_Neutral"):
+				idle_clip = "Idle_Neutral"
+			elif _anim.has_animation("ual1_Idle"):
+				idle_clip = "ual1_Idle"
+		_idle_variants = _collect_idle_variants()
 		if _anim.has_animation(idle_clip):
 			_anim.play(idle_clip)
+		_idle_timer = randf_range(2.5, 5.0)
+		set_process(true)
 
 	# Ground on the terrain.
 	var world := get_tree().get_first_node_in_group("game_world")
 	if world and world.has_method("sample_height"):
 		global_position.y = world.sample_height(global_position.x, global_position.z)
 
+
+func _collect_idle_variants() -> PackedStringArray:
+	var out: PackedStringArray = PackedStringArray()
+	if _anim == null:
+		return out
+	for clip in [idle_clip, "Idle", "Idle_Neutral", "Idle_Sword", "Wave", "Interact",
+			"ual1_Idle", "ual1_Idle_Talking", "ual1_Idle_LookAround", "ual2_Idle_FoldArms", "ual2_Idle_Rail"]:
+		if _anim.has_animation(clip) and not out.has(clip):
+			out.append(clip)
+	return out
+
+
 func _process(delta: float) -> void:
-	# Face the player when they come close; talk-idle while engaged. Polled at
-	# ~8 Hz so a crowded plaza costs almost nothing per frame.
-	_turn_accum += delta
-	if _turn_accum < TURN_INTERVAL:
+	if _anim == null or _idle_variants.is_empty():
 		return
-	var step: float = _turn_accum
-	_turn_accum = 0.0
-	if _player == null or not is_instance_valid(_player):
-		_player = get_tree().get_first_node_in_group("player")
+	## Don't interrupt face-turn / spoken line with fidget swaps.
+	if _face_tween != null and _face_tween.is_running():
 		return
-	if _model == null:
+	_idle_timer -= delta
+	if _idle_timer > 0.0:
 		return
-	var d: float = global_position.distance_to(_player.global_position)
-	if d < NOTICE_RANGE:
-		var dir: Vector3 = _player.global_position - global_position
-		dir.y = 0
-		if dir.length_squared() > 0.01:
-			_model.rotation.y = lerp_angle(_model.rotation.y,
-				ModelUtils.yaw_from_direction(dir.normalized()), minf(1.0, step * 6.0))
-		if _anim and d < TALK_RANGE and _anim.has_animation("ual1_Idle_Talking"):
-			if _anim.current_animation != "ual1_Idle_Talking":
-				_anim.play("ual1_Idle_Talking")
-	else:
-		_model.rotation.y = lerp_angle(_model.rotation.y, spawn_yaw, minf(1.0, step * 2.5))
-		if _anim and _anim.has_animation(idle_clip) and _anim.current_animation != idle_clip:
-			_anim.play(idle_clip)
+	_idle_timer = randf_range(3.0, 6.5)
+	_idle_idx = (_idle_idx + 1 + randi() % maxi(1, _idle_variants.size())) % _idle_variants.size()
+	var next := _idle_variants[_idle_idx]
+	if _anim.current_animation != next:
+		_anim.play(next)
 
 func get_prompt() -> String:
 	return "Speak with %s" % display_name
 
 func interact() -> void:
+	# Local-only face toward the interacting player (multiplayer-safe later).
+	_face_local_player()
 	if flavour_line != "":
 		_say(flavour_line)
 		return
@@ -133,17 +152,35 @@ func interact() -> void:
 	elif npc_id == "smith" and hud.has_method("open_smith"):
 		hud.open_smith(self)
 
+
+## Client-side turn toward the local player, then ease back to spawn facing.
+func _face_local_player() -> void:
+	if _model == null:
+		return
+	if _player == null or not is_instance_valid(_player):
+		_player = get_tree().get_first_node_in_group("player")
+	if _player == null or not is_instance_valid(_player):
+		return
+	var dir: Vector3 = _player.global_position - global_position
+	dir.y = 0.0
+	if dir.length_squared() < 0.0001:
+		return
+	# yaw_from_direction aims MODEL_FRONT (−Z). UAL GLBs often ship with base −π.
+	var target_yaw: float = _base_yaw + ModelUtils.yaw_from_direction(dir.normalized())
+	if _face_tween != null and _face_tween.is_valid():
+		_face_tween.kill()
+	_face_tween = create_tween()
+	_face_tween.tween_property(_model, "rotation:y", target_yaw, 0.28) \
+		.set_trans(Tween.TRANS_SINE).set_ease(Tween.EASE_OUT)
+	_face_tween.tween_interval(FACE_SECONDS)
+	_face_tween.tween_property(_model, "rotation:y", _base_yaw + spawn_yaw, 0.45) \
+		.set_trans(Tween.TRANS_SINE).set_ease(Tween.EASE_IN_OUT)
+
 # ── Flavour chatter ──────────────────────────────────────────────────────
 
-## Show a one-off remark above this NPC's head (and in the HUD if it takes one).
+## Show a one-off remark above this NPC's head (speech bubble only — no HUD
+## duplicate toast; that was reading as a "double message" on E).
 func _say(line: String) -> void:
-	var hud := get_tree().get_first_node_in_group("hud")
-	if hud != null:
-		for m in ["show_announcement", "announce", "show_toast", "show_message",
-				"show_notification"]:
-			if hud.has_method(m):
-				hud.call(m, "%s: %s" % [display_name, line])
-				break
 	if _bubble == null or not is_instance_valid(_bubble):
 		_bubble = Label3D.new()
 		_bubble.billboard = BaseMaterial3D.BILLBOARD_ENABLED
@@ -154,7 +191,8 @@ func _say(line: String) -> void:
 		_bubble.font_size = 96
 		_bubble.outline_size = 26
 		_bubble.outline_modulate = Color(0.05, 0.04, 0.03, 0.95)
-		_bubble.modulate = Color(1.0, 0.96, 0.85)
+		## Gold ink only — no second cream/white HUD mirror of the same line.
+		_bubble.modulate = Color(1.0, 0.84, 0.28)
 		_bubble.width = 900.0
 		_bubble.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
 		_bubble.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
