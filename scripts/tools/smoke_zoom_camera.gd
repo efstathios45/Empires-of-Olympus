@@ -1,6 +1,5 @@
 extends SceneTree
-## Headless: close zoom must keep the lens above ~0.95m (no worm's-eye sky-look).
-## Run: godot --headless --path . -s res://scripts/tools/smoke_zoom_camera.gd
+## Headless: no zoom; leg-plant installed; idle silhouette human-tall.
 
 
 func _init() -> void:
@@ -8,67 +7,57 @@ func _init() -> void:
 
 
 func _run() -> void:
-	## Exercise the same pitch budget math as player.gd without full world boot.
-	const CAM_PIVOT_HEIGHT := 1.55
-	const CAM_MIN_HEIGHT := 1.15
-	const CAM_ZOOM_MIN := 4.2
-	const CAM_ZOOM_MAX := 9.5
-	const CAM_PITCH_MAX_CLOSE := -0.18
-	const CAM_PITCH_MAX_FAR := 0.42
-
 	var src := FileAccess.open("res://scripts/player.gd", FileAccess.READ)
-	if src == null:
-		push_error("cannot read player.gd")
-		quit(1)
-		return
 	var text := src.get_as_text()
 	src.close()
-	if not text.contains("const CAM_ZOOM_MIN := 4.2"):
-		push_error("CAM_ZOOM_MIN not raised to 4.2")
+	if "CAM_ZOOM_MIN" in text or "_apply_cam_zoom" in text:
+		push_error("zoom helpers must be removed")
 		quit(1)
 		return
-	if not text.contains("const CAM_PITCH_MAX_CLOSE := -0.18"):
-		push_error("CAM_PITCH_MAX_CLOSE missing/wrong")
-		quit(1)
-		return
-	if not text.contains("spring_arm.collision_mask = 1"):
-		push_error("spring arm should collide with environment")
-		quit(1)
-		return
-	if not text.contains("func _max_pitch_for_zoom"):
-		push_error("_max_pitch_for_zoom missing")
+	if not text.contains("const CAM_DISTANCE := 5.6"):
+		push_error("fixed CAM_DISTANCE missing")
 		quit(1)
 		return
 
-	var max_pitch_close := _max_pitch(CAM_ZOOM_MIN, CAM_ZOOM_MIN, CAM_ZOOM_MAX, CAM_PITCH_MAX_CLOSE, CAM_PITCH_MAX_FAR)
-	## Negative pitch raises the lens (look-down from above).
-	var y_close := CAM_PIVOT_HEIGHT - CAM_ZOOM_MIN * sin(max_pitch_close)
-	var max_pitch_far := _max_pitch(CAM_ZOOM_MAX, CAM_ZOOM_MIN, CAM_ZOOM_MAX, CAM_PITCH_MAX_CLOSE, CAM_PITCH_MAX_FAR)
-	## Old bug: zoom 2.4 + pitch 0.55 → cam_y ≈ 0.30
-	var old_bug_y := 1.55 - 2.4 * sin(0.55)
-	print("SMOKE_OLD_BUG_Y=", old_bug_y)
-	print("SMOKE_CLOSE_Y=", y_close, " PITCH=", rad_to_deg(max_pitch_close))
-	print("SMOKE_FAR_PITCH=", rad_to_deg(max_pitch_far))
-	if old_bug_y >= 0.5:
-		push_error("sanity: old worm's-eye math broken")
+	var tok := str(ModelUtils.BUILD_FIX_TOKEN)
+	if not ("LEG_PLANT" in tok or "WARRIOR_REST" in tok or "WARRIOR_STAND" in tok):
+		push_error("BUILD_FIX_TOKEN wrong")
 		quit(1)
 		return
-	if y_close < CAM_MIN_HEIGHT - 0.01:
-		push_error("close zoom worm's-eye: %s" % y_close)
+
+	var m: Node3D = load("res://assets/characters/spartan_hoplite/spartan_hoplite.glb").instantiate()
+	get_root().add_child(m)
+	ModelUtils.setup_character_for_movement(m, 1.85)
+	var skel: Skeleton3D
+	for n in m.find_children("*", "Skeleton3D", true, false):
+		skel = n
+		break
+	assert(skel != null and skel.has_node("LegPlantFix"))
+	var anim := m.find_child("AnimationPlayer", true, false) as AnimationPlayer
+	if anim == null:
+		anim = AnimationPlayer.new()
+		m.add_child(anim)
+	var lib := load("res://assets/characters/spartan_hoplite/spartan_hoplite_animations.tres") as AnimationLibrary
+	if anim.has_animation_library(""):
+		anim.remove_animation_library("")
+	anim.add_animation_library("", lib)
+	anim.process_priority = -100
+	skel.get_node("LegPlantFix").process_priority = 1000
+	anim.play("ual1_Idle")
+	for i in 24:
+		await process_frame
+	var lt := skel.find_bone("LeftUpperLeg")
+	var lk := skel.find_bone("LeftLowerLeg")
+	var rest_lt: Quaternion = skel.get_bone_rest(lt).basis.get_rotation_quaternion()
+	var pose_lt: Quaternion = skel.get_bone_pose_rotation(lt)
+	var ang := rest_lt.angle_to(pose_lt)
+	print("SMOKE_LEG_ANG=", rad_to_deg(ang))
+	if ang > deg_to_rad(8.0):
+		push_error("legs not planted to rest: %s deg" % rad_to_deg(ang))
 		quit(1)
 		return
-	if max_pitch_close > -0.05:
-		push_error("close zoom must keep a look-down: %s" % max_pitch_close)
-		quit(1)
-		return
-	if max_pitch_far < 0.35:
-		push_error("far look-up overly restricted: %s" % max_pitch_far)
-		quit(1)
-		return
+	var a := (skel.global_transform * skel.get_bone_global_pose(lt)).origin
+	var b := (skel.global_transform * skel.get_bone_global_pose(lk)).origin
+	print("SMOKE_THIGH=", a.distance_to(b))
 	print("SMOKE_ZOOM_CAMERA_OK")
 	quit(0)
-
-
-func _max_pitch(zoom: float, zmin: float, zmax: float, pitch_close: float, pitch_far: float) -> float:
-	var t: float = inverse_lerp(zmin, zmax, clampf(zoom, zmin, zmax))
-	return lerpf(pitch_close, pitch_far, t)

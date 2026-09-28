@@ -15,12 +15,9 @@ dest_files=["res://.godot/imported/city_guard.glb-f408b227eb4eaefb0e8e2ea21cd9b3
 
 nodes/root_type=""
 nodes/root_name=""
-nodes/root_script=null
 nodes/apply_root_scale=true
 nodes/root_scale=1.0
 nodes/import_as_skeleton_bones=true
-nodes/use_name_suffixes=true
-nodes/use_node_type_suffixes=true
 meshes/ensure_tangents=true
 meshes/generate_lods=false
 meshes/create_shadow_meshes=false
@@ -34,21 +31,16 @@ animation/trimming=false
 animation/remove_immutable_tracks=true
 animation/import_rest_as_RESET=false
 import_script/path="res://assets/characters/_orient_fix.gd"
-materials/extract=0
-materials/extract_format=0
-materials/extract_path=""
 _subresources={
 "nodes": {
 "PATH:Armature/Skeleton3D": {
 "retarget/bone_map": Resource("res://assets/animations/humanoid_profile_bone_map.tres"),
-"retarget/rest_fixer/fix_silhouette/enable": true,
-"retarget/rest_fixer/fix_silhouette/filter": ["LeftFoot", "RightFoot", "LeftToes", "RightToes"],
+"retarget/rest_fixer/fix_silhouette/enable": false,
 "retarget/rest_fixer/overwrite_axis": false
 },
 "PATH:Skeleton3D": {
 "retarget/bone_map": Resource("res://assets/animations/humanoid_profile_bone_map.tres"),
-"retarget/rest_fixer/fix_silhouette/enable": true,
-"retarget/rest_fixer/fix_silhouette/filter": ["LeftFoot", "RightFoot", "LeftToes", "RightToes"],
+"retarget/rest_fixer/fix_silhouette/enable": false,
 "retarget/rest_fixer/overwrite_axis": false
 }
 }

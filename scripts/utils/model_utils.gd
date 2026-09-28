@@ -1,7 +1,10 @@
 class_name ModelUtils
 
 ## Baked into exports so we can verify the PCK actually contains this revision.
-const BUILD_FIX_TOKEN := "EOO_FIX_VISIBLE_ENEMIES_V3"
+const BUILD_FIX_TOKEN := "EOO_FIX_WARRIOR_STAND_V7"
+
+## Tripo mesh id shared by spartan_hoplite + city_guard — UAL melts this bind.
+const _BROKEN_UAL_MESH := "95ce6ed4"
 
 ## Ground a model so its mesh bottom sits at y_offset above its parent origin.
 ##
@@ -326,70 +329,37 @@ static func setup_character_for_movement(node: Node3D, target_height: float = 1.
 	if node.is_inside_tree():
 		node.force_update_transform()
 	ground_model(node)
-	install_sky_gaze_fix(node)
+	## Tripo+UAL melts legs into a Z-shape. Plant legs to rest after every pose.
+	install_leg_plant_fix(node)
 
 
-## UAL humanoid clips pitch the spine/head skyward (retarget bias).
-## Rest pose is upright; idle/walk add ~10–35° local +X on Chest/UpperChest.
-## Call each frame AFTER AnimationPlayer has posed the skeleton.
-static func correct_sky_gaze(skel: Skeleton3D, strength: float = 1.0) -> void:
-	if skel == null or strength <= 0.0:
-		return
-	# Soften torso local pitch (don't touch Head here — child tips too far).
-	_dampen_local_pitch(skel, "Chest", strength * 0.9)
-	_dampen_local_pitch(skel, "UpperChest", strength * 0.9)
-	# Snap Head face (−Z) exactly to the horizon (both sky and chin-down).
-	_level_bone_forward(skel, "Head", strength, true)
+## Legacy no-op — hip/chest pitch hacks made heroes look less human.
+static func correct_sky_gaze(_skel: Skeleton3D, _strength: float = 1.0) -> void:
+	return
 
 
-## Soften positive local-X pitch (skyward lean on these humanoid bones).
+## Soften positive local-X pitch (unused; kept for older tool scripts).
 static func _dampen_local_pitch(skel: Skeleton3D, bone_name: String, strength: float) -> void:
 	var bone_i := skel.find_bone(bone_name)
 	if bone_i < 0:
 		return
 	var e: Vector3 = skel.get_bone_pose_rotation(bone_i).get_euler()
-	if e.x <= 0.02:
+	if e.x <= 0.01:
 		return
 	e.x = lerpf(e.x, 0.0, clampf(strength, 0.0, 1.0))
 	skel.set_bone_pose_rotation(bone_i, Quaternion.from_euler(e))
 
 
-## Pitch a bone so its −Z (humanoid face/front) lies on the horizon.
-static func _level_bone_forward(
-	skel: Skeleton3D, bone_name: String, strength: float, both_ways: bool = false
-) -> void:
-	var bone_i := skel.find_bone(bone_name)
-	if bone_i < 0:
-		return
-	var bone_g: Transform3D = skel.global_transform * skel.get_bone_global_pose(bone_i)
-	var fwd: Vector3 = (-bone_g.basis.z).normalized()
-	var up_comp: float = fwd.dot(Vector3.UP)
-	if both_ways:
-		if absf(up_comp) <= 0.02:
-			return
-	elif up_comp <= 0.02:
-		return
-	var pitch_err: float = asin(clampf(up_comp, -1.0, 1.0)) * strength
-	pitch_err = clampf(pitch_err, deg_to_rad(-42.0), deg_to_rad(42.0))
-	var flat_fwd := Vector3(fwd.x, 0.0, fwd.z)
-	if flat_fwd.length_squared() < 0.0001:
-		return
-	flat_fwd = flat_fwd.normalized()
-	var world_right: Vector3 = Vector3.UP.cross(flat_fwd).normalized()
-	# +angle about world-right pitches nose down when facing along flat_fwd (Godot Y-up).
-	var world_correct := Basis(Quaternion(world_right, pitch_err))
-	var parent_i: int = skel.get_bone_parent(bone_i)
-	var parent_g: Transform3D = skel.global_transform
-	if parent_i >= 0:
-		parent_g = skel.global_transform * skel.get_bone_global_pose(parent_i)
-	var new_basis: Basis = world_correct * bone_g.basis
-	var local: Transform3D = parent_g.affine_inverse() * Transform3D(new_basis, bone_g.origin)
-	skel.set_bone_pose_rotation(bone_i, local.basis.get_rotation_quaternion())
-
-
-## Attach a late-process helper so gaze correction runs after AnimationPlayer.
+## Legacy alias.
 static func install_sky_gaze_fix(model: Node3D) -> void:
+	install_leg_plant_fix(model)
+
+
+## Plant torso+legs to rest after AnimationPlayer (broken Tripo warrior only).
+static func install_leg_plant_fix(model: Node3D) -> void:
 	if model == null:
+		return
+	if not _mesh_needs_ual_plant(model):
 		return
 	var skel: Skeleton3D = null
 	for n in model.find_children("*", "Skeleton3D", true, false):
@@ -397,17 +367,26 @@ static func install_sky_gaze_fix(model: Node3D) -> void:
 		break
 	if skel == null:
 		return
-	if skel.has_node("SkyGazeFix"):
+	if skel.has_node("LegPlantFix"):
 		return
 	var anim := model.find_child("AnimationPlayer", true, false) as AnimationPlayer
 	if anim != null:
-		## Lower number = earlier. Anim poses bones, then SkyGazeFix corrects.
 		anim.process_priority = -100
 	var fix := Node.new()
-	fix.name = "SkyGazeFix"
-	fix.set_script(load("res://scripts/utils/sky_gaze_fix.gd"))
+	fix.name = "LegPlantFix"
+	fix.set_script(load("res://scripts/utils/leg_plant_fix.gd"))
 	fix.process_priority = 1000
 	skel.add_child(fix)
+
+
+static func _mesh_needs_ual_plant(model: Node3D) -> bool:
+	var nlow := String(model.name).to_lower()
+	if "spartan" in nlow or "hoplite" in nlow or "city_guard" in nlow or "guard" in nlow:
+		return true
+	for n in model.find_children("*", "MeshInstance3D", true, false):
+		if _BROKEN_UAL_MESH in String(n.name):
+			return true
+	return false
 
 ## Return the Godot yaw that aims canonical MODEL_FRONT (-Z) along direction.
 static func yaw_from_direction(direction: Vector3) -> float:

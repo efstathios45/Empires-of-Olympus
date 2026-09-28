@@ -38,7 +38,7 @@ No zip extract needed — this download is the .exe alone.
 Download
 ------------------------------------------------------------
 Signed single-file Windows build (current):
-  https://gofile.io/d/ncYb5CK2
+  https://gofile.io/d/iExemuyc
 
 File name: EmpiresOfOlympus.exe
 
@@ -48,8 +48,10 @@ bag→panoply drag-and-drop (boots, weapon, and other worn slots).
 Shared/cloud multiplayer persistence is documented in docs/ACCOUNTS.md.
 
 In-world: Enter opens player chat (see docs/CHAT.md).
-Hold middle-mouse (scroll-wheel button) + drag to look; wheel scroll zooms
-(close zoom no longer drops the camera to foot height / worm's-eye sky-look).
+Metin2-style camera: hold middle-mouse to orbit. Mouse-wheel zoom is removed
+(fixed over-shoulder distance).
+Hero/guard Tripo mesh: UAL idle melted legs into a Z-shape — runtime rest-core
+plant keeps a standing human silhouette (arms down outside combat).
 Open Panoply with I — right-click pouch items to Equip / Sell.
 Nameplates show name/level in empire colours. Esc → Host Arena / Join for PvP
 (internet invite uses your public IP:port).
