@@ -312,7 +312,7 @@ const MERCHANT_GLB := "res://assets/characters/citizen_merchant/citizen_merchant
 const MERCHANT_LIB := ""
 const WOMAN_GLB := "res://assets/characters/citizen_woman/citizen_woman.glb"
 const WOMAN_LIB := ""
-const GUARD_GLB := "res://assets/characters/greek_hoplite/greek_hoplite.glb"
+const GUARD_GLB := "res://assets/characters/quaternius_guard_adventurer/guard_adventurer.glb"
 const GUARD_LIB := ""
 
 static func _townsfolk(world) -> void:

@@ -52,20 +52,21 @@ const GRIP_BY_GLB := {
 	},
 	"res://assets/props/gear/xiphos_sword.glb": {
 		"bone": "Wrist.R",
-		"position": Vector3(0.0, 0.05, 0.0),
-		"rotation_deg": Vector3(0.0, 0.0, -90.0),
+		"position": Vector3(0.0, 0.04, 0.0),
+		"rotation_deg": Vector3(-90.0, 0.0, 0.0),
 		"scale": 0.98,
 	},
 	"res://assets/props/gear/kontos_spear.glb": {
 		"bone": "Wrist.R",
-		"position": Vector3(0.0, 0.05, 0.0),
-		"rotation_deg": Vector3(0.0, 0.0, -90.0),
+		"position": Vector3(0.0, 0.04, 0.0),
+		"rotation_deg": Vector3(-90.0, 0.0, 0.0),
 		"scale": 1.12,
 	},
+	## Tuned on guard_adventurer Idle_Sword — tip forward, grip in palm.
 	"res://assets/props/weapons/dory_spear.glb": {
 		"bone": "Wrist.R",
-		"position": Vector3(0.0, 0.05, 0.0),
-		"rotation_deg": Vector3(0.0, 0.0, -90.0),
+		"position": Vector3(0.0, 0.04, 0.0),
+		"rotation_deg": Vector3(-90.0, 0.0, 0.0),
 		"scale": 1.05,
 	},
 	"res://assets/props/weapons/cretan_bow.glb": {

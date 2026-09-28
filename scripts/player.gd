@@ -9,11 +9,13 @@ signal respawned
 signal skill_cooldown_started(duration: float)
 signal combo_performed
 
-## CC0 Achilles Spartan (gamekorp) + Quaternius Walk/Sword_Slash/Idle (no LegPlant).
-const CharacterGLB := "res://assets/characters/greek_hoplite/greek_hoplite.glb"
+## Quaternius guard + GreekLook (Corinthian/bronze) — authored Walk/Slash, no LegPlant.
+## Achilles auto-bind moonwalked and collapsed the arms; do not use it in-game.
+const CharacterGLB := "res://assets/characters/quaternius_guard_adventurer/guard_adventurer.glb"
 const CharacterLib := ""
 const GearGrip = preload("res://scripts/gear_grip.gd")
 const GearPaint = preload("res://scripts/gear_paint.gd")
+const GreekLook = preload("res://scripts/utils/greek_look.gd")
 const HeroAnim = preload("res://scripts/utils/hero_anim.gd")
 const ProjectileScript = preload("res://scripts/projectile.gd")
 const VfxHelper = preload("res://scripts/vfx_helper.gd")
@@ -234,6 +236,8 @@ func _build_body() -> void:
 	var model: Node3D = load(char_path).instantiate()
 	mesh_root.add_child(model)
 	ModelUtils.setup_character_for_movement(model, 1.85)
+	## Hellenic bronze / crimson / Corinthian — before gear so helm sockets stay clean.
+	GreekLook.apply(model, "hoplite")
 	_apply_class_tint(model, cd0)
 
 	anim = model.find_child("AnimationPlayer", true) as AnimationPlayer
@@ -241,7 +245,7 @@ func _build_body() -> void:
 		anim = AnimationPlayer.new()
 		anim.name = "AnimationPlayer"
 		model.add_child(anim)
-	## Full combat UAL library on the hoplite GeneralSkeleton (shared across classes).
+	## Optional external library (empty for Quaternius — clips ship in the GLB).
 	if CharacterLib != "" and ResourceLoader.exists(CharacterLib):
 		var lib := load(CharacterLib) as AnimationLibrary
 		if lib:
@@ -265,7 +269,9 @@ func _build_body() -> void:
 			shield_node.name = "ShieldMount"
 			GearPaint.paint_attached(shield_node, shield_path)
 
-	_attach_helmet(model)
+	## GreekLook already adds a Corinthian helm for hoplite — skip duplicate GLB helm.
+	if model.find_child("CorinthianHelmMount", true, false) == null:
+		_attach_helmet(model)
 
 	HeroAnim.play(anim, "idle")
 	if not GameState.inventory_changed.is_connected(_on_gear_changed):
