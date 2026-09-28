@@ -1,7 +1,12 @@
 extends RefCounted
 ## Paint Quaternius modular humans to read as Hellenic — bronze, crimson,
-## linen, olive — and hide modern/fantasy props (backpacks). Warriors get a
-## procedural Corinthian helm (the stock GLB is an exploded placeholder).
+## linen, olive — and hide modern/fantasy props (backpacks, crowns). Warriors
+## get a procedural Corinthian helm (the stock GLB crown stays hidden).
+##
+## IMPORTANT: paint per mesh surface. Quaternius Body meshes pack sleeves
+## (Blue), armor (Metal), and skin into one MeshInstance — a single
+## material_override turns sleeves into bronze and makes elbow gaps look like
+## missing arms.
 
 
 const ROLE_COLORS := {
@@ -13,6 +18,7 @@ const ROLE_COLORS := {
 		"skin": Color(0.86, 0.68, 0.52),
 		"metal": Color(0.78, 0.62, 0.35),
 		"accent": Color(0.95, 0.88, 0.55),
+		"hair": Color(0.25, 0.18, 0.12),
 	},
 	"guard": {
 		"armor": Color(0.65, 0.50, 0.26),
@@ -21,6 +27,7 @@ const ROLE_COLORS := {
 		"skin": Color(0.84, 0.66, 0.50),
 		"metal": Color(0.75, 0.60, 0.34),
 		"accent": Color(0.9, 0.85, 0.5),
+		"hair": Color(0.22, 0.16, 0.10),
 	},
 	"smith": {
 		"armor": Color(0.45, 0.42, 0.40),
@@ -29,6 +36,7 @@ const ROLE_COLORS := {
 		"skin": Color(0.80, 0.60, 0.45),
 		"metal": Color(0.55, 0.50, 0.45),
 		"accent": Color(0.85, 0.55, 0.20),
+		"hair": Color(0.20, 0.15, 0.10),
 	},
 	"merchant": {
 		"armor": Color(0.55, 0.45, 0.30),
@@ -37,6 +45,7 @@ const ROLE_COLORS := {
 		"skin": Color(0.86, 0.70, 0.55),
 		"metal": Color(0.70, 0.58, 0.35),
 		"accent": Color(0.55, 0.35, 0.20),
+		"hair": Color(0.28, 0.18, 0.10),
 	},
 	"citizen": {
 		"armor": Color(0.70, 0.65, 0.50),
@@ -45,6 +54,7 @@ const ROLE_COLORS := {
 		"skin": Color(0.88, 0.72, 0.58),
 		"metal": Color(0.75, 0.62, 0.40),
 		"accent": Color(0.55, 0.35, 0.45),
+		"hair": Color(0.30, 0.20, 0.12),
 	},
 	"oracle": {
 		"armor": Color(0.85, 0.78, 0.45),
@@ -53,6 +63,7 @@ const ROLE_COLORS := {
 		"skin": Color(0.90, 0.75, 0.62),
 		"metal": Color(0.90, 0.78, 0.35),
 		"accent": Color(0.55, 0.35, 0.70),
+		"hair": Color(0.85, 0.80, 0.70),
 	},
 }
 
@@ -62,8 +73,9 @@ static func apply(model: Node3D, role: String = "citizen") -> void:
 		return
 	_hide_anachronisms(model)
 	var palette: Dictionary = ROLE_COLORS.get(role, ROLE_COLORS["citizen"])
-	_paint_meshes(model, palette)
+	_paint_meshes(model, palette, role)
 	if role in ["hoplite", "guard"]:
+		_hide_stock_crown(model)
 		_ensure_corinthian_helm(model)
 
 
@@ -78,7 +90,34 @@ static func _hide_anachronisms(model: Node3D) -> void:
 			(n as MeshInstance3D).visible = false
 
 
-static func _paint_meshes(model: Node3D, palette: Dictionary) -> void:
+## King_Head packs crown into the Gold surface — hide that surface when we
+## seat a Corinthian so we don't get crown-on-helm stacks.
+static func _hide_stock_crown(model: Node3D) -> void:
+	for n in model.find_children("*", "MeshInstance3D", true, false):
+		var mi := n as MeshInstance3D
+		if mi == null or mi.mesh == null:
+			continue
+		if not ("head" in String(mi.name).to_lower()):
+			continue
+		for s in mi.mesh.get_surface_count():
+			var mat: Material = mi.mesh.surface_get_material(s)
+			var mname := ""
+			if mat != null:
+				mname = String(mat.resource_name).to_lower()
+				if mname == "" and mat is Resource:
+					mname = String(mat.resource_path).get_file().to_lower()
+			## Also check active material name
+			var active: Material = mi.get_active_material(s)
+			var aname := String(active.resource_name).to_lower() if active else ""
+			if "gold" in mname or "gold" in aname or mname == "gold" or aname == "gold":
+				var hide := StandardMaterial3D.new()
+				hide.albedo_color = Color(0, 0, 0, 0)
+				hide.transparency = BaseMaterial3D.TRANSPARENCY_ALPHA
+				hide.cull_mode = BaseMaterial3D.CULL_DISABLED
+				mi.set_surface_override_material(s, hide)
+
+
+static func _paint_meshes(model: Node3D, palette: Dictionary, role: String) -> void:
 	for n in model.find_children("*", "MeshInstance3D", true, false):
 		var mi := n as MeshInstance3D
 		if mi == null or mi.mesh == null:
@@ -93,35 +132,99 @@ static func _paint_meshes(model: Node3D, palette: Dictionary) -> void:
 		if "corinthian" in nm or "helm_crest" in nm or "helm_cheek" in nm \
 				or "helm_dome" in nm or "helm_nose" in nm:
 			continue
-		var key := "cloth"
-		if "head" in nm:
-			key = "skin"
-		elif "feet" in nm or "boot" in nm:
-			key = "leather"
-		elif "pant" in nm or "leg" in nm:
-			key = "cloth"
-		elif "body" in nm:
-			key = "armor"
-		var col: Color = palette.get(key, palette["cloth"])
-		var metal := 0.55 if key in ["armor", "metal"] else 0.05
-		var rough := 0.45 if key in ["armor", "metal"] else 0.75
-		## Non-warrior bodies read as linen / wool, not plate.
-		if key == "armor" and not ("king" in nm or "adventurer" in nm or "soldier" in nm):
-			if "witch" in nm or "formal" in nm or "casual" in nm \
-					or "beach" in nm or "farmer" in nm or "worker" in nm \
-					or "medieval" in nm:
-				col = palette.get("cloth", col)
-				metal = 0.04
-				rough = 0.82
-		var mat := StandardMaterial3D.new()
-		mat.albedo_color = col
-		mat.metallic = metal
-		mat.roughness = rough
-		var base: Material = mi.get_active_material(0)
-		if base is StandardMaterial3D and (base as StandardMaterial3D).albedo_texture != null:
-			mat.albedo_texture = (base as StandardMaterial3D).albedo_texture
-			mat.albedo_color = col
-		mi.material_override = mat
+		## Clear any prior whole-mesh override so per-surface paint shows.
+		mi.material_override = null
+		var surf_count := mi.mesh.get_surface_count()
+		if surf_count <= 0:
+			continue
+		## Multi-surface Quaternius parts: map by authored material name.
+		if surf_count > 1 or _surface_has_named_mat(mi, 0):
+			for s in range(surf_count):
+				var key := _surface_palette_key(mi, s, nm, role)
+				if key == "hide":
+					var hide := StandardMaterial3D.new()
+					hide.albedo_color = Color(0, 0, 0, 0)
+					hide.transparency = BaseMaterial3D.TRANSPARENCY_ALPHA
+					mi.set_surface_override_material(s, hide)
+					continue
+				mi.set_surface_override_material(s, _make_mat(palette, key))
+		else:
+			var key := _mesh_name_palette_key(nm, role)
+			mi.set_surface_override_material(0, _make_mat(palette, key))
+
+
+static func _surface_has_named_mat(mi: MeshInstance3D, surface: int) -> bool:
+	var mat: Material = mi.mesh.surface_get_material(surface)
+	if mat == null:
+		mat = mi.get_active_material(surface)
+	return mat != null and String(mat.resource_name) != ""
+
+
+static func _surface_mat_name(mi: MeshInstance3D, surface: int) -> String:
+	var mat: Material = mi.mesh.surface_get_material(surface)
+	if mat == null:
+		mat = mi.get_active_material(surface)
+	if mat == null:
+		return ""
+	return String(mat.resource_name).to_lower()
+
+
+static func _surface_palette_key(mi: MeshInstance3D, surface: int, mesh_name: String, role: String) -> String:
+	var mname := _surface_mat_name(mi, surface)
+	## Explicit Quaternius material names from the Ultimate Modular pack.
+	if mname == "gold" and ("head" in mesh_name) and role in ["hoplite", "guard"]:
+		return "hide"  ## stock crown under Corinthian
+	if mname in ["skin"]:
+		return "skin"
+	if mname in ["blue", "beige", "darkbrown", "dark_brown"]:
+		return "cloth"
+	if mname in ["metal", "metal_dark", "metal dark"]:
+		return "armor" if role in ["hoplite", "guard", "smith"] else "leather"
+	if mname in ["gold"]:
+		return "accent"
+	if "hair" in mname:
+		return "hair"
+	if mname in ["eye"]:
+		return "skin"
+	## Fallback by mesh part name.
+	return _mesh_name_palette_key(mesh_name, role)
+
+
+static func _mesh_name_palette_key(nm: String, role: String) -> String:
+	if "head" in nm:
+		return "skin"
+	if "feet" in nm or "boot" in nm:
+		return "leather"
+	if "pant" in nm or "leg" in nm:
+		return "cloth"
+	if "body" in nm:
+		if role in ["hoplite", "guard"]:
+			return "armor"
+		return "cloth"
+	return "cloth"
+
+
+static func _make_mat(palette: Dictionary, key: String) -> StandardMaterial3D:
+	var col: Color = palette.get(key, palette["cloth"])
+	var metal := 0.55 if key in ["armor", "metal", "accent"] else 0.05
+	var rough := 0.42 if key in ["armor", "metal", "accent"] else 0.78
+	if key == "cloth":
+		metal = 0.04
+		rough = 0.82
+	elif key == "skin":
+		metal = 0.02
+		rough = 0.72
+	elif key == "leather":
+		metal = 0.08
+		rough = 0.8
+	elif key == "hair":
+		metal = 0.02
+		rough = 0.88
+	var mat := StandardMaterial3D.new()
+	mat.albedo_color = col
+	mat.metallic = metal
+	mat.roughness = rough
+	return mat
 
 
 static func remove_corinthian_helm(model: Node3D) -> void:
@@ -163,9 +266,9 @@ static func _ensure_corinthian_helm(model: Node3D) -> void:
 static func _build_corinthian_mesh() -> Node3D:
 	var root := Node3D.new()
 	root.name = "CorinthianHelm"
-	## Sit above Quaternius Head bone so the dome covers hair, not the neck.
-	root.position = Vector3(0.0, 0.08, 0.02)
-	root.scale = Vector3(1.0, 1.0, 1.0)
+	## Seat on Quaternius Head bone; slightly forward to cover the face bowl.
+	root.position = Vector3(0.0, 0.04, 0.03)
+	root.scale = Vector3(1.05, 1.05, 1.05)
 
 	var bronze := StandardMaterial3D.new()
 	bronze.albedo_color = Color(0.74, 0.55, 0.28)

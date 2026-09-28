@@ -1,7 +1,7 @@
 class_name ModelUtils
 
 ## Baked into exports so we can verify the PCK actually contains this revision.
-const BUILD_FIX_TOKEN := "EOO_FIX_QUATERNIUS_HUMANOIDS_V1"
+const BUILD_FIX_TOKEN := "EOO_FIX_QUATERNIUS_FACING_ARMS_V2"
 
 ## Tripo mesh id shared by spartan_hoplite + city_guard — UAL melts this bind.
 const _BROKEN_UAL_MESH := "95ce6ed4"
@@ -330,11 +330,20 @@ static func setup_character_for_movement(node: Node3D, target_height: float = 1.
 	## KayKit chibi AABBs include IK helpers below the soles — scale by foot→head.
 	if _is_kaykit_model(node):
 		scale_by_foot_to_head(node, target_height)
+	elif _is_quaternius_model(node):
+		## Quaternius Individual Characters already sit near human height (~1.9 m).
+		## Avoid large runtime root scales — they widen modular elbow gaps.
+		var h := measure_height(node)
+		if h > 0.2 and absf(h - target_height) / target_height > 0.12:
+			scale_to_height(node, target_height)
 	else:
 		scale_to_height(node, target_height)
 	if node.is_inside_tree():
 		node.force_update_transform()
 	ground_model(node)
+	## Quaternius meshes face +Z; gameplay MODEL_FRONT is −Z. Rotate the
+	## armature (not the scene root) so mesh_root / NPC yaw stays canonical.
+	_align_quaternius_visual_facing(node)
 	## KayKit (and similar) often have AABB below the soles — pin by foot bones.
 	if _is_kaykit_model(node):
 		ground_by_feet(node)
@@ -342,6 +351,26 @@ static func setup_character_for_movement(node: Node3D, target_height: float = 1.
 		node.position.y -= 0.16
 		install_kaykit_foot_ground(node)
 	install_leg_plant_fix(node)
+
+
+## Quaternius Ultimate Modular faces +Z in rest; rotate CharacterArmature by π
+## so visual face aligns with MODEL_FRONT (−Z) under yaw_from_direction.
+static func _align_quaternius_visual_facing(node: Node3D) -> void:
+	if node == null or not _is_quaternius_model(node):
+		return
+	if node.has_meta("eoo_quat_facing"):
+		return
+	var arm: Node3D = node.find_child("CharacterArmature", true, false) as Node3D
+	if arm == null:
+		## Fallback: rotate first Skeleton3D parent chain node under root.
+		for n in node.get_children():
+			if n is Node3D and n.find_child("Skeleton3D", true, false) != null:
+				arm = n as Node3D
+				break
+	if arm == null:
+		return
+	arm.rotate_y(PI)
+	node.set_meta("eoo_quat_facing", true)
 
 
 ## Keep KayKit soles on the MeshRoot ground as walk/root bob plays.
