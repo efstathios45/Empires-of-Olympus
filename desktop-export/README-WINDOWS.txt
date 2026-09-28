@@ -38,14 +38,14 @@ No zip extract needed — this download is the .exe alone.
 Download
 ------------------------------------------------------------
 Signed single-file Windows build (current):
-  https://gofile.io/d/rUfCO040
+  https://gofile.io/d/90sXU08C
 
 File name: EmpiresOfOlympus.exe
 
 Includes combat loot crash fix, inventory frame fit, account save/sync,
 Enter-to-chat, visible in-game cursor, and bag→panoply drag-and-drop.
 
-Hold RMB + drag to look; open Panoply with I and drag gear onto slots.
+Hold RMB + drag to look; mouse wheel zooms the camera; open Panoply with I.
 
-Also: clearer Panoply tooltips, party XP/gold share, overhead chat bubbles,
-and Video Settings (title + Esc).
+Also: party XP/gold share, overhead chat bubbles, Video Settings (title + Esc),
+GLB-rendered gear icons, and tuned helmet/shield attachment on the hoplite.

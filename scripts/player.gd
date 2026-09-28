@@ -290,9 +290,7 @@ func _attach_helmet(model: Node3D) -> void:
 		return
 	helmet_node = GearGrip.attach_helmet(model, helm_path)
 	if helmet_node != null:
-		var painted: Node3D = helmet_node.find_child("HelmetMount", true, false) as Node3D
-		if painted != null and painted.get_child_count() > 0:
-			GearPaint.paint_attached(painted.get_child(0) as Node3D, helm_path)
+		GearPaint.paint_attached(helmet_node, helm_path)
 
 
 func _build_camera() -> void:
