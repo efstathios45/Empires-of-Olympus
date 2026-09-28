@@ -37,8 +37,8 @@ No zip extract needed — this download is the .exe alone.
 ------------------------------------------------------------
 Download
 ------------------------------------------------------------
-Windows build (current — Greek hoplite restored):
-  https://gofile.io/d/pLwavRer
+Windows build (current — Quaternius humanoids):
+  https://gofile.io/d/6jap7Pt5
 
 File name: EmpiresOfOlympus.exe
 
@@ -50,10 +50,10 @@ Shared/cloud multiplayer persistence is documented in docs/ACCOUNTS.md.
 In-world: Enter opens player chat (see docs/CHAT.md).
 Metin2-style camera: hold middle-mouse to orbit. Mouse-wheel zoom is removed
 (fixed over-shoulder distance).
-Hero is the Greek Spartan hoplite again (dory + aspis). Hold F to raise
-the shield and block. Walk/hit use planted procedural motion on the Tripo
-mesh (no KayKit chibi). Open Panoply with I — right-click pouch items to
-Equip / Sell.
+Hero + plaza NPCs use Quaternius Ultimate Modular characters (CC0 human
+proportions with authored Walk / Sword_Slash / Idle_Sword). Hold F to raise
+the shield (Idle_Sword guard). No Tripo LegPlant / KayKit chibi. Open Panoply
+with I — right-click pouch items to Equip / Sell.
 Nameplates show name/level in empire colours.
 Multiplayer: title/Esc → Browse Servers (LAN names + saved friend worlds).
 Only the host can Copy Invite; joiners never see raw IPs. Host gets each
