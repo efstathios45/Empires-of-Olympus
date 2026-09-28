@@ -326,6 +326,62 @@ static func setup_character_for_movement(node: Node3D, target_height: float = 1.
 	if node.is_inside_tree():
 		node.force_update_transform()
 	ground_model(node)
+	install_sky_gaze_fix(node)
+
+
+## UAL humanoid clips on these rigs pitch the head skyward (retarget bias).
+## Rest pose is upright; locomotion/combat clips add ~15–35° of look-up on Head −Z.
+## Call each frame AFTER AnimationPlayer has posed the skeleton.
+## Levels Head face axis (−Z) to the horizon; leaves chin-down poses alone.
+static func correct_sky_gaze(skel: Skeleton3D, strength: float = 1.0) -> void:
+	if skel == null or strength <= 0.0:
+		return
+	var head_i := skel.find_bone("Head")
+	if head_i < 0:
+		return
+	var head_g: Transform3D = skel.global_transform * skel.get_bone_global_pose(head_i)
+	var fwd: Vector3 = (-head_g.basis.z).normalized()
+	var up_comp: float = fwd.dot(Vector3.UP)
+	if up_comp <= 0.02:
+		return
+	var pitch_err: float = asin(clampf(up_comp, -1.0, 1.0)) * strength
+	pitch_err = minf(pitch_err, deg_to_rad(42.0))
+	var flat_fwd := Vector3(fwd.x, 0.0, fwd.z)
+	if flat_fwd.length_squared() < 0.0001:
+		return
+	flat_fwd = flat_fwd.normalized()
+	var world_right: Vector3 = Vector3.UP.cross(flat_fwd).normalized()
+	# +angle about world-right pitches nose down when facing along flat_fwd (Godot Y-up).
+	var world_correct := Basis(Quaternion(world_right, pitch_err))
+	var parent_i: int = skel.get_bone_parent(head_i)
+	var parent_g: Transform3D = skel.global_transform
+	if parent_i >= 0:
+		parent_g = skel.global_transform * skel.get_bone_global_pose(parent_i)
+	var new_basis: Basis = world_correct * head_g.basis
+	var local: Transform3D = parent_g.affine_inverse() * Transform3D(new_basis, head_g.origin)
+	skel.set_bone_pose_rotation(head_i, local.basis.get_rotation_quaternion())
+
+
+## Attach a late-process helper so gaze correction runs after AnimationPlayer.
+static func install_sky_gaze_fix(model: Node3D) -> void:
+	if model == null:
+		return
+	var skel: Skeleton3D = null
+	for n in model.find_children("*", "Skeleton3D", true, false):
+		skel = n as Skeleton3D
+		break
+	if skel == null:
+		return
+	if skel.has_node("SkyGazeFix"):
+		return
+	var fix := Node.new()
+	fix.name = "SkyGazeFix"
+	fix.set_script(load("res://scripts/utils/sky_gaze_fix.gd"))
+	# Higher process_priority runs later in Godot 4? No — lower runs first.
+	# AnimationPlayer defaults to 0; use a large priority so we run after it.
+	# Godot: "Nodes with a lower number are processed first."
+	fix.process_priority = 100
+	skel.add_child(fix)
 
 ## Return the Godot yaw that aims canonical MODEL_FRONT (-Z) along direction.
 static func yaw_from_direction(direction: Vector3) -> float:
