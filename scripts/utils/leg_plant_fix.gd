@@ -70,25 +70,59 @@ func _cache_rest_foot_y() -> void:
 	_rest_foot_y = _lowest_foot_y(skel)
 
 
+## Bind explicitly (preferred) so we never pick a sibling NPC's player.
+func bind_anim(anim: AnimationPlayer) -> void:
+	if anim == null or not is_instance_valid(anim):
+		return
+	_anim = anim
+	_anim.process_priority = -100
+
+
 func _resolve_anim() -> void:
 	if _anim != null and is_instance_valid(_anim):
 		return
-	var n: Node = get_parent()
+	var skel := get_parent()
+	if skel == null:
+		return
+	## Stay inside THIS character. Climbing into GameWorld used to bind the
+	## hero's LegPlantFix to the first plaza NPC AnimationPlayer (oracle etc.),
+	## which stays on Idle — plant then overwrites Walk/Attack every frame.
+	var root := _character_root(skel)
+	var found := _find_anim_player(root)
+	if found != null:
+		bind_anim(found)
+
+
+func _character_root(from: Node) -> Node:
+	var n: Node = from
 	while n != null:
-		var found := _find_anim_player(n)
-		if found != null:
-			_anim = found
-			_anim.process_priority = -100
-			return
-		n = n.get_parent()
+		if n is CharacterBody3D or n is StaticBody3D:
+			return n
+		if String(n.name) == "MeshRoot":
+			return n
+		var p := n.get_parent()
+		if p == null:
+			return n
+		## Stop before the world / scene root so we never scan sibling NPCs.
+		var pname := String(p.name)
+		var tree := get_tree()
+		if pname == "GameWorld" or pname == "root" or (tree != null and p == tree.root):
+			return n
+		n = p
+	return from
 
 
 func _find_anim_player(n: Node) -> AnimationPlayer:
+	if n == null:
+		return null
 	if n is AnimationPlayer:
 		return n as AnimationPlayer
 	for c in n.get_children():
 		if c is AnimationPlayer:
 			return c as AnimationPlayer
+		## Do not descend into nested character bodies (other players/NPCs).
+		if c is CharacterBody3D or c is StaticBody3D:
+			continue
 		var nested := _find_anim_player(c)
 		if nested != null:
 			return nested
@@ -103,16 +137,15 @@ func _process(delta: float) -> void:
 	_resolve_anim()
 	var mode := _clip_mode()
 
-	if mode == "combat":
-		_level_head(skel)
-		return
-
-	## Idle and locomotion share a planted human base (UAL clips melt Tripo).
+	## Idle / walk / combat all share a planted human base — raw UAL melts Tripo.
 	_plant_human_base(skel)
 	_level_head(skel)
 	if mode == "locomotion":
 		var sprint := _is_sprint()
 		_procedural_walk(skel, sprint)
+		_stabilize_foot_height(skel)
+	elif mode == "combat":
+		_procedural_combat(skel)
 		_stabilize_foot_height(skel)
 	else:
 		_idle_sway(skel)
@@ -263,3 +296,54 @@ func _idle_sway(skel: Skeleton3D) -> void:
 	_add_local_rot(skel, "Chest", Vector3(1, 0, 0), sin(phase * 2.0) * SWAY_SPINE * 0.6)
 	_add_local_rot(skel, "LeftUpperArm", Vector3(0, 0, 1), sin(phase) * SWAY_ARM)
 	_add_local_rot(skel, "RightUpperArm", Vector3(0, 0, 1), -sin(phase + 0.4) * SWAY_ARM)
+
+
+## UAL combat clips melt Tripo — drive a readable swing from clip progress.
+func _procedural_combat(skel: Skeleton3D) -> void:
+	var clip := String(_anim.current_animation) if _anim else ""
+	var u := _clip_progress()
+	## Smooth 0→1→0 envelope across the clip.
+	var env := sin(clampf(u, 0.0, 1.0) * PI)
+	if "Block" in clip:
+		_add_local_rot(skel, "LeftUpperArm", Vector3(1, 0, 0), -0.95)
+		_add_local_rot(skel, "LeftLowerArm", Vector3(1, 0, 0), -1.1)
+		_add_local_rot(skel, "RightUpperArm", Vector3(1, 0, 0), -0.35)
+		_add_local_rot(skel, "Spine", Vector3(1, 0, 0), 0.08)
+		return
+	if "Jump" in clip or "Roll" in clip or "Dodge" in clip:
+		_add_local_rot(skel, "LeftUpperLeg", Vector3(0, 0, -1), 0.25 * env)
+		_add_local_rot(skel, "RightUpperLeg", Vector3(0, 0, -1), 0.25 * env)
+		_add_local_rot(skel, "LeftLowerLeg", Vector3(0, 0, -1), 0.35 * env)
+		_add_local_rot(skel, "RightLowerLeg", Vector3(0, 0, -1), 0.35 * env)
+		_add_local_rot(skel, "LeftUpperArm", Vector3(1, 0, 0), -0.4 * env)
+		_add_local_rot(skel, "RightUpperArm", Vector3(1, 0, 0), -0.4 * env)
+		return
+	## Sword / light / heavy / punch: big readable overhead → forward chop.
+	var heavy := "Heavy" in clip
+	var wind := sin(clampf(u * 2.4, 0.0, 1.0) * PI) ## peaks early
+	var chop := sin(clampf((u - 0.12) * 1.7, 0.0, 1.0) * PI)
+	var twist := (0.5 if heavy else 0.36) * chop
+	var lift := (1.7 if heavy else 1.45) * wind
+	## UpperArm forward ≈ local +X (same as walk arm swing). Raise high, then drive down.
+	_add_local_rot(skel, "RightUpperArm", Vector3(1, 0, 0), -lift)
+	_add_local_rot(skel, "RightUpperArm", Vector3(1, 0, 0), 1.8 * chop)
+	_add_local_rot(skel, "RightLowerArm", Vector3(1, 0, 0), -0.85 * wind - 1.35 * chop)
+	_add_local_rot(skel, "RightHand", Vector3(1, 0, 0), -0.55 * chop)
+	_add_local_rot(skel, "RightUpperArm", Vector3(0, 0, 1), 0.18 * env)
+	## Shield / off-hand braces across the chest.
+	_add_local_rot(skel, "LeftUpperArm", Vector3(1, 0, 0), -0.7 * env)
+	_add_local_rot(skel, "LeftLowerArm", Vector3(1, 0, 0), -0.95 * env)
+	_add_local_rot(skel, "Spine", Vector3(0, 1, 0), twist)
+	_add_local_rot(skel, "Chest", Vector3(0, 1, 0), twist * 0.55)
+	_add_local_rot(skel, "Hips", Vector3(0, 1, 0), -twist * 0.3)
+	_add_local_rot(skel, "RightUpperLeg", Vector3(0, 0, -1), 0.28 * chop)
+	_add_local_rot(skel, "LeftUpperLeg", Vector3(0, 0, -1), -0.14 * chop)
+
+
+func _clip_progress() -> float:
+	if _anim == null or not _anim.is_playing():
+		return 0.0
+	var length := _anim.current_animation_length
+	if length <= 0.001:
+		return 0.0
+	return clampf(_anim.current_animation_position / length, 0.0, 1.0)

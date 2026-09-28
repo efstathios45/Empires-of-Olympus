@@ -37,8 +37,8 @@ No zip extract needed — this download is the .exe alone.
 ------------------------------------------------------------
 Download
 ------------------------------------------------------------
-Windows build (current — walk + natural NPC idle):
-  https://gofile.io/d/PRdeetB0
+Windows build (current — walk + hit restored):
+  https://gofile.io/d/6lil4FQ6
 
 File name: EmpiresOfOlympus.exe
 
@@ -50,9 +50,10 @@ Shared/cloud multiplayer persistence is documented in docs/ACCOUNTS.md.
 In-world: Enter opens player chat (see docs/CHAT.md).
 Metin2-style camera: hold middle-mouse to orbit. Mouse-wheel zoom is removed
 (fixed over-shoulder distance).
-Hero/guard Tripo mesh: UAL idle melted legs into a Z-shape — runtime rest-core
-plant keeps a standing human silhouette (arms down outside combat).
-Open Panoply with I — right-click pouch items to Equip / Sell.
+Hero/guard Tripo mesh: UAL melts the bind — LegPlant binds the hero's own
+AnimationPlayer (not a plaza NPC), plants a human base, then drives
+procedural walk and sword slash. Open Panoply with I — right-click pouch
+items to Equip / Sell.
 Nameplates show name/level in empire colours.
 Multiplayer: title/Esc → Browse Servers (LAN names + saved friend worlds).
 Only the host can Copy Invite; joiners never see raw IPs. Host gets each

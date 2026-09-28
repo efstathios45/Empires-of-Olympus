@@ -1,7 +1,7 @@
 class_name ModelUtils
 
 ## Baked into exports so we can verify the PCK actually contains this revision.
-const BUILD_FIX_TOKEN := "EOO_FIX_WARRIOR_STAND_V7"
+const BUILD_FIX_TOKEN := "EOO_FIX_WARRIOR_STAND_V8"
 
 ## Tripo mesh id shared by spartan_hoplite + city_guard — UAL melts this bind.
 const _BROKEN_UAL_MESH := "95ce6ed4"
@@ -377,6 +377,23 @@ static func install_leg_plant_fix(model: Node3D) -> void:
 	fix.set_script(load("res://scripts/utils/leg_plant_fix.gd"))
 	fix.process_priority = 1000
 	skel.add_child(fix)
+	## Bind this model's AnimationPlayer immediately (before world NPCs exist).
+	if anim != null:
+		bind_leg_plant_anim(model, anim)
+
+
+## Re-bind after the owner creates/replaces its AnimationPlayer.
+static func bind_leg_plant_anim(model: Node3D, anim: AnimationPlayer) -> void:
+	if model == null or anim == null:
+		return
+	for n in model.find_children("*", "Skeleton3D", true, false):
+		var skel := n as Skeleton3D
+		if skel == null or not skel.has_node("LegPlantFix"):
+			continue
+		var fix: Node = skel.get_node("LegPlantFix")
+		if fix.has_method("bind_anim"):
+			fix.call("bind_anim", anim)
+		return
 
 
 static func _mesh_needs_ual_plant(model: Node3D) -> bool:

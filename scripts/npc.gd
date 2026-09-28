@@ -89,6 +89,7 @@ func _ready() -> void:
 			if lib:
 				_anim.add_animation_library("", lib)
 		ModelUtils.set_animation_loops(_anim)
+		ModelUtils.bind_leg_plant_anim(_model, _anim)
 		if not _anim.has_animation(idle_clip):
 			idle_clip = "ual1_Idle"
 		_idle_variants = _collect_idle_variants()

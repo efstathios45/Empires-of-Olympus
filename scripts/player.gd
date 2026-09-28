@@ -247,6 +247,7 @@ func _build_body() -> void:
 				anim.remove_animation_library("")
 			anim.add_animation_library("", lib)
 	ModelUtils.set_animation_loops(anim)
+	ModelUtils.bind_leg_plant_anim(model, anim)
 
 	var weapon_path: String = _resolved_weapon_path()
 	if ResourceLoader.exists(weapon_path):
