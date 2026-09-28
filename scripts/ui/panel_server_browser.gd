@@ -23,16 +23,26 @@ func _ready() -> void:
 	add_child(center)
 	center.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
 
+	var vp := get_viewport().get_visible_rect().size
+	var panel_h: float = clampf(vp.y - 48.0, 520.0, 980.0)
 	var panel := Kit.make_panel(false)
-	panel.custom_minimum_size = Vector2(760, 980)
+	panel.custom_minimum_size = Vector2(760, panel_h)
 	panel.clip_contents = true
 	center.add_child(panel)
 
-	var margin := Kit.make_margin(18)
+	var margin := Kit.make_margin(14)
 	panel.add_child(margin)
+	## Outer scroll so Host / Add Server / Back stay reachable on short viewports.
+	var outer := ScrollContainer.new()
+	outer.size_flags_vertical = Control.SIZE_EXPAND_FILL
+	outer.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	outer.horizontal_scroll_mode = ScrollContainer.SCROLL_MODE_DISABLED
+	margin.add_child(outer)
+
 	var root := VBoxContainer.new()
 	root.add_theme_constant_override("separation", 8)
-	margin.add_child(root)
+	root.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	outer.add_child(root)
 
 	root.add_child(Kit.make_label("Multiplayer Worlds", 32, Kit.INK_TITLE, HORIZONTAL_ALIGNMENT_CENTER))
 	root.add_child(Kit.make_label(
@@ -45,8 +55,8 @@ func _ready() -> void:
 	root.add_child(_status)
 
 	var scroll := ScrollContainer.new()
-	scroll.custom_minimum_size = Vector2(TEXT_W + 40, 320)
-	scroll.size_flags_vertical = Control.SIZE_EXPAND_FILL
+	scroll.custom_minimum_size = Vector2(TEXT_W + 40, 120)
+	scroll.size_flags_vertical = Control.SIZE_SHRINK_BEGIN
 	root.add_child(_centered(scroll))
 	_list = VBoxContainer.new()
 	_list.add_theme_constant_override("separation", 6)
@@ -61,22 +71,8 @@ func _ready() -> void:
 	join_btn.pressed.connect(_on_join_selected)
 	root.add_child(_centered(join_btn))
 
-	root.add_child(Kit.spacer(4))
-	root.add_child(Kit.make_label("Host a world", 18, Kit.INK_TITLE, HORIZONTAL_ALIGNMENT_CENTER))
-	_host_name_edit = LineEdit.new()
-	_host_name_edit.placeholder_text = "World name (shown in browser)"
-	_host_name_edit.text = "Hellas Arena"
-	_host_name_edit.custom_minimum_size = Vector2(Kit.BTN_SIZE.x, 40)
-	_host_name_edit.alignment = HORIZONTAL_ALIGNMENT_CENTER
-	root.add_child(_centered(_host_name_edit))
-	var host_btn := Kit.make_button("Host World", true)
-	host_btn.pressed.connect(_on_host)
-	root.add_child(_centered(host_btn))
-	var copy_btn := Kit.make_button("Copy Invite", false)
-	copy_btn.pressed.connect(_on_copy_invite)
-	root.add_child(_centered(copy_btn))
-
-	root.add_child(Kit.spacer(4))
+	## Friends first: paste host invite under a display name (IP never shown in the list).
+	root.add_child(Kit.spacer(2))
 	root.add_child(Kit.make_label("Add friend server", 18, Kit.INK_TITLE, HORIZONTAL_ALIGNMENT_CENTER))
 	root.add_child(Kit.make_label(
 		"Paste the invite they copied. List shows the name only.",
@@ -97,6 +93,21 @@ func _ready() -> void:
 	var rem_btn := Kit.make_button("Remove Saved", false)
 	rem_btn.pressed.connect(_on_remove_saved)
 	root.add_child(_centered(rem_btn))
+
+	root.add_child(Kit.spacer(2))
+	root.add_child(Kit.make_label("Host a world", 18, Kit.INK_TITLE, HORIZONTAL_ALIGNMENT_CENTER))
+	_host_name_edit = LineEdit.new()
+	_host_name_edit.placeholder_text = "World name (shown in browser)"
+	_host_name_edit.text = "Hellas Arena"
+	_host_name_edit.custom_minimum_size = Vector2(Kit.BTN_SIZE.x, 40)
+	_host_name_edit.alignment = HORIZONTAL_ALIGNMENT_CENTER
+	root.add_child(_centered(_host_name_edit))
+	var host_btn := Kit.make_button("Host World", true)
+	host_btn.pressed.connect(_on_host)
+	root.add_child(_centered(host_btn))
+	var copy_btn := Kit.make_button("Copy Invite", false)
+	copy_btn.pressed.connect(_on_copy_invite)
+	root.add_child(_centered(copy_btn))
 
 	var leave := Kit.make_button("Leave World", false)
 	leave.pressed.connect(_on_leave)
