@@ -3,21 +3,22 @@ extends RefCounted
 ## Prefer KayKit Adventurers names; fall back to legacy UAL clip names.
 
 
+## Prefer UAL hoplite clips first (Greek hero); KayKit names kept as fallback only.
 const ALIASES := {
-	"idle": ["Idle", "Unarmed_Idle", "ual1_Idle", "ual1_Sword_Idle"],
-	"walk": ["Walking_A", "Walking_B", "Walking_C", "ual1_Walk"],
-	"sprint": ["Running_A", "Running_B", "ual1_Sprint"],
-	"jump": ["Jump_Start", "Jump_Full_Short", "Jump_Full_Long", "ual1_Jump"],
-	"dodge": ["Dodge_Forward", "Dodge_Left", "ual1_Roll"],
-	"hit": ["Hit_A", "Hit_B", "ual1_Hit_Chest"],
-	"death": ["Death_A", "Death_B", "ual1_Death01"],
-	"block": ["Blocking", "Block", "ual2_Sword_Block"],
-	"block_hit": ["Block_Hit", "Hit_A", "ual1_Hit_Chest"],
-	"attack_1": ["1H_Melee_Attack_Chop", "1H_Melee_Attack_Slice_Diagonal", "ual2_Sword_Light_A", "ual1_Sword_Attack"],
-	"attack_2": ["1H_Melee_Attack_Slice_Diagonal", "1H_Melee_Attack_Slice_Horizontal", "ual2_Sword_Light_B", "ual1_Sword_Attack"],
-	"attack_3": ["1H_Melee_Attack_Stab", "1H_Melee_Attack_Chop", "ual2_Sword_Light_C", "ual1_Sword_Attack"],
-	"attack_heavy": ["2H_Melee_Attack_Chop", "1H_Melee_Attack_Chop", "ual2_Sword_Heavy_A", "ual1_Sword_Attack"],
-	"attack_ranged": ["1H_Ranged_Shoot", "Spellcast_Shoot", "ual1_Sword_Attack"],
+	"idle": ["ual1_Idle", "ual1_Sword_Idle", "Idle", "Unarmed_Idle"],
+	"walk": ["ual1_Walk", "Walking_A", "Walking_B", "Walking_C"],
+	"sprint": ["ual1_Sprint", "Running_A", "Running_B"],
+	"jump": ["ual1_Jump", "Jump_Start", "Jump_Full_Short", "Jump_Full_Long"],
+	"dodge": ["ual1_Roll", "Dodge_Forward", "Dodge_Left"],
+	"hit": ["ual1_Hit_Chest", "Hit_A", "Hit_B"],
+	"death": ["ual1_Death01", "Death_A", "Death_B"],
+	"block": ["ual2_Sword_Block", "Blocking", "Block"],
+	"block_hit": ["ual1_Hit_Chest", "Block_Hit", "Hit_A"],
+	"attack_1": ["ual2_Sword_Light_A", "ual1_Sword_Attack", "1H_Melee_Attack_Chop"],
+	"attack_2": ["ual2_Sword_Light_B", "ual1_Sword_Attack", "1H_Melee_Attack_Slice_Diagonal"],
+	"attack_3": ["ual2_Sword_Light_C", "ual1_Sword_Attack", "1H_Melee_Attack_Stab"],
+	"attack_heavy": ["ual2_Sword_Heavy_A", "ual1_Sword_Attack", "2H_Melee_Attack_Chop"],
+	"attack_ranged": ["ual1_Sword_Attack", "1H_Ranged_Shoot", "Spellcast_Shoot"],
 }
 
 
