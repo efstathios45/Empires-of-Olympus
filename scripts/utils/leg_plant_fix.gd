@@ -143,10 +143,9 @@ func _process(delta: float) -> void:
 	if mode == "locomotion":
 		var sprint := _is_sprint()
 		_procedural_walk(skel, sprint)
-		_stabilize_foot_height(skel)
+		## Do NOT hip-lift to "stabilize" — that made the hoplite levitate mid-stride.
 	elif mode == "combat":
 		_procedural_combat(skel)
-		_stabilize_foot_height(skel)
 	else:
 		_idle_sway(skel)
 

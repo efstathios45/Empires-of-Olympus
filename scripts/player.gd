@@ -9,9 +9,9 @@ signal respawned
 signal skill_cooldown_started(duration: float)
 signal combo_performed
 
-## KayKit Adventurers Knight — real walk/hit/block clips + sword/shield sockets.
-const CharacterGLB := "res://assets/characters/kaykit_knight/Knight.glb"
-const CharacterLib := "" ## Embedded KayKit AnimationPlayer; no UAL overlay.
+## Greek Tripo hoplite — looks like a Spartan; UAL clips + LegPlant for motion.
+const CharacterGLB := "res://assets/characters/spartan_hoplite/spartan_hoplite.glb"
+const CharacterLib := "res://assets/characters/spartan_hoplite/spartan_hoplite_animations.tres"
 const GearGrip = preload("res://scripts/gear_grip.gd")
 const GearPaint = preload("res://scripts/gear_paint.gd")
 const HeroAnim = preload("res://scripts/utils/hero_anim.gd")
@@ -233,7 +233,6 @@ func _build_body() -> void:
 		char_path = CharacterGLB
 	var model: Node3D = load(char_path).instantiate()
 	mesh_root.add_child(model)
-	## KayKit is authored ~human height; Tripo plant must NOT run on it.
 	ModelUtils.setup_character_for_movement(model, 1.85)
 	_apply_class_tint(model, cd0)
 
@@ -242,16 +241,15 @@ func _build_body() -> void:
 		anim = AnimationPlayer.new()
 		anim.name = "AnimationPlayer"
 		model.add_child(anim)
-	## Only overlay a library when the mesh has no combat clips of its own.
-	if CharacterLib != "" and ResourceLoader.exists(CharacterLib) and not HeroAnim.is_kaykit(model):
+	## Full combat UAL library on the hoplite GeneralSkeleton (shared across classes).
+	if CharacterLib != "" and ResourceLoader.exists(CharacterLib):
 		var lib := load(CharacterLib) as AnimationLibrary
 		if lib:
 			if anim.has_animation_library(""):
 				anim.remove_animation_library("")
 			anim.add_animation_library("", lib)
 	ModelUtils.set_animation_loops(anim)
-	if not HeroAnim.is_kaykit(model):
-		ModelUtils.bind_leg_plant_anim(model, anim)
+	ModelUtils.bind_leg_plant_anim(model, anim)
 
 	var weapon_path: String = _resolved_weapon_path()
 	if ResourceLoader.exists(weapon_path):

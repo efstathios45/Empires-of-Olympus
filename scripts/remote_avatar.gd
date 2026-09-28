@@ -1,7 +1,8 @@
 extends CharacterBody3D
 ## Lightweight remote champion — mesh, nameplate, PvP hitbox. Driven by NetSession.
 
-const CharacterGLB := "res://assets/characters/kaykit_knight/Knight.glb"
+const CharacterGLB := "res://assets/characters/spartan_hoplite/spartan_hoplite.glb"
+const CharacterLib := "res://assets/characters/spartan_hoplite/spartan_hoplite_animations.tres"
 const NameplateScript = preload("res://scripts/player_nameplate.gd")
 const HeroAnim = preload("res://scripts/utils/hero_anim.gd")
 
@@ -60,8 +61,18 @@ func _build_body() -> void:
 		mesh_root.add_child(model)
 		ModelUtils.setup_character_for_movement(model, 1.85)
 		anim = model.find_child("AnimationPlayer", true) as AnimationPlayer
-		if anim:
+		if anim == null:
+			anim = AnimationPlayer.new()
+			anim.name = "AnimationPlayer"
+			model.add_child(anim)
+		if ResourceLoader.exists(CharacterLib):
+			var lib := load(CharacterLib) as AnimationLibrary
+			if lib:
+				if anim.has_animation_library(""):
+					anim.remove_animation_library("")
+				anim.add_animation_library("", lib)
 			ModelUtils.set_animation_loops(anim)
+			ModelUtils.bind_leg_plant_anim(model, anim)
 			HeroAnim.play(anim, "idle")
 	_tint_empire(empire_id)
 
@@ -106,7 +117,6 @@ func _physics_process(delta: float) -> void:
 		mesh_root.rotation.y = lerp_angle(mesh_root.rotation.y, _target_yaw, 10.0 * delta)
 
 
-## Called when a local champion lands a blow on this avatar.
 func take_damage(amount: float, from_position: Vector3) -> void:
 	if dead:
 		return
