@@ -47,29 +47,24 @@ func run() -> void:
 	vp.get_texture().get_image().save_png("/opt/cursor/artifacts/PREZOOM_hero_idle.png")
 
 	HeroAnim.play(anim, "walk")
-	## Sample mid-walk so legs are clearly mid-stride.
-	if anim.current_animation != "":
-		anim.seek(0.35, true)
-	for i in 10:
+	## LegPlant walks on wall-clock (_t), not clip seek — let frames accumulate.
+	for i in 36:
 		await process_frame
 	vp.get_texture().get_image().save_png("/opt/cursor/artifacts/PREZOOM_hero_walk.png")
 
 	HeroAnim.play(anim, "attack_1")
-	if anim.current_animation != "":
-		anim.seek(0.25, true)
-	for i in 10:
+	for i in 24:
 		await process_frame
 	vp.get_texture().get_image().save_png("/opt/cursor/artifacts/PREZOOM_hero_slash.png")
 
-	## Side walk strip — prove legs swing (not planted A-pose).
+	## Side walk strip — prove procedural legs swing.
 	cam.projection = Camera3D.PROJECTION_ORTHOGONAL
 	cam.size = 2.6
 	cam.position = Vector3(3.8, 1.1, 0.0)
 	cam.look_at(Vector3(0, 1.0, 0), Vector3.UP)
 	HeroAnim.play(anim, "walk")
 	for frame_i in 6:
-		anim.seek(0.08 + float(frame_i) * 0.12, true)
-		for i in 4:
+		for i in 8:
 			await process_frame
 		vp.get_texture().get_image().save_png("/opt/cursor/artifacts/PREZOOM_walk_%d.png" % frame_i)
 
