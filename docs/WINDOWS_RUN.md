@@ -38,7 +38,7 @@ No zip extract needed — this download is the .exe alone.
 Download
 ------------------------------------------------------------
 Signed single-file Windows build (current):
-  https://gofile.io/d/Hq3uTQnc
+  https://gofile.io/d/ncYb5CK2
 
 File name: EmpiresOfOlympus.exe
 

@@ -28,14 +28,17 @@ const TURN_RATE := 14.0
 const MOUSE_SENS := 0.0022
 ## Close zoom used to allow ~2.4m arm + look-up pitch, putting the lens near
 ## the feet (worm's-eye). That made every character look sky-staring.
-const CAM_ZOOM_MIN := 3.8
+const CAM_ZOOM_MIN := 4.2
 const CAM_ZOOM_MAX := 9.5
 const CAM_ZOOM_STEP := 0.38
 const CAM_ZOOM_DEFAULT := 5.6
 const CAM_PIVOT_HEIGHT := 1.55
 ## Keep the lens at least this high so close zoom never goes worm's-eye.
-const CAM_MIN_HEIGHT := 0.95
+const CAM_MIN_HEIGHT := 1.15
 const CAM_PITCH_MIN := -1.05
+## Close zoom: keep a mild look-down so framing stays over-shoulder, not sky-heavy.
+## Far zoom may tilt up a bit; SpringArm blocks ground.
+const CAM_PITCH_MAX_CLOSE := -0.18
 const CAM_PITCH_MAX_FAR := 0.42
 const CAM_SPRING_MARGIN := 0.35
 
@@ -392,13 +395,11 @@ var _mmb_press_pos: Vector2 = Vector2.ZERO
 const MMB_LOOK_SLOP := 4.0
 
 
-## Close zoom: hard height budget (no worm's-eye). Far zoom: allow more look-up;
-## SpringArm env collision shortens the arm before the lens goes underground.
+## Close zoom: no look-up (keeps an over-shoulder framing). Far zoom: allow more
+## look-up; SpringArm env collision shortens the arm before the lens hits ground.
 func _max_pitch_for_zoom(zoom: float) -> float:
-	var drop_budget: float = CAM_PIVOT_HEIGHT - CAM_MIN_HEIGHT
-	var close_max: float = asin(clampf(drop_budget / maxf(CAM_ZOOM_MIN, 0.1), 0.0, 0.95))
 	var t: float = inverse_lerp(CAM_ZOOM_MIN, CAM_ZOOM_MAX, clampf(zoom, CAM_ZOOM_MIN, CAM_ZOOM_MAX))
-	return lerpf(close_max, CAM_PITCH_MAX_FAR, t)
+	return lerpf(CAM_PITCH_MAX_CLOSE, CAM_PITCH_MAX_FAR, t)
 
 
 func _apply_cam_zoom(zoom: float) -> void:
