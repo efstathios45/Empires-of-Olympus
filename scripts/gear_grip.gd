@@ -4,19 +4,21 @@ extends RefCounted
 
 const WeaponGrip = preload("res://scripts/weapon_grip.gd")
 
-# Euler degrees in bone space; positions in metres (pre character-scale compensation).
+# Position is metres in bone space. Rotation is Euler degrees on the grip holder.
+# Prefer LeftLowerArm for shields (WeaponGrip default) — LeftHand + wild eulers
+# twisted the forearm and made the champion look broken.
 const GRIP_BY_GLB := {
 	"res://assets/props/gear/aspis_shield.glb": {
-		"bone": "LeftHand",
-		"position": Vector3(0.06, -0.02, 0.04),
-		"rotation_deg": Vector3(-58.0, -102.0, 18.0),
-		"scale": 0.92,
+		"bone": "LeftLowerArm",
+		"position": Vector3(0.02, -0.06, 0.04),
+		"rotation_deg": Vector3(-20.0, -10.0, 8.0),
+		"scale": 1.0,
 	},
 	"res://assets/props/gear/tower_shield.glb": {
-		"bone": "LeftHand",
-		"position": Vector3(0.05, -0.04, 0.06),
-		"rotation_deg": Vector3(-62.0, -98.0, 14.0),
-		"scale": 1.0,
+		"bone": "LeftLowerArm",
+		"position": Vector3(0.02, -0.10, 0.05),
+		"rotation_deg": Vector3(-24.0, -12.0, 6.0),
+		"scale": 1.08,
 	},
 	"res://assets/props/gear/xiphos_sword.glb": {
 		"position": Vector3(0.006, -0.118, 0.0),
@@ -45,12 +47,12 @@ const GRIP_BY_GLB := {
 	},
 }
 
+# Helmets are NOT run through WeaponGrip.normalize (melee/shield frames twist them).
 const HELMET_BY_GLB := {
 	"res://assets/props/gear/corinthian_helmet.glb": {
-		"bone": "Head",
-		"position": Vector3(0.0, 0.04, 0.025),
-		"rotation_deg": Vector3(-90.0, 180.0, 0.0),
-		"scale": 0.46,
+		"position": Vector3(0.0, 0.035, 0.01),
+		"rotation_deg": Vector3(0.0, 0.0, 0.0),
+		"target_extent": 0.26,
 	},
 }
 
@@ -85,18 +87,27 @@ static func attach_shield(model: Node3D, glb_path: String) -> Node3D:
 static func attach_helmet(model: Node3D, glb_path: String) -> Node3D:
 	if glb_path == "" or not ResourceLoader.exists(glb_path):
 		return null
+	var skel: Skeleton3D = _find_skeleton(model)
+	if skel == null:
+		return null
 	var cfg: Dictionary = HELMET_BY_GLB.get(glb_path, {
-		"bone": "Head",
-		"position": Vector3(0.0, 0.03, 0.02),
-		"rotation_deg": Vector3(-90.0, 180.0, 0.0),
-		"scale": 0.48,
+		"position": Vector3(0.0, 0.04, 0.01),
+		"rotation_deg": Vector3.ZERO,
+		"target_extent": 0.26,
 	})
-	var grip: Dictionary = cfg.duplicate(true)
-	grip["bone"] = String(grip.get("bone", "Head"))
-	var mount := WeaponGrip.attach(model, glb_path, "shield", grip)
-	if mount != null:
-		mount.name = "HelmetBone"
-	return mount
+	var att := BoneAttachment3D.new()
+	att.name = "HelmetBone"
+	att.bone_name = "Head"
+	skel.add_child(att)
+	var holder := Node3D.new()
+	holder.name = "HelmetMount"
+	att.add_child(holder)
+	var inst: Node3D = load(glb_path).instantiate()
+	holder.add_child(inst)
+	ModelUtils.scale_to_max_extent(inst, float(cfg.get("target_extent", 0.26)))
+	inst.rotation_degrees = cfg.get("rotation_deg", Vector3.ZERO)
+	inst.position = cfg.get("position", Vector3.ZERO)
+	return att
 
 
 static func _find_skeleton(model: Node3D) -> Skeleton3D:

@@ -276,12 +276,11 @@ func _resolved_weapon_path() -> String:
 
 
 func _resolved_shield_path() -> String:
+	## Only show a shield mesh when one is actually equipped (or class default).
 	var eq: String = GameState.equipped_glb("shield")
 	if eq != "":
 		return eq
-	if GameState.player_class == "hoplite":
-		return "res://assets/props/gear/aspis_shield.glb"
-	return ""
+	return String(GameState.class_data().get("shield", ""))
 
 
 func _attach_helmet(model: Node3D) -> void:
@@ -290,7 +289,11 @@ func _attach_helmet(model: Node3D) -> void:
 		return
 	helmet_node = GearGrip.attach_helmet(model, helm_path)
 	if helmet_node != null:
-		GearPaint.paint_attached(helmet_node, helm_path)
+		var mount: Node3D = helmet_node.find_child("HelmetMount", true, false) as Node3D
+		if mount != null and mount.get_child_count() > 0:
+			GearPaint.paint_attached(mount.get_child(0) as Node3D, helm_path)
+		else:
+			GearPaint.paint_attached(helmet_node, helm_path)
 
 
 func _build_camera() -> void:
@@ -301,24 +304,27 @@ func _build_camera() -> void:
 	spring_arm = SpringArm3D.new()
 	_cam_zoom = CAM_ZOOM_DEFAULT
 	spring_arm.spring_length = _cam_zoom
-	spring_arm.collision_mask = 1
+	## Ignore environment so the arm never collapses under terrain (camera under
+	## the feet makes every character look like they are staring at the sky).
+	spring_arm.collision_mask = 0
 	camera_pivot.add_child(spring_arm)
 	camera = Camera3D.new()
 	camera.current = true
 	spring_arm.add_child(camera)
 
-## Visible cursor: hold-drag RMB to look; short RMB click still heavy-attacks.
-var _rmb_down: bool = false
-var _rmb_looking: bool = false
-var _rmb_press_pos: Vector2 = Vector2.ZERO
-const RMB_LOOK_SLOP := 6.0
+## Orbit: hold middle-mouse (scroll-wheel button) and drag. Wheel scroll zooms.
+## RMB click (no look) still heavy-attacks.
+var _mmb_down: bool = false
+var _mmb_looking: bool = false
+var _mmb_press_pos: Vector2 = Vector2.ZERO
+const MMB_LOOK_SLOP := 4.0
 
 func _unhandled_input(event: InputEvent) -> void:
 	if state == State.DEAD:
 		return
 	if _ui_open():
-		_rmb_down = false
-		_rmb_looking = false
+		_mmb_down = false
+		_mmb_looking = false
 		return
 	if event is InputEventMouseButton:
 		if event.pressed and (event.button_index == MOUSE_BUTTON_WHEEL_UP or event.button_index == MOUSE_BUTTON_WHEEL_DOWN):
@@ -327,24 +333,24 @@ func _unhandled_input(event: InputEvent) -> void:
 			if spring_arm != null:
 				spring_arm.spring_length = _cam_zoom
 			return
-	if event is InputEventMouseButton and event.button_index == MOUSE_BUTTON_RIGHT:
-		if event.pressed:
-			_rmb_down = true
-			_rmb_looking = false
-			_rmb_press_pos = event.position
-		else:
-			## Short click (no drag) → heavy blow; drag was camera look.
-			if _rmb_down and not _rmb_looking and state == State.FREE and not _ui_open():
-				_try_heavy_attack()
-			_rmb_down = false
-			_rmb_looking = false
-		return
-	if event is InputEventMouseMotion and _rmb_down:
-		if not _rmb_looking and event.position.distance_to(_rmb_press_pos) >= RMB_LOOK_SLOP:
-			_rmb_looking = true
-		if _rmb_looking:
+		if event.button_index == MOUSE_BUTTON_MIDDLE:
+			if event.pressed:
+				_mmb_down = true
+				_mmb_looking = false
+				_mmb_press_pos = event.position
+			else:
+				_mmb_down = false
+				_mmb_looking = false
+			return
+		if event.button_index == MOUSE_BUTTON_RIGHT and event.pressed and state == State.FREE:
+			_try_heavy_attack()
+			return
+	if event is InputEventMouseMotion and _mmb_down:
+		if not _mmb_looking and event.position.distance_to(_mmb_press_pos) >= MMB_LOOK_SLOP:
+			_mmb_looking = true
+		if _mmb_looking:
 			cam_yaw -= event.relative.x * MOUSE_SENS
-			cam_pitch = clampf(cam_pitch - event.relative.y * MOUSE_SENS, -1.05, 0.7)
+			cam_pitch = clampf(cam_pitch - event.relative.y * MOUSE_SENS, -1.05, 0.55)
 
 func _physics_process(delta: float) -> void:
 	if world == null:

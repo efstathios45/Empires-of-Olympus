@@ -45,7 +45,8 @@ File name: EmpiresOfOlympus.exe
 Includes combat loot crash fix, inventory frame fit, account save/sync,
 Enter-to-chat, visible in-game cursor, and bag→panoply drag-and-drop.
 
-Hold RMB + drag to look; mouse wheel zooms the camera; open Panoply with I.
+Hold middle-mouse (scroll-wheel button) + drag to look; wheel scroll zooms.
+Open Panoply with I — right-click pouch items to Equip / Sell.
 
 Also: party XP/gold share, overhead chat bubbles, Video Settings (title + Esc),
 GLB-rendered gear icons, and tuned helmet/shield attachment on the hoplite.
