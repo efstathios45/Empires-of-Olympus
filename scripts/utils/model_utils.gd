@@ -119,82 +119,14 @@ static func _bone_name_is_arm(bone_name: String) -> bool:
 
 
 
-static func _setup_achilles_hang_arms(model: Node3D) -> void :
-	if model == null or not _is_achilles_hoplite(model):
-		return
-	var skel: Skeleton3D = null
-	for n in model.find_children("*", "Skeleton3D", true, false):
-		skel = n as Skeleton3D
-		break
-	var ap: = model.find_child("AnimationPlayer", true, false) as AnimationPlayer
-	if skel == null or ap == null:
-		return
-	if skel.has_node("HangArmHold"):
-		return
-	# The greek_hoplite clips ship with the arms baked at the T-pose, so there is
-	# no good arm pose to sample from any clip. Synthesize a natural arms-down
-	# pose by aiming each upper arm downward, hold it with a modifier, and strip
-	# the (broken) arm tracks so the animations can't fight the hold.
-	var poses: = _compute_arm_down_poses(skel)
-	if poses.is_empty():
-		return
-	strip_arm_animation_tracks(ap)
-	var fix: = SkeletonModifier3D.new()
-	fix.name = "HangArmHold"
-	fix.set_script(load("res://scripts/utils/hang_arm_hold.gd"))
-	skel.add_child(fix)
-	fix.call("setup_poses", poses)
-
-
-static func _compute_arm_down_poses(skel: Skeleton3D) -> Dictionary:
-	var out: Dictionary = {}
-	var arms: = [
-		["Shoulder_L", "UpperArm_L", "LowerArm_L", "Wrist_L", 1.0], 
-		["Shoulder_R", "UpperArm_R", "LowerArm_R", "Wrist_R", -1.0], 
-	]
-	for entry in arms:
-		var ua: int = skel.find_bone(String(entry[1]))
-		if ua < 0:
-			continue
-		var side: float = float(entry[4])
-		var la: int = skel.find_bone(String(entry[2]))
-		var ua_g: = skel.get_bone_global_rest(ua)
-		var elbow: Vector3
-		if la >= 0:
-			elbow = skel.get_bone_global_rest(la).origin
-		else:
-			elbow = ua_g.origin + ua_g.basis.x.normalized() * 0.3 * side
-		var cur_dir: = elbow - ua_g.origin
-		if cur_dir.length() < 0.0001:
-			continue
-		cur_dir = cur_dir.normalized()
-		# Mostly straight down, with a small outward splay and slight forward cant.
-		var desired: = Vector3(side * 0.12, -1.0, 0.08).normalized()
-		var swing: = Quaternion(cur_dir, desired)
-		var new_basis: = Basis(swing) * ua_g.basis
-		var parent: int = skel.get_bone_parent(ua)
-		var parent_basis: = Basis()
-		if parent >= 0:
-			parent_basis = skel.get_bone_global_rest(parent).basis
-		var local_basis: = parent_basis.orthonormalized().inverse() * new_basis.orthonormalized()
-		# Keep shoulder / forearm / wrist at their rest pose so the chain hangs
-		# straight from the re-aimed upper arm instead of reverting to T-pose.
-		for keep_name in [String(entry[0]), String(entry[2]), String(entry[3])]:
-			var kb: int = skel.find_bone(keep_name)
-			if kb >= 0 and not out.has(kb):
-				var r: = skel.get_bone_rest(kb)
-				out[kb] = {
-					"pos": r.origin, 
-					"rot": r.basis.get_rotation_quaternion(), 
-					"scale": r.basis.get_scale(), 
-				}
-		var ua_rest: = skel.get_bone_rest(ua)
-		out[ua] = {
-			"pos": ua_rest.origin, 
-			"rot": local_basis.get_rotation_quaternion(), 
-			"scale": ua_rest.basis.get_scale(), 
-		}
-	return out
+# Disabled: the greek_hoplite clips animate the arms correctly on their own
+# (verified: every arm bone has motion tracks). The old "hang arms" hack sampled
+# a pose before the skeleton had applied the animation, captured the T-pose rest,
+# then stripped the good arm tracks and pinned that T-pose — which is exactly why
+# the hero (and anything routed through here) looked T-posed. Letting the source
+# animation drive the arms restores natural idle/walk/attack and weapon holding.
+static func _setup_achilles_hang_arms(_model: Node3D) -> void :
+	return
 
 
 static func strip_arm_animation_tracks(anim_player: AnimationPlayer) -> void :
@@ -463,10 +395,6 @@ static func setup_character_for_movement(node: Node3D, target_height: float = 1.
 
 
 	_align_quaternius_visual_facing(node)
-
-
-	if _is_achilles_hoplite(node):
-		_setup_achilles_hang_arms(node)
 
 	if _is_kaykit_model(node):
 		ground_by_feet(node)
