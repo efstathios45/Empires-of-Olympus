@@ -1,8 +1,8 @@
 @tool
 
-# Implementation of MultiMeshInstance which doesn't use the scene tree
 
-var _multimesh_instance := RID()
+
+var _multimesh_instance: = RID()
 
 
 func _init():
@@ -32,8 +32,8 @@ func set_multimesh(mm: MultiMesh):
 
 
 func set_material_override(material: Material):
-	RenderingServer.instance_geometry_set_material_override( \
-		_multimesh_instance, material.get_rid() if material != null else RID())
+	RenderingServer.instance_geometry_set_material_override(\
+	_multimesh_instance, material.get_rid() if material != null else RID())
 
 
 func set_aabb(aabb: AABB):

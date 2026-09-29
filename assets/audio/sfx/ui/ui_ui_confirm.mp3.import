@@ -13,7 +13,7 @@ dest_files=["res://.godot/imported/ui_ui_confirm.mp3-9d47ef790d7a2ef9ae226662e9d
 [params]
 
 loop=false
-loop_offset=0
-bpm=0
+loop_offset=0.0
+bpm=0.0
 beat_count=0
 bar_beats=4

@@ -13,7 +13,7 @@ dest_files=["res://.godot/imported/jingle_game_over_defeat_dirge.mp3-ee5486f32af
 [params]
 
 loop=false
-loop_offset=0
-bpm=0
+loop_offset=0.0
+bpm=0.0
 beat_count=0
 bar_beats=4

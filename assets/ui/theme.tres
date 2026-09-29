@@ -1,25 +1,25 @@
 [gd_resource type="Theme" load_steps=5 format=3]
 
-[ext_resource type="StyleBox" path="res://assets/ui/btn_blank.tres" id="1_sb"]
-[ext_resource type="StyleBox" path="res://assets/ui/panel_scroll.tres" id="2_sb"]
-[ext_resource type="StyleBox" path="res://assets/ui/panel_card.tres" id="3_sb"]
-[ext_resource type="StyleBox" path="res://assets/ui/panel_tooltip.tres" id="4_sb"]
+[ext_resource type="StyleBox" path="res://assets/ui/btn_blank.tres" id="1"]
+[ext_resource type="StyleBox" path="res://assets/ui/panel_card.tres" id="2"]
+[ext_resource type="StyleBox" path="res://assets/ui/panel_scroll.tres" id="3"]
+[ext_resource type="StyleBox" path="res://assets/ui/panel_tooltip.tres" id="4"]
 
 [resource]
-Button/styles/normal = ExtResource("1_sb")
-Panel/styles/panel = ExtResource("2_sb")
-InventoryPanel/styles/panel = ExtResource("3_sb")
-TooltipPanel/styles/panel = ExtResource("4_sb")
-Button/styles/hover = ExtResource("1_sb")
-Button/styles/pressed = ExtResource("1_sb")
-Button/styles/disabled = ExtResource("1_sb")
-Button/styles/focus = ExtResource("1_sb")
-PanelContainer/styles/panel = ExtResource("2_sb")
-InventoryPanelPanelContainer/styles/panel = ExtResource("3_sb")
-TooltipPanelPanelContainer/styles/panel = ExtResource("4_sb")
 Button/colors/font_color = Color(0.42, 0.13, 0.1, 1)
-Button/colors/font_hover_color = Color(0.42, 0.13, 0.1, 1)
-Button/colors/font_pressed_color = Color(0.3, 0.09, 0.07, 1)
 Button/colors/font_disabled_color = Color(0.55, 0.5, 0.45, 1)
 Button/colors/font_focus_color = Color(0.42, 0.13, 0.1, 1)
+Button/colors/font_hover_color = Color(0.42, 0.13, 0.1, 1)
+Button/colors/font_pressed_color = Color(0.3, 0.09, 0.07, 1)
+Button/styles/disabled = ExtResource("1")
+Button/styles/focus = ExtResource("1")
+Button/styles/hover = ExtResource("1")
+Button/styles/normal = ExtResource("1")
+Button/styles/pressed = ExtResource("1")
+InventoryPanel/styles/panel = ExtResource("2")
+InventoryPanelPanelContainer/styles/panel = ExtResource("2")
 Label/colors/font_color = Color(0.15, 0.11, 0.07, 1)
+Panel/styles/panel = ExtResource("3")
+PanelContainer/styles/panel = ExtResource("3")
+TooltipPanel/styles/panel = ExtResource("4")
+TooltipPanelPanelContainer/styles/panel = ExtResource("4")

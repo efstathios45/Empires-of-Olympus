@@ -1,6 +1,6 @@
 [gd_resource type="ShaderMaterial" load_steps=6 format=3 uid="uid://dnw08mtonx63d"]
 
-[ext_resource type="Shader" uid="uid://b1sjgiq8o4tvd" path="res://assets/3d_vfx/impact_explosions/src/shader/explosion_smoke.gdshader" id="1_5yu7f"]
+[ext_resource type="Shader" uid="uid://b1sjgiq8o4tvd" path="res://assets/3d_vfx/impact_explosions/src/shader/explosion_smoke.gdshader" id="1"]
 
 [sub_resource type="FastNoiseLite" id="FastNoiseLite_msnhc"]
 seed = 2
@@ -33,7 +33,8 @@ noise = SubResource("FastNoiseLite_plj08")
 
 [resource]
 render_priority = 0
-shader = ExtResource("1_5yu7f")
+next_pass = null
+shader = ExtResource("1")
 shader_parameter/noise_texture = SubResource("NoiseTexture2D_msnhc")
 shader_parameter/glow_noise_texture = SubResource("NoiseTexture2D_plj08")
 shader_parameter/primary_color = Color(1, 0.662745, 0.0666667, 1)
