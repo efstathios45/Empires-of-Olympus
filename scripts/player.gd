@@ -255,9 +255,7 @@ func _build_body() -> void:
 				anim.remove_animation_library("")
 			anim.add_animation_library("", lib)
 	ModelUtils.set_animation_loops(anim)
-	## Ensure hang-rest Achilles keeps arms (setup also strips when name matches).
-	if "greek_hoplite" in char_path:
-		ModelUtils.strip_arm_animation_tracks(anim)
+	## Hang arms handled in setup_character_for_movement (hold + strip).
 	ModelUtils.bind_leg_plant_anim(model, anim)
 
 	var weapon_path: String = _resolved_weapon_path()

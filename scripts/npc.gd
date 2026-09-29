@@ -81,9 +81,11 @@ func _ready() -> void:
 		_base_yaw = _model.rotation.y
 		ModelUtils.setup_character_for_movement(_model, height_m)
 		_model.rotation.y = _base_yaw + spawn_yaw
-		## Quaternius warriors get Hellenic bronze + Corinthian; townsfolk stay as authored.
-		if "hero_king" in glb_path or "quaternius_guard" in glb_path \
-				or "guard_adventurer" in glb_path:
+		## CC0 Hellenic cast (greek_*) ships textured meshes — no GreekLook helm stack.
+		var gpath := glb_path.to_lower()
+		var is_hellenic_cast := "/greek_" in gpath or gpath.contains("greek_hoplite")
+		if not is_hellenic_cast and ("hero_king" in gpath or "quaternius_guard" in gpath \
+				or "guard_adventurer" in gpath):
 			var GreekLook = load("res://scripts/utils/greek_look.gd")
 			GreekLook.apply(_model, "guard")
 		_anim = _model.find_child("AnimationPlayer", true) as AnimationPlayer

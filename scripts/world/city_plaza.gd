@@ -165,7 +165,7 @@ static func _temple_precinct(world) -> void:
 
 	# Priestess Melite — the quest giver, by the altar (textured Hellenic rest pose).
 	var priestess = NpcScript.create("priestess", "Priestess Melite",
-		"res://assets/characters/oracle_priestess/oracle_priestess.glb",
+		"res://assets/characters/greek_oracle/greek_oracle.glb",
 		"",
 		Vector3(-7.4, 0.0, -5.8), 1.72, 130.0)
 	world.add_child(priestess)
@@ -268,7 +268,7 @@ static func _smith_yard(world) -> void:
 
 	# Brontes the smith — refinement and wares (textured Hellenic rest pose).
 	var smith = NpcScript.create("smith", "Brontes the Smith",
-		"res://assets/characters/blacksmith_npc/blacksmith_npc.glb",
+		"res://assets/characters/greek_smith/greek_smith.glb",
 		"",
 		Vector3(9.4, 0.0, 14.2), 1.8, 150.0)
 	world.add_child(smith)
@@ -307,12 +307,12 @@ static func _amphora(world, x: float, z: float) -> void:
 ## guards on the gate and the temple steps. Decsheets only — an idle clip each
 ## and one remark on E. Missing models are skipped silently.
 ## Townsfolk: textured Hellenic rest poses (no UAL melt / no LegPlant).
-## Gate guards share the Achilles+Quaternius hero mesh so Idle_Sword works.
-const MERCHANT_GLB := "res://assets/characters/citizen_merchant/citizen_merchant.glb"
+## Gate guards use CC0 Hellenic guard mesh + Quaternius Idle_Sword clips.
+const MERCHANT_GLB := "res://assets/characters/greek_merchant/greek_merchant.glb"
 const MERCHANT_LIB := ""
-const WOMAN_GLB := "res://assets/characters/citizen_woman/citizen_woman.glb"
+const WOMAN_GLB := "res://assets/characters/greek_citizen_woman/greek_citizen_woman.glb"
 const WOMAN_LIB := ""
-const GUARD_GLB := "res://assets/characters/quaternius_hero_king/hero_king.glb"
+const GUARD_GLB := "res://assets/characters/greek_guard/greek_guard.glb"
 const GUARD_LIB := ""
 
 static func _townsfolk(world) -> void:
