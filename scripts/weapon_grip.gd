@@ -189,16 +189,24 @@ static func _resolve_bone(skel: Skeleton3D, preferred: String, weapon_class: Str
 		return preferred
 	if skel.find_bone(preferred) >= 0:
 		return preferred
+	# Bone-name convention fallback: the greek/quaternius rigs use underscores
+	# ("Wrist_R"), while some grip configs use dots ("Wrist.R"). Try swapping the
+	# separator before falling back to the per-class alternates.
+	for swapped in [preferred.replace(".", "_"), preferred.replace("_", ".")]:
+		if swapped != preferred and skel.find_bone(swapped) >= 0:
+			return swapped
 	var alts: Array = []
 	var wclass: = weapon_class.to_lower()
 	if wclass == "shield" or preferred in ["LeftLowerArm", "LeftHand", "LeftUpperArm", "LowerArm.L", "Wrist.L"]:
 		alts = [
+			"Wrist_L", "LowerArm_L", "Hand_L", "LeftHand", 
 			"LowerArm.L", "Wrist.L", "hand.l", "wrist.l", 
 			"Round_Shield", "handslot.l", "Badge_Shield", "Rectangle_Shield", 
 		]
 	elif preferred in ["RightHand", "RightLowerArm", "RightUpperArm", "Wrist.R", "LowerArm.R"]\
 	or wclass in ["melee", "gun", "pistol"]:
 		alts = [
+			"Wrist_R", "LowerArm_R", "Hand_R", "RightHand", 
 			"Wrist.R", "LowerArm.R", "hand.r", "wrist.r", 
 			"1H_Sword", "handslot.r", "2H_Sword", 
 		]
