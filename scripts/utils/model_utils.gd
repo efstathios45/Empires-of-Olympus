@@ -131,36 +131,70 @@ static func _setup_achilles_hang_arms(model: Node3D) -> void :
 		return
 	if skel.has_node("HangArmHold"):
 		return
-	var clip: = "Idle_Neutral"
-	if not ap.has_animation(clip):
-		clip = "Idle" if ap.has_animation("Idle") else ""
-	if clip == "":
-		strip_arm_animation_tracks(ap)
+	# The greek_hoplite clips ship with the arms baked at the T-pose, so there is
+	# no good arm pose to sample from any clip. Synthesize a natural arms-down
+	# pose by aiming each upper arm downward, hold it with a modifier, and strip
+	# the (broken) arm tracks so the animations can't fight the hold.
+	var poses: = _compute_arm_down_poses(skel)
+	if poses.is_empty():
 		return
-	var prev: = ap.current_animation
-	var was_playing: = ap.is_playing()
-	ap.play(clip)
-	ap.seek(0.0, true)
-	ap.advance(0.0)
-	var poses: Dictionary = {}
-	for bi in skel.get_bone_count():
-		if not _bone_name_is_arm(skel.get_bone_name(bi)):
-			continue
-		poses[bi] = {
-			"pos": skel.get_bone_pose_position(bi), 
-			"rot": skel.get_bone_pose_rotation(bi), 
-			"scale": skel.get_bone_pose_scale(bi), 
-		}
 	strip_arm_animation_tracks(ap)
-	if was_playing and prev != "" and ap.has_animation(prev):
-		ap.play(prev)
-	else:
-		ap.play(clip)
 	var fix: = SkeletonModifier3D.new()
 	fix.name = "HangArmHold"
 	fix.set_script(load("res://scripts/utils/hang_arm_hold.gd"))
 	skel.add_child(fix)
 	fix.call("setup_poses", poses)
+
+
+static func _compute_arm_down_poses(skel: Skeleton3D) -> Dictionary:
+	var out: Dictionary = {}
+	var arms: = [
+		["Shoulder_L", "UpperArm_L", "LowerArm_L", "Wrist_L", 1.0], 
+		["Shoulder_R", "UpperArm_R", "LowerArm_R", "Wrist_R", -1.0], 
+	]
+	for entry in arms:
+		var ua: int = skel.find_bone(String(entry[1]))
+		if ua < 0:
+			continue
+		var side: float = float(entry[4])
+		var la: int = skel.find_bone(String(entry[2]))
+		var ua_g: = skel.get_bone_global_rest(ua)
+		var elbow: Vector3
+		if la >= 0:
+			elbow = skel.get_bone_global_rest(la).origin
+		else:
+			elbow = ua_g.origin + ua_g.basis.x.normalized() * 0.3 * side
+		var cur_dir: = elbow - ua_g.origin
+		if cur_dir.length() < 0.0001:
+			continue
+		cur_dir = cur_dir.normalized()
+		# Mostly straight down, with a small outward splay and slight forward cant.
+		var desired: = Vector3(side * 0.12, -1.0, 0.08).normalized()
+		var swing: = Quaternion(cur_dir, desired)
+		var new_basis: = Basis(swing) * ua_g.basis
+		var parent: int = skel.get_bone_parent(ua)
+		var parent_basis: = Basis()
+		if parent >= 0:
+			parent_basis = skel.get_bone_global_rest(parent).basis
+		var local_basis: = parent_basis.orthonormalized().inverse() * new_basis.orthonormalized()
+		# Keep shoulder / forearm / wrist at their rest pose so the chain hangs
+		# straight from the re-aimed upper arm instead of reverting to T-pose.
+		for keep_name in [String(entry[0]), String(entry[2]), String(entry[3])]:
+			var kb: int = skel.find_bone(keep_name)
+			if kb >= 0 and not out.has(kb):
+				var r: = skel.get_bone_rest(kb)
+				out[kb] = {
+					"pos": r.origin, 
+					"rot": r.basis.get_rotation_quaternion(), 
+					"scale": r.basis.get_scale(), 
+				}
+		var ua_rest: = skel.get_bone_rest(ua)
+		out[ua] = {
+			"pos": ua_rest.origin, 
+			"rot": local_basis.get_rotation_quaternion(), 
+			"scale": ua_rest.basis.get_scale(), 
+		}
+	return out
 
 
 static func strip_arm_animation_tracks(anim_player: AnimationPlayer) -> void :
