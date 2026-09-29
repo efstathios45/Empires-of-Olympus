@@ -1,7 +1,7 @@
 class_name ModelUtils
 
 ## Baked into exports so we can verify the PCK actually contains this revision.
-const BUILD_FIX_TOKEN := "EOO_FIX_ACHILLES_PALM_GRIPS_V1"
+const BUILD_FIX_TOKEN := "EOO_FIX_HELLENIC_NPC_POSE_V1"
 
 ## Tripo mesh id shared by spartan_hoplite + city_guard — UAL melts this bind.
 const _BROKEN_UAL_MESH := "95ce6ed4"
@@ -110,6 +110,58 @@ const _ARM_TRACK_KEYS := [
 	"Shoulder", "UpperArm", "LowerArm", "Wrist",
 	"Thumb", "Index", "Middle", "Ring", "Pinky",
 ]
+
+static func _bone_name_is_arm(bone_name: String) -> bool:
+	for key in _ARM_TRACK_KEYS:
+		if key in bone_name:
+			return true
+	return false
+
+
+## Sample hang arms from Idle, strip arm tracks, install SkeletonModifier hold.
+static func _setup_achilles_hang_arms(model: Node3D) -> void:
+	if model == null or not _is_achilles_hoplite(model):
+		return
+	var skel: Skeleton3D = null
+	for n in model.find_children("*", "Skeleton3D", true, false):
+		skel = n as Skeleton3D
+		break
+	var ap := model.find_child("AnimationPlayer", true, false) as AnimationPlayer
+	if skel == null or ap == null:
+		return
+	if skel.has_node("HangArmHold"):
+		return
+	var clip := "Idle_Neutral"
+	if not ap.has_animation(clip):
+		clip = "Idle" if ap.has_animation("Idle") else ""
+	if clip == "":
+		strip_arm_animation_tracks(ap)
+		return
+	var prev := ap.current_animation
+	var was_playing := ap.is_playing()
+	ap.play(clip)
+	ap.seek(0.0, true)
+	ap.advance(0.0)
+	var poses: Dictionary = {}
+	for bi in skel.get_bone_count():
+		if not _bone_name_is_arm(skel.get_bone_name(bi)):
+			continue
+		poses[bi] = {
+			"pos": skel.get_bone_pose_position(bi),
+			"rot": skel.get_bone_pose_rotation(bi),
+			"scale": skel.get_bone_pose_scale(bi),
+		}
+	strip_arm_animation_tracks(ap)
+	if was_playing and prev != "" and ap.has_animation(prev):
+		ap.play(prev)
+	else:
+		ap.play(clip)
+	var fix := SkeletonModifier3D.new()
+	fix.name = "HangArmHold"
+	fix.set_script(load("res://scripts/utils/hang_arm_hold.gd"))
+	skel.add_child(fix)
+	fix.call("setup_poses", poses)
+
 
 static func strip_arm_animation_tracks(anim_player: AnimationPlayer) -> void:
 	if anim_player == null:
@@ -377,11 +429,10 @@ static func setup_character_for_movement(node: Node3D, target_height: float = 1.
 	## Quaternius meshes face +Z; gameplay MODEL_FRONT is −Z. Rotate the
 	## armature (not the scene root) so mesh_root / NPC yaw stays canonical.
 	_align_quaternius_visual_facing(node)
-	## Hang-rest Achilles: drop arm clips so hang bind stays intact.
+	## Hang-rest Achilles: strip arm clips (they melt the bind) and hold the
+	## Idle_Neutral frame-0 arm pose so Walk/Slash don't snap back to T-pose rest.
 	if _is_achilles_hoplite(node):
-		var ap := node.find_child("AnimationPlayer", true, false) as AnimationPlayer
-		if ap != null:
-			strip_arm_animation_tracks(ap)
+		_setup_achilles_hang_arms(node)
 	## KayKit (and similar) often have AABB below the soles — pin by foot bones.
 	if _is_kaykit_model(node):
 		ground_by_feet(node)
