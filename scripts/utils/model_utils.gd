@@ -397,11 +397,36 @@ static func setup_character_for_movement(node: Node3D, target_height: float = 1.
 	_align_quaternius_visual_facing(node)
 
 	if _is_kaykit_model(node):
+		strip_kaykit_native_gear(node)
 		ground_by_feet(node)
 
 		node.position.y -= 0.16
 		install_kaykit_foot_ground(node)
 	install_leg_plant_fix(node)
+
+
+# KayKit character rigs ship with their own weapon/shield meshes baked into the
+# hand/holder sockets (e.g. "1H_Sword3", "Round_Shield3", "Knife3", "2H_Staff3").
+# We mount our own Greek props onto those same sockets, so the native props must
+# be hidden or the hero appears to hold two weapons. Worn accessories (cape, hat,
+# helmet, spellbook) are kept — they do not conflict with the equipped gear.
+const _KAYKIT_GEAR_HIDE: = [
+	"sword", "shield", "crossbow", "bow", "knife", "throwable",
+	"wand", "staff", "axe", "offhand", "dagger", "spear", "mace", "hammer", "quiver",
+]
+
+static func strip_kaykit_native_gear(model: Node3D) -> void :
+	if model == null:
+		return
+	for n in model.find_children("*", "MeshInstance3D", true, false):
+		var mi: = n as MeshInstance3D
+		if mi == null:
+			continue
+		var nlow: = String(mi.name).to_lower()
+		for key in _KAYKIT_GEAR_HIDE:
+			if key in nlow:
+				mi.visible = false
+				break
 
 
 
@@ -450,7 +475,7 @@ static func _is_kaykit_model(model: Node3D) -> bool:
 		return true
 	for n in model.find_children("*", "Skeleton3D", true, false):
 		var skel: = n as Skeleton3D
-		if skel != null and skel.find_bone("handslot.r") >= 0:
+		if skel != null and (skel.find_bone("handslot.r") >= 0 or skel.find_bone("handslot_r") >= 0):
 			return true
 	return false
 
@@ -472,7 +497,7 @@ static func scale_by_foot_to_head(node: Node3D, target_meters: float) -> void :
 	if head_i < 0:
 		head_i = skel.find_bone("Head")
 	var foot_y: = INF
-	for bone_name in ["Foot.L", "Foot.R", "foot.l", "foot.r", "toes.l", "toes.r", "LeftFoot", "RightFoot"]:
+	for bone_name in ["Foot.L", "Foot.R", "foot.l", "foot.r", "foot_l", "foot_r", "toes.l", "toes.r", "toes_l", "toes_r", "LeftFoot", "RightFoot"]:
 		var bi: = skel.find_bone(bone_name)
 		if bi < 0:
 			continue
@@ -499,7 +524,8 @@ static func ground_by_feet(node: Node3D, y_offset: float = 0.0) -> void :
 	if skel == null:
 		return
 	var foot_names: = [
-		"Foot.L", "Foot.R", "foot.l", "foot.r", "toes.l", "toes.r", 
+		"Foot.L", "Foot.R", "foot.l", "foot.r", "foot_l", "foot_r", 
+		"toes.l", "toes.r", "toes_l", "toes_r", 
 		"LeftFoot", "RightFoot", "LeftToes", "RightToes", 
 	]
 	var min_y: = INF

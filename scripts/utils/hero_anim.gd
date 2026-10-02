@@ -56,7 +56,7 @@ static func is_kaykit(model: Node3D) -> bool:
 		return true
 	for n in model.find_children("*", "Skeleton3D", true, false):
 		var skel: = n as Skeleton3D
-		if skel != null and skel.find_bone("handslot.r") >= 0:
+		if skel != null and (skel.find_bone("handslot.r") >= 0 or skel.find_bone("handslot_r") >= 0):
 			return true
 	return false
 
