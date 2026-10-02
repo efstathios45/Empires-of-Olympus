@@ -96,6 +96,7 @@ func _ready() -> void :
 		if lib_path != "" and ResourceLoader.exists(lib_path):
 			var lib: = load(lib_path) as AnimationLibrary
 			if lib:
+				lib = _retarget_library(lib)
 				_anim.add_animation_library("", lib)
 		ModelUtils.set_animation_loops(_anim)
 		ModelUtils.bind_leg_plant_anim(_model, _anim)
@@ -116,6 +117,44 @@ func _ready() -> void :
 	var world: = get_tree().get_first_node_in_group("game_world")
 	if world and world.has_method("sample_height"):
 		global_position.y = world.sample_height(global_position.x, global_position.z)
+
+
+func _retarget_library(lib: AnimationLibrary) -> AnimationLibrary:
+	# Some shared animation libraries author their skeleton tracks against a
+	# scene-unique name ("%GeneralSkeleton:<bone>"), which does not resolve on
+	# these imported models (their skeleton is "Armature/Skeleton3D"). Without
+	# this the clip plays but moves nothing, leaving the model stuck in its
+	# T-pose rest. Rewrite those tracks to the model's actual skeleton path.
+	var skel: Skeleton3D = null
+	for n in _model.find_children("*", "Skeleton3D", true, false):
+		skel = n as Skeleton3D
+		break
+	if skel == null or _anim == null:
+		return lib
+	var root: Node = _anim.get_node_or_null(_anim.root_node)
+	if root == null:
+		root = _model
+	var skel_rel: = String(root.get_path_to(skel))
+	var needs_fix: = false
+	for an in lib.get_animation_list():
+		var a: = lib.get_animation(an)
+		for ti in a.get_track_count():
+			if String(a.track_get_path(ti)).begins_with("%GeneralSkeleton"):
+				needs_fix = true
+				break
+		if needs_fix:
+			break
+	if not needs_fix:
+		return lib
+	var out: = AnimationLibrary.new()
+	for an in lib.get_animation_list():
+		var a: Animation = lib.get_animation(an).duplicate(true)
+		for ti in a.get_track_count():
+			var tp: = String(a.track_get_path(ti))
+			if tp.begins_with("%GeneralSkeleton"):
+				a.track_set_path(ti, NodePath(skel_rel + tp.substr("%GeneralSkeleton".length())))
+		out.add_animation(an, a)
+	return out
 
 
 func _collect_idle_variants() -> PackedStringArray:
