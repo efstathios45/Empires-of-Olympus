@@ -100,6 +100,7 @@ func _ready() -> void :
 				_anim.add_animation_library("", lib)
 		ModelUtils.set_animation_loops(_anim)
 		ModelUtils.bind_leg_plant_anim(_model, _anim)
+		_install_posture_fix()
 		if not _anim.has_animation(idle_clip):
 			if _anim.has_animation("Idle"):
 				idle_clip = "Idle"
@@ -117,6 +118,21 @@ func _ready() -> void :
 	var world: = get_tree().get_first_node_in_group("game_world")
 	if world and world.has_method("sample_height"):
 		global_position.y = world.sample_height(global_position.x, global_position.z)
+
+
+func _install_posture_fix() -> void :
+	var skel: Skeleton3D = null
+	for n in _model.find_children("*", "Skeleton3D", true, false):
+		skel = n as Skeleton3D
+		break
+	if skel == null or skel.has_node("NpcPostureFix"):
+		return
+	var fix: = Node.new()
+	fix.name = "NpcPostureFix"
+	fix.set_script(load("res://scripts/utils/npc_posture_fix.gd"))
+	skel.add_child(fix)
+	if fix.has_method("bind_anim"):
+		fix.call("bind_anim", _anim)
 
 
 func _retarget_library(lib: AnimationLibrary) -> AnimationLibrary:
