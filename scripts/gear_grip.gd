@@ -98,7 +98,83 @@ const HELMET_BY_GLB: = {
 }
 
 
-static func grip_for_glb(glb_path: String) -> Dictionary:
+# KayKit rigs (knight/rogue/mage) expose dedicated hand-attach bones
+# ("handslot_r"/"handslot_l") plus weapon-holder sockets. Props mounted there
+# need their own hold tuning because the hand bone's rest orientation differs
+# from the greek/quaternius rigs. These are normalized to a canonical frame
+# first, then nudged into a believable grip.
+# Mounted on KayKit's dedicated weapon-holder sockets (1H_Sword, Round_Shield,
+# 1H_Crossbow, 2H_Staff ...). The animations keep those sockets oriented for the
+# weapon through every clip, so a +Y-authored prop sits correctly with identity
+# rotation. skip_normalize avoids compounding the model's ~1.52x skeleton scale.
+# Scales/offsets are derived from the measured raw prop sizes; +Y position moves
+# the hand grip from the prop's centre toward its butt.
+const GRIP_BY_GLB_KAYKIT: = {
+	"res://assets/props/weapons/dory_spear.glb": {
+		"bone": "1H_Sword", 
+		"position": Vector3(0.0, 0.85, 0.0), 
+		"rotation_deg": Vector3(0.0, 0.0, 0.0), 
+		"scale": 1.7, 
+		"skip_normalize": true, 
+	}, 
+	"res://assets/props/gear/kontos_spear.glb": {
+		"bone": "1H_Sword", 
+		"position": Vector3(0.0, 1.0, 0.0), 
+		"rotation_deg": Vector3(0.0, 0.0, 0.0), 
+		"scale": 2.0, 
+		"skip_normalize": true, 
+	}, 
+	"res://assets/props/gear/aspis_shield.glb": {
+		"bone": "Round_Shield", 
+		"position": Vector3(0.0, 0.0, 0.0), 
+		"rotation_deg": Vector3(0.0, 0.0, 0.0), 
+		"scale": 0.78, 
+		"skip_normalize": true, 
+	}, 
+	"res://assets/props/gear/tower_shield.glb": {
+		"bone": "Rectangle_Shield", 
+		"position": Vector3(0.0, 0.0, 0.0), 
+		"rotation_deg": Vector3(0.0, 0.0, 0.0), 
+		"scale": 0.8, 
+		"skip_normalize": true, 
+	}, 
+	"res://assets/props/weapons/cretan_bow.glb": {
+		"bone": "1H_Crossbow", 
+		"position": Vector3(0.0, 0.0, 0.0), 
+		"rotation_deg": Vector3(0.0, 0.0, 0.0), 
+		"scale": 1.1, 
+		"skip_normalize": true, 
+	}, 
+	"res://assets/props/weapons/theurgist_staff.glb": {
+		"bone": "2H_Staff", 
+		"position": Vector3(0.0, 0.85, 0.0), 
+		"rotation_deg": Vector3(0.0, 0.0, 0.0), 
+		"scale": 1.7, 
+		"skip_normalize": true, 
+	}, 
+	"res://assets/props/gear/xiphos_sword.glb": {
+		"bone": "1H_Sword", 
+		"position": Vector3(0.0, 0.0, 0.0), 
+		"rotation_deg": Vector3(0.0, 0.0, 0.0), 
+		"scale": 0.9, 
+		"skip_normalize": true, 
+	}, 
+}
+
+
+static func _is_kaykit(model: Node3D) -> bool:
+	if model == null:
+		return false
+	var nlow: = String(model.name).to_lower()
+	if "knight" in nlow or "rogue" in nlow or "mage" in nlow or "barbarian" in nlow:
+		return true
+	var skel: = _find_skeleton(model)
+	return skel != null and skel.find_bone("handslot_r") >= 0
+
+
+static func grip_for_glb(glb_path: String, model: Node3D = null) -> Dictionary:
+	if model != null and _is_kaykit(model) and GRIP_BY_GLB_KAYKIT.has(glb_path):
+		return (GRIP_BY_GLB_KAYKIT[glb_path] as Dictionary).duplicate(true)
 	var g: Dictionary = GRIP_BY_GLB.get(glb_path, {})
 	return g.duplicate(true)
 
@@ -115,7 +191,7 @@ static func weapon_class_for(glb_path: String) -> String:
 static func attach_weapon(model: Node3D, glb_path: String) -> Node3D:
 	if glb_path == "" or not ResourceLoader.exists(glb_path):
 		return null
-	var grip: = grip_for_glb(glb_path)
+	var grip: = grip_for_glb(glb_path, model)
 	var wclass: = weapon_class_for(glb_path)
 	var att: = WeaponGrip.attach(model, glb_path, wclass, grip)
 	if att == null:
@@ -127,7 +203,7 @@ static func attach_weapon(model: Node3D, glb_path: String) -> Node3D:
 static func attach_shield(model: Node3D, glb_path: String) -> Node3D:
 	if glb_path == "" or not ResourceLoader.exists(glb_path):
 		return null
-	var grip: = grip_for_glb(glb_path)
+	var grip: = grip_for_glb(glb_path, model)
 	var att: = WeaponGrip.attach(model, glb_path, "shield", grip)
 	if att == null:
 		return null
