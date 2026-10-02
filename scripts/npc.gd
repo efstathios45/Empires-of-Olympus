@@ -97,6 +97,8 @@ func _ready() -> void :
 			var lib: = load(lib_path) as AnimationLibrary
 			if lib:
 				lib = _retarget_library(lib)
+				if _anim.has_animation_library(""):
+					_anim.remove_animation_library("")
 				_anim.add_animation_library("", lib)
 		ModelUtils.set_animation_loops(_anim)
 		ModelUtils.bind_leg_plant_anim(_model, _anim)
@@ -108,6 +110,12 @@ func _ready() -> void :
 				idle_clip = "Idle_Neutral"
 			elif _anim.has_animation("ual1_Idle"):
 				idle_clip = "ual1_Idle"
+			else:
+				# Last resort: play whatever clip the library actually has so the
+				# model is never left frozen in its bind (T-pose) rest.
+				var all: = _anim.get_animation_list()
+				if all.size() > 0:
+					idle_clip = all[0]
 		_idle_variants = _collect_idle_variants()
 		if _anim.has_animation(idle_clip):
 			_anim.play(idle_clip)
