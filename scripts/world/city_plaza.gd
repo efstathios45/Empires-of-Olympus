@@ -165,8 +165,8 @@ static func _temple_precinct(world) -> void :
 
 
 	var priestess = NpcScript.create("priestess", "Priestess Melite", 
-		"res://assets/characters/greek_oracle/greek_oracle.glb", 
-		"", 
+		"res://assets/characters/oracle_priestess/oracle_priestess.glb", 
+		"res://assets/characters/oracle_priestess/oracle_priestess_animations.tres", 
 		Vector3(-7.4, 0.0, -5.8), 1.72, 130.0)
 	world.add_child(priestess)
 	world.add_interactable(priestess)
@@ -268,8 +268,8 @@ static func _smith_yard(world) -> void :
 
 
 	var smith = NpcScript.create("smith", "Brontes the Smith", 
-		"res://assets/characters/greek_smith/greek_smith.glb", 
-		"", 
+		"res://assets/characters/blacksmith_npc/blacksmith_npc.glb", 
+		"res://assets/characters/blacksmith_npc/blacksmith_npc_animations.tres", 
 		Vector3(9.4, 0.0, 14.2), 1.8, 150.0)
 	world.add_child(smith)
 	world.add_interactable(smith)
@@ -308,12 +308,12 @@ static func _amphora(world, x: float, z: float) -> void :
 
 
 
-const MERCHANT_GLB: = "res://assets/characters/greek_merchant/greek_merchant.glb"
-const MERCHANT_LIB: = ""
-const WOMAN_GLB: = "res://assets/characters/greek_citizen_woman/greek_citizen_woman.glb"
-const WOMAN_LIB: = ""
-const GUARD_GLB: = "res://assets/characters/greek_guard/greek_guard.glb"
-const GUARD_LIB: = ""
+const MERCHANT_GLB: = "res://assets/characters/citizen_merchant/citizen_merchant.glb"
+const MERCHANT_LIB: = "res://assets/characters/citizen_merchant/citizen_merchant_animations.tres"
+const WOMAN_GLB: = "res://assets/characters/citizen_woman/citizen_woman.glb"
+const WOMAN_LIB: = "res://assets/characters/citizen_woman/citizen_woman_animations.tres"
+const GUARD_GLB: = "res://assets/characters/city_guard/city_guard.glb"
+const GUARD_LIB: = "res://assets/characters/city_guard/city_guard_animations.tres"
 
 static func _townsfolk(world) -> void :
 	var folk: = [
