@@ -11,10 +11,10 @@ const GRIP_BY_GLB: = {
 
 
 	"res://assets/props/gear/aspis_shield.glb": {
-		"bone": "Wrist.L", 
-		"position": Vector3(0.08, -0.02, 0.4), 
-		"rotation_deg": Vector3(0.0, 0.0, 0.0), 
-		"scale": 1.0, 
+		"bone": "LowerArm_L", 
+		"position": Vector3(0.0, 0.0, 0.08), 
+		"rotation_deg": Vector3(90.0, 0.0, 0.0), 
+		"scale": 1.5, 
 		"center_prop": true, 
 	}, 
 	"res://assets/props/gear/tower_shield.glb": {
@@ -71,11 +71,10 @@ const GRIP_BY_GLB: = {
 		"spear_hold_along_aim": 0.34, 
 	}, 
 	"res://assets/props/weapons/dory_spear.glb": {
-		"bone": "Wrist.R", 
-		"position": Vector3(-0.08, -0.02, 0.4), 
-		"rotation_deg": Vector3(90.0, 0.0, 0.0), 
-		"scale": 1.05, 
-		"spear_hold_along_aim": 0.34, 
+		"bone": "Wrist_R", 
+		"position": Vector3(0.0, 0.0, 0.0), 
+		"rotation_deg": Vector3(180.0, 0.0, 0.0), 
+		"scale": 1.8, 
 	}, 
 	"res://assets/props/weapons/cretan_bow.glb": {
 		"position": Vector3(-0.06, 0.02, 0.0), 
