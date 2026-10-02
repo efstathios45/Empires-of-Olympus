@@ -276,7 +276,7 @@ func _build_body() -> void :
 	if model.find_child("CorinthianHelmMount", true, false) == null:
 		_attach_helmet(model)
 
-	HeroAnim.play(anim, "idle")
+	HeroAnim.play(anim, _idle_alias())
 	if not GameState.inventory_changed.is_connected(_on_gear_changed):
 		GameState.inventory_changed.connect(_on_gear_changed)
 
@@ -479,7 +479,7 @@ func _process_free(delta: float) -> void :
 	if _ui_open():
 		velocity.x = move_toward(velocity.x, 0.0, 24.0 * delta)
 		velocity.z = move_toward(velocity.z, 0.0, 24.0 * delta)
-		_play_alias("idle")
+		_play_alias(_idle_alias())
 		return
 	var input_dir: = Input.get_vector("move_left", "move_right", "move_forward", "move_back")
 	var cam_basis: = camera_pivot.global_transform.basis
@@ -499,7 +499,7 @@ func _process_free(delta: float) -> void :
 	else:
 		velocity.x = move_toward(velocity.x, 0.0, 24.0 * delta)
 		velocity.z = move_toward(velocity.z, 0.0, 24.0 * delta)
-		_play_alias("idle")
+		_play_alias(_idle_alias())
 
 		_step_accum = maxf(_step_accum, STEP_DIST_WALK * 0.7)
 
@@ -616,7 +616,7 @@ func _process_block(delta: float) -> void :
 	_play_alias("block")
 	if not Input.is_action_pressed("block"):
 		state = State.FREE
-		_play_alias("idle")
+		_play_alias(_idle_alias())
 
 func _apply_gravity(delta: float) -> void :
 	if not is_on_floor():
@@ -644,6 +644,18 @@ func _play_anim(clip: String, loop_ok: bool = true) -> void :
 
 func _play_alias(alias: String, loop_ok: bool = true) -> void :
 	HeroAnim.play(anim, alias, loop_ok)
+
+
+func _idle_alias() -> String:
+	# KayKit rigs look best resting in a weapon-ready pose (spear/staff held
+	# upright) rather than the unarmed "Idle", where the mounted prop droops.
+	# Classes declare that clip via their "idle" field; fall back to the
+	# generic alias when the rig lacks it.
+	var cd: = GameState.class_data()
+	var want: = String(cd.get("idle", ""))
+	if want != "" and anim != null and anim.has_animation(want):
+		return want
+	return "idle"
 
 
 func _clip_for_alias(alias: String) -> String:
@@ -931,7 +943,7 @@ func _respawn() -> void :
 	if world and world.has_method("get_respawn_point"):
 		global_position = world.get_respawn_point()
 	velocity = Vector3.ZERO
-	_play_alias("idle")
+	_play_alias(_idle_alias())
 	AudioManager.play_music("exploration")
 	health_changed.emit(hp, GameState.max_hp())
 	mana_changed.emit(mp, GameState.max_mp())
