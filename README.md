@@ -9,7 +9,7 @@ Hoplite class uses PS1/PSX Hoplite Chan; centaur enemies use the bone centaur.
 
 Single-file build (embedded PCK) — includes Hoplite Chan + bone centaur:
 
-**https://gofile.io/d/oT7ZPbvO** — `EmpiresOfOlympus.exe`
+**https://gofile.io/d/FxBSWuwC** — `EmpiresOfOlympus.exe`
 
 Run notes / SmartScreen: [`docs/WINDOWS_RUN.md`](docs/WINDOWS_RUN.md)
 

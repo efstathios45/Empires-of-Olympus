@@ -31,12 +31,12 @@ No zip extract needed — this download is the .exe alone.
 Download
 ------------------------------------------------------------
 Windows build (recovered multiplayer/chat game + Hoplite Chan / bone centaur):
-  https://gofile.io/d/oT7ZPbvO
+  https://gofile.io/d/FxBSWuwC
 
 File name: EmpiresOfOlympus.exe
 Size: ~222 MB (embedded PCK)
-SHA-256: ed363f58738531cf980e7b7eb32258814582983067ccebd85980f27c88e17697
-MD5:     c7c7f311b01d3fdf4199ed4e290e1786
+SHA-256: 40b0397e63a360273f61693a8073c89ffedc5cf0783f662c84f7ec92b38f8f57
+MD5:     cec92e94d43fdf0b50f9d1b6faafa1f0
 
 Includes:
 - Accounts + local / cloud saves
@@ -47,6 +47,7 @@ Includes:
 - Panoply inventory, party XP/gold share, video settings
 - Nameplates / cross-empire PvP arena hooks
 - PS1/PSX Hoplite Chan as the hoplite class (built-in dory/aspis)
+- Pose fixes: wolves/boars face chase correctly; humanoid enemies leave T-pose; plaza uses greek_* cast
 - Sandstone bone centaur enemy model
 
 How to play with friends
