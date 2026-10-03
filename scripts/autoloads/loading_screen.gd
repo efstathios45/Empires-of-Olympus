@@ -272,6 +272,7 @@ const PRELOAD_PATHS: PackedStringArray = [
 	"res://assets/characters/oracle_priestess/oracle_priestess_animations.tres",
 	"res://assets/characters/satyr_enemy/satyr_enemy.glb",
 	"res://assets/characters/satyr_enemy/satyr_enemy_animations.tres",
+	"res://assets/characters/hoplite_chan/hoplite_chan.glb",
 	"res://assets/characters/spartan_hoplite/spartan_hoplite.glb",
 	"res://assets/characters/spartan_hoplite/spartan_hoplite_animations.tres",
 	"res://assets/characters/wolf_enemy/wolf_enemy.glb",

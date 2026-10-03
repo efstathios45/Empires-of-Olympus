@@ -45,6 +45,11 @@ const CLASSES := {
 	"hoplite": {
 		"name": "Hoplite",
 		"desc": "Spear and shield. A wall of bronze that strikes back.",
+		"model": "res://assets/characters/hoplite_chan/hoplite_chan.glb",
+		# Clips live on the GLB. Spear, shield, and xiphos are skinned to it.
+		"anim_lib": "",
+		"builtin_gear": true,
+		"credit": "PS1/PSX Hoplite Chan by Seifert — CC BY 4.0",
 		"weapon": "res://assets/props/weapons/dory_spear.glb",
 		"weapon_name": "Dory Spear",
 		"base_dmg": 14.0, "base_hp": 130, "base_mp": 60,
@@ -57,6 +62,9 @@ const CLASSES := {
 	"toxotes": {
 		"name": "Toxotes",
 		"desc": "Cretan bow. Death arrives before the whisper of the string.",
+		"model": "res://assets/characters/spartan_hoplite/spartan_hoplite.glb",
+		"anim_lib": "res://assets/characters/spartan_hoplite/spartan_hoplite_animations.tres",
+		"builtin_gear": false,
 		"weapon": "res://assets/props/weapons/cretan_bow.glb",
 		"weapon_name": "Cretan Bow",
 		"base_dmg": 11.0, "base_hp": 100, "base_mp": 80,
@@ -69,6 +77,9 @@ const CLASSES := {
 	"magos": {
 		"name": "Magos",
 		"desc": "Theurgist of storm and shadow. Olympus answers his call.",
+		"model": "res://assets/characters/spartan_hoplite/spartan_hoplite.glb",
+		"anim_lib": "res://assets/characters/spartan_hoplite/spartan_hoplite_animations.tres",
+		"builtin_gear": false,
 		"weapon": "res://assets/props/weapons/theurgist_staff.glb",
 		"weapon_name": "Theurgist Staff",
 		"base_dmg": 12.0, "base_hp": 90, "base_mp": 110,

@@ -421,6 +421,9 @@ func _make_class_card(id: String, data: Dictionary) -> PanelContainer:
 	v.add_child(_wrapped(String(CLASS_LORE.get(id, data.get("desc", ""))), 15, Kit.INK_SOFT, TEXT_W))
 	v.add_child(_icon_line("icon_sword", String(data.get("weapon_name", "")), Kit.INK, TEXT_W - 40))
 	v.add_child(_icon_line("icon_mana", String(data.get("skill_name", "")), Kit.INK_GOLD, TEXT_W - 40))
+	var credit := String(data.get("credit", ""))
+	if credit != "":
+		v.add_child(_wrapped(credit, 12, Kit.INK_SOFT, TEXT_W))
 
 	var walk := _card_button("Walk this Path")
 	walk.pressed.connect(_on_pick_class.bind(id))

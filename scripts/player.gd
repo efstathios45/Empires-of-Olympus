@@ -9,9 +9,8 @@ signal respawned
 signal skill_cooldown_started(duration: float)
 signal combo_performed
 
-const CharacterGLB := "res://assets/characters/spartan_hoplite/spartan_hoplite.glb"
-const CharacterLib := "res://assets/characters/spartan_hoplite/spartan_hoplite_animations.tres"
 const WeaponGrip = preload("res://scripts/weapon_grip.gd")
+const HeroAnimScript = preload("res://scripts/hero_anim.gd")
 const ProjectileScript = preload("res://scripts/projectile.gd")
 const VfxHelper = preload("res://scripts/vfx_helper.gd")
 
@@ -22,8 +21,7 @@ const GRAVITY := 22.0
 const TURN_RATE := 14.0
 const MOUSE_SENS := 0.0022
 
-const COMBO_CLIPS := ["ual2_Sword_Light_A", "ual2_Sword_Light_B", "ual2_Sword_Light_C"]
-const HEAVY_CLIP := "ual2_Sword_Heavy_A"
+const KAYKIT_MODEL := "res://assets/characters/spartan_hoplite/spartan_hoplite.glb"
 
 # Footsteps are driven by distance travelled, so they always match the stride
 # no matter how the move speed is tuned.
@@ -96,7 +94,9 @@ func _build_body() -> void:
 	mesh_root = Node3D.new()
 	mesh_root.name = "MeshRoot"
 	add_child(mesh_root)
-	var model: Node3D = load(CharacterGLB).instantiate()
+	var cd := GameState.class_data()
+	var model_path: String = cd.get("model", KAYKIT_MODEL)
+	var model: Node3D = load(model_path).instantiate()
 	mesh_root.add_child(model)
 	ModelUtils.setup_character_for_movement(model, 1.85)
 
@@ -104,20 +104,27 @@ func _build_body() -> void:
 	if anim == null:
 		anim = AnimationPlayer.new()
 		model.add_child(anim)
-	if ResourceLoader.exists(CharacterLib):
-		var lib := load(CharacterLib) as AnimationLibrary
+	var lib_path: String = str(cd.get("anim_lib", ""))
+	if lib_path != "" and ResourceLoader.exists(lib_path):
+		var lib := load(lib_path) as AnimationLibrary
 		if lib:
 			anim.add_animation_library("", lib)
 	ModelUtils.set_animation_loops(anim)
+	HeroAnimScript.apply_loops(anim, GameState.player_class)
 
-	# Class weapon in the right hand.
-	var weapon_path: String = GameState.class_data()["weapon"]
-	if ResourceLoader.exists(weapon_path):
-		var grip_class := "melee"
-		weapon_node = WeaponGrip.attach(model, weapon_path, grip_class)
+	# Hoplite Chan carries her own spear, shield, and xiphos. The other
+	# classes still grip a separate KayKit weapon.
+	if bool(cd.get("builtin_gear", false)):
+		HeroAnimScript.pixel_filter(model)
+		weapon_node = HeroAnimScript.find_named_mesh(model, "DORY")
 		_update_weapon_glow()
+	else:
+		var weapon_path: String = cd["weapon"]
+		if ResourceLoader.exists(weapon_path):
+			weapon_node = WeaponGrip.attach(model, weapon_path, "melee")
+			_update_weapon_glow()
 
-	anim.play("ual1_Idle")
+	_play_alias("idle")
 
 func _build_camera() -> void:
 	camera_pivot = Node3D.new()
@@ -195,7 +202,7 @@ func _process_free(delta: float) -> void:
 	if _ui_open():
 		velocity.x = move_toward(velocity.x, 0.0, 24.0 * delta)
 		velocity.z = move_toward(velocity.z, 0.0, 24.0 * delta)
-		_play_anim("ual1_Idle")
+		_play_alias("idle")
 		return
 	var input_dir := Input.get_vector("move_left", "move_right", "move_forward", "move_back")
 	var cam_basis := camera_pivot.global_transform.basis
@@ -210,18 +217,18 @@ func _process_free(delta: float) -> void:
 		velocity.x = dir.x * speed
 		velocity.z = dir.z * speed
 		_face_direction(dir, delta)
-		_play_anim("ual1_Sprint" if sprinting else "ual1_Walk")
+		_play_alias("sprint" if sprinting else "walk")
 		_tick_footsteps(delta, sprinting)
 	else:
 		velocity.x = move_toward(velocity.x, 0.0, 24.0 * delta)
 		velocity.z = move_toward(velocity.z, 0.0, 24.0 * delta)
-		_play_anim("ual1_Idle")
+		_play_alias("idle")
 		# Prime the accumulator so the first step lands soon after moving off.
 		_step_accum = maxf(_step_accum, STEP_DIST_WALK * 0.7)
 
 	if Input.is_action_just_pressed("jump") and is_on_floor():
 		velocity.y = JUMP_VELOCITY
-		_play_anim("ual1_Jump", false)
+		_play_alias("jump", 0, false)
 
 	if Input.is_action_just_pressed("attack_light"):
 		_try_light_attack()
@@ -233,7 +240,7 @@ func _process_free(delta: float) -> void:
 		_start_dodge(dir)
 	elif Input.is_action_just_pressed("block"):
 		state = State.BLOCK
-		_play_anim("ual2_Sword_Block")
+		_play_alias("block")
 	elif Input.is_action_just_pressed("potion_1"):
 		_drink_health_potion()
 	elif Input.is_action_just_pressed("potion_2"):
@@ -342,28 +349,46 @@ func _face_camera() -> void:
 	if forward.length() > 0.01:
 		mesh_root.rotation.y = ModelUtils.yaw_from_direction(forward.normalized())
 
+func _play_alias(alias: String, index: int = 0, loop_ok: bool = true) -> void:
+	_play_anim(HeroAnimScript.clip(GameState.player_class, alias, index), loop_ok)
+
 func _play_anim(clip: String, loop_ok: bool = true) -> void:
-	if anim == null or not anim.has_animation(clip):
+	if clip == "" or anim == null or not anim.has_animation(clip):
 		return
 	if anim.current_animation == clip and loop_ok:
 		return
 	anim.play(clip)
 
+func _attack_duration(clip_name: String, fallback: float) -> float:
+	# Hoplite strikes are authored around a second. Cutting them at the
+	# KayKit combo timing hides the thrust. Other classes keep their timing.
+	if GameState.player_class != "hoplite":
+		return fallback
+	if anim == null or clip_name == "" or not anim.has_animation(clip_name):
+		return fallback
+	return anim.get_animation(clip_name).length
+
 # ── Combat ───────────────────────────────────────────────────────────────
 func _try_light_attack() -> void:
 	var cd := GameState.class_data()
 	if cd["ranged"]:
-		_start_attack("ual1_Sword_Attack", 0.55)
+		var shot := HeroAnimScript.clip(GameState.player_class, "attack_ranged")
+		_start_attack(shot, _attack_duration(shot, 0.55))
 	else:
+		var steps := HeroAnimScript.combo_count(GameState.player_class)
+		if steps <= 0:
+			return
 		if combo_window <= 0.0:
 			combo_index = 0
-		_start_attack(COMBO_CLIPS[combo_index], 0.5)
-		combo_index = (combo_index + 1) % COMBO_CLIPS.size()
+		var swing := HeroAnimScript.clip(GameState.player_class, "attack", combo_index)
+		_start_attack(swing, _attack_duration(swing, 0.5))
+		combo_index = (combo_index + 1) % steps
 		combo_window = 1.1
 	AudioManager.play_sfx("sword_swing", -4.0, randf_range(0.95, 1.1))
 
 func _try_heavy_attack() -> void:
-	_start_attack(HEAVY_CLIP, 0.85)
+	var heavy := HeroAnimScript.clip(GameState.player_class, "heavy")
+	_start_attack(heavy, _attack_duration(heavy, 0.85))
 	AudioManager.play_sfx("sword_swing", -2.0, 0.85)
 
 func _start_attack(clip: String, duration: float) -> void:
@@ -372,7 +397,7 @@ func _start_attack(clip: String, duration: float) -> void:
 	_attack_hit_time = duration * 0.55
 	attack_hit_done = false
 	_face_camera()
-	anim.play(clip)
+	_play_anim(clip, false)
 	combo_performed.emit()
 
 var _heavy_next: bool = false
@@ -380,7 +405,8 @@ var _heavy_next: bool = false
 func _apply_attack_hit() -> void:
 	var cd := GameState.class_data()
 	var dmg := GameState.attack_damage()
-	if anim.current_animation == HEAVY_CLIP:
+	var heavy := HeroAnimScript.clip(GameState.player_class, "heavy")
+	if heavy != "" and anim != null and anim.current_animation == heavy:
 		dmg *= 1.8
 	if cd["ranged"]:
 		_fire_projectile(dmg, cd["projectile_speed"])
@@ -454,7 +480,7 @@ func _try_skill() -> void:
 	skill_cooldown_started.emit(skill_cd)
 	mana_changed.emit(mp, GameState.max_mp())
 	_face_camera()
-	anim.play("ual1_Sword_Attack")
+	_play_alias("skill", 0, false)
 
 	match GameState.player_class:
 		"hoplite":
@@ -501,7 +527,7 @@ func _start_dodge(dir: Vector3) -> void:
 	invuln_timer = 0.5
 	dodge_dir = dir.normalized()
 	_face_direction(dodge_dir, 1.0)
-	anim.play("ual1_Roll")
+	_play_alias("dodge", 0, false)
 	AudioManager.play_sfx("dodge_roll", -4.0)
 
 func _drink_health_potion() -> void:
@@ -536,7 +562,7 @@ func take_damage(amount: float, from_position: Vector3) -> void:
 		_die()
 	else:
 		if state == State.FREE:
-			anim.play("ual1_Hit_Chest")
+			_play_alias("hit", 0, false)
 		AudioManager.play_sfx("hit_flesh", -4.0, 0.8)
 
 func _die() -> void:
@@ -545,7 +571,7 @@ func _die() -> void:
 	death_timer = 4.0
 	_set_target(null)
 	add_camera_shake(0.26, 0.5)
-	anim.play("ual1_Death01")
+	_play_alias("death", 0, false)
 	Input.mouse_mode = Input.MOUSE_MODE_VISIBLE
 	AudioManager.play_music_once("defeat")
 	died.emit()
@@ -563,7 +589,7 @@ func _respawn() -> void:
 	if world and world.has_method("get_respawn_point"):
 		global_position = world.get_respawn_point()
 	velocity = Vector3.ZERO
-	anim.play("ual1_Idle")
+	_play_alias("idle")
 	AudioManager.play_music("exploration")
 	health_changed.emit(hp, GameState.max_hp())
 	mana_changed.emit(mp, GameState.max_mp())
@@ -585,8 +611,12 @@ func _update_weapon_glow() -> void:
 	if weapon_node == null:
 		return
 	var refine := GameState.weapon_refine
+	var meshes: Array[MeshInstance3D] = []
+	if weapon_node is MeshInstance3D:
+		meshes.append(weapon_node)
 	for child in weapon_node.find_children("*", "MeshInstance3D"):
-		var mi := child as MeshInstance3D
+		meshes.append(child as MeshInstance3D)
+	for mi in meshes:
 		var mat := mi.get_active_material(0)
 		if mat is StandardMaterial3D:
 			var m := (mat as StandardMaterial3D).duplicate() as StandardMaterial3D
