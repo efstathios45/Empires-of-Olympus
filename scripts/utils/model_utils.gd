@@ -485,21 +485,73 @@ static func strip_kaykit_native_gear(model: Node3D) -> void :
 
 
 static func _align_quaternius_visual_facing(node: Node3D) -> void :
+	# Quaternius *humanoids* ship with CharacterArmature facing +Z. Flip that
+	# armature so yaw_from_direction (Godot −Z front) matches locomotion.
+	# Do NOT flip AnimalArmature packs (wolves etc.) — those already face −Z,
+	# and a fallback flip made them chase the player while walking backwards.
 	if node == null or not _is_quaternius_model(node):
 		return
 	if node.has_meta("eoo_quat_facing"):
 		return
 	var arm: Node3D = node.find_child("CharacterArmature", true, false) as Node3D
 	if arm == null:
-
-		for n in node.get_children():
-			if n is Node3D and n.find_child("Skeleton3D", true, false) != null:
-				arm = n as Node3D
-				break
-	if arm == null:
 		return
 	arm.rotate_y(PI)
 	node.set_meta("eoo_quat_facing", true)
+
+
+## Rewrite %GeneralSkeleton:* animation tracks to the model's real Skeleton3D
+## path. External UAL .tres libraries author scene-unique paths; without this
+## the clip "plays" but moves nothing and the mesh stays in its bind T-pose.
+static func retarget_general_skeleton_library(lib: AnimationLibrary, anim: AnimationPlayer, model: Node3D) -> AnimationLibrary:
+	if lib == null or anim == null or model == null:
+		return lib
+	var skel: Skeleton3D = null
+	for n in model.find_children("*", "Skeleton3D", true, false):
+		skel = n as Skeleton3D
+		break
+	if skel == null:
+		return lib
+	var root: Node = anim.get_node_or_null(anim.root_node)
+	if root == null:
+		root = model
+	var skel_rel: = String(root.get_path_to(skel))
+	var needs_fix: = false
+	for an in lib.get_animation_list():
+		var a: = lib.get_animation(an)
+		if a == null:
+			continue
+		for ti in a.get_track_count():
+			if String(a.track_get_path(ti)).begins_with("%GeneralSkeleton"):
+				needs_fix = true
+				break
+		if needs_fix:
+			break
+	if not needs_fix:
+		return lib
+	var out: = AnimationLibrary.new()
+	for an in lib.get_animation_list():
+		var src: = lib.get_animation(an)
+		if src == null:
+			continue
+		var a: Animation = src.duplicate(true)
+		for ti in a.get_track_count():
+			var tp: = String(a.track_get_path(ti))
+			if tp.begins_with("%GeneralSkeleton"):
+				a.track_set_path(ti, NodePath(skel_rel + tp.substr("%GeneralSkeleton".length())))
+		out.add_animation(an, a)
+	return out
+
+
+static func retarget_anim_player_libraries(anim: AnimationPlayer, model: Node3D) -> void :
+	if anim == null or model == null:
+		return
+	for lib_name in anim.get_animation_library_list():
+		var lib: = anim.get_animation_library(lib_name)
+		var fixed: = retarget_general_skeleton_library(lib, anim, model)
+		if fixed != lib:
+			anim.remove_animation_library(lib_name)
+			anim.add_animation_library(lib_name, fixed)
 
 
 

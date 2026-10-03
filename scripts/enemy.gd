@@ -18,7 +18,6 @@ const ENEMY_CONFIGS: = {
 		"height": 1.05, "hp": 42, "dmg": 7.0, "speed": 4.6, 
 		"xp": 18, "gold": [3, 8], "aggro": 9.0, "reach": 1.9, 
 		"attack_cd": 1.4, "material": "Wolf Pelt", 
-		"facing_plus_z": true, 
 		"tint": Color(0.78, 0.78, 0.82), 
 		"sfx_attack": "wolf_attack", "sfx_death": "wolf_death", 
 		"sfx_aggro": "wolf_aggro", 
@@ -38,7 +37,6 @@ const ENEMY_CONFIGS: = {
 		"height": 1.12, "hp": 48, "dmg": 8.5, "speed": 4.8, 
 		"xp": 22, "gold": [4, 9], "aggro": 9.5, "reach": 1.95, 
 		"attack_cd": 1.35, "material": "Wolf Pelt", 
-		"facing_plus_z": true, 
 		"tint": Color(0.28, 0.26, 0.3), 
 		"sfx_attack": "wolf_black_attack", "sfx_death": "wolf_black_death", 
 		"sfx_aggro": "wolf_aggro", 
@@ -58,7 +56,6 @@ const ENEMY_CONFIGS: = {
 		"height": 1.28, "hp": 58, "dmg": 10.0, "speed": 4.4, 
 		"xp": 28, "gold": [5, 11], "aggro": 10.0, "reach": 2.1, 
 		"attack_cd": 1.5, "material": "Wolf Pelt", 
-		"facing_plus_z": true, 
 		"tint": Color(0.55, 0.42, 0.34), 
 		"sfx_attack": "wolf_dire_attack", "sfx_death": "wolf_dire_death", 
 		"sfx_aggro": "wolf_aggro", 
@@ -77,7 +74,6 @@ const ENEMY_CONFIGS: = {
 		"height": 1.05, "hp": 110, "dmg": 14.0, "speed": 4.2, 
 		"xp": 48, "gold": [8, 16], "aggro": 9.5, "reach": 2.0, 
 		"attack_cd": 1.7, "material": "Boar Tusk", 
-		"facing_plus_z": true, 
 		"sfx_attack": "boar_attack", "sfx_death": "boar_death", 
 		"sfx_aggro": "boar_idle", 
 		"sfx_attack_alt": "boar_attack_b", 
@@ -296,6 +292,9 @@ func _build_body() -> void :
 				if anim.has_animation_library(""):
 					anim.remove_animation_library("")
 				anim.add_animation_library("", lib)
+		# UAL .tres packs use %GeneralSkeleton tracks — retarget so humanoids
+		# actually leave the bind T-pose when idle/walk/attack play.
+		ModelUtils.retarget_anim_player_libraries(anim, model)
 
 		if cfg.has("slices") and cfg.has("slice_master"):
 			_install_sliced_clips(String(cfg["slice_master"]), float(cfg.get("slice_fps", 24.0)), cfg["slices"])
@@ -368,16 +367,22 @@ func _prepare_skeleton_for_anims(model: Node3D) -> bool:
 	if skel == null:
 		return false
 
+	# Ensure %GeneralSkeleton libraries (or leftover unique-name tracks) resolve.
+	ModelUtils.retarget_anim_player_libraries(anim, model)
+	if _anim_uses_general_skeleton_paths():
+		if skel.name != "GeneralSkeleton":
+			skel.name = "GeneralSkeleton"
+		skel.unique_name_in_owner = true
 
-	for candidate in [_death_clip, "Death", "death"]:
+	for candidate in [_death_clip, "Death", "death", _clip("idle"), _clip("walk")]:
 		var cname: = String(candidate)
 		if cname == "" or not anim.has_animation(cname):
 			continue
 		if _anim_binds_to_skeleton(anim.get_animation(cname), skel):
-			_death_clip = cname
-			_clips["death"] = cname
+			if String(candidate) == _death_clip or candidate == "Death" or candidate == "death":
+				_death_clip = cname
+				_clips["death"] = cname
 			return true
-
 
 	if skel.find_bone("Hips") < 0:
 		return false
@@ -390,6 +395,19 @@ func _prepare_skeleton_for_anims(model: Node3D) -> bool:
 		return true
 	if anim.has_animation(_death_clip):
 		return true
+	return false
+
+
+func _anim_uses_general_skeleton_paths() -> bool:
+	if anim == null:
+		return false
+	for an in anim.get_animation_list():
+		var a: = anim.get_animation(an)
+		if a == null:
+			continue
+		for ti in a.get_track_count():
+			if String(a.track_get_path(ti)).begins_with("%GeneralSkeleton"):
+				return true
 	return false
 
 
@@ -807,7 +825,8 @@ func _face(dir: Vector3, delta: float) -> void :
 	if dir.length_squared() < 0.001:
 		return
 	var target_yaw: = ModelUtils.yaw_from_direction(dir)
-	mesh_root.rotation.y = lerp_angle(mesh_root.rotation.y, target_yaw, 10.0 * delta)
+	var w: = clampf(10.0 * delta, 0.0, 1.0)
+	mesh_root.rotation.y = lerp_angle(mesh_root.rotation.y, target_yaw, w)
 
 func _apply_gravity(delta: float) -> void :
 	if not is_on_floor():

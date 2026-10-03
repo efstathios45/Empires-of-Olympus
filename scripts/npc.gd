@@ -96,13 +96,16 @@ func _ready() -> void :
 		if lib_path != "" and ResourceLoader.exists(lib_path):
 			var lib: = load(lib_path) as AnimationLibrary
 			if lib:
-				lib = _retarget_library(lib)
+				lib = ModelUtils.retarget_general_skeleton_library(lib, _anim, _model)
 				if _anim.has_animation_library(""):
 					_anim.remove_animation_library("")
 				_anim.add_animation_library("", lib)
 		ModelUtils.set_animation_loops(_anim)
 		ModelUtils.bind_leg_plant_anim(_model, _anim)
-		_install_posture_fix()
+		# UAL posture dampening is only for melted Tripo/UAL citizen packs.
+		# Hellenic Quaternius greek_* cast already idles upright.
+		if not ModelUtils._is_quaternius_model(_model):
+			_install_posture_fix()
 		if not _anim.has_animation(idle_clip):
 			if _anim.has_animation("Idle"):
 				idle_clip = "Idle"
@@ -141,44 +144,6 @@ func _install_posture_fix() -> void :
 	skel.add_child(fix)
 	if fix.has_method("bind_anim"):
 		fix.call("bind_anim", _anim)
-
-
-func _retarget_library(lib: AnimationLibrary) -> AnimationLibrary:
-	# Some shared animation libraries author their skeleton tracks against a
-	# scene-unique name ("%GeneralSkeleton:<bone>"), which does not resolve on
-	# these imported models (their skeleton is "Armature/Skeleton3D"). Without
-	# this the clip plays but moves nothing, leaving the model stuck in its
-	# T-pose rest. Rewrite those tracks to the model's actual skeleton path.
-	var skel: Skeleton3D = null
-	for n in _model.find_children("*", "Skeleton3D", true, false):
-		skel = n as Skeleton3D
-		break
-	if skel == null or _anim == null:
-		return lib
-	var root: Node = _anim.get_node_or_null(_anim.root_node)
-	if root == null:
-		root = _model
-	var skel_rel: = String(root.get_path_to(skel))
-	var needs_fix: = false
-	for an in lib.get_animation_list():
-		var a: = lib.get_animation(an)
-		for ti in a.get_track_count():
-			if String(a.track_get_path(ti)).begins_with("%GeneralSkeleton"):
-				needs_fix = true
-				break
-		if needs_fix:
-			break
-	if not needs_fix:
-		return lib
-	var out: = AnimationLibrary.new()
-	for an in lib.get_animation_list():
-		var a: Animation = lib.get_animation(an).duplicate(true)
-		for ti in a.get_track_count():
-			var tp: = String(a.track_get_path(ti))
-			if tp.begins_with("%GeneralSkeleton"):
-				a.track_set_path(ti, NodePath(skel_rel + tp.substr("%GeneralSkeleton".length())))
-		out.add_animation(an, a)
-	return out
 
 
 func _collect_idle_variants() -> PackedStringArray:
