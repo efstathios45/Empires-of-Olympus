@@ -109,12 +109,23 @@ const ENEMY_CONFIGS: = {
 	"centaur_enemy": {
 		"name": "Centaur Warrior", 
 		"level": 8, 
-		"glb": "res://assets/characters/centaur_enemy/centaur_enemy.glb", 
-		"lib": "res://assets/characters/centaur_enemy/centaur_enemy_animations.tres", 
+		"glb": "res://assets/characters/bone_centaur/bone_centaur.glb", 
+		"lib": "", 
+		"center_xz": true, 
+		"credit": "Sandstone, Bone centaur monster by Nagisa_Kurama — CC-BY 4.0", 
 		"height": 2.3, "hp": 320, "dmg": 28.0, "speed": 6.0, 
 		"xp": 145, "gold": [28, 48], "aggro": 11.0, "reach": 2.6, 
 		"attack_cd": 1.6, "material": "Centaur Hoof", 
 		"sfx_attack": "centaur_attack", "sfx_death": "centaur_death", 
+		"clips": {
+			"idle": "Armature|RestPose", 
+			"walk": "Armature|Walking", 
+			"sprint": "Armature|Walking", 
+			"attack": "Attack", 
+			"heavy": "Armature|UpwardStrike", 
+			"hit": "Armature|RestPose", 
+			"death": "Armature|RestPose", 
+		}, 
 	}, 
 	"gorgon_enemy": {
 		"name": "Gorgon", 
@@ -291,7 +302,7 @@ func _build_body() -> void :
 		_skeletal_anims = _prepare_skeleton_for_anims(model)
 		ModelUtils.set_animation_loops(anim)
 		_force_oneshot_clips([
-			_clip("death"), _clip("hit"), _clip("attack"), 
+			_clip("death"), _clip("hit"), _clip("attack"), _clip("heavy"), 
 			"ual1_Death01", "ual1_Hit_Chest", "ual1_Sword_Attack", 
 			"ual1_Punch_Jab", "ual2_Sword_Heavy_A", "ual2_Sword_Heavy_B", 
 			"Death", "Attack", "Attack_Headbutt", "Idle_HitReact1", "Idle_HitReact2", 
@@ -303,6 +314,11 @@ func _build_body() -> void :
 				var a: = anim.get_animation(n)
 				if a:
 					a.loop_mode = Animation.LOOP_LINEAR
+		if bool(cfg.get("center_xz", false)):
+			if anim.has_animation(_clip("idle")):
+				anim.play(_clip("idle"))
+				anim.seek(0.0, true)
+			ModelUtils.align_skeleton_to_ground(model)
 	if anim and _skeletal_anims:
 		_play(_clip("idle"))
 
@@ -776,7 +792,7 @@ func _attack_clip() -> String:
 		"minotaur_boss":
 			return "ual2_Sword_Heavy_A" if randf() < 0.5 else _clip("attack")
 		"centaur_enemy":
-			return "ual2_Sword_Heavy_A" if randf() < 0.4 else _clip("attack")
+			return _clip("heavy") if _clips.has("heavy") and randf() < 0.4 else _clip("attack")
 		_:
 			return _clip("attack")
 
