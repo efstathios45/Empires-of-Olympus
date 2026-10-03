@@ -1,239 +1,16 @@
-[gd_scene format=3 uid="uid://dbxojkr0k7vsg"]
+[gd_scene load_steps=32 format=3 uid="uid://dbxojkr0k7vsg"]
 
-[ext_resource type="Script" uid="uid://cmpof68vvmhk2" path="res://assets/3d_vfx/StylizedHitFX/script/VFXImpactBB.gd" id="1_uno15"]
-[ext_resource type="Shader" uid="uid://ddaykxb1ucbsl" path="res://assets/3d_vfx/StylizedHitFX/shader/glow.gdshader" id="3_7ctnx"]
-[ext_resource type="Shader" uid="uid://dkenjalb0a7f6" path="res://assets/3d_vfx/StylizedHitFX/shader/streaks.gdshader" id="4_05nkx"]
-[ext_resource type="Script" uid="uid://bwmucxp58uvvt" path="res://assets/3d_vfx/shared/script/VFXOmniLightBB.gd" id="5_6dt2h"]
-[ext_resource type="Shader" uid="uid://n0hv5j1ofiye" path="res://assets/3d_vfx/StylizedHitFX/shader/flare.gdshader" id="6_x23ew"]
-[ext_resource type="Shader" uid="uid://bndvdknhjeps4" path="res://assets/3d_vfx/StylizedHitFX/shader/four_point_star.gdshader" id="7_7ctnx"]
-
-[sub_resource type="Animation" id="Animation_ffe1e"]
-length = 0.001
-tracks/0/type = "value"
-tracks/0/imported = false
-tracks/0/enabled = true
-tracks/0/path = NodePath("Glow:scale")
-tracks/0/interp = 1
-tracks/0/loop_wrap = true
-tracks/0/keys = {
-"times": PackedFloat32Array(0),
-"transitions": PackedFloat32Array(1),
-"update": 0,
-"values": [Vector3(0, 0, 0)]
-}
-tracks/1/type = "value"
-tracks/1/imported = false
-tracks/1/enabled = true
-tracks/1/path = NodePath("GPUParticles3D2:emitting")
-tracks/1/interp = 1
-tracks/1/loop_wrap = true
-tracks/1/keys = {
-"times": PackedFloat32Array(0),
-"transitions": PackedFloat32Array(1),
-"update": 1,
-"values": [false]
-}
-tracks/2/type = "value"
-tracks/2/imported = false
-tracks/2/enabled = true
-tracks/2/path = NodePath("GPUParticles3D3:emitting")
-tracks/2/interp = 1
-tracks/2/loop_wrap = true
-tracks/2/keys = {
-"times": PackedFloat32Array(0),
-"transitions": PackedFloat32Array(1),
-"update": 1,
-"values": [false]
-}
-tracks/3/type = "value"
-tracks/3/imported = false
-tracks/3/enabled = true
-tracks/3/path = NodePath("HitCore:emitting")
-tracks/3/interp = 1
-tracks/3/loop_wrap = true
-tracks/3/keys = {
-"times": PackedFloat32Array(0),
-"transitions": PackedFloat32Array(1),
-"update": 1,
-"values": [false]
-}
-tracks/4/type = "value"
-tracks/4/imported = false
-tracks/4/enabled = true
-tracks/4/path = NodePath("VFXOmniLightBB:light_mult")
-tracks/4/interp = 1
-tracks/4/loop_wrap = true
-tracks/4/keys = {
-"times": PackedFloat32Array(0),
-"transitions": PackedFloat32Array(1),
-"update": 0,
-"values": [0.0]
-}
-tracks/5/type = "value"
-tracks/5/imported = false
-tracks/5/enabled = true
-tracks/5/path = NodePath("AudioStreamPlayer3D:playing")
-tracks/5/interp = 1
-tracks/5/loop_wrap = true
-tracks/5/keys = {
-"times": PackedFloat32Array(0),
-"transitions": PackedFloat32Array(1),
-"update": 1,
-"values": [false]
-}
-
-[sub_resource type="Animation" id="Animation_7ctnx"]
-resource_local_to_scene = true
-resource_name = "main"
-length = 1.6
-step = 0.1
-tracks/0/type = "value"
-tracks/0/imported = false
-tracks/0/enabled = true
-tracks/0/path = NodePath("Glow:scale")
-tracks/0/interp = 1
-tracks/0/loop_wrap = true
-tracks/0/keys = {
-"times": PackedFloat32Array(0, 0.3),
-"transitions": PackedFloat32Array(0.5, 1),
-"update": 0,
-"values": [Vector3(3, 3, 3), Vector3(0, 0, 0)]
-}
-tracks/1/type = "value"
-tracks/1/imported = false
-tracks/1/enabled = true
-tracks/1/path = NodePath("GPUParticles3D2:emitting")
-tracks/1/interp = 1
-tracks/1/loop_wrap = true
-tracks/1/keys = {
-"times": PackedFloat32Array(0, 0.3),
-"transitions": PackedFloat32Array(1, 1),
-"update": 1,
-"values": [true, false]
-}
-tracks/2/type = "value"
-tracks/2/imported = false
-tracks/2/enabled = true
-tracks/2/path = NodePath("GPUParticles3D3:emitting")
-tracks/2/interp = 1
-tracks/2/loop_wrap = true
-tracks/2/keys = {
-"times": PackedFloat32Array(0, 0.29999995),
-"transitions": PackedFloat32Array(1, 1),
-"update": 1,
-"values": [true, false]
-}
-tracks/3/type = "value"
-tracks/3/imported = false
-tracks/3/enabled = true
-tracks/3/path = NodePath("HitCore:emitting")
-tracks/3/interp = 1
-tracks/3/loop_wrap = true
-tracks/3/keys = {
-"times": PackedFloat32Array(0, 0.29999995),
-"transitions": PackedFloat32Array(1, 1),
-"update": 1,
-"values": [true, false]
-}
-tracks/4/type = "value"
-tracks/4/imported = false
-tracks/4/enabled = true
-tracks/4/path = NodePath("VFXOmniLightBB:light_mult")
-tracks/4/interp = 1
-tracks/4/loop_wrap = true
-tracks/4/keys = {
-"times": PackedFloat32Array(0, 0.5),
-"transitions": PackedFloat32Array(1, 1),
-"update": 0,
-"values": [1.0, 0.0]
-}
-tracks/5/type = "value"
-tracks/5/imported = false
-tracks/5/enabled = true
-tracks/5/path = NodePath("AudioStreamPlayer3D:playing")
-tracks/5/interp = 1
-tracks/5/loop_wrap = true
-tracks/5/keys = {
-"times": PackedFloat32Array(0),
-"transitions": PackedFloat32Array(1),
-"update": 1,
-"values": [true]
-}
-
-[sub_resource type="Animation" id="Animation_05nkx"]
-resource_name = "stop"
-length = 0.001
-tracks/0/type = "value"
-tracks/0/imported = false
-tracks/0/enabled = true
-tracks/0/path = NodePath("Glow:scale")
-tracks/0/interp = 1
-tracks/0/loop_wrap = true
-tracks/0/keys = {
-"times": PackedFloat32Array(0),
-"transitions": PackedFloat32Array(1),
-"update": 0,
-"values": [Vector3(0, 0, 0)]
-}
-tracks/1/type = "value"
-tracks/1/imported = false
-tracks/1/enabled = true
-tracks/1/path = NodePath("GPUParticles3D2:emitting")
-tracks/1/interp = 1
-tracks/1/loop_wrap = true
-tracks/1/keys = {
-"times": PackedFloat32Array(0),
-"transitions": PackedFloat32Array(1),
-"update": 1,
-"values": [false]
-}
-tracks/2/type = "value"
-tracks/2/imported = false
-tracks/2/enabled = true
-tracks/2/path = NodePath("GPUParticles3D3:emitting")
-tracks/2/interp = 1
-tracks/2/loop_wrap = true
-tracks/2/keys = {
-"times": PackedFloat32Array(0),
-"transitions": PackedFloat32Array(1),
-"update": 1,
-"values": [false]
-}
-tracks/3/type = "value"
-tracks/3/imported = false
-tracks/3/enabled = true
-tracks/3/path = NodePath("HitCore:emitting")
-tracks/3/interp = 1
-tracks/3/loop_wrap = true
-tracks/3/keys = {
-"times": PackedFloat32Array(0),
-"transitions": PackedFloat32Array(1),
-"update": 1,
-"values": [false]
-}
-tracks/4/type = "value"
-tracks/4/imported = false
-tracks/4/enabled = true
-tracks/4/path = NodePath("VFXOmniLightBB:light_mult")
-tracks/4/interp = 1
-tracks/4/loop_wrap = true
-tracks/4/keys = {
-"times": PackedFloat32Array(0),
-"transitions": PackedFloat32Array(1),
-"update": 0,
-"values": [0.0]
-}
-
-[sub_resource type="AnimationLibrary" id="AnimationLibrary_ffe1e"]
-_data = {
-&"RESET": SubResource("Animation_ffe1e"),
-&"main": SubResource("Animation_7ctnx"),
-&"stop": SubResource("Animation_05nkx")
-}
+[ext_resource type="Script" uid="uid://bhtwmgwq5arjb" path="res://assets/3d_vfx/StylizedHitFX/script/VFXImpactBB.gd" id="1"]
+[ext_resource type="Shader" uid="uid://g0t2a64g2ppi" path="res://assets/3d_vfx/StylizedHitFX/shader/glow.gdshader" id="2"]
+[ext_resource type="Shader" uid="uid://dgdlq4teltfam" path="res://assets/3d_vfx/StylizedHitFX/shader/streaks.gdshader" id="3"]
+[ext_resource type="Script" uid="uid://bwmucxp58uvvt" path="res://assets/3d_vfx/shared/script/VFXOmniLightBB.gd" id="4"]
+[ext_resource type="Shader" uid="uid://dx463efs7e87i" path="res://assets/3d_vfx/StylizedHitFX/shader/flare.gdshader" id="5"]
+[ext_resource type="Shader" uid="uid://c814i2v7dwiy3" path="res://assets/3d_vfx/StylizedHitFX/shader/four_point_star.gdshader" id="6"]
 
 [sub_resource type="ShaderMaterial" id="ShaderMaterial_2trc5"]
 render_priority = 0
-shader = ExtResource("3_7ctnx")
+next_pass = null
+shader = ExtResource("2")
 shader_parameter/primary_color = Color(1, 1, 1, 1)
 shader_parameter/secondary_color = Color(1, 0.8, 0.4, 1)
 shader_parameter/emission = 2.0
@@ -243,7 +20,8 @@ shader_parameter/emission_mult = 1.0
 
 [sub_resource type="ShaderMaterial" id="ShaderMaterial_pyccv"]
 render_priority = 0
-shader = ExtResource("4_05nkx")
+next_pass = null
+shader = ExtResource("3")
 shader_parameter/primary_color = Color(1, 1, 1, 1)
 shader_parameter/secondary_color = Color(1, 0.8, 0.4, 1)
 shader_parameter/emission = 4.0
@@ -294,7 +72,8 @@ fill_to = Vector2(0.5, 0)
 
 [sub_resource type="ShaderMaterial" id="ShaderMaterial_r6874"]
 render_priority = 0
-shader = ExtResource("6_x23ew")
+next_pass = null
+shader = ExtResource("5")
 shader_parameter/primary_color = Color(1, 1, 1, 1)
 shader_parameter/secondary_color = Color(1, 0.8, 0.4, 1)
 shader_parameter/emission = 0.5
@@ -337,7 +116,8 @@ size = Vector2(0.5, 0.5)
 
 [sub_resource type="ShaderMaterial" id="ShaderMaterial_05nkx"]
 render_priority = 0
-shader = ExtResource("7_7ctnx")
+next_pass = null
+shader = ExtResource("6")
 shader_parameter/primary_color = Color(1, 1, 1, 1)
 shader_parameter/secondary_color = Color(1, 0.8, 0.4, 1)
 shader_parameter/emission = 2.0
@@ -374,21 +154,20 @@ alpha_curve = SubResource("CurveTexture_lyxse")
 [sub_resource type="QuadMesh" id="QuadMesh_6dt2h"]
 size = Vector2(0.5, 0.5)
 
-[node name="VFXHit_01" type="Node3D" unique_id=1851836445]
-script = ExtResource("1_uno15")
+[node name="VFXHit_01" type="Node3D"]
+script = ExtResource("1")
 primary_color = Color(1, 1, 1, 1)
 secondary_color = Color(1, 0.8, 0.4, 1)
 light_color = Color(1, 0.8, 0.4, 1)
 
-[node name="AnimationPlayer" type="AnimationPlayer" parent="." unique_id=1122126073]
-libraries/ = SubResource("AnimationLibrary_ffe1e")
+[node name="AnimationPlayer" type="AnimationPlayer" parent="."]
 
-[node name="Glow" type="MeshInstance3D" parent="." unique_id=194988872]
+[node name="Glow" type="MeshInstance3D" parent="."]
 transform = Transform3D(0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0)
 material_override = SubResource("ShaderMaterial_2trc5")
 mesh = SubResource("SphereMesh_t0cbq")
 
-[node name="GPUParticles3D2" type="GPUParticles3D" parent="." unique_id=247430605]
+[node name="GPUParticles3D2" type="GPUParticles3D" parent="."]
 material_override = SubResource("ShaderMaterial_pyccv")
 emitting = false
 amount = 1
@@ -399,17 +178,17 @@ transform_align = 1
 process_material = SubResource("ParticleProcessMaterial_kn1xq")
 draw_pass_1 = SubResource("QuadMesh_o2nyg")
 
-[node name="VFXOmniLightBB" type="OmniLight3D" parent="." unique_id=1272882803]
+[node name="VFXOmniLightBB" type="OmniLight3D" parent="."]
 light_color = Color(1, 0.8, 0.4, 1)
 light_energy = 0.0
 light_indirect_energy = 0.0
 light_volumetric_fog_energy = 0.0
 omni_range = 3.0
-script = ExtResource("5_6dt2h")
+script = ExtResource("4")
 light_mult = 0.0
 vfx_light_energy = 2.0
 
-[node name="GPUParticles3D3" type="GPUParticles3D" parent="." unique_id=1694832712]
+[node name="GPUParticles3D3" type="GPUParticles3D" parent="."]
 material_override = SubResource("ShaderMaterial_r6874")
 emitting = false
 amount = 2
@@ -420,7 +199,7 @@ transform_align = 1
 process_material = SubResource("ParticleProcessMaterial_aaoak")
 draw_pass_1 = SubResource("QuadMesh_lg0dv")
 
-[node name="HitCore" type="GPUParticles3D" parent="." unique_id=1162759326]
+[node name="HitCore" type="GPUParticles3D" parent="."]
 material_override = SubResource("ShaderMaterial_05nkx")
 emitting = false
 amount = 2
@@ -431,4 +210,4 @@ transform_align = 3
 process_material = SubResource("ParticleProcessMaterial_6dt2h")
 draw_pass_1 = SubResource("QuadMesh_6dt2h")
 
-[node name="AudioStreamPlayer3D" type="AudioStreamPlayer3D" parent="." unique_id=264469949]
+[node name="AudioStreamPlayer3D" type="AudioStreamPlayer3D" parent="."]

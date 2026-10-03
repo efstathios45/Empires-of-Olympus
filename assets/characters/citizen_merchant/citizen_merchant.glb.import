@@ -13,45 +13,25 @@ dest_files=["res://.godot/imported/citizen_merchant.glb-8451acb52373a91e4cc87cb3
 
 [params]
 
-nodes/root_type=""
-nodes/root_name=""
-nodes/root_script=null
+nodes/root_type="Node3D"
+nodes/root_name="citizen_merchant"
 nodes/apply_root_scale=true
 nodes/root_scale=1.0
-nodes/import_as_skeleton_bones=true
-nodes/use_name_suffixes=true
+nodes/import_as_skeleton_bones=false
 nodes/use_node_type_suffixes=true
 meshes/ensure_tangents=true
 meshes/generate_lods=false
 meshes/create_shadow_meshes=false
 meshes/light_baking=0
 meshes/lightmap_texel_size=0.2
-meshes/force_disable_compression=false
+meshes/force_disable_compression=true
 skins/use_named_skins=true
-animation/import=false
+animation/import=true
 animation/fps=30
 animation/trimming=false
 animation/remove_immutable_tracks=true
 animation/import_rest_as_RESET=false
-import_script/path="res://assets/characters/_orient_fix.gd"
-materials/extract=0
-materials/extract_format=0
-materials/extract_path=""
-_subresources={
-"nodes": {
-"PATH:Armature/Skeleton3D": {
-"retarget/bone_map": Resource("res://assets/animations/humanoid_profile_bone_map.tres"),
-"retarget/rest_fixer/fix_silhouette/enable": true,
-"retarget/rest_fixer/fix_silhouette/filter": ["LeftFoot", "RightFoot", "LeftToes", "RightToes"],
-"retarget/rest_fixer/overwrite_axis": false
-},
-"PATH:Skeleton3D": {
-"retarget/bone_map": Resource("res://assets/animations/humanoid_profile_bone_map.tres"),
-"retarget/rest_fixer/fix_silhouette/enable": true,
-"retarget/rest_fixer/fix_silhouette/filter": ["LeftFoot", "RightFoot", "LeftToes", "RightToes"],
-"retarget/rest_fixer/overwrite_axis": false
-}
-}
-}
-gltf/naming_version=2
-gltf/embedded_image_handling=2
+import_script/path=""
+_subresources={}
+gltf/naming_version=1
+gltf/embedded_image_handling=3

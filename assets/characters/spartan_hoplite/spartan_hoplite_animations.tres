@@ -1,4 +1,4 @@
-[gd_resource type="AnimationLibrary" format=3]
+[gd_resource type="AnimationLibrary" load_steps=19 format=3]
 
 [sub_resource type="Animation" id="Animation_cco_cc4wb"]
 resource_name = "Death01"
@@ -7650,7 +7650,6 @@ tracks/59/interp = 1
 tracks/59/loop_wrap = true
 tracks/59/keys = PackedFloat32Array(0, 1, 2.635207e-08, -1, -8.940697e-08, -1.5918255e-08)
 
-
 [resource]
 _data = {
 &"ual1_Death01": SubResource("Animation_cco_cc4wb"),
@@ -7670,5 +7669,5 @@ _data = {
 &"ual2_Sword_Heavy_A": SubResource("Animation_cco_ii1wn"),
 &"ual2_Sword_Light_A": SubResource("Animation_cco_4sbpn"),
 &"ual2_Sword_Light_B": SubResource("Animation_cco_dv01l"),
-&"ual2_Sword_Light_C": SubResource("Animation_cco_rgrnn"),
+&"ual2_Sword_Light_C": SubResource("Animation_cco_rgrnn")
 }

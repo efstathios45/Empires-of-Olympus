@@ -1,4 +1,4 @@
 [gd_resource type="StyleBoxFlat" format=3]
 
 [resource]
-bg_color = Color(0.7843, 0.6353, 0.2902, 1.0000)
+bg_color = Color(0.7843, 0.6353, 0.2902, 1)

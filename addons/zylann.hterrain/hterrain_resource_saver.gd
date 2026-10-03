@@ -19,11 +19,6 @@ func _recognize(res: Resource) -> bool:
 func _save(resource: Resource, path: String, flags: int) -> Error:
 	if resource.save_data(path.get_base_dir()):
 		return OK
-	# This can occur if at least one map of the terrain fails to save.
-	# It doesnt necessarily mean the entire terrain failed to save.
+
+
 	return FAILED
-
-
-# TODO Handle UIDs
-# func _set_uid(path: String, uid: int) -> int:
-# 	???

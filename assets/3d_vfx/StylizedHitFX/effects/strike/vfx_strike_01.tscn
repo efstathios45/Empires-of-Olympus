@@ -1,165 +1,14 @@
-[gd_scene format=3 uid="uid://cgm735jr4jxa2"]
+[gd_scene load_steps=19 format=3 uid="uid://cgm735jr4jxa2"]
 
-[ext_resource type="Script" uid="uid://cmpof68vvmhk2" path="res://assets/3d_vfx/StylizedHitFX/script/VFXImpactBB.gd" id="1_lbe3o"]
-[ext_resource type="Shader" uid="uid://dkenjalb0a7f6" path="res://assets/3d_vfx/StylizedHitFX/shader/streaks.gdshader" id="2_co5vm"]
-[ext_resource type="Script" uid="uid://bwmucxp58uvvt" path="res://assets/3d_vfx/shared/script/VFXOmniLightBB.gd" id="3_pq2pi"]
-[ext_resource type="Shader" uid="uid://bndvdknhjeps4" path="res://assets/3d_vfx/StylizedHitFX/shader/four_point_star.gdshader" id="5_8hms5"]
-
-[sub_resource type="Animation" id="Animation_ffe1e"]
-length = 0.001
-tracks/0/type = "value"
-tracks/0/imported = false
-tracks/0/enabled = true
-tracks/0/path = NodePath("GPUParticles3D2:emitting")
-tracks/0/interp = 1
-tracks/0/loop_wrap = true
-tracks/0/keys = {
-"times": PackedFloat32Array(0),
-"transitions": PackedFloat32Array(1),
-"update": 1,
-"values": [false]
-}
-tracks/1/type = "value"
-tracks/1/imported = false
-tracks/1/enabled = true
-tracks/1/path = NodePath("HitCore:emitting")
-tracks/1/interp = 1
-tracks/1/loop_wrap = true
-tracks/1/keys = {
-"times": PackedFloat32Array(0),
-"transitions": PackedFloat32Array(1),
-"update": 1,
-"values": [false]
-}
-tracks/2/type = "value"
-tracks/2/imported = false
-tracks/2/enabled = true
-tracks/2/path = NodePath("VFXOmniLightBB:light_mult")
-tracks/2/interp = 1
-tracks/2/loop_wrap = true
-tracks/2/keys = {
-"times": PackedFloat32Array(0),
-"transitions": PackedFloat32Array(1),
-"update": 0,
-"values": [0.0]
-}
-tracks/3/type = "value"
-tracks/3/imported = false
-tracks/3/enabled = true
-tracks/3/path = NodePath("AudioStreamPlayer3D:playing")
-tracks/3/interp = 1
-tracks/3/loop_wrap = true
-tracks/3/keys = {
-"times": PackedFloat32Array(0),
-"transitions": PackedFloat32Array(1),
-"update": 1,
-"values": [false]
-}
-
-[sub_resource type="Animation" id="Animation_7ctnx"]
-resource_local_to_scene = true
-resource_name = "main"
-length = 1.6
-step = 0.1
-tracks/0/type = "value"
-tracks/0/imported = false
-tracks/0/enabled = true
-tracks/0/path = NodePath("GPUParticles3D2:emitting")
-tracks/0/interp = 1
-tracks/0/loop_wrap = true
-tracks/0/keys = {
-"times": PackedFloat32Array(0, 0.3),
-"transitions": PackedFloat32Array(1, 1),
-"update": 1,
-"values": [true, false]
-}
-tracks/1/type = "value"
-tracks/1/imported = false
-tracks/1/enabled = true
-tracks/1/path = NodePath("HitCore:emitting")
-tracks/1/interp = 1
-tracks/1/loop_wrap = true
-tracks/1/keys = {
-"times": PackedFloat32Array(0, 0.29999995),
-"transitions": PackedFloat32Array(1, 1),
-"update": 1,
-"values": [true, false]
-}
-tracks/2/type = "value"
-tracks/2/imported = false
-tracks/2/enabled = true
-tracks/2/path = NodePath("VFXOmniLightBB:light_mult")
-tracks/2/interp = 1
-tracks/2/loop_wrap = true
-tracks/2/keys = {
-"times": PackedFloat32Array(0, 0.5),
-"transitions": PackedFloat32Array(1, 1),
-"update": 0,
-"values": [1.0, 0.0]
-}
-tracks/3/type = "value"
-tracks/3/imported = false
-tracks/3/enabled = true
-tracks/3/path = NodePath("AudioStreamPlayer3D:playing")
-tracks/3/interp = 1
-tracks/3/loop_wrap = true
-tracks/3/keys = {
-"times": PackedFloat32Array(0),
-"transitions": PackedFloat32Array(1),
-"update": 1,
-"values": [true]
-}
-
-[sub_resource type="Animation" id="Animation_05nkx"]
-resource_name = "stop"
-length = 0.001
-tracks/0/type = "value"
-tracks/0/imported = false
-tracks/0/enabled = true
-tracks/0/path = NodePath("GPUParticles3D2:emitting")
-tracks/0/interp = 1
-tracks/0/loop_wrap = true
-tracks/0/keys = {
-"times": PackedFloat32Array(0),
-"transitions": PackedFloat32Array(1),
-"update": 1,
-"values": [false]
-}
-tracks/1/type = "value"
-tracks/1/imported = false
-tracks/1/enabled = true
-tracks/1/path = NodePath("HitCore:emitting")
-tracks/1/interp = 1
-tracks/1/loop_wrap = true
-tracks/1/keys = {
-"times": PackedFloat32Array(0),
-"transitions": PackedFloat32Array(1),
-"update": 1,
-"values": [false]
-}
-tracks/2/type = "value"
-tracks/2/imported = false
-tracks/2/enabled = true
-tracks/2/path = NodePath("VFXOmniLightBB:light_mult")
-tracks/2/interp = 1
-tracks/2/loop_wrap = true
-tracks/2/keys = {
-"times": PackedFloat32Array(0),
-"transitions": PackedFloat32Array(1),
-"update": 0,
-"values": [0.0]
-}
-
-[sub_resource type="AnimationLibrary" id="AnimationLibrary_kojw3"]
-_data = {
-&"RESET": SubResource("Animation_ffe1e"),
-&"main": SubResource("Animation_7ctnx"),
-&"stop": SubResource("Animation_05nkx")
-}
+[ext_resource type="Script" uid="uid://bhtwmgwq5arjb" path="res://assets/3d_vfx/StylizedHitFX/script/VFXImpactBB.gd" id="1"]
+[ext_resource type="Shader" uid="uid://dgdlq4teltfam" path="res://assets/3d_vfx/StylizedHitFX/shader/streaks.gdshader" id="2"]
+[ext_resource type="Script" uid="uid://bwmucxp58uvvt" path="res://assets/3d_vfx/shared/script/VFXOmniLightBB.gd" id="3"]
+[ext_resource type="Shader" uid="uid://c814i2v7dwiy3" path="res://assets/3d_vfx/StylizedHitFX/shader/four_point_star.gdshader" id="4"]
 
 [sub_resource type="ShaderMaterial" id="ShaderMaterial_bp2si"]
 render_priority = 0
-shader = ExtResource("2_co5vm")
+next_pass = null
+shader = ExtResource("2")
 shader_parameter/primary_color = Color(1, 1, 1, 1)
 shader_parameter/secondary_color = Color(1, 0.8, 0.4, 1)
 shader_parameter/emission = 4.0
@@ -198,7 +47,8 @@ size = Vector2(1.5, 1.5)
 
 [sub_resource type="ShaderMaterial" id="ShaderMaterial_5hhia"]
 render_priority = 0
-shader = ExtResource("5_8hms5")
+next_pass = null
+shader = ExtResource("4")
 shader_parameter/primary_color = Color(1, 1, 1, 1)
 shader_parameter/secondary_color = Color(1, 0.8, 0.4, 1)
 shader_parameter/emission = 2.0
@@ -235,16 +85,15 @@ alpha_curve = SubResource("CurveTexture_05nkx")
 [sub_resource type="QuadMesh" id="QuadMesh_gtgc1"]
 size = Vector2(0.4, 0.15)
 
-[node name="VFXStrike_01" type="Node3D" unique_id=1631564898]
-script = ExtResource("1_lbe3o")
+[node name="VFXStrike_01" type="Node3D"]
+script = ExtResource("1")
 primary_color = Color(1, 1, 1, 1)
 secondary_color = Color(1, 0.8, 0.4, 1)
 light_color = Color(1, 0.8, 0.4, 1)
 
-[node name="AnimationPlayer" type="AnimationPlayer" parent="." unique_id=1890947796]
-libraries/ = SubResource("AnimationLibrary_kojw3")
+[node name="AnimationPlayer" type="AnimationPlayer" parent="."]
 
-[node name="GPUParticles3D2" type="GPUParticles3D" parent="." unique_id=1321472885]
+[node name="GPUParticles3D2" type="GPUParticles3D" parent="."]
 material_override = SubResource("ShaderMaterial_bp2si")
 emitting = false
 amount = 1
@@ -255,15 +104,15 @@ transform_align = 1
 process_material = SubResource("ParticleProcessMaterial_3srtg")
 draw_pass_1 = SubResource("QuadMesh_3fxsg")
 
-[node name="VFXOmniLightBB" type="OmniLight3D" parent="." unique_id=624289620]
+[node name="VFXOmniLightBB" type="OmniLight3D" parent="."]
 light_color = Color(1, 0.8, 0.4, 1)
 light_energy = 0.0
 omni_range = 3.0
-script = ExtResource("3_pq2pi")
+script = ExtResource("3")
 light_mult = 0.0
 vfx_light_energy = 4.0
 
-[node name="HitCore" type="GPUParticles3D" parent="." unique_id=2146695553]
+[node name="HitCore" type="GPUParticles3D" parent="."]
 material_override = SubResource("ShaderMaterial_5hhia")
 emitting = false
 amount = 1
@@ -274,4 +123,4 @@ transform_align = 3
 process_material = SubResource("ParticleProcessMaterial_hf37w")
 draw_pass_1 = SubResource("QuadMesh_gtgc1")
 
-[node name="AudioStreamPlayer3D" type="AudioStreamPlayer3D" parent="." unique_id=1200764419]
+[node name="AudioStreamPlayer3D" type="AudioStreamPlayer3D" parent="."]

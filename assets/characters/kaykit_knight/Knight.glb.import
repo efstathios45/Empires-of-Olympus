@@ -1,0 +1,132 @@
+[remap]
+
+importer="scene"
+importer_version=1
+type="PackedScene"
+uid="uid://dosd8xfbmfbn8"
+path="res://.godot/imported/Knight.glb-81b369ad2bd033c78264a352a9d9d3dd.scn"
+
+[deps]
+
+source_file="res://assets/characters/kaykit_knight/Knight.glb"
+dest_files=["res://.godot/imported/Knight.glb-81b369ad2bd033c78264a352a9d9d3dd.scn"]
+
+[params]
+
+nodes/root_type="Node3D"
+nodes/root_name="Knight"
+nodes/apply_root_scale=true
+nodes/root_scale=1.0
+nodes/import_as_skeleton_bones=false
+nodes/use_node_type_suffixes=true
+meshes/ensure_tangents=true
+meshes/generate_lods=true
+meshes/create_shadow_meshes=true
+meshes/light_baking=1
+meshes/lightmap_texel_size=0.2
+meshes/force_disable_compression=false
+skins/use_named_skins=true
+animation/import=true
+animation/fps=30
+animation/trimming=false
+animation/remove_immutable_tracks=true
+animation/import_rest_as_RESET=false
+import_script/path=""
+_subresources={
+"meshes": {
+"Knight_Cube_125": {
+"generate/lightmap_uv": 0,
+"generate/lods": 0,
+"generate/shadow_meshes": 2,
+"lods/normal_merge_angle": 60.0,
+"lods/normal_split_angle": 25.0,
+"save_to_file/enabled": false,
+"save_to_file/path": ""
+},
+"Knight_Cube_126": {
+"generate/lightmap_uv": 0,
+"generate/lods": 0,
+"generate/shadow_meshes": 2,
+"lods/normal_merge_angle": 60.0,
+"lods/normal_split_angle": 25.0,
+"save_to_file/enabled": false,
+"save_to_file/path": ""
+},
+"Knight_Cube_127": {
+"generate/lightmap_uv": 0,
+"generate/lods": 0,
+"generate/shadow_meshes": 2,
+"lods/normal_merge_angle": 60.0,
+"lods/normal_split_angle": 25.0,
+"save_to_file/enabled": false,
+"save_to_file/path": ""
+},
+"Knight_Cube_128": {
+"generate/lightmap_uv": 0,
+"generate/lods": 0,
+"generate/shadow_meshes": 2,
+"lods/normal_merge_angle": 60.0,
+"lods/normal_split_angle": 25.0,
+"save_to_file/enabled": false,
+"save_to_file/path": ""
+},
+"Knight_Cylinder_022": {
+"generate/lightmap_uv": 0,
+"generate/lods": 2,
+"generate/shadow_meshes": 0,
+"lods/normal_merge_angle": 60.0,
+"lods/normal_split_angle": 25.0,
+"save_to_file/enabled": false,
+"save_to_file/path": ""
+},
+"Knight_PrototypePete_body_020": {
+"generate/lightmap_uv": 0,
+"generate/lods": 0,
+"generate/shadow_meshes": 2,
+"lods/normal_merge_angle": 60.0,
+"lods/normal_split_angle": 25.0,
+"save_to_file/enabled": false,
+"save_to_file/path": ""
+},
+"Knight_PrototypePete_head_001": {
+"generate/lightmap_uv": 0,
+"generate/lods": 0,
+"generate/shadow_meshes": 2,
+"lods/normal_merge_angle": 60.0,
+"lods/normal_split_angle": 25.0,
+"save_to_file/enabled": false,
+"save_to_file/path": ""
+}
+},
+"nodes": {
+"PATH:Rig/Skeleton3D/1H_Sword": {
+"node/node_type": "BoneAttachment3D"
+},
+"PATH:Rig/Skeleton3D/1H_Sword_Offhand": {
+"node/node_type": "BoneAttachment3D"
+},
+"PATH:Rig/Skeleton3D/2H_Sword": {
+"node/node_type": "BoneAttachment3D"
+},
+"PATH:Rig/Skeleton3D/Badge_Shield": {
+"node/node_type": "BoneAttachment3D"
+},
+"PATH:Rig/Skeleton3D/Knight_Cape": {
+"node/node_type": "BoneAttachment3D"
+},
+"PATH:Rig/Skeleton3D/Knight_Helmet": {
+"node/node_type": "BoneAttachment3D"
+},
+"PATH:Rig/Skeleton3D/Rectangle_Shield": {
+"node/node_type": "BoneAttachment3D"
+},
+"PATH:Rig/Skeleton3D/Round_Shield": {
+"node/node_type": "BoneAttachment3D"
+},
+"PATH:Rig/Skeleton3D/Spike_Shield": {
+"node/node_type": "BoneAttachment3D"
+}
+}
+}
+gltf/naming_version=1
+gltf/embedded_image_handling=1

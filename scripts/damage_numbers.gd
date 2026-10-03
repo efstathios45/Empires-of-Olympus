@@ -1,8 +1,8 @@
 class_name DamageNumbers
 extends Node
-## Floating combat text: rises, drifts, fades, frees itself.
 
-const FONT_PATH := "res://assets/fonts/cinzel.ttf"
+
+const FONT_PATH: = "res://assets/fonts/cinzel.ttf"
 static var _font: Font
 
 static func _get_font() -> Font:
@@ -10,11 +10,11 @@ static func _get_font() -> Font:
 		_font = load(FONT_PATH)
 	return _font
 
-## Spawn a floating number in 3D space (billboarded Label3D).
-static func spawn(parent: Node, at: Vector3, amount: int, color: Color = Color(1.0, 0.85, 0.35)) -> void:
+
+static func spawn(parent: Node, at: Vector3, amount: int, color: Color = Color(1.0, 0.85, 0.35)) -> void :
 	if parent == null:
 		return
-	var label := Label3D.new()
+	var label: = Label3D.new()
 	label.text = str(amount)
 	label.font = _get_font()
 	label.font_size = 96
@@ -27,8 +27,8 @@ static func spawn(parent: Node, at: Vector3, amount: int, color: Color = Color(1
 	label.position = at
 	parent.add_child(label)
 
-	var drift := Vector3(randf_range(-0.4, 0.4), 1.6, randf_range(-0.4, 0.4))
-	var tween := label.create_tween()
+	var drift: = Vector3(randf_range(-0.4, 0.4), 1.6, randf_range(-0.4, 0.4))
+	var tween: = label.create_tween()
 	tween.set_parallel(true)
 	tween.tween_property(label, "position", at + drift, 0.9).set_ease(Tween.EASE_OUT)
 	tween.tween_property(label, "modulate:a", 0.0, 0.9).set_ease(Tween.EASE_IN).set_delay(0.25)

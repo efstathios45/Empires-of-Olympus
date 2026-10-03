@@ -1,4 +1,4 @@
-[gd_resource type="AnimationLibrary" format=3]
+[gd_resource type="AnimationLibrary" load_steps=5 format=3]
 
 [sub_resource type="Animation" id="Animation_cco_31u7n"]
 resource_name = "Idle_Loop"
@@ -1700,11 +1700,10 @@ tracks/59/interp = 1
 tracks/59/loop_wrap = true
 tracks/59/keys = PackedFloat32Array(0, 1, -1.4935583e-08, -1, -5.9604645e-08, -4.697274e-09)
 
-
 [resource]
 _data = {
 &"ual1_Idle": SubResource("Animation_cco_31u7n"),
 &"ual1_Idle_Talking": SubResource("Animation_cco_057dg"),
 &"ual1_Walk": SubResource("Animation_cco_ybcen"),
-&"ual2_Idle_Rail": SubResource("Animation_cco_rlav5"),
+&"ual2_Idle_Rail": SubResource("Animation_cco_rlav5")
 }
