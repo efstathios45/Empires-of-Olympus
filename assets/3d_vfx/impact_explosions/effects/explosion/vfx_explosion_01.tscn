@@ -1,14 +1,14 @@
 [gd_scene load_steps=59 format=3 uid="uid://bflg720h1w3d3"]
 
-[ext_resource type="Script" uid="uid://tb7n6ybv43ch" path="res://assets/3d_vfx/shared/script/vfx_controller.gd" id="1_so17j"]
-[ext_resource type="Shader" uid="uid://b6ke6r1fjb8s3" path="res://assets/3d_vfx/impact_explosions/src/shader/explosion_core.gdshader" id="2_d2rk6"]
-[ext_resource type="Material" uid="uid://dnw08mtonx63d" path="res://assets/3d_vfx/impact_explosions/src/material/explosion/explosion_smoke.tres" id="2_plj08"]
-[ext_resource type="Shader" uid="uid://d28ltkmbbdcjb" path="res://assets/3d_vfx/impact_explosions/src/shader/sparks.gdshader" id="3_msnhc"]
-[ext_resource type="Shader" uid="uid://bf8eiigjam2fr" path="res://assets/3d_vfx/impact_explosions/src/shader/explostion_ring.gdshader" id="5_d2rk6"]
-[ext_resource type="Texture2D" uid="uid://85fb3gemkbhp" path="res://assets/3d_vfx/shared/texture/cracks_01.png" id="5_otofc"]
-[ext_resource type="Texture2D" uid="uid://bbxo5nkvy537a" path="res://assets/3d_vfx/shared/texture/cracks_emission_01.png" id="6_d2rk6"]
-[ext_resource type="Shader" uid="uid://ccd4kg68n7uox" path="res://assets/3d_vfx/impact_explosions/src/shader/basic_billboard.gdshader" id="8_y01pw"]
-[ext_resource type="Script" uid="uid://bdk8hhttligw" path="res://assets/3d_vfx/shared/script/vfx_light.gd" id="9_85p3d"]
+[ext_resource type="Script" uid="uid://tb7n6ybv43ch" path="res://assets/3d_vfx/shared/script/vfx_controller.gd" id="1"]
+[ext_resource type="Shader" uid="uid://b6ke6r1fjb8s3" path="res://assets/3d_vfx/impact_explosions/src/shader/explosion_core.gdshader" id="2"]
+[ext_resource type="Material" uid="uid://dnw08mtonx63d" path="res://assets/3d_vfx/impact_explosions/src/material/explosion/explosion_smoke.tres" id="3"]
+[ext_resource type="Shader" uid="uid://d28ltkmbbdcjb" path="res://assets/3d_vfx/impact_explosions/src/shader/sparks.gdshader" id="4"]
+[ext_resource type="Shader" uid="uid://bf8eiigjam2fr" path="res://assets/3d_vfx/impact_explosions/src/shader/explostion_ring.gdshader" id="5"]
+[ext_resource type="Shader" uid="uid://ccd4kg68n7uox" path="res://assets/3d_vfx/impact_explosions/src/shader/basic_billboard.gdshader" id="6"]
+[ext_resource type="Texture2D" uid="uid://85fb3gemkbhp" path="res://assets/3d_vfx/shared/texture/cracks_01.png" id="7"]
+[ext_resource type="Texture2D" uid="uid://bbxo5nkvy537a" path="res://assets/3d_vfx/shared/texture/cracks_emission_01.png" id="8"]
+[ext_resource type="Script" uid="uid://bdk8hhttligw" path="res://assets/3d_vfx/shared/script/vfx_light.gd" id="9"]
 
 [sub_resource type="Gradient" id="Gradient_y01pw"]
 
@@ -26,11 +26,13 @@ seamless = true
 color_ramp = SubResource("Gradient_y01pw")
 noise = SubResource("FastNoiseLite_85p3d")
 
-[sub_resource type="ShaderMaterial" id="ShaderMaterial_e6ocy"]
+[sub_resource type="ShaderMaterial" id="ShaderMaterial_klyuf"]
 resource_local_to_scene = true
 render_priority = 0
-shader = ExtResource("2_d2rk6")
+next_pass = null
+shader = ExtResource("2")
 shader_parameter/noise_texture = SubResource("NoiseTexture2D_csir3")
+shader_parameter/glow_noise_texture = null
 shader_parameter/primary_color = Color(1, 0.662745, 0.0666667, 1)
 shader_parameter/texture_scale = Vector2(1, 1)
 shader_parameter/decay = 0.0
@@ -105,7 +107,8 @@ fill_to = Vector2(0.5, 0)
 
 [sub_resource type="ShaderMaterial" id="ShaderMaterial_msnhc"]
 render_priority = 0
-shader = ExtResource("3_msnhc")
+next_pass = null
+shader = ExtResource("4")
 shader_parameter/shape_texture = SubResource("GradientTexture2D_y01pw")
 shader_parameter/primary_color = Color(1, 0.662745, 0.0666667, 1)
 shader_parameter/secondary_color = Color(0.984314, 0.192157, 0, 1)
@@ -156,7 +159,8 @@ fill_to = Vector2(0.5, 0)
 
 [sub_resource type="ShaderMaterial" id="ShaderMaterial_y01pw"]
 render_priority = 0
-shader = ExtResource("5_d2rk6")
+next_pass = null
+shader = ExtResource("5")
 shader_parameter/ring_texture = SubResource("GradientTexture2D_cwquj")
 shader_parameter/noise_texture = SubResource("NoiseTexture2D_7t2vj")
 shader_parameter/primary_color = Color(1, 0.662745, 0.0666667, 1)
@@ -222,7 +226,8 @@ noise = SubResource("FastNoiseLite_y01pw")
 
 [sub_resource type="ShaderMaterial" id="ShaderMaterial_85p3d"]
 render_priority = 0
-shader = ExtResource("8_y01pw")
+next_pass = null
+shader = ExtResource("6")
 shader_parameter/mask_texture = SubResource("GradientTexture2D_3i5cu")
 shader_parameter/noise_texture = SubResource("NoiseTexture2D_cwquj")
 shader_parameter/edge_smoothness = 0.5
@@ -476,7 +481,7 @@ _data = {
 }
 
 [node name="VFXExplosion_01" type="Node3D"]
-script = ExtResource("1_so17j")
+script = ExtResource("1")
 primary_color = Color(1, 0.662745, 0.0666667, 1)
 secondary_color = Color(0.984314, 0.192157, 0, 1)
 tertiary_color = Color(0.227451, 0.223529, 0.180392, 1)
@@ -486,12 +491,12 @@ alpha_mode = 1
 
 [node name="Core" type="MeshInstance3D" parent="."]
 layers = 540672
-material_override = SubResource("ShaderMaterial_e6ocy")
+material_override = SubResource("ShaderMaterial_klyuf")
 mesh = SubResource("SphereMesh_awqfb")
 
 [node name="Smoke" type="GPUParticles3D" parent="."]
 layers = 540672
-material_override = ExtResource("2_plj08")
+material_override = ExtResource("3")
 amount = 16
 lifetime = 0.8
 one_shot = true
@@ -535,8 +540,8 @@ draw_pass_1 = SubResource("QuadMesh_e6ocy")
 [node name="Decal" type="Decal" parent="."]
 visible = false
 size = Vector3(5, 5, 5)
-texture_albedo = ExtResource("5_otofc")
-texture_emission = ExtResource("6_d2rk6")
+texture_albedo = ExtResource("7")
+texture_emission = ExtResource("8")
 emission_energy = 0.0
 modulate = Color(0, 0, 0, 1)
 albedo_mix = 0.0
@@ -548,7 +553,7 @@ light_energy = 12.0
 light_size = 4.0
 light_cull_mask = 4294426623
 omni_range = 8.0
-script = ExtResource("9_85p3d")
+script = ExtResource("9")
 base_energy = 12.0
 
 [node name="AnimationPlayer" type="AnimationPlayer" parent="."]

@@ -13,7 +13,7 @@ dest_files=["res://.godot/imported/pickup_gold_pickup.mp3-a39f577b195c9deb8e6c9c
 [params]
 
 loop=false
-loop_offset=0
-bpm=0
+loop_offset=0.0
+bpm=0.0
 beat_count=0
 bar_beats=4
