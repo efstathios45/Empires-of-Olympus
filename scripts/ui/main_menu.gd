@@ -387,6 +387,10 @@ func _build_class_step() -> void:
 		_class_cards[id] = card
 		cards.add_child(card)
 
+	var centaur_credit := str(preload("res://scripts/enemy.gd").ENEMY_CONFIGS["centaur_enemy"].get("credit", ""))
+	if centaur_credit != "":
+		page.add_child(_wrapped(centaur_credit, 13, Kit.INK_SOFT, 980))
+
 	var nav := _row(18)
 	page.add_child(nav)
 
@@ -421,6 +425,8 @@ func _make_class_card(id: String, data: Dictionary) -> PanelContainer:
 	v.add_child(_wrapped(String(CLASS_LORE.get(id, data.get("desc", ""))), 15, Kit.INK_SOFT, TEXT_W))
 	v.add_child(_icon_line("icon_sword", String(data.get("weapon_name", "")), Kit.INK, TEXT_W - 40))
 	v.add_child(_icon_line("icon_mana", String(data.get("skill_name", "")), Kit.INK_GOLD, TEXT_W - 40))
+	if str(data.get("credit", "")) != "":
+		v.add_child(_wrapped(String(data["credit"]), 13, Kit.INK_SOFT, TEXT_W))
 
 	var walk := _card_button("Walk this Path")
 	walk.pressed.connect(_on_pick_class.bind(id))

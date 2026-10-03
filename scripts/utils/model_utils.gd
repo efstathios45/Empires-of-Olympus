@@ -62,8 +62,8 @@ static func add_per_part_convex_collision(node: Node3D, collision_layer: int = 1
 
 ## Set animation loop modes: locomotion loops, attacks/hits/deaths are one-shot.
 static func set_animation_loops(anim_player: AnimationPlayer) -> void:
-	var oneshot_anims = ["jump", "attack", "slash", "shoot", "hurt", "die", "death",
-		"fall", "climb", "dive", "hit", "cast", "throw", "reload", "pick_up", "roll", "dodge"]
+	var oneshot_anims = ["jump", "attack", "atack", "slash", "shoot", "firing", "hurt", "die", "death",
+		"fall", "climb", "dive", "hit", "cast", "throw", "reload", "pick_up", "roll", "dodge", "unsheath", "strike"]
 	for anim_name in anim_player.get_animation_list():
 		var anim = anim_player.get_animation(anim_name)
 		if not anim:
@@ -100,6 +100,74 @@ static func scale_to_height(node: Node3D, target_meters: float) -> void:
 		return
 	var factor = target_meters / current
 	node.scale *= factor
+
+## Put a posed skeleton's body over the parent origin and its feet on y=0.
+## Skinned-mesh AABBs stay on the bind pose, so bone positions are the guide.
+static func align_skeleton_to_ground(node: Node3D) -> void:
+	var skel := node.find_child("Skeleton3D", true, false) as Skeleton3D
+	if skel == null:
+		center_model_xz(node)
+		ground_model(node)
+		return
+	skel.force_update_all_bone_transforms()
+	var min_y := INF
+	var anchor := Vector3.ZERO
+	var have_anchor := false
+	for i in skel.get_bone_count():
+		var bone_name := str(skel.get_bone_name(i))
+		var world: Vector3 = skel.to_global(skel.get_bone_global_pose(i).origin)
+		if (bone_name.begins_with("RootBone") or bone_name.begins_with("ROOT BODY")) and not have_anchor:
+			anchor = world
+			have_anchor = true
+		var lower := bone_name.to_lower()
+		var is_end := "end" in lower
+		if not is_end and ("hoof" in lower or lower.begins_with("foot") or ".foot" in lower or lower.begins_with("ik foot")):
+			min_y = minf(min_y, world.y)
+	var parent := node.get_parent() as Node3D
+	var parent_basis := Basis.IDENTITY
+	var target := Vector3.ZERO
+	if parent:
+		parent_basis = parent.global_transform.basis
+		target = parent.global_position
+	if have_anchor:
+		var delta := Vector3(anchor.x - target.x, 0.0, anchor.z - target.z)
+		var local_delta := parent_basis.inverse() * delta
+		node.position.x -= local_delta.x
+		node.position.z -= local_delta.z
+	else:
+		center_model_xz(node)
+	if min_y < INF and min_y > -1000.0:
+		node.position.y -= min_y
+
+## Shift a model so its mesh AABB sits on the node's XZ origin.
+## Some Sketchfab rigs are authored several metres away from the scene root.
+static func center_model_xz(node: Node3D) -> void:
+	var min_x := INF
+	var max_x := -INF
+	var min_z := INF
+	var max_z := -INF
+	for child in node.find_children("*", "MeshInstance3D"):
+		var mi := child as MeshInstance3D
+		if mi == null or mi.mesh == null:
+			continue
+		var aabb := mi.get_aabb()
+		for corner_idx in 8:
+			var world: Vector3 = mi.to_global(aabb.get_endpoint(corner_idx))
+			min_x = minf(min_x, world.x)
+			max_x = maxf(max_x, world.x)
+			min_z = minf(min_z, world.z)
+			max_z = maxf(max_z, world.z)
+	if min_x == INF:
+		return
+	var delta := Vector3((min_x + max_x) * 0.5, 0.0, (min_z + max_z) * 0.5) - node.global_position
+	delta.y = 0.0
+	# position is in the parent frame. The node's own scale must not be inverted.
+	var parent_basis := Basis.IDENTITY
+	if node.get_parent() is Node3D:
+		parent_basis = (node.get_parent() as Node3D).global_transform.basis
+	var local_delta := parent_basis.inverse() * delta
+	node.position.x -= local_delta.x
+	node.position.z -= local_delta.z
 
 ## One-call setup for movement-driven characters.
 static func setup_character_for_movement(node: Node3D, target_height: float = 1.8) -> void:

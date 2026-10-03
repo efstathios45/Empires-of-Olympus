@@ -41,8 +41,22 @@ const ENEMY_CONFIGS := {
 	},
 	"centaur_enemy": {
 		"name": "Centaur Warrior",
-		"glb": "res://assets/characters/centaur_enemy/centaur_enemy.glb",
-		"lib": "res://assets/characters/centaur_enemy/centaur_enemy_animations.tres",
+		"glb": "res://assets/characters/bone_centaur/bone_centaur.glb",
+		"lib": "",
+		# Spear and shield are skinned into the mesh. Clip names are the
+		# file's own; RestPose is a one-frame hold used where the rig has
+		# no idle, flinch, or death.
+		"clips": {
+			"idle": "Armature|RestPose",
+			"walk": "Armature|Walking",
+			"sprint": "Armature|Walking",
+			"attack": "Attack",
+			"heavy": "Armature|UpwardStrike",
+			"hit": "Armature|RestPose",
+			"death": "Armature|RestPose",
+		},
+		"credit": "Sandstone, Bone centaur monster by Nagisa_Kurama — CC-BY 4.0",
+		"center_xz": true,
 		"height": 2.3, "hp": 185, "dmg": 21.0, "speed": 6.0,
 		"xp": 115, "gold": [22, 40], "aggro": 11.0, "reach": 2.6,
 		"attack_cd": 1.6, "material": "Centaur Hoof",
@@ -169,14 +183,17 @@ func _build_body() -> void:
 		if anim == null:
 			anim = AnimationPlayer.new()
 			model.add_child(anim)
-		var lib_path: String = cfg["lib"]
-		if ResourceLoader.exists(lib_path):
+		var lib_path: String = str(cfg.get("lib", ""))
+		if lib_path != "" and ResourceLoader.exists(lib_path):
 			var lib := load(lib_path) as AnimationLibrary
 			if lib:
 				anim.add_animation_library("", lib)
 		ModelUtils.set_animation_loops(anim)
-	if anim:
-		_play("ual1_Idle")
+		if anim:
+			_play(_clip("idle"))
+			if bool(cfg.get("center_xz", false)):
+				anim.seek(0.0, true)
+				ModelUtils.align_skeleton_to_ground(model)
 
 # ── Nameplate, health bar, boss beacon ───────────────────────────────────
 func _build_plate() -> void:
@@ -407,12 +424,12 @@ func _process_idle(delta: float) -> void:
 		wander_target = spawn_point + offset
 		velocity.x = 0
 		velocity.z = 0
-		_play("ual1_Idle")
+		_play(_clip("idle"))
 	else:
 		velocity.x = to_target.normalized().x * cfg["speed"] * 0.35
 		velocity.z = to_target.normalized().z * cfg["speed"] * 0.35
 		_face(to_target, delta)
-		_play("ual1_Walk")
+		_play(_clip("walk"))
 
 	if _player_distance() < float(cfg["aggro"]):
 		state = State.CHASE
@@ -441,7 +458,7 @@ func _process_chase(delta: float) -> void:
 		velocity.x = to_player.normalized().x * cfg["speed"]
 		velocity.z = to_player.normalized().z * cfg["speed"]
 		_face(to_player, delta)
-		_play("ual1_Sprint")
+		_play(_clip("sprint"))
 
 func _process_attack(_delta: float) -> void:
 	velocity.x = 0
@@ -458,13 +475,36 @@ func _process_attack(_delta: float) -> void:
 		state = State.CHASE
 
 func _attack_clip() -> String:
+	if cfg.has("clips"):
+		if randf() < 0.4 and str(cfg["clips"].get("heavy", "")) != "":
+			return _clip("heavy")
+		return _clip("attack")
 	match enemy_id:
 		"minotaur_boss":
 			return "ual2_Sword_Heavy_A" if randf() < 0.5 else "ual1_Sword_Attack"
-		"centaur_enemy":
-			return "ual2_Sword_Heavy_A" if randf() < 0.4 else "ual1_Sword_Attack"
 		_:
 			return "ual1_Sword_Attack"
+
+func _clip(slot: String) -> String:
+	var clips: Dictionary = cfg.get("clips", {})
+	if clips.has(slot):
+		return str(clips[slot])
+	match slot:
+		"idle":
+			return "ual1_Idle"
+		"walk":
+			return "ual1_Walk"
+		"sprint":
+			return "ual1_Sprint"
+		"hit":
+			return "ual1_Hit_Chest"
+		"death":
+			return "ual1_Death01"
+		"attack":
+			return "ual1_Sword_Attack"
+		"heavy":
+			return "ual2_Sword_Heavy_A"
+	return "ual1_Idle"
 
 func _player_distance() -> float:
 	if player == null:
@@ -515,7 +555,7 @@ func take_damage(amount: float, from_position: Vector3) -> void:
 	if not is_boss and state != State.ATTACK:
 		state = State.HIT
 		state_timer = 0.35
-		_play("ual1_Hit_Chest", false)
+		_play(_clip("hit"), false)
 	velocity += (global_position - from_position).normalized() * 2.2
 
 func _die() -> void:
@@ -523,7 +563,7 @@ func _die() -> void:
 	state = State.DEAD
 	targeted = false
 	velocity = Vector3.ZERO
-	_play("ual1_Death01", false)
+	_play(_clip("death"), false)
 	collision_layer = 0
 	collision_mask = 1
 	AudioManager.play_sfx("hit_flesh", 0.0, 0.7)
