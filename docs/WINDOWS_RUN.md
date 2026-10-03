@@ -30,13 +30,13 @@ No zip extract needed — this download is the .exe alone.
 ------------------------------------------------------------
 Download
 ------------------------------------------------------------
-Windows build (full recovered game — multiplayer / chat / server browser):
-  https://gofile.io/d/aUKvYxJg
+Windows build (recovered multiplayer/chat game + Hoplite Chan / bone centaur):
+  https://gofile.io/d/oT7ZPbvO
 
 File name: EmpiresOfOlympus.exe
-Size: ~221 MB (embedded PCK)
-SHA-256: 4f0600c7d1bb52e4b5fa72e24c9f667c3ca42c086873a6dab20c7df749c0f43e
-MD5:     df28ddddbab2df8349a55914a5a5e77d
+Size: ~222 MB (embedded PCK)
+SHA-256: ed363f58738531cf980e7b7eb32258814582983067ccebd85980f27c88e17697
+MD5:     c7c7f311b01d3fdf4199ed4e290e1786
 
 Includes:
 - Accounts + local / cloud saves
@@ -46,6 +46,8 @@ Includes:
 - Host World Online (UPnP) — host-only Copy Invite; joiners never see raw IPs
 - Panoply inventory, party XP/gold share, video settings
 - Nameplates / cross-empire PvP arena hooks
+- PS1/PSX Hoplite Chan as the hoplite class (built-in dory/aspis)
+- Sandstone bone centaur enemy model
 
 How to play with friends
 1. Host: enter world → Esc → name world → Host World → Copy Invite (host only).
