@@ -41,10 +41,10 @@ Keep both files in that folder.
 Download
 ------------------------------------------------------------
 Windows build (separate .exe + .pck):
-  https://gofile.io/d/m1FXTSr8
+  https://gofile.io/d/5uzdM2aj
 
 Archive: EmpiresOfOlympus-windows.zip
-SHA-256: 8a84732a04a98c47aae1b52387617bf71b997b81c3c5381cff915c932dd4433f
+SHA-256: d1f75644008962b4289a48b633e43868d45eec289354183dfa602351d970085f
 
 Exe SHA-256: b493c1d53fb915f7805f360cfe42d1c3126e720dfc234a4b0f2feb99200f9a4b
 Pck SHA-256: 42e1eb1a0a8b4a19b9613ecaddce130879c85316bb9c8e7765d82a944419a958

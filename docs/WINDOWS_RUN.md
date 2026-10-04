@@ -53,11 +53,11 @@ Keep EmpiresOfOlympus.exe and EmpiresOfOlympus.pck in that same folder.
 Download
 ------------------------------------------------------------
 Windows build (separate .exe + .pck — fewer Defender false positives):
-  https://gofile.io/d/m1FXTSr8
+  https://gofile.io/d/5uzdM2aj
 
 Archive: EmpiresOfOlympus-windows.zip
-SHA-256 (zip): 8a84732a04a98c47aae1b52387617bf71b997b81c3c5381cff915c932dd4433f
-MD5 (zip):     6457c2a3f11da3bd399e58dad36baa30
+SHA-256 (zip): d1f75644008962b4289a48b633e43868d45eec289354183dfa602351d970085f
+MD5 (zip):     0c36047cea41425eaa8db691b15a4baa
 
 Contents:
   EmpiresOfOlympus.exe  SHA-256: b493c1d53fb915f7805f360cfe42d1c3126e720dfc234a4b0f2feb99200f9a4b
