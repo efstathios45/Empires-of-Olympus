@@ -1,7 +1,7 @@
 class_name ModelUtils
 
 
-const BUILD_FIX_TOKEN: = "EOO_FIX_HELLENIC_NPC_POSE_V1"
+const BUILD_FIX_TOKEN: = "EOO_FIX_UAL_POSTURE_V2"
 
 
 const _BROKEN_UAL_MESH: = "95ce6ed4"
@@ -655,7 +655,6 @@ static func correct_sky_gaze(_skel: Skeleton3D, _strength: float = 1.0) -> void 
 	return
 
 
-
 static func _dampen_local_pitch(skel: Skeleton3D, bone_name: String, strength: float) -> void :
 	var bone_i: = skel.find_bone(bone_name)
 	if bone_i < 0:
@@ -667,9 +666,40 @@ static func _dampen_local_pitch(skel: Skeleton3D, bone_name: String, strength: f
 	skel.set_bone_pose_rotation(bone_i, Quaternion.from_euler(e))
 
 
+## Install post-AnimationPlayer UAL sky-gaze / arm-tangle corrector.
+## Safe for Mixamo/UAL humanoids; skipped for Quaternius / KayKit / animals.
+static func install_ual_posture_fix(model: Node3D, anim: AnimationPlayer = null) -> void :
+	if model == null:
+		return
+	if _is_quaternius_model(model) or _is_kaykit_model(model):
+		return
+	var skel: Skeleton3D = null
+	for n in model.find_children("*", "Skeleton3D", true, false):
+		skel = n as Skeleton3D
+		break
+	if skel == null:
+		return
+	# Need a humanoid UAL-style rig (Hips + arms). Animals skip.
+	if skel.find_bone("Hips") < 0:
+		return
+	if skel.find_bone("LeftUpperArm") < 0 and skel.find_bone("LeftShoulder") < 0:
+		return
+	if skel.has_node("NpcPostureFix"):
+		return
+	if anim == null:
+		anim = model.find_child("AnimationPlayer", true, false) as AnimationPlayer
+	var fix: = Node.new()
+	fix.name = "NpcPostureFix"
+	fix.set_script(load("res://scripts/utils/ual_posture_fix.gd"))
+	skel.add_child(fix)
+	if fix.has_method("bind_anim"):
+		fix.call("bind_anim", anim)
+
 
 static func install_sky_gaze_fix(model: Node3D) -> void :
-	install_leg_plant_fix(model)
+	# Legacy name: prefer the UAL posture corrector (LegPlant stays disabled —
+	# it wiped authored clips and caused T-pose / entanglement).
+	install_ual_posture_fix(model)
 
 
 

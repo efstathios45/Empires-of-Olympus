@@ -103,15 +103,17 @@ func _ready() -> void :
 				_anim.add_animation_library("", lib)
 		ModelUtils.set_animation_loops(_anim)
 		ModelUtils.bind_leg_plant_anim(_model, _anim)
-		# UAL posture dampening is only for melted Tripo/UAL citizen packs.
-		# Hellenic Quaternius greek_* cast already idles upright.
-		if not ModelUtils._is_quaternius_model(_model):
-			_install_posture_fix()
+		# Quaternius native Idle is already upright. UAL/Mixamo ual1_* packs
+		# (and any leftover non-Quaternius citizen meshes) need posture fix —
+		# same root cause that made the old guard-hero stare at the sky.
+		ModelUtils.install_ual_posture_fix(_model, _anim)
 		if not _anim.has_animation(idle_clip):
 			if _anim.has_animation("Idle"):
 				idle_clip = "Idle"
 			elif _anim.has_animation("Idle_Neutral"):
 				idle_clip = "Idle_Neutral"
+			elif _anim.has_animation("Idle_Sword"):
+				idle_clip = "Idle_Sword"
 			elif _anim.has_animation("ual1_Idle"):
 				idle_clip = "ual1_Idle"
 			else:
@@ -130,21 +132,6 @@ func _ready() -> void :
 	var world: = get_tree().get_first_node_in_group("game_world")
 	if world and world.has_method("sample_height"):
 		global_position.y = world.sample_height(global_position.x, global_position.z)
-
-
-func _install_posture_fix() -> void :
-	var skel: Skeleton3D = null
-	for n in _model.find_children("*", "Skeleton3D", true, false):
-		skel = n as Skeleton3D
-		break
-	if skel == null or skel.has_node("NpcPostureFix"):
-		return
-	var fix: = Node.new()
-	fix.name = "NpcPostureFix"
-	fix.set_script(load("res://scripts/utils/npc_posture_fix.gd"))
-	skel.add_child(fix)
-	if fix.has_method("bind_anim"):
-		fix.call("bind_anim", _anim)
 
 
 func _model_needs_greek_paint(model: Node3D, gpath: String) -> bool:

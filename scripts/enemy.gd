@@ -304,6 +304,9 @@ func _build_body() -> void :
 		# UAL .tres packs use %GeneralSkeleton tracks — retarget so humanoids
 		# actually leave the bind T-pose when idle/walk/attack play.
 		ModelUtils.retarget_anim_player_libraries(anim, model)
+		# Same root bug as the old guard-hero: raw ual1_* clips tip the head
+		# at the sky and twist shoulders. Correct after the AnimationPlayer.
+		ModelUtils.install_ual_posture_fix(model, anim)
 
 		if cfg.has("slices") and cfg.has("slice_master"):
 			_install_sliced_clips(String(cfg["slice_master"]), float(cfg.get("slice_fps", 24.0)), cfg["slices"])

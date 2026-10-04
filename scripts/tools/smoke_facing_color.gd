@@ -1,6 +1,6 @@
 extends SceneTree
 
-# Smoke: chase facing (visual front toward chase) + textured plaza NPCs.
+# Smoke: chase facing + plaza NPCs are colored Quaternius (not grey/brown paint).
 
 func _init() -> void:
 	call_deferred("_run")
@@ -15,7 +15,7 @@ func _run() -> void:
 	ok = await _check_enemy("gorgon_enemy", false) and ok
 	ok = await _check_enemy("minotaur_boss", false) and ok
 	ok = await _check_enemy("centaur_enemy", true) and ok
-	ok = await _check_npc_textured() and ok
+	ok = await _check_npc_cast() and ok
 	if ok:
 		print("SMOKE_FACING_COLOR_OK")
 		quit(0)
@@ -42,21 +42,15 @@ func _check_enemy(id: String, use_head: bool) -> bool:
 				anim.play(c)
 				anim.seek(0.2, true)
 				break
-	# MeshRoot aims chase +Z (same as runtime yaw_from_direction).
 	mesh.rotation.y = ModelUtils.yaw_from_direction(Vector3(0, 0, 1))
 	await process_frame
 	skel.force_update_all_bone_transforms()
-	var face: float = _visual_face_dot(skel) # UAL +Z / Godot chase
+	var face: float = _visual_face_dot(skel)
 	var head: float = _head_ahead(skel)
 	var yaw_cfg = e.cfg.get("facing_yaw_deg", null)
 	print("  yaw_cfg=", yaw_cfg, " model.y=", snappedf(model.rotation.y, 0.01),
 		" face_dot=", snappedf(face, 0.01), " head_ahead=", snappedf(head, 0.01))
-	var good: bool
-	if use_head:
-		good = head > 0.05
-	else:
-		# Humanoids: visual front (chest +Z) must aim at chase.
-		good = face > 0.55
+	var good: bool = head > 0.05 if use_head else face > 0.55
 	if not good:
 		print("FAIL ", id, " still sideways/backwards")
 		e.queue_free()
@@ -67,78 +61,62 @@ func _check_enemy(id: String, use_head: bool) -> bool:
 	return true
 
 
-func _check_npc_textured() -> bool:
-	print("-- npc textured cast")
+func _check_npc_cast() -> bool:
+	print("-- npc quaternius cast")
 	var n: StaticBody3D = load("res://scripts/npc.gd").create(
 		"priestess", "Priestess Melite",
-		"res://assets/characters/oracle_priestess/oracle_priestess.glb",
-		"res://assets/characters/oracle_priestess/oracle_priestess_animations.tres",
-		Vector3.ZERO, 1.72, 0.0)
+		"res://assets/characters/quaternius_oracle_witch/oracle_witch.glb",
+		"", Vector3.ZERO, 1.72, 0.0)
+	n.idle_clip = "Idle_Neutral"
 	get_root().add_child(n)
 	await process_frame
 	await process_frame
 	var model: Node3D = n.get("_model") as Node3D
-	if model == null:
-		print("FAIL no model")
+	if model == null or not ModelUtils._is_quaternius_model(model):
+		print("FAIL not Quaternius plaza cast")
+		n.queue_free()
 		return false
-	var textured := 0
-	var flat_paint := 0
+	var colored := 0
+	var whiteish := 0
 	for node in model.find_children("*", "MeshInstance3D", true, false):
 		var mi := node as MeshInstance3D
-		if mi == null:
+		if mi == null or mi.mesh == null:
 			continue
-		var mat: Material = mi.get_active_material(0)
-		if mat == null and mi.get_surface_override_material_count() > 0:
-			mat = mi.get_surface_override_material(0)
-		if mat is StandardMaterial3D:
-			var sm := mat as StandardMaterial3D
-			if sm.albedo_texture != null:
-				textured += 1
-				print("  mesh=", mi.name, " TEXTURED")
-			else:
-				var c: Color = sm.albedo_color
+		for si in mi.mesh.get_surface_count():
+			var mat: Material = mi.get_active_material(si)
+			if mat == null:
+				mat = mi.mesh.surface_get_material(si)
+			if mat is StandardMaterial3D:
+				var c: Color = (mat as StandardMaterial3D).albedo_color
 				var sat: float = maxf(c.r, maxf(c.g, c.b)) - minf(c.r, minf(c.g, c.b))
-				print("  mesh=", mi.name, " albedo=", c, " sat=", snappedf(sat, 0.01))
-				# GreekLook bronze/cloth overrides look like flat paint
-				if sat > 0.08:
-					flat_paint += 1
-	print("  textured=", textured, " flat_paint=", flat_paint)
-	if textured < 1:
-		print("FAIL NPC has no albedo textures")
+				if sat >= 0.08:
+					colored += 1
+				elif c.r > 0.75 and c.g > 0.75 and c.b > 0.75:
+					whiteish += 1
+	print("  colored_surfaces=", colored, " whiteish=", whiteish)
+	if colored < 3 or whiteish > colored:
+		print("FAIL plaza NPC not multi-colored")
 		n.queue_free()
 		return false
-	if flat_paint > textured:
-		print("FAIL NPC still GreekLook-painted over textures")
-		n.queue_free()
-		return false
-	# Guard textured too
 	var g: StaticBody3D = load("res://scripts/npc.gd").create_flavour(
-		"citizen_g", "Guard", "res://assets/characters/city_guard/city_guard.glb",
-		"res://assets/characters/city_guard/city_guard_animations.tres",
-		Vector3.ZERO, 1.84, 0.0, "Idle_Sword", "hi")
+		"citizen_g", "Guard",
+		"res://assets/characters/quaternius_guard_adventurer/guard_adventurer.glb",
+		"", Vector3.ZERO, 1.84, 0.0, "Idle_Sword", "hi")
 	get_root().add_child(g)
 	await process_frame
 	await process_frame
 	var gm: Node3D = g.get("_model") as Node3D
-	var gtex := 0
-	for node in gm.find_children("*", "MeshInstance3D", true, false):
-		var mi := node as MeshInstance3D
-		var mat: Material = mi.get_active_material(0)
-		if mat is StandardMaterial3D and (mat as StandardMaterial3D).albedo_texture != null:
-			gtex += 1
-	print("  guard textured_meshes=", gtex)
-	if gtex < 1:
-		print("FAIL guard not textured")
+	if gm == null or not ModelUtils._is_quaternius_model(gm):
+		print("FAIL guard not Quaternius")
 		n.queue_free(); g.queue_free()
 		return false
-	print("  npc textured OK")
+	print("  npc cast OK")
 	n.queue_free()
 	g.queue_free()
 	return true
 
 
 func _visual_face_dot(skel: Skeleton3D) -> float:
-	# UAL/Mixamo visual front is chest +Z. Chase probe aims MeshRoot at +Z.
 	var toward := Vector3(0, 0, 1)
 	for bn in ["UpperChest", "Chest", "Hips", "Head", "Torso_04"]:
 		var bi := skel.find_bone(bn)
