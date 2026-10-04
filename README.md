@@ -7,27 +7,21 @@ Hoplite class uses PS1/PSX Hoplite Chan; centaur enemies use the bone centaur.
 
 ## Windows download
 
-Defender often false-positives **any zip that contains a Godot `.exe`** from
-file hosts. Prefer one of these:
+### Recommended (avoids Defender exe-in-zip false positives)
 
-### A) Data-only zip (recommended if Defender flagged the full zip)
+**https://gofile.io/d/BgE1qK2B** — `EmpiresOfOlympus-data-only.zip`
 
-**https://gofile.io/d/BafoP5Nd** — `EmpiresOfOlympus-data-only.zip`
+Extract → run `powershell -ExecutionPolicy Bypass -File .\GET-ENGINE.ps1`
+(pulls the official Godot 4.4.1 engine from github.com/godotengine).
 
-Contains `EmpiresOfOlympus.pck` + `GET-ENGINE.ps1` (no `.exe` inside).
-Run the script once; it pulls the official Godot 4.4.1 engine from
-`github.com/godotengine` and verifies SHA-256.
+### Full zip (exe + pck) — if you already allowlisted Defender
 
-### B) Full zip (exe + pck) — GitHub Release (repo collaborators)
+**https://gofile.io/d/PIUbZAh4** — `EmpiresOfOlympus-windows.zip`
 
-If you can log into GitHub on this private repo:
+Extract both files into the same folder, then run `EmpiresOfOlympus.exe`.
 
-**https://github.com/efstathios45/Empires-of-Olympus/releases/tag/v0.9.1-windows**
-
-### If Defender still quarantines
-
-Windows Security → Protection history → **Allow on this device**.
-Details / hashes: [`docs/WINDOWS_RUN.md`](docs/WINDOWS_RUN.md)
+This build: enemies chase facing you; plaza NPCs use textured characters
+(not flat white/brown). Run notes: [`docs/WINDOWS_RUN.md`](docs/WINDOWS_RUN.md)
 
 ## Build yourself
 
