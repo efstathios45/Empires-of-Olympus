@@ -106,31 +106,20 @@ const ENEMY_CONFIGS: = {
 		"height": 1.75, "hp": 240, "dmg": 24.0, "speed": 5.6, 
 		"xp": 120, "gold": [20, 36], "aggro": 11.5, "reach": 2.1, 
 		"attack_cd": 1.2, "material": "Harpy Feather", "screech": true, 
-		# Authored 90° off + Unity +Z front → 270°.
-		"facing_yaw_deg": 270.0, 
+		# UAL/Unity +Z front → Godot −Z (same as other Tripo humanoids).
+		"facing_yaw_deg": 180.0, 
 		"sfx_attack": "harpy_attack", "sfx_death": "harpy_death", 
 	}, 
 	"centaur_enemy": {
 		"name": "Centaur Warrior", 
 		"level": 8, 
-		"glb": "res://assets/characters/bone_centaur/bone_centaur.glb", 
-		"lib": "", 
-		"center_xz": true, 
-		"credit": "Sandstone, Bone centaur monster by Nagisa_Kurama — CC-BY 4.0", 
+		"glb": "res://assets/characters/centaur_enemy/centaur_enemy.glb", 
+		"lib": "res://assets/characters/centaur_enemy/centaur_enemy_animations.tres", 
 		"height": 2.3, "hp": 320, "dmg": 28.0, "speed": 6.0, 
 		"xp": 145, "gold": [28, 48], "aggro": 11.0, "reach": 2.6, 
 		"attack_cd": 1.6, "material": "Centaur Hoof", 
 		"facing_yaw_deg": 180.0, 
 		"sfx_attack": "centaur_attack", "sfx_death": "centaur_death", 
-		"clips": {
-			"idle": "Armature|RestPose", 
-			"walk": "Armature|Walking", 
-			"sprint": "Armature|Walking", 
-			"attack": "Attack", 
-			"heavy": "Armature|UpwardStrike", 
-			"hit": "Armature|RestPose", 
-			"death": "Armature|RestPose", 
-		}, 
 	}, 
 	"gorgon_enemy": {
 		"name": "Gorgon", 
@@ -301,19 +290,13 @@ func _build_body() -> void :
 				if anim.has_animation_library(""):
 					anim.remove_animation_library("")
 				anim.add_animation_library("", lib)
-		# UAL .tres packs use %GeneralSkeleton tracks — retarget so humanoids
-		# actually leave the bind T-pose when idle/walk/attack play.
-		ModelUtils.retarget_anim_player_libraries(anim, model)
-		# Same root bug as the old guard-hero: raw ual1_* clips tip the head
-		# at the sky and twist shoulders. Correct after the AnimationPlayer.
-		ModelUtils.install_ual_posture_fix(model, anim)
 
 		if cfg.has("slices") and cfg.has("slice_master"):
 			_install_sliced_clips(String(cfg["slice_master"]), float(cfg.get("slice_fps", 24.0)), cfg["slices"])
 		_skeletal_anims = _prepare_skeleton_for_anims(model)
 		ModelUtils.set_animation_loops(anim)
 		_force_oneshot_clips([
-			_clip("death"), _clip("hit"), _clip("attack"), _clip("heavy"), 
+			_clip("death"), _clip("hit"), _clip("attack"), 
 			"ual1_Death01", "ual1_Hit_Chest", "ual1_Sword_Attack", 
 			"ual1_Punch_Jab", "ual2_Sword_Heavy_A", "ual2_Sword_Heavy_B", 
 			"Death", "Attack", "Attack_Headbutt", "Idle_HitReact1", "Idle_HitReact2", 
@@ -325,14 +308,8 @@ func _build_body() -> void :
 				var a: = anim.get_animation(n)
 				if a:
 					a.loop_mode = Animation.LOOP_LINEAR
-		# Face Godot −Z after clips exist so head/snout measurement (and
-		# facing_plus_z overrides) match what the player actually sees.
+		# Face Godot −Z after clips exist so head/snout measurement matches play.
 		_apply_facing_correction(model)
-		if bool(cfg.get("center_xz", false)):
-			if anim.has_animation(_clip("idle")):
-				anim.play(_clip("idle"))
-				anim.seek(0.0, true)
-			ModelUtils.align_skeleton_to_ground(model)
 	if anim and _skeletal_anims:
 		_play(_clip("idle"))
 
@@ -464,25 +441,27 @@ func _prepare_skeleton_for_anims(model: Node3D) -> bool:
 	if skel == null:
 		return false
 
-	# Ensure %GeneralSkeleton libraries (or leftover unique-name tracks) resolve.
-	ModelUtils.retarget_anim_player_libraries(anim, model)
+	# Old exe imported GLBs as unique GeneralSkeleton. Mirror that at runtime
+	# before any early-return so %GeneralSkeleton UAL tracks resolve (no retarget).
 	if _anim_uses_general_skeleton_paths():
 		if skel.name != "GeneralSkeleton":
 			skel.name = "GeneralSkeleton"
 		skel.unique_name_in_owner = true
+		anim.clear_caches()
 
-	for candidate in [_death_clip, "Death", "death", _clip("idle"), _clip("walk")]:
+	for candidate in [_death_clip, "Death", "death", "ual1_Death01"]:
 		var cname: = String(candidate)
 		if cname == "" or not anim.has_animation(cname):
 			continue
 		if _anim_binds_to_skeleton(anim.get_animation(cname), skel):
-			if String(candidate) == _death_clip or candidate == "Death" or candidate == "death":
-				_death_clip = cname
-				_clips["death"] = cname
+			_death_clip = cname
+			_clips["death"] = cname
 			return true
 
 	if skel.find_bone("Hips") < 0:
 		return false
+	if _anim_uses_general_skeleton_paths():
+		return anim.has_animation(_clip("idle")) or anim.has_animation("ual1_Idle")
 	if skel.name != "GeneralSkeleton":
 		skel.name = "GeneralSkeleton"
 	skel.unique_name_in_owner = true
@@ -726,9 +705,6 @@ func set_targeted(on: bool) -> void :
 
 func _telegraph_aggro() -> void :
 
-	if player != null and is_instance_valid(player):
-		PartyShare.note(self, player)
-	PartyShare.note_nearby(self, global_position, float(cfg.get("aggro", 10.0)))
 	if _telegraph_cd > 0.0:
 		return
 	_telegraph_cd = 5.0
@@ -907,7 +883,7 @@ func _attack_clip() -> String:
 		"minotaur_boss":
 			return "ual2_Sword_Heavy_A" if randf() < 0.5 else _clip("attack")
 		"centaur_enemy":
-			return _clip("heavy") if _clips.has("heavy") and randf() < 0.4 else _clip("attack")
+			return "ual2_Sword_Heavy_A" if randf() < 0.4 else _clip("attack")
 		_:
 			return _clip("attack")
 
@@ -922,8 +898,7 @@ func _face(dir: Vector3, delta: float) -> void :
 	if dir.length_squared() < 0.001:
 		return
 	var target_yaw: = ModelUtils.yaw_from_direction(dir)
-	var w: = clampf(10.0 * delta, 0.0, 1.0)
-	mesh_root.rotation.y = lerp_angle(mesh_root.rotation.y, target_yaw, w)
+	mesh_root.rotation.y = lerp_angle(mesh_root.rotation.y, target_yaw, 10.0 * delta)
 
 func _apply_gravity(delta: float) -> void :
 	if not is_on_floor():
@@ -948,18 +923,12 @@ func take_damage(amount: float, from_position: Vector3) -> void :
 	_plate_timer = 0.0
 	_update_plate()
 
-	if player != null and is_instance_valid(player):
-		PartyShare.note(self, player)
-	PartyShare.note_nearby(self, from_position, 5.0)
-
 	if player != null and is_instance_valid(player) and player.has_method("add_camera_shake"):
 		player.add_camera_shake(0.05, 0.14)
 
 	if state == State.IDLE:
 		state = State.CHASE
 		_telegraph_aggro()
-		if player != null:
-			PartyShare.note(self, player)
 	if hp <= 0.0:
 		_die()
 		return
@@ -988,16 +957,15 @@ func _die() -> void :
 		beacon.visible = false
 
 
-	var foe_lvl: int = int(cfg.get("level", 1))
-	if player != null:
-		PartyShare.note(self, player)
-	PartyShare.note_nearby(self, global_position, float(cfg.get("aggro", 10.0)) * 1.5)
 	var gold_range: Array = cfg["gold"]
-	var gold_amount: int = GameState.roll_gold_drop(
-		int(gold_range[0]), int(gold_range[1]), foe_lvl)
-
-	PartyShare.award_xp_and_gold(self, int(cfg["xp"]), gold_amount)
-	_spawn_world_loot(foe_lvl, false)
+	var gold_amount: = randi_range(int(gold_range[0]), int(gold_range[1]))
+	GameState.add_gold(gold_amount)
+	GameState.add_xp(cfg["xp"])
+	GameState.add_material(cfg["material"], 1)
+	if randf() < 0.12:
+		GameState.health_potions += 1
+		GameState.potions_changed.emit()
+	_spawn_gear_drops()
 	GameState.register_kill(String(cfg.get("quest_id", enemy_id)))
 	if is_boss:
 		GameState.register_minotaur_kill()
@@ -1015,49 +983,25 @@ func _die() -> void :
 
 
 
-func _spawn_world_loot(foe_lvl: int, include_gold: bool = false) -> void :
+func _spawn_gear_drops() -> void :
+	var rolls: = 2 if is_boss else 1
+	var chance: = 0.55 if is_boss else 0.38
+
+	chance += clampf(float(cfg.get("level", 1)) * 0.03, 0.0, 0.2)
 	var parent: = get_parent()
 	if parent == null:
 		return
 	var LootPickup: = load("res://scripts/loot_pickup.gd")
 	if LootPickup == null:
 		return
-	if include_gold:
-		var gold_range: Array = cfg["gold"]
-		var gold_amount: int = GameState.roll_gold_drop(
-			int(gold_range[0]), int(gold_range[1]), foe_lvl)
-		_spawn_one_drop(LootPickup, parent, "gold_coin", gold_amount)
-
-
-	var mat_name: String = String(cfg.get("material", ""))
-	if mat_name != "":
-		var mat_id: String = GameState.material_item_id(mat_name)
-		if mat_id == "":
-			mat_id = "mat_" + mat_name.to_lower().replace(" ", "_")
-		_spawn_one_drop(LootPickup, parent, mat_id, 0)
-
-	if randf() < 0.12:
-		_spawn_one_drop(LootPickup, parent, "health_potion", 0)
-
-	var rolls: = 2 if is_boss else 1
-	var chance: = 0.55 if is_boss else 0.38
-	chance += clampf(float(foe_lvl) * 0.03, 0.0, 0.2)
 	for _i in rolls:
-		var loot_id: String = GameState.roll_loot_drop(chance, is_boss, foe_lvl)
+		var loot_id: String = GameState.roll_loot_drop(chance, is_boss)
 		if loot_id == "":
 			continue
-		_spawn_one_drop(LootPickup, parent, loot_id, 0)
-
-
-func _spawn_one_drop(LootPickup: Script, parent: Node, loot_id: String, gold_value: int) -> void :
-	if LootPickup == null or parent == null or loot_id == "":
-		return
-	var drop: Node = LootPickup.new()
-	if drop == null:
-		return
-	parent.add_child(drop)
-	if drop.has_method("setup"):
-		drop.call("setup", loot_id, global_position + Vector3(0, 0.2, 0), gold_value)
+		var drop: Node = LootPickup.new()
+		parent.add_child(drop)
+		if drop.has_method("setup"):
+			drop.setup(loot_id, global_position + Vector3(0, 0.2, 0))
 
 
 

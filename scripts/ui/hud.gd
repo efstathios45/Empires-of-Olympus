@@ -10,6 +10,7 @@ extends CanvasLayer
 const Kit = preload("res://scripts/ui/ui_kit.gd")
 const DialoguePanel = preload("res://scripts/ui/panel_dialogue.gd")
 const SmithPanel = preload("res://scripts/ui/panel_smith.gd")
+const MosaicPanel = preload("res://scripts/ui/panel_mosaic.gd")
 const InventoryPanel = preload("res://scripts/ui/panel_inventory.gd")
 const PausePanel = preload("res://scripts/ui/panel_pause.gd")
 const ChatOverlay = preload("res://scripts/ui/chat_overlay.gd")
@@ -456,16 +457,27 @@ func _refresh_all() -> void :
 	_refresh_quest()
 
 func _refresh_quest() -> void :
+	var mosaic_line: = GameState.mosaic_progress_text()
 	var q: Dictionary = GameState.current_quest()
 	if q.is_empty():
+		if mosaic_line != "":
+			_quest_title.text = String(GameState.MOSAIC_QUEST["title"])
+			_quest_lines.text = mosaic_line
+			_quest_hint.text = "Speak with the agora women" if GameState.mosaic_quest_stage == "accepted" else ""
+			return
 		_quest_title.text = "All Trials Complete"
 		_quest_lines.text = "Wander, refine, and grow stronger."
 		_quest_hint.text = ""
 		return
 	_quest_title.text = q["title"]
-	_quest_lines.text = GameState.quest_progress_text()
+	var body: = GameState.quest_progress_text()
+	if mosaic_line != "" and GameState.mosaic_quest_stage != "complete":
+		body += "\n\n" + mosaic_line
+	_quest_lines.text = body
 	if GameState.is_quest_objective_done():
 		_quest_hint.text = "Return to Priestess Melite"
+	elif GameState.mosaic_quest_stage == "accepted":
+		_quest_hint.text = "Agora women — begin the mosaic"
 	else:
 		_quest_hint.text = ""
 
@@ -575,6 +587,12 @@ func open_dialogue(_npc: Node3D) -> void :
 
 func open_smith(_npc: Node3D) -> void :
 	_open(SmithPanel.new())
+
+func open_mosaic(npc: Node3D) -> void :
+	var p: = MosaicPanel.new()
+	if npc != null and "display_name" in npc:
+		p.speaker_name = String(npc.display_name)
+	_open(p)
 
 func toggle_inventory(tab: String = "gear") -> void :
 	if _open_panel is InventoryPanel:
