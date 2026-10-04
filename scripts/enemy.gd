@@ -18,6 +18,7 @@ const ENEMY_CONFIGS: = {
 		"height": 1.05, "hp": 42, "dmg": 7.0, "speed": 4.6, 
 		"xp": 18, "gold": [3, 8], "aggro": 9.0, "reach": 1.9, 
 		"attack_cd": 1.4, "material": "Wolf Pelt", 
+		"facing_plus_z": true, 
 		"tint": Color(0.78, 0.78, 0.82), 
 		"sfx_attack": "wolf_attack", "sfx_death": "wolf_death", 
 		"sfx_aggro": "wolf_aggro", 
@@ -37,6 +38,7 @@ const ENEMY_CONFIGS: = {
 		"height": 1.12, "hp": 48, "dmg": 8.5, "speed": 4.8, 
 		"xp": 22, "gold": [4, 9], "aggro": 9.5, "reach": 1.95, 
 		"attack_cd": 1.35, "material": "Wolf Pelt", 
+		"facing_plus_z": true, 
 		"tint": Color(0.28, 0.26, 0.3), 
 		"sfx_attack": "wolf_black_attack", "sfx_death": "wolf_black_death", 
 		"sfx_aggro": "wolf_aggro", 
@@ -56,6 +58,7 @@ const ENEMY_CONFIGS: = {
 		"height": 1.28, "hp": 58, "dmg": 10.0, "speed": 4.4, 
 		"xp": 28, "gold": [5, 11], "aggro": 10.0, "reach": 2.1, 
 		"attack_cd": 1.5, "material": "Wolf Pelt", 
+		"facing_plus_z": true, 
 		"tint": Color(0.55, 0.42, 0.34), 
 		"sfx_attack": "wolf_dire_attack", "sfx_death": "wolf_dire_death", 
 		"sfx_aggro": "wolf_aggro", 
@@ -74,6 +77,7 @@ const ENEMY_CONFIGS: = {
 		"height": 1.05, "hp": 110, "dmg": 14.0, "speed": 4.2, 
 		"xp": 48, "gold": [8, 16], "aggro": 9.5, "reach": 2.0, 
 		"attack_cd": 1.7, "material": "Boar Tusk", 
+		"facing_plus_z": false, 
 		"sfx_attack": "boar_attack", "sfx_death": "boar_death", 
 		"sfx_aggro": "boar_idle", 
 		"sfx_attack_alt": "boar_attack_b", 
@@ -90,6 +94,7 @@ const ENEMY_CONFIGS: = {
 		"height": 1.7, "hp": 160, "dmg": 18.0, "speed": 5.2, 
 		"xp": 78, "gold": [14, 26], "aggro": 10.5, "reach": 2.1, 
 		"attack_cd": 1.3, "material": "Satyr Horn", 
+		"facing_plus_z": true, 
 		"sfx_attack": "satyr_attack", "sfx_death": "satyr_death", 
 	}, 
 	"harpy_enemy": {
@@ -100,6 +105,7 @@ const ENEMY_CONFIGS: = {
 		"height": 1.75, "hp": 240, "dmg": 24.0, "speed": 5.6, 
 		"xp": 120, "gold": [20, 36], "aggro": 11.5, "reach": 2.1, 
 		"attack_cd": 1.2, "material": "Harpy Feather", "screech": true, 
+		"facing_plus_z": false, 
 		"sfx_attack": "harpy_attack", "sfx_death": "harpy_death", 
 	}, 
 	"centaur_enemy": {
@@ -112,6 +118,7 @@ const ENEMY_CONFIGS: = {
 		"height": 2.3, "hp": 320, "dmg": 28.0, "speed": 6.0, 
 		"xp": 145, "gold": [28, 48], "aggro": 11.0, "reach": 2.6, 
 		"attack_cd": 1.6, "material": "Centaur Hoof", 
+		"facing_plus_z": true, 
 		"sfx_attack": "centaur_attack", "sfx_death": "centaur_death", 
 		"clips": {
 			"idle": "Armature|RestPose", 
@@ -131,6 +138,7 @@ const ENEMY_CONFIGS: = {
 		"height": 2.0, "hp": 360, "dmg": 30.0, "speed": 4.4, 
 		"xp": 160, "gold": [32, 55], "aggro": 10.0, "reach": 2.4, 
 		"attack_cd": 1.8, "material": "Gorgon Venom", 
+		"facing_plus_z": true, 
 		"sfx_attack": "gorgon_attack", "sfx_death": "gorgon_death", 
 	}, 
 	"minotaur_boss": {
@@ -141,6 +149,7 @@ const ENEMY_CONFIGS: = {
 		"height": 3.4, "hp": 2800, "dmg": 55.0, "speed": 5.0, 
 		"xp": 2200, "gold": [400, 600], "aggro": 14.0, "reach": 3.4, 
 		"attack_cd": 2.2, "material": "Minotaur Horn", "boss": true, 
+		"facing_plus_z": true, 
 		"sfx_attack": "minotaur_attack", "sfx_death": "minotaur_death", 
 	}, 
 }
@@ -270,8 +279,6 @@ func _build_body() -> void :
 		var model: Node3D = load(glb_path).instantiate()
 		mesh_root.add_child(model)
 
-		if cfg.get("facing_plus_z", false):
-			model.rotation.y = PI
 		if cfg.get("maya_cm", false):
 			ModelUtils.setup_maya_cm_animal(model, cfg["height"])
 		else:
@@ -313,6 +320,9 @@ func _build_body() -> void :
 				var a: = anim.get_animation(n)
 				if a:
 					a.loop_mode = Animation.LOOP_LINEAR
+		# Face Godot −Z after clips exist so head/snout measurement (and
+		# facing_plus_z overrides) match what the player actually sees.
+		_apply_facing_correction(model)
 		if bool(cfg.get("center_xz", false)):
 			if anim.has_animation(_clip("idle")):
 				anim.play(_clip("idle"))
@@ -320,6 +330,50 @@ func _build_body() -> void :
 			ModelUtils.align_skeleton_to_ground(model)
 	if anim and _skeletal_anims:
 		_play(_clip("idle"))
+
+
+## Make the visible snout/face point along Godot −Z (what yaw_from_direction aims).
+## Prefer explicit facing_plus_z from config; otherwise pose idle/walk and flip if
+## the head sits on the +Z side of the hips in mesh-root space.
+func _apply_facing_correction(model: Node3D) -> void :
+	if model == null:
+		return
+	model.rotation.y = 0.0
+	if cfg.has("facing_plus_z"):
+		if bool(cfg["facing_plus_z"]):
+			model.rotation.y = PI
+		return
+	var skel: Skeleton3D = null
+	for node in model.find_children("*", "Skeleton3D", true, false):
+		skel = node as Skeleton3D
+		break
+	if skel == null or anim == null:
+		return
+	for role in ["walk", "idle", "sprint"]:
+		var clip: = _clip(role)
+		if anim.has_animation(clip):
+			anim.play(clip)
+			anim.seek(0.2, true)
+			break
+	skel.force_update_all_bone_transforms()
+	var hips_i: = _find_bone(skel, ["Hips", "hips", "Body", "Root", "RootBone"])
+	var head_i: = _find_bone(skel, ["Head", "head", "Nose", "nose", "Neck3", "Neck"])
+	if hips_i < 0 or head_i < 0 or mesh_root == null:
+		return
+	var inv: = mesh_root.global_transform.affine_inverse()
+	var hips_l: Vector3 = inv * skel.to_global(skel.get_bone_global_pose(hips_i).origin)
+	var head_l: Vector3 = inv * skel.to_global(skel.get_bone_global_pose(head_i).origin)
+	# Head further in +Z than hips ⇒ visual front is opposite Godot −Z.
+	if head_l.z - hips_l.z > 0.05:
+		model.rotation.y = PI
+
+
+func _find_bone(skel: Skeleton3D, names: Array) -> int:
+	for n in names:
+		var i: = skel.find_bone(String(n))
+		if i >= 0:
+			return i
+	return -1
 
 
 func _clip(role: String) -> String:
