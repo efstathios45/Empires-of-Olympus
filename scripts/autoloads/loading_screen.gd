@@ -259,6 +259,8 @@ const PRELOAD_PATHS: PackedStringArray = [
 	"res://assets/characters/blacksmith_npc/blacksmith_npc_animations.tres", 
 	"res://assets/characters/boar_enemy/boar_enemy.glb", 
 	"res://assets/characters/boar_enemy/boar_enemy_animations.tres", 
+	"res://assets/characters/bone_centaur/bone_centaur.glb", 
+	"res://assets/characters/hoplite_chan/hoplite_chan.glb", 
 	"res://assets/characters/centaur_enemy/centaur_enemy.glb", 
 	"res://assets/characters/centaur_enemy/centaur_enemy_animations.tres", 
 	"res://assets/characters/greek_merchant/greek_merchant.glb", 
