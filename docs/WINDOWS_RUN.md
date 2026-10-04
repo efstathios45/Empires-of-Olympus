@@ -31,12 +31,12 @@ No zip extract needed — this download is the .exe alone.
 Download
 ------------------------------------------------------------
 Windows build (recovered multiplayer/chat game + Hoplite Chan / bone centaur):
-  https://gofile.io/d/r1yjLMEa
+  https://gofile.io/d/u9WOB977
 
 File name: EmpiresOfOlympus.exe
 Size: ~222 MB (embedded PCK)
-SHA-256: e2b065ae23bfef491685b5929d3b51293739cfa8141fb1f1b7c2b88eac7cf94e
-MD5:     b974d06507da171de055b5accc29aa3e
+SHA-256: d5759504d460bcbf231116a15110d03e4f5355bd9b42ec89717b29b2ff8a007d
+MD5:     53980a1ef3e807dde318d6b5147435ab
 
 Includes:
 - Accounts + local / cloud saves
