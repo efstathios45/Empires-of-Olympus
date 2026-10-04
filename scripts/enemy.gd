@@ -106,8 +106,8 @@ const ENEMY_CONFIGS: = {
 		"height": 1.75, "hp": 240, "dmg": 24.0, "speed": 5.6, 
 		"xp": 120, "gold": [20, 36], "aggro": 11.5, "reach": 2.1, 
 		"attack_cd": 1.2, "material": "Harpy Feather", "screech": true, 
-		# Authored 90° off + Unity +Z front → 270°.
-		"facing_yaw_deg": 270.0, 
+		# UAL/Unity +Z front → Godot −Z (same as other Tripo humanoids).
+		"facing_yaw_deg": 180.0, 
 		"sfx_attack": "harpy_attack", "sfx_death": "harpy_death", 
 	}, 
 	"centaur_enemy": {
