@@ -18,7 +18,7 @@ const ENEMY_CONFIGS: = {
 		"height": 1.05, "hp": 42, "dmg": 7.0, "speed": 4.6, 
 		"xp": 18, "gold": [3, 8], "aggro": 9.0, "reach": 1.9, 
 		"attack_cd": 1.4, "material": "Wolf Pelt", 
-		"facing_yaw_deg": 180.0, 
+		"facing_plus_z": true, 
 		"tint": Color(0.78, 0.78, 0.82), 
 		"sfx_attack": "wolf_attack", "sfx_death": "wolf_death", 
 		"sfx_aggro": "wolf_aggro", 
@@ -38,7 +38,7 @@ const ENEMY_CONFIGS: = {
 		"height": 1.12, "hp": 48, "dmg": 8.5, "speed": 4.8, 
 		"xp": 22, "gold": [4, 9], "aggro": 9.5, "reach": 1.95, 
 		"attack_cd": 1.35, "material": "Wolf Pelt", 
-		"facing_yaw_deg": 180.0, 
+		"facing_plus_z": true, 
 		"tint": Color(0.28, 0.26, 0.3), 
 		"sfx_attack": "wolf_black_attack", "sfx_death": "wolf_black_death", 
 		"sfx_aggro": "wolf_aggro", 
@@ -58,7 +58,7 @@ const ENEMY_CONFIGS: = {
 		"height": 1.28, "hp": 58, "dmg": 10.0, "speed": 4.4, 
 		"xp": 28, "gold": [5, 11], "aggro": 10.0, "reach": 2.1, 
 		"attack_cd": 1.5, "material": "Wolf Pelt", 
-		"facing_yaw_deg": 180.0, 
+		"facing_plus_z": true, 
 		"tint": Color(0.55, 0.42, 0.34), 
 		"sfx_attack": "wolf_dire_attack", "sfx_death": "wolf_dire_death", 
 		"sfx_aggro": "wolf_aggro", 
@@ -77,7 +77,8 @@ const ENEMY_CONFIGS: = {
 		"height": 1.05, "hp": 110, "dmg": 14.0, "speed": 4.2, 
 		"xp": 48, "gold": [8, 16], "aggro": 9.5, "reach": 2.0, 
 		"attack_cd": 1.7, "material": "Boar Tusk", 
-		"facing_yaw_deg": 0.0, 
+		# OGA boar snout is already −Z / MeshRoot chase-forward; facing_plus_z
+		# made it charge while showing its rear.
 		"sfx_attack": "boar_attack", "sfx_death": "boar_death", 
 		"sfx_aggro": "boar_idle", 
 		"sfx_attack_alt": "boar_attack_b", 
@@ -94,8 +95,8 @@ const ENEMY_CONFIGS: = {
 		"height": 1.7, "hp": 160, "dmg": 18.0, "speed": 5.2, 
 		"xp": 78, "gold": [14, 26], "aggro": 10.5, "reach": 2.1, 
 		"attack_cd": 1.3, "material": "Satyr Horn", 
-		# UAL/Unity humanoids face +Z visually; aim that at Godot −Z → 180°.
-		"facing_yaw_deg": 180.0, 
+		# Tripo/UAL visual face is chest/head +Z; chase aims MeshRoot −Z → 180°.
+		"facing_plus_z": true, 
 		"sfx_attack": "satyr_attack", "sfx_death": "satyr_death", 
 	}, 
 	"harpy_enemy": {
@@ -106,8 +107,14 @@ const ENEMY_CONFIGS: = {
 		"height": 1.75, "hp": 240, "dmg": 24.0, "speed": 5.6, 
 		"xp": 120, "gold": [20, 36], "aggro": 11.5, "reach": 2.1, 
 		"attack_cd": 1.2, "material": "Harpy Feather", "screech": true, 
-		# Authored 90° off + Unity +Z front → 270°.
+		# Authored 90° off + face/+Z → 270° so face aims MeshRoot −Z.
 		"facing_yaw_deg": 270.0, 
+		# Harpy Tripo rig lacks Chest/Neck — alias torso only. Arm→wing aliases
+		# stretched the mesh into an entangled spike.
+		"bone_aliases": {
+			"Chest": "UpperChest",
+			"Neck": "Head",
+		}, 
 		"sfx_attack": "harpy_attack", "sfx_death": "harpy_death", 
 	}, 
 	"centaur_enemy": {
@@ -120,7 +127,6 @@ const ENEMY_CONFIGS: = {
 		"height": 2.3, "hp": 320, "dmg": 28.0, "speed": 6.0, 
 		"xp": 145, "gold": [28, 48], "aggro": 11.0, "reach": 2.6, 
 		"attack_cd": 1.6, "material": "Centaur Hoof", 
-		"facing_yaw_deg": 180.0, 
 		"sfx_attack": "centaur_attack", "sfx_death": "centaur_death", 
 		"clips": {
 			"idle": "Armature|RestPose", 
@@ -140,7 +146,7 @@ const ENEMY_CONFIGS: = {
 		"height": 2.0, "hp": 360, "dmg": 30.0, "speed": 4.4, 
 		"xp": 160, "gold": [32, 55], "aggro": 10.0, "reach": 2.4, 
 		"attack_cd": 1.8, "material": "Gorgon Venom", 
-		"facing_yaw_deg": 180.0, 
+		"facing_plus_z": true, 
 		"sfx_attack": "gorgon_attack", "sfx_death": "gorgon_death", 
 	}, 
 	"minotaur_boss": {
@@ -151,7 +157,7 @@ const ENEMY_CONFIGS: = {
 		"height": 3.4, "hp": 2800, "dmg": 55.0, "speed": 5.0, 
 		"xp": 2200, "gold": [400, 600], "aggro": 14.0, "reach": 3.4, 
 		"attack_cd": 2.2, "material": "Minotaur Horn", "boss": true, 
-		"facing_yaw_deg": 180.0, 
+		"facing_plus_z": true, 
 		"sfx_attack": "minotaur_attack", "sfx_death": "minotaur_death", 
 	}, 
 }
@@ -280,7 +286,9 @@ func _build_body() -> void :
 	if ResourceLoader.exists(glb_path):
 		var model: Node3D = load(glb_path).instantiate()
 		mesh_root.add_child(model)
-
+		# Facing: apply AFTER scale/ground so yaw is not wiped. Animals and UAL
+		# humanoids are authored +Z; chase aims MeshRoot −Z. Harpy is 270°.
+		# No track retarget / posture dampen (those tangled limbs).
 		if cfg.get("maya_cm", false):
 			ModelUtils.setup_maya_cm_animal(model, cfg["height"])
 		else:
@@ -298,19 +306,16 @@ func _build_body() -> void :
 		if lib_path != "" and ResourceLoader.exists(lib_path):
 			var lib: = load(lib_path) as AnimationLibrary
 			if lib:
+				if cfg.has("bone_aliases"):
+					lib = ModelUtils.alias_ual_bone_tracks(lib, cfg["bone_aliases"])
 				if anim.has_animation_library(""):
 					anim.remove_animation_library("")
 				anim.add_animation_library("", lib)
-		# UAL .tres packs use %GeneralSkeleton tracks — retarget so humanoids
-		# actually leave the bind T-pose when idle/walk/attack play.
-		ModelUtils.retarget_anim_player_libraries(anim, model)
-		# Same root bug as the old guard-hero: raw ual1_* clips tip the head
-		# at the sky and twist shoulders. Correct after the AnimationPlayer.
-		ModelUtils.install_ual_posture_fix(model, anim)
-
 		if cfg.has("slices") and cfg.has("slice_master"):
 			_install_sliced_clips(String(cfg["slice_master"]), float(cfg.get("slice_fps", 24.0)), cfg["slices"])
 		_skeletal_anims = _prepare_skeleton_for_anims(model)
+		# Pitch-only sky-gaze corrector (no arm dampen — that tangled limbs).
+		ModelUtils.install_ual_posture_fix(model, anim)
 		ModelUtils.set_animation_loops(anim)
 		_force_oneshot_clips([
 			_clip("death"), _clip("hit"), _clip("attack"), _clip("heavy"), 
@@ -325,9 +330,7 @@ func _build_body() -> void :
 				var a: = anim.get_animation(n)
 				if a:
 					a.loop_mode = Animation.LOOP_LINEAR
-		# Face Godot −Z after clips exist so head/snout measurement (and
-		# facing_plus_z overrides) match what the player actually sees.
-		_apply_facing_correction(model)
+		_apply_model_facing(model)
 		if bool(cfg.get("center_xz", false)):
 			if anim.has_animation(_clip("idle")):
 				anim.play(_clip("idle"))
@@ -337,86 +340,70 @@ func _build_body() -> void :
 		_play(_clip("idle"))
 
 
-## Make the visible front point along Godot −Z (what yaw_from_direction aims).
-## Config `facing_yaw_deg` is the authored model yaw (0 / 90 / 180 / 270).
-## When omitted, auto-pick: UAL humanoids use chest +Z (Unity forward);
-## Quaternius animals use head-vs-hips along MeshRoot −Z.
-func _apply_facing_correction(model: Node3D) -> void :
+## Aim visual front along MeshRoot −Z (chase yaw). Prefer explicit facing_* flags.
+## Fallback auto-picks 0/90/180/270 by aligning Tripo chest/head +Z to MeshRoot −Z
+## (must use MeshRoot, not model −Z — model-local dots are yaw-invariant).
+func _apply_model_facing(model: Node3D) -> void:
 	if model == null:
 		return
-	model.rotation.y = 0.0
 	if cfg.has("facing_yaw_deg"):
 		model.rotation.y = deg_to_rad(float(cfg["facing_yaw_deg"]))
 		return
-	# Legacy bool (true = model front was +Z, needs 180°).
-	if cfg.has("facing_plus_z"):
-		model.rotation.y = PI if bool(cfg["facing_plus_z"]) else 0.0
+	if cfg.get("facing_plus_z", false):
+		model.rotation.y = PI
+		return
+	# Auto only for UAL-style chests. Animals use facing_plus_z or authored 0.
+	if anim == null or mesh_root == null:
 		return
 	var skel: Skeleton3D = null
 	for node in model.find_children("*", "Skeleton3D", true, false):
 		skel = node as Skeleton3D
 		break
-	if skel == null or anim == null:
+	if skel == null:
 		return
-	for role in ["walk", "idle", "sprint"]:
-		var clip: = _clip(role)
-		if anim.has_animation(clip):
-			anim.play(clip)
-			anim.seek(0.2, true)
-			break
-	skel.force_update_all_bone_transforms()
-	var is_humanoid: = skel.find_bone("LeftShoulder") >= 0 or skel.find_bone("LeftUpperArm") >= 0
-	if is_humanoid:
-		# UAL / Mixamo visual front is chest +Z (Unity). Aim it at MeshRoot −Z.
-		var best_yaw: float = 0.0
-		var best_dot: float = -999.0
-		for deg in [0.0, 90.0, 180.0, 270.0]:
-			model.rotation.y = deg_to_rad(deg)
-			skel.force_update_all_bone_transforms()
-			var d: = _chest_face_dot_model(skel, model)
-			if d > best_dot:
-				best_dot = d
-				best_yaw = deg
+	if skel.find_bone("UpperChest") < 0 and skel.find_bone("Chest") < 0:
+		return
+	var walk := _clip("walk")
+	if anim.has_animation(walk):
+		anim.play(walk)
+		anim.seek(0.25, true)
+	elif anim.has_animation(_clip("idle")):
+		anim.play(_clip("idle"))
+		anim.seek(0.25, true)
+	var best_yaw := 0.0
+	var best_dot := -999.0
+	for deg in [0.0, 90.0, 180.0, 270.0]:
+		model.rotation.y = deg_to_rad(deg)
+		skel.force_update_all_bone_transforms()
+		var d := _visual_front_dot_chase_forward(skel)
+		if d > best_dot:
+			best_dot = d
+			best_yaw = deg
+	if best_dot > 0.35:
 		model.rotation.y = deg_to_rad(best_yaw)
-		return
-	var hips_i: = _find_bone(skel, ["Hips", "hips", "Body", "Root", "RootBone", "RootBone_01", "Torso_04"])
-	var head_i: = _find_bone(skel, ["Head", "head", "Nose", "nose", "Neck3", "Neck", "Head_06"])
-	if hips_i < 0 or head_i < 0 or mesh_root == null:
-		return
-	var inv: = mesh_root.global_transform.affine_inverse()
-	var hips_l: Vector3 = inv * skel.to_global(skel.get_bone_global_pose(hips_i).origin)
-	var head_l: Vector3 = inv * skel.to_global(skel.get_bone_global_pose(head_i).origin)
-	# Head toward MeshRoot +Z means snout aims away from Godot forward — flip.
-	if head_l.z - hips_l.z > 0.05:
-		model.rotation.y = PI
 
 
-func _chest_face_dot_model(skel: Skeleton3D, model: Node3D) -> float:
-	# Dot of visual front (chest +Z, Unity/UAL) with model −Z (Godot forward).
-	var model_fwd: Vector3 = - model.global_transform.basis.z
-	model_fwd.y = 0.0
-	if model_fwd.length_squared() < 1e-6:
+## Dot of Tripo visual face (chest/head +Z) with MeshRoot −Z (chase forward).
+func _visual_front_dot_chase_forward(skel: Skeleton3D) -> float:
+	if mesh_root == null:
 		return 0.0
-	model_fwd = model_fwd.normalized()
-	for bn in ["UpperChest", "Chest", "Hips", "Head", "Spine", "Torso_04"]:
-		var bi: = skel.find_bone(bn)
+	var chase_fwd: Vector3 = -mesh_root.global_transform.basis.z
+	chase_fwd.y = 0.0
+	if chase_fwd.length_squared() < 1e-6:
+		return 0.0
+	chase_fwd = chase_fwd.normalized()
+	for bn in ["Head", "UpperChest", "Chest", "Neck"]:
+		var bi := skel.find_bone(bn)
 		if bi < 0:
 			continue
-		var xf: = skel.global_transform * skel.get_bone_global_pose(bi)
-		var f: Vector3 = xf.basis.z
-		f.y = 0.0
-		if f.length_squared() < 1e-6:
+		var xf := skel.global_transform * skel.get_bone_global_pose(bi)
+		# Tripo-authored UAL rigs: visual face/snout follows bone +Z in Godot.
+		var face: Vector3 = xf.basis.z
+		face.y = 0.0
+		if face.length_squared() < 1e-6:
 			continue
-		return f.normalized().dot(model_fwd)
+		return face.normalized().dot(chase_fwd)
 	return 0.0
-
-
-func _find_bone(skel: Skeleton3D, names: Array) -> int:
-	for n in names:
-		var i: = skel.find_bone(String(n))
-		if i >= 0:
-			return i
-	return -1
 
 
 func _clip(role: String) -> String:
@@ -454,6 +441,10 @@ func _install_sliced_clips(master_name: String, fps: float, slices: Dictionary) 
 
 
 
+## Humanoid UAL rigs need GeneralSkeleton+Hips. Free animal packs need a Death
+## clip whose tracks actually address bones on THIS skeleton.
+## Pre-chat exe bind: rename + unique_name so %GeneralSkeleton resolves — never
+## rewrite animation tracks (retarget/posture dampen entangled limbs).
 func _prepare_skeleton_for_anims(model: Node3D) -> bool:
 	if anim == null:
 		return false
@@ -464,34 +455,27 @@ func _prepare_skeleton_for_anims(model: Node3D) -> bool:
 	if skel == null:
 		return false
 
-	# Ensure %GeneralSkeleton libraries (or leftover unique-name tracks) resolve.
-	ModelUtils.retarget_anim_player_libraries(anim, model)
+	# Must run before any early return: ual1_* bone-name matches look "bound"
+	# even while %GeneralSkeleton is still unresolved (silent T-pose).
 	if _anim_uses_general_skeleton_paths():
 		if skel.name != "GeneralSkeleton":
 			skel.name = "GeneralSkeleton"
 		skel.unique_name_in_owner = true
+		anim.clear_caches()
 
-	for candidate in [_death_clip, "Death", "death", _clip("idle"), _clip("walk")]:
+	for candidate in [_death_clip, "Death", "death", "ual1_Death01"]:
 		var cname: = String(candidate)
 		if cname == "" or not anim.has_animation(cname):
 			continue
 		if _anim_binds_to_skeleton(anim.get_animation(cname), skel):
-			if String(candidate) == _death_clip or candidate == "Death" or candidate == "death":
-				_death_clip = cname
-				_clips["death"] = cname
+			_death_clip = cname
+			_clips["death"] = cname
 			return true
 
 	if skel.find_bone("Hips") < 0:
 		return false
-	if skel.name != "GeneralSkeleton":
-		skel.name = "GeneralSkeleton"
-	skel.unique_name_in_owner = true
-	if anim.has_animation("ual1_Death01"):
-		_death_clip = "ual1_Death01"
-		_clips["death"] = "ual1_Death01"
-		return true
-	if anim.has_animation(_death_clip):
-		return true
+	if _anim_uses_general_skeleton_paths():
+		return anim.has_animation(_clip("idle")) or anim.has_animation("ual1_Idle")
 	return false
 
 
@@ -506,7 +490,6 @@ func _anim_uses_general_skeleton_paths() -> bool:
 			if String(a.track_get_path(ti)).begins_with("%GeneralSkeleton"):
 				return true
 	return false
-
 
 
 func _anim_binds_to_skeleton(animation: Animation, skel: Skeleton3D) -> bool:

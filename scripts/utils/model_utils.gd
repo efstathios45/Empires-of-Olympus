@@ -554,6 +554,43 @@ static func retarget_anim_player_libraries(anim: AnimationPlayer, model: Node3D)
 			anim.add_animation_library(lib_name, fixed)
 
 
+## Rewrite UAL bone names that a non-standard rig is missing (e.g. harpy has
+## UpperChest/Head but no Chest/Neck/LowerArm). Aliases map missing → present.
+## Operates on a duplicated library so the .tres on disk is untouched.
+static func alias_ual_bone_tracks(lib: AnimationLibrary, aliases: Dictionary) -> AnimationLibrary:
+	if lib == null or aliases.is_empty():
+		return lib
+	var out := AnimationLibrary.new()
+	for an in lib.get_animation_list():
+		var src := lib.get_animation(an)
+		if src == null:
+			continue
+		var a: Animation = src.duplicate(true)
+		for ti in a.get_track_count():
+			var tp := String(a.track_get_path(ti))
+			var colon := tp.rfind(":")
+			if colon < 0:
+				continue
+			var bone := tp.substr(colon + 1)
+			if not aliases.has(bone):
+				continue
+			var repl := String(aliases[bone])
+			a.track_set_path(ti, NodePath(tp.substr(0, colon + 1) + repl))
+		out.add_animation(an, a)
+	return out
+
+
+static func alias_anim_player_bones(anim: AnimationPlayer, aliases: Dictionary) -> void:
+	if anim == null or aliases.is_empty():
+		return
+	for lib_name in anim.get_animation_library_list():
+		var lib := anim.get_animation_library(lib_name)
+		var fixed := alias_ual_bone_tracks(lib, aliases)
+		if fixed != lib:
+			anim.remove_animation_library(lib_name)
+			anim.add_animation_library(lib_name, fixed)
+
+
 
 static func install_kaykit_foot_ground(model: Node3D) -> void :
 	if model == null:
