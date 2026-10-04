@@ -361,10 +361,9 @@ func _install_sliced_clips(master_name: String, fps: float, slices: Dictionary) 
 
 
 ## Humanoid UAL rigs need GeneralSkeleton+Hips. Free animal packs need a Death
-## clip whose tracks actually address bones on THIS skeleton. Having a UAL
-## library loaded is not enough — tripo boars had ual1_Death01 but no Hips, so
-## death "played" with zero motion and skipped the tumble fallback.
-## Restored from pre-chat exe: rename + unique_name (no track retarget).
+## clip whose tracks actually address bones on THIS skeleton.
+## Pre-chat exe bind: rename + unique_name so %GeneralSkeleton resolves — never
+## rewrite animation tracks (retarget/posture dampen entangled limbs).
 func _prepare_skeleton_for_anims(model: Node3D) -> bool:
 	if anim == null:
 		return false
@@ -375,8 +374,15 @@ func _prepare_skeleton_for_anims(model: Node3D) -> bool:
 	if skel == null:
 		return false
 
-	# Native animal Death/death clips (Quaternius / Gobkit slices).
-	for candidate in [_death_clip, "Death", "death"]:
+	# Must run before any early return: ual1_* bone-name matches look "bound"
+	# even while %GeneralSkeleton is still unresolved (silent T-pose).
+	if _anim_uses_general_skeleton_paths():
+		if skel.name != "GeneralSkeleton":
+			skel.name = "GeneralSkeleton"
+		skel.unique_name_in_owner = true
+		anim.clear_caches()
+
+	for candidate in [_death_clip, "Death", "death", "ual1_Death01"]:
 		var cname: = String(candidate)
 		if cname == "" or not anim.has_animation(cname):
 			continue
@@ -385,18 +391,23 @@ func _prepare_skeleton_for_anims(model: Node3D) -> bool:
 			_clips["death"] = cname
 			return true
 
-	# UAL humanoid library on a matching Hips rig.
 	if skel.find_bone("Hips") < 0:
 		return false
-	if skel.name != "GeneralSkeleton":
-		skel.name = "GeneralSkeleton"
-	skel.unique_name_in_owner = true
-	if anim.has_animation("ual1_Death01"):
-		_death_clip = "ual1_Death01"
-		_clips["death"] = "ual1_Death01"
-		return true
-	if anim.has_animation(_death_clip):
-		return true
+	if _anim_uses_general_skeleton_paths():
+		return anim.has_animation(_clip("idle")) or anim.has_animation("ual1_Idle")
+	return false
+
+
+func _anim_uses_general_skeleton_paths() -> bool:
+	if anim == null:
+		return false
+	for an in anim.get_animation_list():
+		var a: = anim.get_animation(an)
+		if a == null:
+			continue
+		for ti in a.get_track_count():
+			if String(a.track_get_path(ti)).begins_with("%GeneralSkeleton"):
+				return true
 	return false
 
 

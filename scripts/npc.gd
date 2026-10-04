@@ -67,9 +67,14 @@ func _ready() -> void:
 		add_child(_model)
 		ModelUtils.setup_character_for_movement(_model, height_m)
 		_model.rotation.y = spawn_yaw
-		_anim = _model.find_child("AnimationPlayer", true) as AnimationPlayer
+		_anim = _model.find_child("AnimationPlayer", true, false) as AnimationPlayer
+		if _anim == null:
+			for node in _model.find_children("*", "AnimationPlayer", true, false):
+				_anim = node as AnimationPlayer
+				break
 		if _anim == null:
 			_anim = AnimationPlayer.new()
+			_anim.name = "AnimationPlayer"
 			_model.add_child(_anim)
 		if lib_path != "" and ResourceLoader.exists(lib_path):
 			var lib := load(lib_path) as AnimationLibrary
@@ -95,6 +100,19 @@ func _ready() -> void:
 func _bind_ual_skeleton(model: Node3D) -> void:
 	if model == null or _anim == null:
 		return
+	var needs_gs := false
+	for an in _anim.get_animation_list():
+		var a := _anim.get_animation(an)
+		if a == null:
+			continue
+		for ti in a.get_track_count():
+			if String(a.track_get_path(ti)).begins_with("%GeneralSkeleton"):
+				needs_gs = true
+				break
+		if needs_gs:
+			break
+	if not needs_gs:
+		return
 	var skel: Skeleton3D = null
 	for node in model.find_children("*", "Skeleton3D", true, false):
 		skel = node as Skeleton3D
@@ -104,6 +122,7 @@ func _bind_ual_skeleton(model: Node3D) -> void:
 	if skel.name != "GeneralSkeleton":
 		skel.name = "GeneralSkeleton"
 	skel.unique_name_in_owner = true
+	_anim.clear_caches()
 
 
 func get_prompt() -> String:
