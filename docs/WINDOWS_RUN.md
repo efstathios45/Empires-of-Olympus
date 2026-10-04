@@ -47,7 +47,7 @@ Includes:
 - Panoply inventory, party XP/gold share, video settings
 - Nameplates / cross-empire PvP arena hooks
 - PS1/PSX Hoplite Chan as the hoplite class (built-in dory/aspis)
-- Pose fixes: wolves/boars face chase correctly; humanoid enemies leave T-pose; plaza uses greek_* cast
+- Pose/facing: wolves/boars/harpies/minotaur chase facing forward; humanoids leave T-pose; plaza greek_* NPCs get GreekLook color
 - Sandstone bone centaur enemy model
 
 How to play with friends
