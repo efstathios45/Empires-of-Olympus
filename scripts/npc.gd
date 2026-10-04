@@ -85,6 +85,8 @@ func _ready() -> void:
 		# Resolve %GeneralSkeleton UAL tracks the same way the old exe did for
 		# humanoid enemies: rename + scene-unique name (never rewrite tracks).
 		_bind_ual_skeleton(_model)
+		# Pitch-only — stops ual1_* sky-stare without gluing arms.
+		ModelUtils.install_ual_posture_fix(_model, _anim)
 		ModelUtils.set_animation_loops(_anim)
 		if not _anim.has_animation(idle_clip):
 			idle_clip = "ual1_Idle"

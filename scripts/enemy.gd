@@ -94,6 +94,8 @@ const ENEMY_CONFIGS: = {
 		"height": 1.7, "hp": 160, "dmg": 18.0, "speed": 5.2, 
 		"xp": 78, "gold": [14, 26], "aggro": 10.5, "reach": 2.1, 
 		"attack_cd": 1.3, "material": "Satyr Horn", 
+		# UAL visual front is +Z; chase yaw aims MeshRoot −Z → flip 180°.
+		"facing_plus_z": true, 
 		"sfx_attack": "satyr_attack", "sfx_death": "satyr_death", 
 	}, 
 	"harpy_enemy": {
@@ -104,6 +106,8 @@ const ENEMY_CONFIGS: = {
 		"height": 1.75, "hp": 240, "dmg": 24.0, "speed": 5.6, 
 		"xp": 120, "gold": [20, 36], "aggro": 11.5, "reach": 2.1, 
 		"attack_cd": 1.2, "material": "Harpy Feather", "screech": true, 
+		# Authored ~90° off + Unity +Z front → 270°.
+		"facing_yaw_deg": 270.0, 
 		"sfx_attack": "harpy_attack", "sfx_death": "harpy_death", 
 	}, 
 	"centaur_enemy": {
@@ -135,6 +139,7 @@ const ENEMY_CONFIGS: = {
 		"height": 2.0, "hp": 360, "dmg": 30.0, "speed": 4.4, 
 		"xp": 160, "gold": [32, 55], "aggro": 10.0, "reach": 2.4, 
 		"attack_cd": 1.8, "material": "Gorgon Venom", 
+		"facing_plus_z": true, 
 		"sfx_attack": "gorgon_attack", "sfx_death": "gorgon_death", 
 	}, 
 	"minotaur_boss": {
@@ -145,6 +150,7 @@ const ENEMY_CONFIGS: = {
 		"height": 3.4, "hp": 2800, "dmg": 55.0, "speed": 5.0, 
 		"xp": 2200, "gold": [400, 600], "aggro": 14.0, "reach": 3.4, 
 		"attack_cd": 2.2, "material": "Minotaur Horn", "boss": true, 
+		"facing_plus_z": true, 
 		"sfx_attack": "minotaur_attack", "sfx_death": "minotaur_death", 
 	}, 
 }
@@ -273,12 +279,9 @@ func _build_body() -> void :
 	if ResourceLoader.exists(glb_path):
 		var model: Node3D = load(glb_path).instantiate()
 		mesh_root.add_child(model)
-		# Match pre-chat/server exe (gofile m84Azz3v): animals authored +Z → PI.
-		# Do NOT retarget UAL tracks or run posture dampeners — those entangled
-		# limbs/sky-gaze on the chat/server build. %GeneralSkeleton resolves via
-		# rename + unique_name_in_owner in _prepare_skeleton_for_anims.
-		if cfg.get("facing_plus_z", false):
-			model.rotation.y = PI
+		# Facing: apply AFTER scale/ground so yaw is not wiped. Animals and UAL
+		# humanoids are authored +Z; chase aims MeshRoot −Z. Harpy is 270°.
+		# No track retarget / posture dampen (those tangled limbs).
 		if cfg.get("maya_cm", false):
 			ModelUtils.setup_maya_cm_animal(model, cfg["height"])
 		else:
@@ -302,6 +305,8 @@ func _build_body() -> void :
 		if cfg.has("slices") and cfg.has("slice_master"):
 			_install_sliced_clips(String(cfg["slice_master"]), float(cfg.get("slice_fps", 24.0)), cfg["slices"])
 		_skeletal_anims = _prepare_skeleton_for_anims(model)
+		# Pitch-only sky-gaze corrector (no arm dampen — that tangled limbs).
+		ModelUtils.install_ual_posture_fix(model, anim)
 		ModelUtils.set_animation_loops(anim)
 		_force_oneshot_clips([
 			_clip("death"), _clip("hit"), _clip("attack"), _clip("heavy"), 
@@ -316,6 +321,7 @@ func _build_body() -> void :
 				var a: = anim.get_animation(n)
 				if a:
 					a.loop_mode = Animation.LOOP_LINEAR
+		_apply_model_facing(model)
 		if bool(cfg.get("center_xz", false)):
 			if anim.has_animation(_clip("idle")):
 				anim.play(_clip("idle"))
@@ -323,6 +329,18 @@ func _build_body() -> void :
 			ModelUtils.align_skeleton_to_ground(model)
 	if anim and _skeletal_anims:
 		_play(_clip("idle"))
+
+
+## Aim authored model front along MeshRoot −Z (what chase yaw uses).
+func _apply_model_facing(model: Node3D) -> void:
+	if model == null:
+		return
+	if cfg.has("facing_yaw_deg"):
+		model.rotation.y = deg_to_rad(float(cfg["facing_yaw_deg"]))
+		return
+	if cfg.get("facing_plus_z", false):
+		model.rotation.y = PI
+		return
 
 
 func _clip(role: String) -> String:

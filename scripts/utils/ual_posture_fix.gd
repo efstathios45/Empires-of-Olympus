@@ -15,11 +15,9 @@ const DAMPEN_PITCH: Dictionary = {
 	"Head": 0.75,
 }
 
-# Only soften extreme shoulder roll (full upper-arm dampen glued gorgon hands).
-const DAMPEN_ARM: Dictionary = {
-	"LeftShoulder": 0.3,
-	"RightShoulder": 0.3,
-}
+# No arm/shoulder dampen — that glued hands and read as "entangled".
+# Pitch-only correction is enough to stop the UAL sky-stare.
+const DAMPEN_ARM: Dictionary = {}
 
 var _anim: AnimationPlayer
 
