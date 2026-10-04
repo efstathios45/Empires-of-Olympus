@@ -18,7 +18,7 @@ const ENEMY_CONFIGS: = {
 		"height": 1.05, "hp": 42, "dmg": 7.0, "speed": 4.6, 
 		"xp": 18, "gold": [3, 8], "aggro": 9.0, "reach": 1.9, 
 		"attack_cd": 1.4, "material": "Wolf Pelt", 
-		"facing_plus_z": true, 
+		"facing_yaw_deg": 180.0, 
 		"tint": Color(0.78, 0.78, 0.82), 
 		"sfx_attack": "wolf_attack", "sfx_death": "wolf_death", 
 		"sfx_aggro": "wolf_aggro", 
@@ -38,7 +38,7 @@ const ENEMY_CONFIGS: = {
 		"height": 1.12, "hp": 48, "dmg": 8.5, "speed": 4.8, 
 		"xp": 22, "gold": [4, 9], "aggro": 9.5, "reach": 1.95, 
 		"attack_cd": 1.35, "material": "Wolf Pelt", 
-		"facing_plus_z": true, 
+		"facing_yaw_deg": 180.0, 
 		"tint": Color(0.28, 0.26, 0.3), 
 		"sfx_attack": "wolf_black_attack", "sfx_death": "wolf_black_death", 
 		"sfx_aggro": "wolf_aggro", 
@@ -58,7 +58,7 @@ const ENEMY_CONFIGS: = {
 		"height": 1.28, "hp": 58, "dmg": 10.0, "speed": 4.4, 
 		"xp": 28, "gold": [5, 11], "aggro": 10.0, "reach": 2.1, 
 		"attack_cd": 1.5, "material": "Wolf Pelt", 
-		"facing_plus_z": true, 
+		"facing_yaw_deg": 180.0, 
 		"tint": Color(0.55, 0.42, 0.34), 
 		"sfx_attack": "wolf_dire_attack", "sfx_death": "wolf_dire_death", 
 		"sfx_aggro": "wolf_aggro", 
@@ -77,7 +77,7 @@ const ENEMY_CONFIGS: = {
 		"height": 1.05, "hp": 110, "dmg": 14.0, "speed": 4.2, 
 		"xp": 48, "gold": [8, 16], "aggro": 9.5, "reach": 2.0, 
 		"attack_cd": 1.7, "material": "Boar Tusk", 
-		"facing_plus_z": false, 
+		"facing_yaw_deg": 0.0, 
 		"sfx_attack": "boar_attack", "sfx_death": "boar_death", 
 		"sfx_aggro": "boar_idle", 
 		"sfx_attack_alt": "boar_attack_b", 
@@ -94,7 +94,7 @@ const ENEMY_CONFIGS: = {
 		"height": 1.7, "hp": 160, "dmg": 18.0, "speed": 5.2, 
 		"xp": 78, "gold": [14, 26], "aggro": 10.5, "reach": 2.1, 
 		"attack_cd": 1.3, "material": "Satyr Horn", 
-		"facing_plus_z": true, 
+		"facing_yaw_deg": 0.0, 
 		"sfx_attack": "satyr_attack", "sfx_death": "satyr_death", 
 	}, 
 	"harpy_enemy": {
@@ -105,7 +105,7 @@ const ENEMY_CONFIGS: = {
 		"height": 1.75, "hp": 240, "dmg": 24.0, "speed": 5.6, 
 		"xp": 120, "gold": [20, 36], "aggro": 11.5, "reach": 2.1, 
 		"attack_cd": 1.2, "material": "Harpy Feather", "screech": true, 
-		"facing_plus_z": false, 
+		"facing_yaw_deg": 90.0, 
 		"sfx_attack": "harpy_attack", "sfx_death": "harpy_death", 
 	}, 
 	"centaur_enemy": {
@@ -118,7 +118,7 @@ const ENEMY_CONFIGS: = {
 		"height": 2.3, "hp": 320, "dmg": 28.0, "speed": 6.0, 
 		"xp": 145, "gold": [28, 48], "aggro": 11.0, "reach": 2.6, 
 		"attack_cd": 1.6, "material": "Centaur Hoof", 
-		"facing_plus_z": true, 
+		"facing_yaw_deg": 180.0, 
 		"sfx_attack": "centaur_attack", "sfx_death": "centaur_death", 
 		"clips": {
 			"idle": "Armature|RestPose", 
@@ -138,7 +138,7 @@ const ENEMY_CONFIGS: = {
 		"height": 2.0, "hp": 360, "dmg": 30.0, "speed": 4.4, 
 		"xp": 160, "gold": [32, 55], "aggro": 10.0, "reach": 2.4, 
 		"attack_cd": 1.8, "material": "Gorgon Venom", 
-		"facing_plus_z": true, 
+		"facing_yaw_deg": 0.0, 
 		"sfx_attack": "gorgon_attack", "sfx_death": "gorgon_death", 
 	}, 
 	"minotaur_boss": {
@@ -149,7 +149,7 @@ const ENEMY_CONFIGS: = {
 		"height": 3.4, "hp": 2800, "dmg": 55.0, "speed": 5.0, 
 		"xp": 2200, "gold": [400, 600], "aggro": 14.0, "reach": 3.4, 
 		"attack_cd": 2.2, "material": "Minotaur Horn", "boss": true, 
-		"facing_plus_z": true, 
+		"facing_yaw_deg": 0.0, 
 		"sfx_attack": "minotaur_attack", "sfx_death": "minotaur_death", 
 	}, 
 }
@@ -332,16 +332,19 @@ func _build_body() -> void :
 		_play(_clip("idle"))
 
 
-## Make the visible snout/face point along Godot −Z (what yaw_from_direction aims).
-## Prefer explicit facing_plus_z from config; otherwise pose idle/walk and flip if
-## the head sits on the +Z side of the hips in mesh-root space.
+## Make the visible front point along Godot −Z (what yaw_from_direction aims).
+## Config `facing_yaw_deg` is the authored model yaw (0 / 90 / 180 / 270).
+## When omitted, auto-pick: humanoids use chest −Z; animals use head-vs-hips.
 func _apply_facing_correction(model: Node3D) -> void :
 	if model == null:
 		return
 	model.rotation.y = 0.0
+	if cfg.has("facing_yaw_deg"):
+		model.rotation.y = deg_to_rad(float(cfg["facing_yaw_deg"]))
+		return
+	# Legacy bool
 	if cfg.has("facing_plus_z"):
-		if bool(cfg["facing_plus_z"]):
-			model.rotation.y = PI
+		model.rotation.y = PI if bool(cfg["facing_plus_z"]) else 0.0
 		return
 	var skel: Skeleton3D = null
 	for node in model.find_children("*", "Skeleton3D", true, false):
@@ -356,6 +359,21 @@ func _apply_facing_correction(model: Node3D) -> void :
 			anim.seek(0.2, true)
 			break
 	skel.force_update_all_bone_transforms()
+	var is_humanoid: = skel.find_bone("LeftShoulder") >= 0 or skel.find_bone("LeftUpperArm") >= 0
+	if is_humanoid:
+		# Pick yaw in {0,90,180,270} that aims chest −Z at MeshRoot −Z.
+		var best_yaw: float = 0.0
+		var best_dot: float = -999.0
+		var base: float = model.rotation.y
+		for deg in [0.0, 90.0, 180.0, 270.0]:
+			model.rotation.y = base + deg_to_rad(deg)
+			skel.force_update_all_bone_transforms()
+			var d: = _chest_face_dot_model(skel, model)
+			if d > best_dot:
+				best_dot = d
+				best_yaw = deg
+		model.rotation.y = deg_to_rad(best_yaw)
+		return
 	var hips_i: = _find_bone(skel, ["Hips", "hips", "Body", "Root", "RootBone"])
 	var head_i: = _find_bone(skel, ["Head", "head", "Nose", "nose", "Neck3", "Neck"])
 	if hips_i < 0 or head_i < 0 or mesh_root == null:
@@ -363,9 +381,28 @@ func _apply_facing_correction(model: Node3D) -> void :
 	var inv: = mesh_root.global_transform.affine_inverse()
 	var hips_l: Vector3 = inv * skel.to_global(skel.get_bone_global_pose(hips_i).origin)
 	var head_l: Vector3 = inv * skel.to_global(skel.get_bone_global_pose(head_i).origin)
-	# Head further in +Z than hips ⇒ visual front is opposite Godot −Z.
 	if head_l.z - hips_l.z > 0.05:
 		model.rotation.y = PI
+
+
+func _chest_face_dot_model(skel: Skeleton3D, model: Node3D) -> float:
+	# Dot of chest −Z with model −Z (both flattened). Higher = facing Godot forward.
+	var model_fwd: Vector3 = - model.global_transform.basis.z
+	model_fwd.y = 0.0
+	if model_fwd.length_squared() < 1e-6:
+		return 0.0
+	model_fwd = model_fwd.normalized()
+	for bn in ["UpperChest", "Chest", "Hips", "Head", "Spine"]:
+		var bi: = skel.find_bone(bn)
+		if bi < 0:
+			continue
+		var xf: = skel.global_transform * skel.get_bone_global_pose(bi)
+		var f: Vector3 = - xf.basis.z
+		f.y = 0.0
+		if f.length_squared() < 1e-6:
+			continue
+		return f.normalized().dot(model_fwd)
+	return 0.0
 
 
 func _find_bone(skel: Skeleton3D, names: Array) -> int:

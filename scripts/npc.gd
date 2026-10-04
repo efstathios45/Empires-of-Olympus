@@ -82,12 +82,13 @@ func _ready() -> void :
 		ModelUtils.setup_character_for_movement(_model, height_m)
 		_model.rotation.y = _base_yaw + spawn_yaw
 
+		# greek_* plaza meshes are untextured Tripo greys — paint Hellenic
+		# palettes so they are not solid white. Textured legacy packs keep
+		# GreekLook only when they are the Quaternius/hero_king stand-ins.
 		var gpath: = glb_path.to_lower()
-		var is_hellenic_cast: = "/greek_" in gpath or gpath.contains("greek_hoplite")
-		if not is_hellenic_cast and ("hero_king" in gpath or "quaternius_guard" in gpath\
-		or "guard_adventurer" in gpath):
-			var GreekLook = load("res://scripts/utils/greek_look.gd")
-			GreekLook.apply(_model, "guard")
+		var role: = _resolve_greek_role(gpath)
+		var GreekLook = load("res://scripts/utils/greek_look.gd")
+		GreekLook.apply(_model, role)
 		_anim = _model.find_child("AnimationPlayer", true) as AnimationPlayer
 		if _anim == null:
 			_anim = AnimationPlayer.new()
@@ -144,6 +145,22 @@ func _install_posture_fix() -> void :
 	skel.add_child(fix)
 	if fix.has_method("bind_anim"):
 		fix.call("bind_anim", _anim)
+
+
+func _resolve_greek_role(gpath: String) -> String:
+	if greek_role != "" and greek_role != "citizen":
+		return greek_role
+	if npc_id == "priestess" or "oracle" in gpath:
+		return "oracle"
+	if npc_id == "smith" or "smith" in gpath or "blacksmith" in gpath:
+		return "smith"
+	if "guard" in gpath or "hoplite" in gpath or "spartan" in gpath:
+		return "guard"
+	if "merchant" in gpath:
+		return "merchant"
+	if "woman" in gpath or "citizen" in gpath:
+		return "citizen"
+	return "citizen"
 
 
 func _collect_idle_variants() -> PackedStringArray:

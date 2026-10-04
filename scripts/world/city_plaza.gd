@@ -365,5 +365,6 @@ static func _townsfolk(world) -> void :
 		var n = NpcScript.create_flavour("citizen_%d" % idx, String(f["name"]), 
 			glb, lib, f["at"], height, float(f["yaw"]), 
 			String(f["idle"]), String(f["line"]))
+		n.greek_role = kind if kind != "woman" else "citizen"
 		world.add_child(n)
 		world.add_interactable(n)
