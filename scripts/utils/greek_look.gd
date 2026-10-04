@@ -197,10 +197,26 @@ static func _mesh_name_palette_key(nm: String, role: String) -> String:
 		return "leather"
 	if "pant" in nm or "leg" in nm:
 		return "cloth"
+	# Single-mesh Tripo greek_* casts (GreekGuardMesh, GreekOracleMesh, …)
+	if "guard" in nm or "hoplite" in nm or "spartan" in nm:
+		return "armor" if role in ["hoplite", "guard"] else "cloth"
+	if "smith" in nm:
+		return "leather"
+	if "oracle" in nm or "priest" in nm:
+		return "cloth"
+	if "merchant" in nm:
+		return "cloth"
+	if "woman" in nm or "citizen" in nm:
+		return "cloth"
 	if "body" in nm:
 		if role in ["hoplite", "guard"]:
 			return "armor"
 		return "cloth"
+	# Role fallback for unnamed single meshes
+	if role in ["hoplite", "guard"]:
+		return "armor"
+	if role == "smith":
+		return "leather"
 	return "cloth"
 
 

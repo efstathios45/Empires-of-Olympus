@@ -236,7 +236,10 @@ func _build_body() -> void :
 		char_path = CharacterGLB
 	var model: Node3D = load(char_path).instantiate()
 	mesh_root.add_child(model)
-	ModelUtils.setup_character_for_movement(model, 1.85)
+	if bool(cd0.get("builtin_weapons", false)):
+		ModelUtils.setup_authored_humanoid(model, 1.85)
+	else:
+		ModelUtils.setup_character_for_movement(model, 1.85)
 
 	if USE_GREEK_LOOK:
 		GreekLook.apply(model, "hoplite")
@@ -258,23 +261,26 @@ func _build_body() -> void :
 
 	ModelUtils.bind_leg_plant_anim(model, anim)
 
-	var weapon_path: String = _resolved_weapon_path()
-	if ResourceLoader.exists(weapon_path):
-		weapon_node = GearGrip.attach_weapon(model, weapon_path)
-		if weapon_node:
-			GearPaint.paint_attached(weapon_node, weapon_path)
+	if _uses_builtin_weapons():
+		_tag_builtin_weapons(model)
 		_update_weapon_glow()
+	else:
+		var weapon_path: String = _resolved_weapon_path()
+		if ResourceLoader.exists(weapon_path):
+			weapon_node = GearGrip.attach_weapon(model, weapon_path)
+			if weapon_node:
+				GearPaint.paint_attached(weapon_node, weapon_path)
+			_update_weapon_glow()
 
-	var shield_path: String = _resolved_shield_path()
-	if shield_path != "" and ResourceLoader.exists(shield_path):
-		shield_node = GearGrip.attach_shield(model, shield_path)
-		if shield_node:
-			shield_node.name = "ShieldMount"
-			GearPaint.paint_attached(shield_node, shield_path)
+		var shield_path: String = _resolved_shield_path()
+		if shield_path != "" and ResourceLoader.exists(shield_path):
+			shield_node = GearGrip.attach_shield(model, shield_path)
+			if shield_node:
+				shield_node.name = "ShieldMount"
+				GearPaint.paint_attached(shield_node, shield_path)
 
-
-	if model.find_child("CorinthianHelmMount", true, false) == null:
-		_attach_helmet(model)
+		if model.find_child("CorinthianHelmMount", true, false) == null:
+			_attach_helmet(model)
 
 	HeroAnim.play(anim, _idle_alias())
 	if not GameState.inventory_changed.is_connected(_on_gear_changed):
@@ -327,6 +333,10 @@ func _refresh_held_gear() -> void :
 	if helmet_node != null and is_instance_valid(helmet_node):
 		helmet_node.queue_free()
 		helmet_node = null
+	if _uses_builtin_weapons():
+		_tag_builtin_weapons(model)
+		_update_weapon_glow()
+		return
 	var weapon_path: String = _resolved_weapon_path()
 	if ResourceLoader.exists(weapon_path):
 		weapon_node = GearGrip.attach_weapon(model, weapon_path)
@@ -662,20 +672,24 @@ func _clip_for_alias(alias: String) -> String:
 	return HeroAnim.resolve(anim, alias)
 
 
+func _attack_time(key: String, fallback: float) -> float:
+	return float(GameState.class_data().get(key, fallback))
+
+
 func _try_light_attack() -> void :
 	var cd: = GameState.class_data()
 	if cd["ranged"]:
-		_start_attack(_clip_for_alias("attack_ranged"), 0.55)
+		_start_attack(_clip_for_alias("attack_ranged"), _attack_time("ranged_time", 0.55))
 	else:
 		if combo_window <= 0.0:
 			combo_index = 0
-		_start_attack(_clip_for_alias(COMBO_ALIASES[combo_index]), 0.55)
+		_start_attack(_clip_for_alias(COMBO_ALIASES[combo_index]), _attack_time("light_time", 0.55))
 		combo_index = (combo_index + 1) % COMBO_ALIASES.size()
 		combo_window = 1.1
 	_play_attack_swing_sfx(false)
 
 func _try_heavy_attack() -> void :
-	_start_attack(_clip_for_alias(HEAVY_ALIAS), 0.85)
+	_start_attack(_clip_for_alias(HEAVY_ALIAS), _attack_time("heavy_time", 0.85))
 	_play_attack_swing_sfx(true)
 
 func _play_attack_swing_sfx(heavy: bool) -> void :
@@ -962,12 +976,43 @@ func _on_level_up(_new_level: int) -> void :
 func _on_weapon_refined(_lvl: int) -> void :
 	_update_weapon_glow()
 
-func _update_weapon_glow() -> void :
+func _uses_builtin_weapons() -> bool:
+	return bool(GameState.class_data().get("builtin_weapons", false))
 
-	if weapon_node == null:
+
+func _tag_builtin_weapons(model: Node3D) -> void:
+	if model == null:
+		return
+	for node in model.find_children("*", "MeshInstance3D", true, false):
+		var mi: MeshInstance3D = node as MeshInstance3D
+		if mi == null:
+			continue
+		var blob: String = String(mi.name)
+		var mat: Material = mi.get_active_material(0)
+		if mat != null:
+			blob += " " + String(mat.resource_name)
+		if mi.mesh != null and mi.mesh.get_surface_count() > 0:
+			var surf: Material = mi.mesh.surface_get_material(0)
+			if surf != null:
+				blob += " " + String(surf.resource_name)
+		blob = blob.to_upper()
+		if "DORY" in blob or "XIPHOS" in blob or "SHIELD" in blob:
+			mi.set_meta("class_weapon", true)
+
+
+func _update_weapon_glow() -> void:
+	var meshes: Array = []
+	if weapon_node != null and is_instance_valid(weapon_node):
+		for child in weapon_node.find_children("*", "MeshInstance3D"):
+			meshes.append(child)
+	elif mesh_root != null:
+		for node in mesh_root.find_children("*", "MeshInstance3D", true, false):
+			if node.has_meta("class_weapon"):
+				meshes.append(node)
+	if meshes.is_empty():
 		return
 	var refine: = GameState.weapon_refine
-	for child in weapon_node.find_children("*", "MeshInstance3D"):
+	for child in meshes:
 		var mi: = child as MeshInstance3D
 		var mat: = mi.get_active_material(0)
 		if mat is StandardMaterial3D:
