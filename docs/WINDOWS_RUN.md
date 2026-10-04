@@ -1,82 +1,81 @@
 Empires of Olympus — Windows 10 / 11
 ====================================
 
-This build is a zip with two files you keep together:
-  EmpiresOfOlympus.exe  (Godot engine)
-  EmpiresOfOlympus.pck  (game data)
-
-Extract both into the same folder, then run the .exe.
-(The .pck is separate on purpose — see Defender note below.)
-
 ------------------------------------------------------------
-Windows Defender / "virus detected" (false positive)
+Windows Defender / "virus detected"
 ------------------------------------------------------------
-Godot docs warn that embedding the .pck inside the .exe often
-triggers antivirus false positives. This build keeps them
-separate to avoid that. The game is not malware.
+This is a FALSE POSITIVE. The game is not malware.
 
-If Defender still quarantines the download:
+Why it happens:
+- The engine file is the stock Godot 4.4.1 Windows export template
+  (byte-identical to Godot’s official windows_release_x86_64.exe).
+- Unsigned Godot games + downloads from anonymous file hosts (gofile)
+  frequently trip Defender heuristics / cloud reputation.
+- Embedding the .pck inside the .exe makes it worse; we already stopped
+  doing that. Defender can still flag a zip that merely CONTAINS an .exe.
 
-1. Windows Security → Virus & threat protection → Protection history
-2. Find EmpiresOfOlympus.exe (or the zip)
-3. Actions → Allow on this device / Restore
-4. Or add an exclusion for your game folder, e.g.
-     C:\Games\EmpiresOfOlympus\
+Engine SHA-256 (must match):
+  b493c1d53fb915f7805f360cfe42d1c3126e720dfc234a4b0f2feb99200f9a4b
 
-Verify the files match the hashes listed under Download before you
-allow them (confirms nothing was swapped in transit).
+How to allow a quarantined file:
+1. Open Windows Security
+2. Virus & threat protection → Protection history
+3. Find EmpiresOfOlympus (zip or exe)
+4. Actions → Allow on this device / Restore
+5. Or: Manage settings → Exclusions → Add folder
+     e.g. C:\Games\EmpiresOfOlympus\
 
-Report as false positive (optional):
+Optional Microsoft false-positive report:
   https://www.microsoft.com/en-us/wdsi/filesubmission
+  Product: Microsoft Defender Antivirus
+
+There is no free packaging trick that permanently stops this for every
+PC. A paid code-signing certificate (or Steam / MS Store) is the real fix.
+
+------------------------------------------------------------
+Install option A — data-only zip (best against Defender)
+------------------------------------------------------------
+Download:
+  https://gofile.io/d/BafoP5Nd
+  File: EmpiresOfOlympus-data-only.zip
+  SHA-256: 3e744ff2214bba64428ea5351832f09700c4f4eac4c1674e5b70c0445048343f
+
+1. Extract to e.g. C:\Games\EmpiresOfOlympus\
+2. In that folder, run:
+     powershell -ExecutionPolicy Bypass -File .\GET-ENGINE.ps1
+3. Wait while it downloads the official Godot 4.4.1 export templates
+   from github.com/godotengine (~1.2 GB once), extracts the engine,
+   and writes EmpiresOfOlympus.exe next to the .pck
+4. Run EmpiresOfOlympus.exe
+
+Keep EmpiresOfOlympus.exe and EmpiresOfOlympus.pck together.
+
+------------------------------------------------------------
+Install option B — full zip via GitHub Release
+------------------------------------------------------------
+Repo is private; you must be logged into GitHub with access:
+
+  https://github.com/efstathios45/Empires-of-Olympus/releases/tag/v0.9.1-windows
+
+Download EmpiresOfOlympus-windows.zip, extract BOTH files into one folder,
+run the .exe.
+
+Zip SHA-256: d1f75644008962b4289a48b633e43868d45eec289354183dfa602351d970085f
+Pck SHA-256: 42e1eb1a0a8b4a19b9613ecaddce130879c85316bb9c8e7765d82a944419a958
 
 ------------------------------------------------------------
 "Windows protected your PC" / SmartScreen
 ------------------------------------------------------------
 1. Double-click EmpiresOfOlympus.exe
-2. If SmartScreen appears, click "More info"
-3. Click "Run anyway"
-
-Also try:
-  Right-click the .exe → Properties
-  - If you see "Unblock", tick it → OK
-  - Then run again
+2. More info → Run anyway
+3. Or: Properties → Unblock → OK
 
 ------------------------------------------------------------
-Where to put the files
+Includes
 ------------------------------------------------------------
-Extract the zip to a normal folder, for example:
-  C:\Games\EmpiresOfOlympus\
+- Accounts + local / cloud saves, empire map
+- Enter-to-chat, server browser, Host World Online (UPnP)
+- Panoply, party share, video settings, nameplates / PvP hooks
+- PS1 Hoplite Chan, bone centaur, facing + plaza NPC color fixes
 
-Keep EmpiresOfOlympus.exe and EmpiresOfOlympus.pck in that same folder.
-
-------------------------------------------------------------
-Download
-------------------------------------------------------------
-Windows build (separate .exe + .pck — fewer Defender false positives):
-  https://gofile.io/d/5uzdM2aj
-
-Archive: EmpiresOfOlympus-windows.zip
-SHA-256 (zip): d1f75644008962b4289a48b633e43868d45eec289354183dfa602351d970085f
-MD5 (zip):     0c36047cea41425eaa8db691b15a4baa
-
-Contents:
-  EmpiresOfOlympus.exe  SHA-256: b493c1d53fb915f7805f360cfe42d1c3126e720dfc234a4b0f2feb99200f9a4b
-  EmpiresOfOlympus.pck  SHA-256: 42e1eb1a0a8b4a19b9613ecaddce130879c85316bb9c8e7765d82a944419a958
-
-Includes:
-- Accounts + local / cloud saves
-- Empire map select
-- Enter-to-chat (HUD log + overhead bubbles) with multiplayer RPC
-- Minecraft-style server browser (LAN names + saved friend worlds)
-- Host World Online (UPnP) — host-only Copy Invite; joiners never see raw IPs
-- Panoply inventory, party XP/gold share, video settings
-- Nameplates / cross-empire PvP arena hooks
-- PS1/PSX Hoplite Chan as the hoplite class (built-in dory/aspis)
-- Pose/facing: wolves/boars/harpies/minotaur chase facing forward; humanoids leave T-pose; plaza greek_* NPCs get GreekLook color
-- Sandstone bone centaur enemy model
-- Non-embedded PCK packaging (Defender false-positive mitigation)
-
-How to play with friends
-1. Host: enter world → Esc → name world → Host World → Copy Invite (host only).
-2. Friend: Browse Servers → join by name, or Add Server with display name + invite.
-3. Chat: press Enter in-world; Enter sends, Esc closes.
+Friends: Esc → Host World → Copy Invite. Enter opens chat.

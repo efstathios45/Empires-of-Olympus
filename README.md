@@ -7,13 +7,27 @@ Hoplite class uses PS1/PSX Hoplite Chan; centaur enemies use the bone centaur.
 
 ## Windows download
 
-Zip with separate `.exe` + `.pck` (avoids the common Defender false positive from
-embedded PCK) — includes Hoplite Chan + bone centaur:
+Defender often false-positives **any zip that contains a Godot `.exe`** from
+file hosts. Prefer one of these:
 
-**https://gofile.io/d/5uzdM2aj** — `EmpiresOfOlympus-windows.zip`
+### A) Data-only zip (recommended if Defender flagged the full zip)
 
-Extract both files into the same folder, then run `EmpiresOfOlympus.exe`.
-Run notes / Defender / SmartScreen: [`docs/WINDOWS_RUN.md`](docs/WINDOWS_RUN.md)
+**https://gofile.io/d/BafoP5Nd** — `EmpiresOfOlympus-data-only.zip`
+
+Contains `EmpiresOfOlympus.pck` + `GET-ENGINE.ps1` (no `.exe` inside).
+Run the script once; it pulls the official Godot 4.4.1 engine from
+`github.com/godotengine` and verifies SHA-256.
+
+### B) Full zip (exe + pck) — GitHub Release (repo collaborators)
+
+If you can log into GitHub on this private repo:
+
+**https://github.com/efstathios45/Empires-of-Olympus/releases/tag/v0.9.1-windows**
+
+### If Defender still quarantines
+
+Windows Security → Protection history → **Allow on this device**.
+Details / hashes: [`docs/WINDOWS_RUN.md`](docs/WINDOWS_RUN.md)
 
 ## Build yourself
 
