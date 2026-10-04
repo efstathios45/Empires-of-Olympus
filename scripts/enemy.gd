@@ -113,24 +113,13 @@ const ENEMY_CONFIGS: = {
 	"centaur_enemy": {
 		"name": "Centaur Warrior", 
 		"level": 8, 
-		"glb": "res://assets/characters/bone_centaur/bone_centaur.glb", 
-		"lib": "", 
-		"center_xz": true, 
-		"credit": "Sandstone, Bone centaur monster by Nagisa_Kurama — CC-BY 4.0", 
+		"glb": "res://assets/characters/centaur_enemy/centaur_enemy.glb", 
+		"lib": "res://assets/characters/centaur_enemy/centaur_enemy_animations.tres", 
 		"height": 2.3, "hp": 320, "dmg": 28.0, "speed": 6.0, 
 		"xp": 145, "gold": [28, 48], "aggro": 11.0, "reach": 2.6, 
 		"attack_cd": 1.6, "material": "Centaur Hoof", 
 		"facing_yaw_deg": 180.0, 
 		"sfx_attack": "centaur_attack", "sfx_death": "centaur_death", 
-		"clips": {
-			"idle": "Armature|RestPose", 
-			"walk": "Armature|Walking", 
-			"sprint": "Armature|Walking", 
-			"attack": "Attack", 
-			"heavy": "Armature|UpwardStrike", 
-			"hit": "Armature|RestPose", 
-			"death": "Armature|RestPose", 
-		}, 
 	}, 
 	"gorgon_enemy": {
 		"name": "Gorgon", 
@@ -280,12 +269,19 @@ func _build_body() -> void :
 	if ResourceLoader.exists(glb_path):
 		var model: Node3D = load(glb_path).instantiate()
 		mesh_root.add_child(model)
+		# #region agent log
+		_dbg_ual("A", "enemy.gd:instantiate", "model_loaded", {"id": enemy_id, "glb": glb_path})
+		_dbg_ual_bind(model, enemy_id, "post_instantiate")
+		# #endregion
 
 		if cfg.get("maya_cm", false):
 			ModelUtils.setup_maya_cm_animal(model, cfg["height"])
 		else:
 			ModelUtils.setup_character_for_movement(model, cfg["height"])
 		ModelUtils.clamp_world_height(model, maxf(cfg["height"] * 2.5, 4.0), cfg["height"])
+		# #region agent log
+		_dbg_ual_bind(model, enemy_id, "post_setup_movement")
+		# #endregion
 		if cfg.get("bristle_hide", false):
 			_apply_bristle_boar_hide(model)
 		elif cfg.has("tint"):
@@ -301,19 +297,16 @@ func _build_body() -> void :
 				if anim.has_animation_library(""):
 					anim.remove_animation_library("")
 				anim.add_animation_library("", lib)
-		# UAL .tres packs use %GeneralSkeleton tracks — retarget so humanoids
-		# actually leave the bind T-pose when idle/walk/attack play.
-		ModelUtils.retarget_anim_player_libraries(anim, model)
-		# Same root bug as the old guard-hero: raw ual1_* clips tip the head
-		# at the sky and twist shoulders. Correct after the AnimationPlayer.
-		ModelUtils.install_ual_posture_fix(model, anim)
 
 		if cfg.has("slices") and cfg.has("slice_master"):
 			_install_sliced_clips(String(cfg["slice_master"]), float(cfg.get("slice_fps", 24.0)), cfg["slices"])
 		_skeletal_anims = _prepare_skeleton_for_anims(model)
+		# #region agent log
+		_dbg_ual_bind(model, enemy_id, "post_prepare_skel")
+		# #endregion
 		ModelUtils.set_animation_loops(anim)
 		_force_oneshot_clips([
-			_clip("death"), _clip("hit"), _clip("attack"), _clip("heavy"), 
+			_clip("death"), _clip("hit"), _clip("attack"), 
 			"ual1_Death01", "ual1_Hit_Chest", "ual1_Sword_Attack", 
 			"ual1_Punch_Jab", "ual2_Sword_Heavy_A", "ual2_Sword_Heavy_B", 
 			"Death", "Attack", "Attack_Headbutt", "Idle_HitReact1", "Idle_HitReact2", 
@@ -325,16 +318,17 @@ func _build_body() -> void :
 				var a: = anim.get_animation(n)
 				if a:
 					a.loop_mode = Animation.LOOP_LINEAR
-		# Face Godot −Z after clips exist so head/snout measurement (and
-		# facing_plus_z overrides) match what the player actually sees.
+		# Face Godot −Z after clips exist so head/snout measurement matches play.
 		_apply_facing_correction(model)
-		if bool(cfg.get("center_xz", false)):
-			if anim.has_animation(_clip("idle")):
-				anim.play(_clip("idle"))
-				anim.seek(0.0, true)
-			ModelUtils.align_skeleton_to_ground(model)
+		# #region agent log
+		_dbg_ual_bind(model, enemy_id, "post_facing")
+		# #endregion
 	if anim and _skeletal_anims:
 		_play(_clip("idle"))
+		# #region agent log
+		if mesh_root and mesh_root.get_child_count() > 0:
+			_dbg_ual_extents(mesh_root.get_child(0) as Node3D, enemy_id, "post_idle_play")
+		# #endregion
 
 
 ## Make the visible front point along Godot −Z (what yaw_from_direction aims).
@@ -463,26 +457,35 @@ func _prepare_skeleton_for_anims(model: Node3D) -> bool:
 		break
 	if skel == null:
 		return false
+	# #region agent log
+	_dbg_ual("B", "enemy.gd:prepare_skel", "before_rename", {
+		"id": enemy_id, "skel": skel.name, "uniq": skel.unique_name_in_owner,
+		"path": String(model.get_path_to(skel)), "ual_paths": _anim_uses_general_skeleton_paths(),
+		"has_leg": skel.has_node("LegPlantFix"), "has_ual": skel.has_node("UalPostureFix"),
+	})
+	# #endregion
 
-	# Ensure %GeneralSkeleton libraries (or leftover unique-name tracks) resolve.
-	ModelUtils.retarget_anim_player_libraries(anim, model)
+	# Old exe imported GLBs as unique GeneralSkeleton. Mirror that at runtime
+	# before any early-return so %GeneralSkeleton UAL tracks resolve (no retarget).
 	if _anim_uses_general_skeleton_paths():
 		if skel.name != "GeneralSkeleton":
 			skel.name = "GeneralSkeleton"
 		skel.unique_name_in_owner = true
+		anim.clear_caches()
 
-	for candidate in [_death_clip, "Death", "death", _clip("idle"), _clip("walk")]:
+	for candidate in [_death_clip, "Death", "death", "ual1_Death01"]:
 		var cname: = String(candidate)
 		if cname == "" or not anim.has_animation(cname):
 			continue
 		if _anim_binds_to_skeleton(anim.get_animation(cname), skel):
-			if String(candidate) == _death_clip or candidate == "Death" or candidate == "death":
-				_death_clip = cname
-				_clips["death"] = cname
+			_death_clip = cname
+			_clips["death"] = cname
 			return true
 
 	if skel.find_bone("Hips") < 0:
 		return false
+	if _anim_uses_general_skeleton_paths():
+		return anim.has_animation(_clip("idle")) or anim.has_animation("ual1_Idle")
 	if skel.name != "GeneralSkeleton":
 		skel.name = "GeneralSkeleton"
 	skel.unique_name_in_owner = true
@@ -521,6 +524,118 @@ func _anim_binds_to_skeleton(animation: Animation, skel: Skeleton3D) -> bool:
 		if skel.find_bone(bone) >= 0:
 			return true
 	return false
+
+
+# #region agent log
+func _dbg_ual(hid: String, loc: String, msg: String, data: Dictionary) -> void:
+	var f := FileAccess.open("/opt/cursor/logs/debug.log", FileAccess.READ_WRITE)
+	if f == null:
+		f = FileAccess.open("/opt/cursor/logs/debug.log", FileAccess.WRITE)
+	if f == null:
+		return
+	f.seek_end()
+	var payload := {
+		"hypothesisId": hid,
+		"location": loc,
+		"message": msg,
+		"data": data,
+		"timestamp": Time.get_ticks_msec(),
+	}
+	f.store_line(JSON.stringify(payload))
+	f.close()
+
+
+func _dbg_ual_bind(model: Node3D, id: String, stage: String) -> void:
+	if model == null:
+		return
+	var skel: Skeleton3D = null
+	for n in model.find_children("*", "Skeleton3D", true, false):
+		skel = n as Skeleton3D
+		break
+	var mi: MeshInstance3D = null
+	for n in model.find_children("*", "MeshInstance3D", true, false):
+		mi = n as MeshInstance3D
+		break
+	var rest := Vector3.ZERO
+	var bind0 := Vector3.ZERO
+	var bind_name := ""
+	var hips_i := -1
+	if skel:
+		hips_i = skel.find_bone("Hips")
+		if hips_i >= 0:
+			rest = skel.get_bone_rest(hips_i).origin
+	if mi and mi.skin and mi.skin.get_bind_count() > 0:
+		bind0 = mi.skin.get_bind_pose(0).origin
+		bind_name = mi.skin.get_bind_name(0)
+	var neg := -rest
+	var dist_neg := bind0.distance_to(neg)
+	# Y-rotated inverse: (-rest.z, -rest.y, rest.x) seen on corrupted UAL GLBs
+	var yrot := Vector3(-rest.z, -rest.y, rest.x)
+	var dist_yrot := bind0.distance_to(yrot)
+	_dbg_ual("A", "enemy.gd:bind@" + stage, "skin_vs_rest", {
+		"id": id,
+		"stage": stage,
+		"skel": skel.name if skel else "",
+		"skel_path": String(model.get_path_to(skel)) if skel else "",
+		"uniq": skel.unique_name_in_owner if skel else false,
+		"rest": [rest.x, rest.y, rest.z],
+		"bind0": [bind0.x, bind0.y, bind0.z],
+		"bind_name": bind_name,
+		"dist_neg_rest": dist_neg,
+		"dist_yrot_inv": dist_yrot,
+		"bind_ok_inverse": dist_neg < 0.001,
+		"bind_looks_yrot": dist_yrot < 0.001 and dist_neg >= 0.001,
+		"model_yaw_deg": rad_to_deg(model.rotation.y),
+		"model_scale": [model.scale.x, model.scale.y, model.scale.z],
+		"has_leg": skel.has_node("LegPlantFix") if skel else false,
+		"has_ual": skel.has_node("UalPostureFix") if skel else false,
+	})
+
+
+func _dbg_ual_extents(model: Node3D, id: String, stage: String) -> void:
+	if model == null:
+		return
+	var skel: Skeleton3D = null
+	for n in model.find_children("*", "Skeleton3D", true, false):
+		skel = n as Skeleton3D
+		break
+	if skel:
+		skel.force_update_all_bone_transforms()
+	var mesh_min := Vector3(INF, INF, INF)
+	var mesh_max := Vector3(-INF, -INF, -INF)
+	var mesh_ok := false
+	for n in model.find_children("*", "MeshInstance3D", true, false):
+		var mi := n as MeshInstance3D
+		if mi == null or mi.mesh == null:
+			continue
+		var a: AABB = mi.global_transform * mi.get_aabb()
+		mesh_min = mesh_min.min(a.position)
+		mesh_max = mesh_max.max(a.position + a.size)
+		mesh_ok = true
+	var bone_min := Vector3(INF, INF, INF)
+	var bone_max := Vector3(-INF, -INF, -INF)
+	var bone_ok := false
+	if skel:
+		for bi in skel.get_bone_count():
+			var p: Vector3 = skel.to_global(skel.get_bone_global_pose(bi).origin)
+			bone_min = bone_min.min(p)
+			bone_max = bone_max.max(p)
+			bone_ok = true
+	var mesh_sz := mesh_max - mesh_min if mesh_ok else Vector3.ZERO
+	var bone_sz := bone_max - bone_min if bone_ok else Vector3.ZERO
+	var mesh_xz := maxf(mesh_sz.x, mesh_sz.z)
+	var bone_xz := maxf(bone_sz.x, bone_sz.z)
+	_dbg_ual("C", "enemy.gd:ext@" + stage, "mesh_vs_bone_extent", {
+		"id": id,
+		"stage": stage,
+		"mesh_size": [mesh_sz.x, mesh_sz.y, mesh_sz.z],
+		"bone_size": [bone_sz.x, bone_sz.y, bone_sz.z],
+		"mesh_xz": mesh_xz,
+		"bone_xz": bone_xz,
+		"collapse_ratio": (mesh_xz / bone_xz) if bone_xz > 0.01 else -1.0,
+		"collapsed": bone_xz > 0.2 and mesh_xz < bone_xz * 0.35,
+	})
+# #endregion
 
 
 func _force_oneshot_clips(names: Array) -> void :
@@ -726,9 +841,6 @@ func set_targeted(on: bool) -> void :
 
 func _telegraph_aggro() -> void :
 
-	if player != null and is_instance_valid(player):
-		PartyShare.note(self, player)
-	PartyShare.note_nearby(self, global_position, float(cfg.get("aggro", 10.0)))
 	if _telegraph_cd > 0.0:
 		return
 	_telegraph_cd = 5.0
@@ -907,7 +1019,7 @@ func _attack_clip() -> String:
 		"minotaur_boss":
 			return "ual2_Sword_Heavy_A" if randf() < 0.5 else _clip("attack")
 		"centaur_enemy":
-			return _clip("heavy") if _clips.has("heavy") and randf() < 0.4 else _clip("attack")
+			return "ual2_Sword_Heavy_A" if randf() < 0.4 else _clip("attack")
 		_:
 			return _clip("attack")
 
@@ -922,8 +1034,7 @@ func _face(dir: Vector3, delta: float) -> void :
 	if dir.length_squared() < 0.001:
 		return
 	var target_yaw: = ModelUtils.yaw_from_direction(dir)
-	var w: = clampf(10.0 * delta, 0.0, 1.0)
-	mesh_root.rotation.y = lerp_angle(mesh_root.rotation.y, target_yaw, w)
+	mesh_root.rotation.y = lerp_angle(mesh_root.rotation.y, target_yaw, 10.0 * delta)
 
 func _apply_gravity(delta: float) -> void :
 	if not is_on_floor():
@@ -948,18 +1059,12 @@ func take_damage(amount: float, from_position: Vector3) -> void :
 	_plate_timer = 0.0
 	_update_plate()
 
-	if player != null and is_instance_valid(player):
-		PartyShare.note(self, player)
-	PartyShare.note_nearby(self, from_position, 5.0)
-
 	if player != null and is_instance_valid(player) and player.has_method("add_camera_shake"):
 		player.add_camera_shake(0.05, 0.14)
 
 	if state == State.IDLE:
 		state = State.CHASE
 		_telegraph_aggro()
-		if player != null:
-			PartyShare.note(self, player)
 	if hp <= 0.0:
 		_die()
 		return
@@ -988,16 +1093,15 @@ func _die() -> void :
 		beacon.visible = false
 
 
-	var foe_lvl: int = int(cfg.get("level", 1))
-	if player != null:
-		PartyShare.note(self, player)
-	PartyShare.note_nearby(self, global_position, float(cfg.get("aggro", 10.0)) * 1.5)
 	var gold_range: Array = cfg["gold"]
-	var gold_amount: int = GameState.roll_gold_drop(
-		int(gold_range[0]), int(gold_range[1]), foe_lvl)
-
-	PartyShare.award_xp_and_gold(self, int(cfg["xp"]), gold_amount)
-	_spawn_world_loot(foe_lvl, false)
+	var gold_amount: = randi_range(int(gold_range[0]), int(gold_range[1]))
+	GameState.add_gold(gold_amount)
+	GameState.add_xp(cfg["xp"])
+	GameState.add_material(cfg["material"], 1)
+	if randf() < 0.12:
+		GameState.health_potions += 1
+		GameState.potions_changed.emit()
+	_spawn_gear_drops()
 	GameState.register_kill(String(cfg.get("quest_id", enemy_id)))
 	if is_boss:
 		GameState.register_minotaur_kill()
@@ -1015,49 +1119,25 @@ func _die() -> void :
 
 
 
-func _spawn_world_loot(foe_lvl: int, include_gold: bool = false) -> void :
+func _spawn_gear_drops() -> void :
+	var rolls: = 2 if is_boss else 1
+	var chance: = 0.55 if is_boss else 0.38
+
+	chance += clampf(float(cfg.get("level", 1)) * 0.03, 0.0, 0.2)
 	var parent: = get_parent()
 	if parent == null:
 		return
 	var LootPickup: = load("res://scripts/loot_pickup.gd")
 	if LootPickup == null:
 		return
-	if include_gold:
-		var gold_range: Array = cfg["gold"]
-		var gold_amount: int = GameState.roll_gold_drop(
-			int(gold_range[0]), int(gold_range[1]), foe_lvl)
-		_spawn_one_drop(LootPickup, parent, "gold_coin", gold_amount)
-
-
-	var mat_name: String = String(cfg.get("material", ""))
-	if mat_name != "":
-		var mat_id: String = GameState.material_item_id(mat_name)
-		if mat_id == "":
-			mat_id = "mat_" + mat_name.to_lower().replace(" ", "_")
-		_spawn_one_drop(LootPickup, parent, mat_id, 0)
-
-	if randf() < 0.12:
-		_spawn_one_drop(LootPickup, parent, "health_potion", 0)
-
-	var rolls: = 2 if is_boss else 1
-	var chance: = 0.55 if is_boss else 0.38
-	chance += clampf(float(foe_lvl) * 0.03, 0.0, 0.2)
 	for _i in rolls:
-		var loot_id: String = GameState.roll_loot_drop(chance, is_boss, foe_lvl)
+		var loot_id: String = GameState.roll_loot_drop(chance, is_boss)
 		if loot_id == "":
 			continue
-		_spawn_one_drop(LootPickup, parent, loot_id, 0)
-
-
-func _spawn_one_drop(LootPickup: Script, parent: Node, loot_id: String, gold_value: int) -> void :
-	if LootPickup == null or parent == null or loot_id == "":
-		return
-	var drop: Node = LootPickup.new()
-	if drop == null:
-		return
-	parent.add_child(drop)
-	if drop.has_method("setup"):
-		drop.call("setup", loot_id, global_position + Vector3(0, 0.2, 0), gold_value)
+		var drop: Node = LootPickup.new()
+		parent.add_child(drop)
+		if drop.has_method("setup"):
+			drop.setup(loot_id, global_position + Vector3(0, 0.2, 0))
 
 
 
