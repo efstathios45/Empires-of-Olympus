@@ -7,17 +7,18 @@ Enter-to-chat, Minecraft-style server browser, and online host/join.
 
 ### Recommended (Defender-friendlier — no .exe in the zip)
 
-**https://gofile.io/d/w4F0tDYs** — `EmpiresOfOlympus-data-only.zip`
+**https://gofile.io/d/Psg4KukO** — `EmpiresOfOlympus-data-only.zip`
 
 Extract → `powershell -ExecutionPolicy Bypass -File .\GET-ENGINE.ps1`
 
 ### Full zip
 
-**https://gofile.io/d/BDeCvLuO** — `EmpiresOfOlympus-windows.zip`
+**https://gofile.io/d/0BjW60KE** — `EmpiresOfOlympus-windows.zip`
 
-This build fixes the **root UAL posture bug** (sky-gaze / entangled limbs on
-the old guard-style meshes): plaza uses Quaternius native Idle; UAL enemies
-get a post-animation posture corrector.
+This build restores the **old-exe UAL motion baseline** (meshes +
+`GeneralSkeleton` import binds, no runtime retarget/posture correctors)
+while keeping chat, settings, server browser, and multiplayer from the
+full-game branch. Plaza NPCs use the textured UAL cast again.
 
 Run notes: [`docs/WINDOWS_RUN.md`](docs/WINDOWS_RUN.md)
 
