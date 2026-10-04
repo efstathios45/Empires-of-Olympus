@@ -72,11 +72,12 @@ func _clamp_head_look(skel: Skeleton3D) -> void:
 		return
 	skel.force_update_all_bone_transforms()
 	var xf := skel.global_transform * skel.get_bone_global_pose(hi)
-	var look := -xf.basis.z
-	# If looking steeply upward, nod the head local pitch toward rest.
-	if look.y > 0.2:
+	# Mixamo look is −Z; Tripo-authored UAL face/snout is +Z. Clamp if either
+	# axis stares at the sky so both cast styles get corrected.
+	var up_look: float = maxf((-xf.basis.z).y, xf.basis.z.y)
+	if up_look > 0.2:
 		var rest_x := skel.get_bone_rest(hi).basis.get_euler().x
 		var e := skel.get_bone_pose_rotation(hi).get_euler()
-		var t := clampf((look.y - 0.2) / 0.6, 0.0, 1.0)
+		var t := clampf((up_look - 0.2) / 0.6, 0.0, 1.0)
 		e.x = lerpf(e.x, rest_x, t)
 		skel.set_bone_pose_rotation(hi, Quaternion.from_euler(e))

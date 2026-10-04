@@ -77,7 +77,8 @@ const ENEMY_CONFIGS: = {
 		"height": 1.05, "hp": 110, "dmg": 14.0, "speed": 4.2, 
 		"xp": 48, "gold": [8, 16], "aggro": 9.5, "reach": 2.0, 
 		"attack_cd": 1.7, "material": "Boar Tusk", 
-		"facing_plus_z": true, 
+		# OGA boar snout is already −Z / MeshRoot chase-forward; facing_plus_z
+		# made it charge while showing its rear.
 		"sfx_attack": "boar_attack", "sfx_death": "boar_death", 
 		"sfx_aggro": "boar_idle", 
 		"sfx_attack_alt": "boar_attack_b", 
@@ -94,7 +95,7 @@ const ENEMY_CONFIGS: = {
 		"height": 1.7, "hp": 160, "dmg": 18.0, "speed": 5.2, 
 		"xp": 78, "gold": [14, 26], "aggro": 10.5, "reach": 2.1, 
 		"attack_cd": 1.3, "material": "Satyr Horn", 
-		# UAL visual front is +Z; chase yaw aims MeshRoot −Z → flip 180°.
+		# Tripo/UAL visual face is chest/head +Z; chase aims MeshRoot −Z → 180°.
 		"facing_plus_z": true, 
 		"sfx_attack": "satyr_attack", "sfx_death": "satyr_death", 
 	}, 
@@ -106,8 +107,14 @@ const ENEMY_CONFIGS: = {
 		"height": 1.75, "hp": 240, "dmg": 24.0, "speed": 5.6, 
 		"xp": 120, "gold": [20, 36], "aggro": 11.5, "reach": 2.1, 
 		"attack_cd": 1.2, "material": "Harpy Feather", "screech": true, 
-		# Authored ~90° off + Unity +Z front → 270°.
+		# Authored 90° off + face/+Z → 270° so face aims MeshRoot −Z.
 		"facing_yaw_deg": 270.0, 
+		# Harpy Tripo rig lacks Chest/Neck — alias torso only. Arm→wing aliases
+		# stretched the mesh into an entangled spike.
+		"bone_aliases": {
+			"Chest": "UpperChest",
+			"Neck": "Head",
+		}, 
 		"sfx_attack": "harpy_attack", "sfx_death": "harpy_death", 
 	}, 
 	"centaur_enemy": {
@@ -299,6 +306,8 @@ func _build_body() -> void :
 		if lib_path != "" and ResourceLoader.exists(lib_path):
 			var lib: = load(lib_path) as AnimationLibrary
 			if lib:
+				if cfg.has("bone_aliases"):
+					lib = ModelUtils.alias_ual_bone_tracks(lib, cfg["bone_aliases"])
 				if anim.has_animation_library(""):
 					anim.remove_animation_library("")
 				anim.add_animation_library("", lib)
@@ -331,7 +340,9 @@ func _build_body() -> void :
 		_play(_clip("idle"))
 
 
-## Aim authored model front along MeshRoot −Z (what chase yaw uses).
+## Aim visual front along MeshRoot −Z (chase yaw). Prefer explicit facing_* flags.
+## Fallback auto-picks 0/90/180/270 by aligning Tripo chest/head +Z to MeshRoot −Z
+## (must use MeshRoot, not model −Z — model-local dots are yaw-invariant).
 func _apply_model_facing(model: Node3D) -> void:
 	if model == null:
 		return
@@ -341,6 +352,58 @@ func _apply_model_facing(model: Node3D) -> void:
 	if cfg.get("facing_plus_z", false):
 		model.rotation.y = PI
 		return
+	# Auto only for UAL-style chests. Animals use facing_plus_z or authored 0.
+	if anim == null or mesh_root == null:
+		return
+	var skel: Skeleton3D = null
+	for node in model.find_children("*", "Skeleton3D", true, false):
+		skel = node as Skeleton3D
+		break
+	if skel == null:
+		return
+	if skel.find_bone("UpperChest") < 0 and skel.find_bone("Chest") < 0:
+		return
+	var walk := _clip("walk")
+	if anim.has_animation(walk):
+		anim.play(walk)
+		anim.seek(0.25, true)
+	elif anim.has_animation(_clip("idle")):
+		anim.play(_clip("idle"))
+		anim.seek(0.25, true)
+	var best_yaw := 0.0
+	var best_dot := -999.0
+	for deg in [0.0, 90.0, 180.0, 270.0]:
+		model.rotation.y = deg_to_rad(deg)
+		skel.force_update_all_bone_transforms()
+		var d := _visual_front_dot_chase_forward(skel)
+		if d > best_dot:
+			best_dot = d
+			best_yaw = deg
+	if best_dot > 0.35:
+		model.rotation.y = deg_to_rad(best_yaw)
+
+
+## Dot of Tripo visual face (chest/head +Z) with MeshRoot −Z (chase forward).
+func _visual_front_dot_chase_forward(skel: Skeleton3D) -> float:
+	if mesh_root == null:
+		return 0.0
+	var chase_fwd: Vector3 = -mesh_root.global_transform.basis.z
+	chase_fwd.y = 0.0
+	if chase_fwd.length_squared() < 1e-6:
+		return 0.0
+	chase_fwd = chase_fwd.normalized()
+	for bn in ["Head", "UpperChest", "Chest", "Neck"]:
+		var bi := skel.find_bone(bn)
+		if bi < 0:
+			continue
+		var xf := skel.global_transform * skel.get_bone_global_pose(bi)
+		# Tripo-authored UAL rigs: visual face/snout follows bone +Z in Godot.
+		var face: Vector3 = xf.basis.z
+		face.y = 0.0
+		if face.length_squared() < 1e-6:
+			continue
+		return face.normalized().dot(chase_fwd)
+	return 0.0
 
 
 func _clip(role: String) -> String:
