@@ -11,6 +11,7 @@ signal weapon_refined(new_level: int)
 signal quest_advanced(quest_id: String, step: int)
 signal clan_changed
 signal potions_changed
+signal mosaic_changed
 
 
 const EMPIRES: = {
@@ -399,6 +400,20 @@ var equipped: Dictionary = {
 
 
 var quest_index: int = 0
+
+## Side quest: ψιφιδωτό of the agora (not part of Melite's Trials chain).
+## Stages: none → accepted → complete
+var mosaic_quest_stage: String = "none"
+var mosaic_tiles: PackedByteArray = PackedByteArray()
+var mosaic_rewarded: bool = false
+
+const MOSAIC_QUEST: = {
+	"id": "agora_mosaic",
+	"title": "Ψιφιδωτό of the Agora",
+	"brief": "Old Myrrine remembers when the square's pebble mosaic shone for every feast. Restore the circular ψιφιδωτό — set each tessera by hand, then seal it for Athena's court.",
+	"reward_gold": 650,
+	"reward_xp": 480,
+}
 var quest_kills: Dictionary = {}
 var omphaloi_destroyed: int = 0
 var minotaur_slain: bool = false
@@ -473,6 +488,9 @@ func to_save_dict() -> Dictionary:
 		"minotaur_slain": minotaur_slain, 
 		"clan_name": clan_name, 
 		"clan_rank": clan_rank, 
+		"mosaic_quest_stage": mosaic_quest_stage, 
+		"mosaic_tiles": MosaicArt.tiles_to_array(mosaic_tiles), 
+		"mosaic_rewarded": mosaic_rewarded, 
 	}
 
 
@@ -521,6 +539,11 @@ func apply_save_dict(data: Dictionary) -> bool:
 	minotaur_slain = bool(data.get("minotaur_slain", false))
 	clan_name = String(data.get("clan_name", ""))
 	clan_rank = String(data.get("clan_rank", ""))
+	mosaic_quest_stage = String(data.get("mosaic_quest_stage", "none"))
+	if mosaic_quest_stage != "accepted" and mosaic_quest_stage != "complete":
+		mosaic_quest_stage = "none"
+	mosaic_tiles = MosaicArt.tiles_from_array(data.get("mosaic_tiles", []))
+	mosaic_rewarded = bool(data.get("mosaic_rewarded", false))
 	_resync_derived_counts()
 	stats_changed.emit()
 	inventory_changed.emit()
@@ -528,6 +551,7 @@ func apply_save_dict(data: Dictionary) -> bool:
 	var q: = current_quest()
 	quest_advanced.emit(String(q.get("id", "")), quest_index)
 	clan_changed.emit()
+	mosaic_changed.emit()
 	return true
 
 
@@ -1289,3 +1313,66 @@ func is_quest_objective_done() -> bool:
 	if q.has("boss") and not minotaur_slain:
 		return false
 	return true
+
+
+func ensure_mosaic_tiles() -> void:
+	mosaic_tiles = MosaicArt.ensure_tiles(mosaic_tiles)
+
+
+func accept_mosaic_quest() -> bool:
+	if mosaic_quest_stage != "none":
+		return false
+	mosaic_quest_stage = "accepted"
+	ensure_mosaic_tiles()
+	mosaic_changed.emit()
+	quest_advanced.emit(String(MOSAIC_QUEST["id"]), -1)
+	return true
+
+
+func has_mosaic_art() -> bool:
+	ensure_mosaic_tiles()
+	return MosaicArt.painted_count(mosaic_tiles) > 0
+
+
+func mosaic_progress_text() -> String:
+	if mosaic_quest_stage == "none":
+		return ""
+	ensure_mosaic_tiles()
+	var painted: = MosaicArt.painted_count(mosaic_tiles)
+	if mosaic_quest_stage == "complete":
+		return "%s — sealed (%d tesserae)" % [MOSAIC_QUEST["title"], painted]
+	if painted <= 0:
+		return "%s\nSpeak with the agora women to begin." % MOSAIC_QUEST["title"]
+	return "%s — %d tesserae laid\nSeal the circle when ready." % [
+		MOSAIC_QUEST["title"], painted,
+	]
+
+
+func seal_mosaic_artwork() -> Dictionary:
+	## Returns {ok, first_reward, gold, xp}. Requires some painted tiles.
+	ensure_mosaic_tiles()
+	if mosaic_quest_stage == "none":
+		return {"ok": false, "reason": "not_accepted"}
+	if MosaicArt.painted_count(mosaic_tiles) < 24:
+		return {"ok": false, "reason": "too_sparse"}
+	var first: = not mosaic_rewarded
+	mosaic_quest_stage = "complete"
+	var gold_amt: = 0
+	var xp_amt: = 0
+	if first:
+		gold_amt = int(MOSAIC_QUEST["reward_gold"])
+		xp_amt = int(MOSAIC_QUEST["reward_xp"])
+		add_gold(gold_amt)
+		add_xp(xp_amt)
+		mosaic_rewarded = true
+	mosaic_changed.emit()
+	quest_advanced.emit(String(MOSAIC_QUEST["id"]), -1)
+	stats_changed.emit()
+	return {"ok": true, "first_reward": first, "gold": gold_amt, "xp": xp_amt}
+
+
+func mosaic_floor_texture() -> Texture2D:
+	ensure_mosaic_tiles()
+	if not has_mosaic_art():
+		return null
+	return MosaicArt.build_texture(mosaic_tiles, 10)

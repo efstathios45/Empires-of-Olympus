@@ -484,7 +484,40 @@ func get_nearest_interactable(pos: Vector3, max_dist: float = 3.4) -> Node3D:
 
 func _build_hub() -> void :
 	CityPlazaScript.build(self)
+	if not GameState.mosaic_changed.is_connected(apply_player_mosaic):
+		GameState.mosaic_changed.connect(apply_player_mosaic)
+	apply_player_mosaic()
 
+
+## Apply the logged-in player's sealed/draft ψιφιδωτό to the agora court disc.
+func apply_player_mosaic() -> void :
+	var disc: MeshInstance3D = null
+	for n in get_tree().get_nodes_in_group("plaza_mosaic_disc"):
+		if n is MeshInstance3D:
+			disc = n as MeshInstance3D
+			break
+	if disc == null:
+		return
+	var mat: = disc.material_override as StandardMaterial3D
+	if mat == null:
+		mat = StandardMaterial3D.new()
+		disc.material_override = mat
+	var tex: Texture2D = GameState.mosaic_floor_texture()
+	if tex != null:
+		mat.albedo_texture = tex
+		mat.albedo_color = Color(1, 1, 1, 1)
+		mat.uv1_scale = Vector3.ONE
+		mat.texture_filter = BaseMaterial3D.TEXTURE_FILTER_NEAREST
+	else:
+		# Restore pebble underlay when the player has no art yet.
+		const MOSAIC_TEX: = "res://assets/textures/stone/greek_pebble_mosaic.png"
+		mat.albedo_color = Color(0.82, 0.74, 0.62)
+		if ResourceLoader.exists(MOSAIC_TEX):
+			mat.albedo_texture = load(MOSAIC_TEX)
+		mat.uv1_scale = Vector3.ONE
+		mat.texture_filter = BaseMaterial3D.TEXTURE_FILTER_LINEAR_WITH_MIPMAPS
+	mat.roughness = 0.92
+	mat.metallic = 0.0
 
 
 func _build_wilds() -> void :

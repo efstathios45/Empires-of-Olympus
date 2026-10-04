@@ -21,6 +21,8 @@ var spawn_yaw: float = 0.0
 var idle_clip: String = "ual1_Idle"
 
 var flavour_line: String = ""
+## When true, interact opens the agora ψιφιδωτό quest / painter panel.
+var offers_mosaic: bool = false
 
 const BUBBLE_SECONDS: = 4.5
 const FACE_SECONDS: = 4.0
@@ -124,15 +126,26 @@ func _bind_ual_skeleton(model: Node3D) -> void :
 
 
 func get_prompt() -> String:
+	if offers_mosaic:
+		match GameState.mosaic_quest_stage:
+			"accepted":
+				return "Ask %s about the mosaic" % display_name
+			"complete":
+				return "Refine the ψιφιδωτό with %s" % display_name
+			_:
+				return "Hear %s's commission" % display_name
 	return "Speak with %s" % display_name
 
 func interact() -> void :
 
 	_face_local_player()
+	var hud: = get_tree().get_first_node_in_group("hud")
+	if offers_mosaic and hud != null and hud.has_method("open_mosaic"):
+		hud.open_mosaic(self)
+		return
 	if flavour_line != "":
 		_say(flavour_line)
 		return
-	var hud: = get_tree().get_first_node_in_group("hud")
 	if hud == null:
 		return
 	if npc_id == "priestess" and hud.has_method("open_dialogue"):

@@ -94,12 +94,16 @@ static func _paving(world) -> void :
 	var gy: float = world.sample_height(0.0, 0.0)
 
 	var disc: = MeshInstance3D.new()
-
-	disc.mesh = _make_disc_mesh(PAVE_R, 64, 1.8)
+	disc.name = "PlazaMosaicDisc"
+	# Unit UVs across the diameter so a player ψιφιδωτό ImageTexture maps cleanly.
+	disc.mesh = _make_disc_mesh(PAVE_R, 64, 1.8, true)
 	disc.material_override = court_mat
 	disc.cast_shadow = GeometryInstance3D.SHADOW_CASTING_SETTING_OFF
+	disc.add_to_group("plaza_mosaic_disc")
 	world.add_child(disc)
 	disc.global_position = Vector3(0.0, gy + 0.02, 0.0)
+	if world.has_method("apply_player_mosaic"):
+		world.call_deferred("apply_player_mosaic")
 
 	var road: = MeshInstance3D.new()
 	var box: = BoxMesh.new()
@@ -113,11 +117,11 @@ static func _paving(world) -> void :
 
 
 
-static func _make_disc_mesh(radius: float, segments: int, metres_per_tile: float = 2.0) -> ArrayMesh:
+static func _make_disc_mesh(radius: float, segments: int, metres_per_tile: float = 2.0, unit_uv: bool = false) -> ArrayMesh:
 	var st: = SurfaceTool.new()
 	st.begin(Mesh.PRIMITIVE_TRIANGLES)
 	st.set_normal(Vector3.UP)
-	st.set_uv(Vector2(0.0, 0.0))
+	st.set_uv(Vector2(0.5, 0.5) if unit_uv else Vector2(0.0, 0.0))
 	st.add_vertex(Vector3.ZERO)
 	var inv: float = 1.0 / maxf(0.01, metres_per_tile)
 	for i in range(segments + 1):
@@ -125,7 +129,10 @@ static func _make_disc_mesh(radius: float, segments: int, metres_per_tile: float
 		var x: float = cos(a) * radius
 		var z: float = sin(a) * radius
 		st.set_normal(Vector3.UP)
-		st.set_uv(Vector2(x * inv, z * inv))
+		if unit_uv:
+			st.set_uv(Vector2(0.5 + 0.5 * (x / radius), 0.5 + 0.5 * (z / radius)))
+		else:
+			st.set_uv(Vector2(x * inv, z * inv))
 		st.add_vertex(Vector3(x, 0.0, z))
 	for i in range(segments):
 		st.add_index(0)
@@ -326,13 +333,13 @@ static func _townsfolk(world) -> void :
 			"line": "Figs, dates, honey cakes! Coin first, glory later."}, 
 		{"kind": "woman", "name": "Thalia", "at": Vector3(2.9, 0.0, 3.2), 
 			"yaw": 205.0, "idle": "ual1_Idle_Talking", 
-			"line": "They say the priestess had another vision at dawn. Awful omens."}, 
+			"line": "", "mosaic": true}, 
 		{"kind": "woman", "name": "Eirene", "at": Vector3(-2.6, 0.0, 4.6), 
 			"yaw": 25.0, "idle": "ual1_Idle_LookAround", 
-			"line": "The fountain runs cold as Boreas' breath. Blessed be Athena."}, 
+			"line": "", "mosaic": true}, 
 		{"kind": "woman", "name": "Old Myrrine", "at": Vector3(-11.4, 0.0, 8.2), 
 			"yaw": 90.0, "idle": "ual1_Idle_LookAround", 
-			"line": "In my day the agora had twice the stalls. And better bread."}, 
+			"line": "", "mosaic": true}, 
 		{"kind": "guard", "name": "Guard Lysandros", "at": Vector3(-3.4, 0.0, 22.0), 
 			"yaw": 0.0, "idle": "ual2_Idle_Rail", 
 			"line": "Wolves beyond that gate, and worse. Sharpen your spear first."}, 
@@ -360,8 +367,11 @@ static func _townsfolk(world) -> void :
 		if not ResourceLoader.exists(glb):
 			continue
 		idx += 1
-		var n = NpcScript.create_flavour("citizen_%d" % idx, String(f["name"]), 
+		var offers_mosaic: = bool(f.get("mosaic", false))
+		var npc_id: = "mosaic_keeper" if offers_mosaic else ("citizen_%d" % idx)
+		var n = NpcScript.create_flavour(npc_id, String(f["name"]), 
 			glb, lib, f["at"], height, float(f["yaw"]), 
 			String(f["idle"]), String(f["line"]))
+		n.offers_mosaic = offers_mosaic
 		world.add_child(n)
 		world.add_interactable(n)
