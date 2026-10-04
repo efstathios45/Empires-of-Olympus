@@ -21,7 +21,7 @@ var spawn_yaw: float = 0.0
 var idle_clip: String = "ual1_Idle"
 
 var flavour_line: String = ""
-## When true, interact opens the agora ψιφιδωτό quest / painter panel.
+## When true, interact opens the agora Psifidoto quest / painter panel.
 var offers_mosaic: bool = false
 
 const BUBBLE_SECONDS: = 4.5
@@ -131,7 +131,7 @@ func get_prompt() -> String:
 			"accepted":
 				return "Ask %s about the mosaic" % display_name
 			"complete":
-				return "Refine the ψιφιδωτό with %s" % display_name
+				return "Refine the Psifidoto with %s" % display_name
 			_:
 				return "Hear %s's commission" % display_name
 	return "Speak with %s" % display_name

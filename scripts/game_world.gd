@@ -489,7 +489,7 @@ func _build_hub() -> void :
 	apply_player_mosaic()
 
 
-## Apply the logged-in player's sealed/draft ψιφιδωτό to the agora court disc.
+## Apply the logged-in player's sealed/draft Psifidoto to the agora court disc.
 func apply_player_mosaic() -> void :
 	var disc: MeshInstance3D = null
 	for n in get_tree().get_nodes_in_group("plaza_mosaic_disc"):

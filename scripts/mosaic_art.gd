@@ -1,10 +1,14 @@
 class_name MosaicArt
 extends RefCounted
-## Circular agora ψιφιδωτό (psifidoto) — tessera grid + classical Greek palette.
+## Circular agora Psifidoto — tessera grid + classical Greek palette.
 
-const RES: = 40
+## ~2× the old 40² circle (~1.1k → ~2.2k paintable tesserae).
+const RES: = 56
+const PREV_RES: = 40
 ## Index 0 = unpainted (shows stone underlay). Palette colors are 1..n.
 const EMPTY: = 0
+## Hand-laid minimum before the circle may be sealed.
+const SEAL_MIN: = 48
 
 ## Classical / Homeric colour words rendered in English, tuned for pebble mosaic.
 const PALETTE: = [
@@ -54,9 +58,28 @@ static func empty_tiles() -> PackedByteArray:
 
 
 static func ensure_tiles(tiles: PackedByteArray) -> PackedByteArray:
-	if tiles == null or tiles.size() != RES * RES:
+	if tiles == null or tiles.is_empty():
 		return empty_tiles()
-	return tiles
+	if tiles.size() == RES * RES:
+		return tiles
+	# Migrate older 40×40 saves into the denser circle.
+	if tiles.size() == PREV_RES * PREV_RES:
+		return _upsample(tiles, PREV_RES, RES)
+	return empty_tiles()
+
+
+static func _upsample(src: PackedByteArray, old_res: int, new_res: int) -> PackedByteArray:
+	var out: = empty_tiles()
+	for y in new_res:
+		for x in new_res:
+			if not in_circle(x, y):
+				continue
+			var ox: = int(floor(float(x) * float(old_res) / float(new_res)))
+			var oy: = int(floor(float(y) * float(old_res) / float(new_res)))
+			ox = clampi(ox, 0, old_res - 1)
+			oy = clampi(oy, 0, old_res - 1)
+			out[index_of(x, y)] = src[oy * old_res + ox]
+	return out
 
 
 static func in_circle(x: int, y: int) -> bool:
@@ -64,7 +87,6 @@ static func in_circle(x: int, y: int) -> bool:
 	var cy: = (RES - 1) * 0.5
 	var dx: = float(x) - cx
 	var dy: = float(y) - cy
-	# Slight inset so the rim reads cleanly.
 	return dx * dx + dy * dy <= (cx - 0.35) * (cx - 0.35)
 
 
@@ -117,22 +139,27 @@ static func clear_circle(tiles: PackedByteArray) -> void:
 				tiles[index_of(x, y)] = EMPTY
 
 
-## Build a square Image of the circular mosaic (transparent outside the disc).
 static func build_image(tiles: PackedByteArray, px_per_cell: int = 8) -> Image:
 	tiles = ensure_tiles(tiles)
 	var side: = RES * px_per_cell
 	var img: = Image.create(side, side, false, Image.FORMAT_RGBA8)
 	img.fill(Color(0, 0, 0, 0))
-	var gap: = maxi(1, int(round(float(px_per_cell) * 0.12)))
+	var gap: = maxi(1, int(round(float(px_per_cell) * 0.14)))
 	for y in RES:
 		for x in RES:
 			if not in_circle(x, y):
 				continue
 			var idx: = int(tiles[index_of(x, y)])
 			var col: = color_at(idx) if idx != EMPTY else UNDERLAY
+			if idx != EMPTY:
+				var wobble: = 0.04 * sin(float(x * 17 + y * 13))
+				col = Color(
+					clampf(col.r + wobble, 0.0, 1.0),
+					clampf(col.g + wobble * 0.7, 0.0, 1.0),
+					clampf(col.b + wobble * 0.5, 0.0, 1.0),
+					1.0)
 			var x0: = x * px_per_cell
 			var y0: = y * px_per_cell
-			# Mortar frame
 			for py in px_per_cell:
 				for px in px_per_cell:
 					var edge: = px < gap or py < gap or px >= px_per_cell - gap or py >= px_per_cell - gap
@@ -154,10 +181,10 @@ static func tiles_to_array(tiles: PackedByteArray) -> Array:
 
 
 static func tiles_from_array(raw) -> PackedByteArray:
-	var t: = empty_tiles()
 	if typeof(raw) != TYPE_ARRAY:
-		return t
-	var n: = mini(raw.size(), t.size())
-	for i in n:
+		return empty_tiles()
+	var t: = PackedByteArray()
+	t.resize(raw.size())
+	for i in raw.size():
 		t[i] = clampi(int(raw[i]), EMPTY, PALETTE.size())
-	return t
+	return ensure_tiles(t)

@@ -95,7 +95,7 @@ static func _paving(world) -> void :
 
 	var disc: = MeshInstance3D.new()
 	disc.name = "PlazaMosaicDisc"
-	# Unit UVs across the diameter so a player ψιφιδωτό ImageTexture maps cleanly.
+	# Unit UVs across the diameter so a player Psifidoto ImageTexture maps cleanly.
 	disc.mesh = _make_disc_mesh(PAVE_R, 64, 1.8, true)
 	disc.material_override = court_mat
 	disc.cast_shadow = GeometryInstance3D.SHADOW_CASTING_SETTING_OFF

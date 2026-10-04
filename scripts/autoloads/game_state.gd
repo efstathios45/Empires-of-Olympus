@@ -401,7 +401,7 @@ var equipped: Dictionary = {
 
 var quest_index: int = 0
 
-## Side quest: ψιφιδωτό of the agora (not part of Melite's Trials chain).
+## Side quest: Psifidoto of the agora (not part of Melite's Trials chain).
 ## Stages: none → accepted → complete
 var mosaic_quest_stage: String = "none"
 var mosaic_tiles: PackedByteArray = PackedByteArray()
@@ -409,8 +409,8 @@ var mosaic_rewarded: bool = false
 
 const MOSAIC_QUEST: = {
 	"id": "agora_mosaic",
-	"title": "Ψιφιδωτό of the Agora",
-	"brief": "Old Myrrine remembers when the square's pebble mosaic shone for every feast. Restore the circular ψιφιδωτό — set each tessera by hand, then seal it for Athena's court.",
+	"title": "Psifidoto of the Agora",
+	"brief": "Old Myrrine remembers when the square's pebble mosaic shone for every feast. Restore the circular Psifidoto by hand — each tessera set like the old craftsmen — then seal it for Athena's court. Your artwork will stay on this square forever for you.",
 	"reward_gold": 650,
 	"reward_xp": 480,
 }
@@ -1340,12 +1340,27 @@ func mosaic_progress_text() -> String:
 	ensure_mosaic_tiles()
 	var painted: = MosaicArt.painted_count(mosaic_tiles)
 	if mosaic_quest_stage == "complete":
-		return "%s — sealed (%d tesserae)" % [MOSAIC_QUEST["title"], painted]
+		return "%s — sealed forever (%d tesserae)" % [MOSAIC_QUEST["title"], painted]
 	if painted <= 0:
 		return "%s\nSpeak with the agora women to begin." % MOSAIC_QUEST["title"]
-	return "%s — %d tesserae laid\nSeal the circle when ready." % [
-		MOSAIC_QUEST["title"], painted,
+	return "%s — %d tesserae laid (need %d to seal)\nSaved — return anytime to continue." % [
+		MOSAIC_QUEST["title"], painted, MosaicArt.SEAL_MIN,
 	]
+
+
+func save_mosaic_progress(tiles: PackedByteArray = PackedByteArray()) -> bool:
+	## Persist draft without sealing. Artwork stays on this square for this account.
+	if mosaic_quest_stage == "none":
+		return false
+	if tiles.size() > 0:
+		mosaic_tiles = MosaicArt.ensure_tiles(tiles)
+	else:
+		ensure_mosaic_tiles()
+	mosaic_changed.emit()
+	quest_advanced.emit(String(MOSAIC_QUEST["id"]), -1)
+	if AccountSystem.is_logged_in():
+		AccountSystem.save_game()
+	return true
 
 
 func seal_mosaic_artwork() -> Dictionary:
@@ -1353,7 +1368,7 @@ func seal_mosaic_artwork() -> Dictionary:
 	ensure_mosaic_tiles()
 	if mosaic_quest_stage == "none":
 		return {"ok": false, "reason": "not_accepted"}
-	if MosaicArt.painted_count(mosaic_tiles) < 24:
+	if MosaicArt.painted_count(mosaic_tiles) < MosaicArt.SEAL_MIN:
 		return {"ok": false, "reason": "too_sparse"}
 	var first: = not mosaic_rewarded
 	mosaic_quest_stage = "complete"
@@ -1368,6 +1383,8 @@ func seal_mosaic_artwork() -> Dictionary:
 	mosaic_changed.emit()
 	quest_advanced.emit(String(MOSAIC_QUEST["id"]), -1)
 	stats_changed.emit()
+	if AccountSystem.is_logged_in():
+		AccountSystem.save_game()
 	return {"ok": true, "first_reward": first, "gold": gold_amt, "xp": xp_amt}
 
 
