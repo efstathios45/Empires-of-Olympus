@@ -1,25 +1,31 @@
 Empires of Olympus — Windows 10 / 11
 ====================================
 
-Posture root fix (sky-gaze / entangled townsfolk & UAL enemies)
+Old-exe motion baseline (no entanglement from bad GLB binds)
 --------------------------------------------------------------
-Same bug as when the hero was the city_guard mesh: shared ual1_* clips tip
-the chest/neck/head at the sky once retargeted. Fix:
-- Plaza NPCs → Quaternius CC0 cast with native Idle/Walk (colored, upright)
-- UAL humanoid enemies → UalPostureFix after AnimationPlayer each frame
+The working gofile build (m84Azz3v) imported UAL humanoids as unique
+`GeneralSkeleton` and played `%GeneralSkeleton` clips without retarget
+or posture correctors. Later workspace GLBs had Y-rotated skin binds that
+collapsed meshes while bone smokes still passed.
+
+This build:
+- Restores those GLBs from the recovered exe
+- Imports with `PATH:Armature/Skeleton3D` → unique `GeneralSkeleton`
+- Keeps chat / settings / server browser / multiplayer from the full game
+- Keeps `facing_yaw_deg` so chase shows faces (not backs)
 
 ------------------------------------------------------------
 Download
 ------------------------------------------------------------
 Data-only (recommended):
-  https://gofile.io/d/w4F0tDYs
-  SHA-256: 5077b4d97f265256ff655b03c21c0849cc92cebe3c55f49320a7b70c4101a2c1
+  https://gofile.io/d/Psg4KukO
+  SHA-256: 015de74505cd285ca94e322580c581b9c56f7c95cbad2a629dbd707e8619c6c1
 
 Full zip:
-  https://gofile.io/d/BDeCvLuO
-  SHA-256: 258ffc91e8c675490d1d14785b9d53670e216de2f5e5bbf7ffadf43af7f8e0cb
+  https://gofile.io/d/0BjW60KE
+  SHA-256: 036394797dd919311aa189edc3ad2c0e0b3fcc44bed1f777d7196bec2a1ee970
 
-Pck SHA-256: b9695a23e1771fc5e993d956d403e94343cb7f9cc161998634bcbe9247bfd990
+Pck SHA-256: 2ab1708e4227cdee378c5c65e611e54e3fa67a57cac03d276d7c25b77935ad56
 Engine SHA-256 (stock Godot 4.4.1 template):
   b493c1d53fb915f7805f360cfe42d1c3126e720dfc234a4b0f2feb99200f9a4b
 
