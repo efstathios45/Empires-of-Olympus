@@ -85,7 +85,7 @@ static func add_per_part_convex_collision(node: Node3D, collision_layer: int = 1
 
 
 static func set_animation_loops(anim_player: AnimationPlayer) -> void :
-	var oneshot_anims = ["jump", "attack", "slash", "shoot", "hurt", "die", "death", 
+	var oneshot_anims = ["jump", "attack", "atack", "slash", "shoot", "firing", "hurt", "die", "death", 
 		"fall", "climb", "dive", "hit", "cast", "throw", "reload", "pick_up", "roll", "dodge"]
 	for anim_name in anim_player.get_animation_list():
 		var anim = anim_player.get_animation(anim_name)
@@ -374,6 +374,59 @@ static func setup_maya_cm_animal(node: Node3D, target_height: float) -> void :
 
 
 
+# Sketchfab rigs such as the bone centaur are authored away from the scene
+# origin, and a skinned mesh AABB stays at the bind pose. Seat the posed
+# skeleton on the parent origin using the root bone and the hoof/foot bones.
+static func align_skeleton_to_ground(node: Node3D) -> void:
+	var skel: Skeleton3D = node.find_child("Skeleton3D", true, false) as Skeleton3D
+	if skel == null:
+		ground_model(node)
+		return
+	skel.force_update_all_bone_transforms()
+	var min_y: float = INF
+	var anchor: Vector3 = Vector3.ZERO
+	var have_anchor: bool = false
+	for i in skel.get_bone_count():
+		var bone_name: String = str(skel.get_bone_name(i))
+		var world: Vector3 = skel.to_global(skel.get_bone_global_pose(i).origin)
+		if (bone_name.begins_with("RootBone") or bone_name.begins_with("ROOT BODY")) and not have_anchor:
+			anchor = world
+			have_anchor = true
+		var lower: String = bone_name.to_lower()
+		var is_end: bool = "end" in lower
+		if not is_end and ("hoof" in lower or lower.begins_with("foot") or ".foot" in lower or lower.begins_with("ik foot")):
+			min_y = minf(min_y, world.y)
+	var parent: Node3D = node.get_parent() as Node3D
+	var parent_basis: Basis = Basis.IDENTITY
+	var target: Vector3 = Vector3.ZERO
+	if parent:
+		parent_basis = parent.global_transform.basis
+		target = parent.global_position
+	if have_anchor:
+		var delta: Vector3 = Vector3(anchor.x - target.x, 0.0, anchor.z - target.z)
+		var local_delta: Vector3 = parent_basis.inverse() * delta
+		node.position.x -= local_delta.x
+		node.position.z -= local_delta.z
+	if min_y < INF and min_y > -1000.0:
+		node.position.y -= min_y
+
+
+# Authored humanoids such as Hoplite Chan already sit near real-world meters.
+# The Maya-centimetre mesh fix and the skeleton-span measure blow those
+# rigs up (a small prop mesh gets scaled by 100) and then crush the root.
+static func setup_authored_humanoid(node: Node3D, target_height: float) -> void:
+	if node == null:
+		return
+	if node.is_inside_tree():
+		node.force_update_transform()
+	var mesh_h: float = _measure_mesh_height(node)
+	if mesh_h > 0.05:
+		node.scale *= target_height / mesh_h
+	if node.is_inside_tree():
+		node.force_update_transform()
+	ground_model(node)
+
+
 static func setup_character_for_movement(node: Node3D, target_height: float = 1.8) -> void :
 
 	if node == null and BUILD_FIX_TOKEN.is_empty():
@@ -432,21 +485,73 @@ static func strip_kaykit_native_gear(model: Node3D) -> void :
 
 
 static func _align_quaternius_visual_facing(node: Node3D) -> void :
+	# Quaternius *humanoids* ship with CharacterArmature facing +Z. Flip that
+	# armature so yaw_from_direction (Godot −Z front) matches locomotion.
+	# Do NOT flip AnimalArmature packs (wolves etc.) — those already face −Z,
+	# and a fallback flip made them chase the player while walking backwards.
 	if node == null or not _is_quaternius_model(node):
 		return
 	if node.has_meta("eoo_quat_facing"):
 		return
 	var arm: Node3D = node.find_child("CharacterArmature", true, false) as Node3D
 	if arm == null:
-
-		for n in node.get_children():
-			if n is Node3D and n.find_child("Skeleton3D", true, false) != null:
-				arm = n as Node3D
-				break
-	if arm == null:
 		return
 	arm.rotate_y(PI)
 	node.set_meta("eoo_quat_facing", true)
+
+
+## Rewrite %GeneralSkeleton:* animation tracks to the model's real Skeleton3D
+## path. External UAL .tres libraries author scene-unique paths; without this
+## the clip "plays" but moves nothing and the mesh stays in its bind T-pose.
+static func retarget_general_skeleton_library(lib: AnimationLibrary, anim: AnimationPlayer, model: Node3D) -> AnimationLibrary:
+	if lib == null or anim == null or model == null:
+		return lib
+	var skel: Skeleton3D = null
+	for n in model.find_children("*", "Skeleton3D", true, false):
+		skel = n as Skeleton3D
+		break
+	if skel == null:
+		return lib
+	var root: Node = anim.get_node_or_null(anim.root_node)
+	if root == null:
+		root = model
+	var skel_rel: = String(root.get_path_to(skel))
+	var needs_fix: = false
+	for an in lib.get_animation_list():
+		var a: = lib.get_animation(an)
+		if a == null:
+			continue
+		for ti in a.get_track_count():
+			if String(a.track_get_path(ti)).begins_with("%GeneralSkeleton"):
+				needs_fix = true
+				break
+		if needs_fix:
+			break
+	if not needs_fix:
+		return lib
+	var out: = AnimationLibrary.new()
+	for an in lib.get_animation_list():
+		var src: = lib.get_animation(an)
+		if src == null:
+			continue
+		var a: Animation = src.duplicate(true)
+		for ti in a.get_track_count():
+			var tp: = String(a.track_get_path(ti))
+			if tp.begins_with("%GeneralSkeleton"):
+				a.track_set_path(ti, NodePath(skel_rel + tp.substr("%GeneralSkeleton".length())))
+		out.add_animation(an, a)
+	return out
+
+
+static func retarget_anim_player_libraries(anim: AnimationPlayer, model: Node3D) -> void :
+	if anim == null or model == null:
+		return
+	for lib_name in anim.get_animation_library_list():
+		var lib: = anim.get_animation_library(lib_name)
+		var fixed: = retarget_general_skeleton_library(lib, anim, model)
+		if fixed != lib:
+			anim.remove_animation_library(lib_name)
+			anim.add_animation_library(lib_name, fixed)
 
 
 

@@ -20,7 +20,7 @@ const MAP: = BG + "empire_map_hellas.png"
 
 const CARD_W: = 420
 const EMPIRE_CARD_H: = 300
-const CLASS_CARD_H: = 380
+const CLASS_CARD_H: = 430
 const FRAME_INSET: = 78
 const CARD_PAD: = 14
 const TEXT_W: = CARD_W - FRAME_INSET * 2 - CARD_PAD * 2
@@ -602,6 +602,10 @@ func _build_class_step() -> void :
 		_class_cards[id] = card
 		cards.add_child(card)
 
+	var centaur_credit: String = String(preload("res://scripts/enemy.gd").ENEMY_CONFIGS["centaur_enemy"].get("credit", ""))
+	if centaur_credit != "":
+		page.add_child(_sub_line(centaur_credit))
+
 	var nav: = _row(18)
 	page.add_child(nav)
 
@@ -633,6 +637,9 @@ func _make_class_card(id: String, data: Dictionary) -> PanelContainer:
 	var class_name_text: String = data.get("name", id.capitalize())
 	v.add_child(_wrapped(class_name_text, 16, Kit.INK_TITLE, TEXT_W))
 	v.add_child(_wrapped(String(CLASS_LORE.get(id, data.get("desc", ""))), 10, Kit.INK_SOFT, TEXT_W))
+	var credit: String = String(data.get("credit", ""))
+	if credit != "":
+		v.add_child(_wrapped(credit, 13, Kit.INK_SOFT, TEXT_W))
 	v.add_child(_icon_line("icon_sword", String(data.get("weapon_name", "")), Kit.INK, TEXT_W))
 	v.add_child(_icon_line("icon_mana", String(data.get("skill_name", "")), Kit.INK_GOLD, TEXT_W))
 

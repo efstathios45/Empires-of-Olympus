@@ -82,12 +82,13 @@ func _ready() -> void :
 		ModelUtils.setup_character_for_movement(_model, height_m)
 		_model.rotation.y = _base_yaw + spawn_yaw
 
+		# Only paint untextured greys (greek_* Tripo). Textured UAL/Quaternius
+		# packs keep their albedo — GreekLook made them flat brown.
 		var gpath: = glb_path.to_lower()
-		var is_hellenic_cast: = "/greek_" in gpath or gpath.contains("greek_hoplite")
-		if not is_hellenic_cast and ("hero_king" in gpath or "quaternius_guard" in gpath\
-		or "guard_adventurer" in gpath):
+		if _model_needs_greek_paint(_model, gpath):
+			var role: = _resolve_greek_role(gpath)
 			var GreekLook = load("res://scripts/utils/greek_look.gd")
-			GreekLook.apply(_model, "guard")
+			GreekLook.apply(_model, role)
 		_anim = _model.find_child("AnimationPlayer", true) as AnimationPlayer
 		if _anim == null:
 			_anim = AnimationPlayer.new()
@@ -96,13 +97,16 @@ func _ready() -> void :
 		if lib_path != "" and ResourceLoader.exists(lib_path):
 			var lib: = load(lib_path) as AnimationLibrary
 			if lib:
-				lib = _retarget_library(lib)
+				lib = ModelUtils.retarget_general_skeleton_library(lib, _anim, _model)
 				if _anim.has_animation_library(""):
 					_anim.remove_animation_library("")
 				_anim.add_animation_library("", lib)
 		ModelUtils.set_animation_loops(_anim)
 		ModelUtils.bind_leg_plant_anim(_model, _anim)
-		_install_posture_fix()
+		# UAL posture dampening is only for melted Tripo/UAL citizen packs.
+		# Hellenic Quaternius greek_* cast already idles upright.
+		if not ModelUtils._is_quaternius_model(_model):
+			_install_posture_fix()
 		if not _anim.has_animation(idle_clip):
 			if _anim.has_animation("Idle"):
 				idle_clip = "Idle"
@@ -143,42 +147,39 @@ func _install_posture_fix() -> void :
 		fix.call("bind_anim", _anim)
 
 
-func _retarget_library(lib: AnimationLibrary) -> AnimationLibrary:
-	# Some shared animation libraries author their skeleton tracks against a
-	# scene-unique name ("%GeneralSkeleton:<bone>"), which does not resolve on
-	# these imported models (their skeleton is "Armature/Skeleton3D"). Without
-	# this the clip plays but moves nothing, leaving the model stuck in its
-	# T-pose rest. Rewrite those tracks to the model's actual skeleton path.
-	var skel: Skeleton3D = null
-	for n in _model.find_children("*", "Skeleton3D", true, false):
-		skel = n as Skeleton3D
-		break
-	if skel == null or _anim == null:
-		return lib
-	var root: Node = _anim.get_node_or_null(_anim.root_node)
-	if root == null:
-		root = _model
-	var skel_rel: = String(root.get_path_to(skel))
-	var needs_fix: = false
-	for an in lib.get_animation_list():
-		var a: = lib.get_animation(an)
-		for ti in a.get_track_count():
-			if String(a.track_get_path(ti)).begins_with("%GeneralSkeleton"):
-				needs_fix = true
-				break
-		if needs_fix:
-			break
-	if not needs_fix:
-		return lib
-	var out: = AnimationLibrary.new()
-	for an in lib.get_animation_list():
-		var a: Animation = lib.get_animation(an).duplicate(true)
-		for ti in a.get_track_count():
-			var tp: = String(a.track_get_path(ti))
-			if tp.begins_with("%GeneralSkeleton"):
-				a.track_set_path(ti, NodePath(skel_rel + tp.substr("%GeneralSkeleton".length())))
-		out.add_animation(an, a)
-	return out
+func _model_needs_greek_paint(model: Node3D, gpath: String) -> bool:
+	# Explicit untextured greek_* cast, or any mesh with no albedo textures.
+	if "greek_" in gpath:
+		return true
+	for node in model.find_children("*", "MeshInstance3D", true, false):
+		var mi: = node as MeshInstance3D
+		if mi == null:
+			continue
+		var mat: Material = mi.get_active_material(0)
+		if mat is StandardMaterial3D and (mat as StandardMaterial3D).albedo_texture != null:
+			return false
+		if mat is ORMMaterial3D and (mat as ORMMaterial3D).albedo_texture != null:
+			return false
+	# Vertex-colored Quaternius etc. already look painted.
+	if ModelUtils._is_quaternius_model(model):
+		return false
+	return false
+
+
+func _resolve_greek_role(gpath: String) -> String:
+	if greek_role != "" and greek_role != "citizen":
+		return greek_role
+	if npc_id == "priestess" or "oracle" in gpath:
+		return "oracle"
+	if npc_id == "smith" or "smith" in gpath or "blacksmith" in gpath:
+		return "smith"
+	if "guard" in gpath or "hoplite" in gpath or "spartan" in gpath:
+		return "guard"
+	if "merchant" in gpath:
+		return "merchant"
+	if "woman" in gpath or "citizen" in gpath:
+		return "citizen"
+	return "citizen"
 
 
 func _collect_idle_variants() -> PackedStringArray:
