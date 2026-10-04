@@ -1,25 +1,25 @@
 Empires of Olympus — Windows 10 / 11
 ====================================
 
-Posture root fix (sky-gaze / entangled townsfolk & UAL enemies)
---------------------------------------------------------------
-Same bug as when the hero was the city_guard mesh: shared ual1_* clips tip
-the chest/neck/head at the sky once retargeted. Fix:
-- Plaza NPCs → Quaternius CC0 cast with native Idle/Walk (colored, upright)
-- UAL humanoid enemies → UalPostureFix after AnimationPlayer each frame
+Old-exe motion bind (no entangled NPCs/mobs)
+--------------------------------------------
+Studied pre-chat/server build https://gofile.io/d/m84Azz3v. Upright
+move/walk/attack used facing_plus_z + %GeneralSkeleton rename only —
+not UAL track retarget or posture dampeners (those entangled limbs).
+Plaza cast restored to textured city_guard / citizen_* / priestess / smith.
 
 ------------------------------------------------------------
 Download
 ------------------------------------------------------------
 Data-only (recommended):
-  https://gofile.io/d/w4F0tDYs
-  SHA-256: 5077b4d97f265256ff655b03c21c0849cc92cebe3c55f49320a7b70c4101a2c1
+  https://gofile.io/d/9t9thv6S
+  SHA-256: 4c8c00fbbe4101d81cc84c9ef2a2ac1d49f13b7e94132a43dcba8e3bde97d222
 
 Full zip:
-  https://gofile.io/d/BDeCvLuO
-  SHA-256: 258ffc91e8c675490d1d14785b9d53670e216de2f5e5bbf7ffadf43af7f8e0cb
+  https://gofile.io/d/5bOTiqMC
+  SHA-256: 37638ec6835fe299394b16f05d5a1b633cd46a54b2d5d4cf10fd3c0cac963932
 
-Pck SHA-256: b9695a23e1771fc5e993d956d403e94343cb7f9cc161998634bcbe9247bfd990
+Pck SHA-256: b30e72c55ffe16a32227897d11af1c4457bd89527b2e36e10936537d7f3e76d0
 Engine SHA-256 (stock Godot 4.4.1 template):
   b493c1d53fb915f7805f360cfe42d1c3126e720dfc234a4b0f2feb99200f9a4b
 
