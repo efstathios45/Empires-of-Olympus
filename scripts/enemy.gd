@@ -269,19 +269,12 @@ func _build_body() -> void :
 	if ResourceLoader.exists(glb_path):
 		var model: Node3D = load(glb_path).instantiate()
 		mesh_root.add_child(model)
-		# #region agent log
-		_dbg_ual("A", "enemy.gd:instantiate", "model_loaded", {"id": enemy_id, "glb": glb_path})
-		_dbg_ual_bind(model, enemy_id, "post_instantiate")
-		# #endregion
 
 		if cfg.get("maya_cm", false):
 			ModelUtils.setup_maya_cm_animal(model, cfg["height"])
 		else:
 			ModelUtils.setup_character_for_movement(model, cfg["height"])
 		ModelUtils.clamp_world_height(model, maxf(cfg["height"] * 2.5, 4.0), cfg["height"])
-		# #region agent log
-		_dbg_ual_bind(model, enemy_id, "post_setup_movement")
-		# #endregion
 		if cfg.get("bristle_hide", false):
 			_apply_bristle_boar_hide(model)
 		elif cfg.has("tint"):
@@ -301,9 +294,6 @@ func _build_body() -> void :
 		if cfg.has("slices") and cfg.has("slice_master"):
 			_install_sliced_clips(String(cfg["slice_master"]), float(cfg.get("slice_fps", 24.0)), cfg["slices"])
 		_skeletal_anims = _prepare_skeleton_for_anims(model)
-		# #region agent log
-		_dbg_ual_bind(model, enemy_id, "post_prepare_skel")
-		# #endregion
 		ModelUtils.set_animation_loops(anim)
 		_force_oneshot_clips([
 			_clip("death"), _clip("hit"), _clip("attack"), 
@@ -320,15 +310,8 @@ func _build_body() -> void :
 					a.loop_mode = Animation.LOOP_LINEAR
 		# Face Godot −Z after clips exist so head/snout measurement matches play.
 		_apply_facing_correction(model)
-		# #region agent log
-		_dbg_ual_bind(model, enemy_id, "post_facing")
-		# #endregion
 	if anim and _skeletal_anims:
 		_play(_clip("idle"))
-		# #region agent log
-		if mesh_root and mesh_root.get_child_count() > 0:
-			_dbg_ual_extents(mesh_root.get_child(0) as Node3D, enemy_id, "post_idle_play")
-		# #endregion
 
 
 ## Make the visible front point along Godot −Z (what yaw_from_direction aims).
@@ -457,13 +440,6 @@ func _prepare_skeleton_for_anims(model: Node3D) -> bool:
 		break
 	if skel == null:
 		return false
-	# #region agent log
-	_dbg_ual("B", "enemy.gd:prepare_skel", "before_rename", {
-		"id": enemy_id, "skel": skel.name, "uniq": skel.unique_name_in_owner,
-		"path": String(model.get_path_to(skel)), "ual_paths": _anim_uses_general_skeleton_paths(),
-		"has_leg": skel.has_node("LegPlantFix"), "has_ual": skel.has_node("UalPostureFix"),
-	})
-	# #endregion
 
 	# Old exe imported GLBs as unique GeneralSkeleton. Mirror that at runtime
 	# before any early-return so %GeneralSkeleton UAL tracks resolve (no retarget).
@@ -524,118 +500,6 @@ func _anim_binds_to_skeleton(animation: Animation, skel: Skeleton3D) -> bool:
 		if skel.find_bone(bone) >= 0:
 			return true
 	return false
-
-
-# #region agent log
-func _dbg_ual(hid: String, loc: String, msg: String, data: Dictionary) -> void:
-	var f := FileAccess.open("/opt/cursor/logs/debug.log", FileAccess.READ_WRITE)
-	if f == null:
-		f = FileAccess.open("/opt/cursor/logs/debug.log", FileAccess.WRITE)
-	if f == null:
-		return
-	f.seek_end()
-	var payload := {
-		"hypothesisId": hid,
-		"location": loc,
-		"message": msg,
-		"data": data,
-		"timestamp": Time.get_ticks_msec(),
-	}
-	f.store_line(JSON.stringify(payload))
-	f.close()
-
-
-func _dbg_ual_bind(model: Node3D, id: String, stage: String) -> void:
-	if model == null:
-		return
-	var skel: Skeleton3D = null
-	for n in model.find_children("*", "Skeleton3D", true, false):
-		skel = n as Skeleton3D
-		break
-	var mi: MeshInstance3D = null
-	for n in model.find_children("*", "MeshInstance3D", true, false):
-		mi = n as MeshInstance3D
-		break
-	var rest := Vector3.ZERO
-	var bind0 := Vector3.ZERO
-	var bind_name := ""
-	var hips_i := -1
-	if skel:
-		hips_i = skel.find_bone("Hips")
-		if hips_i >= 0:
-			rest = skel.get_bone_rest(hips_i).origin
-	if mi and mi.skin and mi.skin.get_bind_count() > 0:
-		bind0 = mi.skin.get_bind_pose(0).origin
-		bind_name = mi.skin.get_bind_name(0)
-	var neg := -rest
-	var dist_neg := bind0.distance_to(neg)
-	# Y-rotated inverse: (-rest.z, -rest.y, rest.x) seen on corrupted UAL GLBs
-	var yrot := Vector3(-rest.z, -rest.y, rest.x)
-	var dist_yrot := bind0.distance_to(yrot)
-	_dbg_ual("A", "enemy.gd:bind@" + stage, "skin_vs_rest", {
-		"id": id,
-		"stage": stage,
-		"skel": skel.name if skel else "",
-		"skel_path": String(model.get_path_to(skel)) if skel else "",
-		"uniq": skel.unique_name_in_owner if skel else false,
-		"rest": [rest.x, rest.y, rest.z],
-		"bind0": [bind0.x, bind0.y, bind0.z],
-		"bind_name": bind_name,
-		"dist_neg_rest": dist_neg,
-		"dist_yrot_inv": dist_yrot,
-		"bind_ok_inverse": dist_neg < 0.001,
-		"bind_looks_yrot": dist_yrot < 0.001 and dist_neg >= 0.001,
-		"model_yaw_deg": rad_to_deg(model.rotation.y),
-		"model_scale": [model.scale.x, model.scale.y, model.scale.z],
-		"has_leg": skel.has_node("LegPlantFix") if skel else false,
-		"has_ual": skel.has_node("UalPostureFix") if skel else false,
-	})
-
-
-func _dbg_ual_extents(model: Node3D, id: String, stage: String) -> void:
-	if model == null:
-		return
-	var skel: Skeleton3D = null
-	for n in model.find_children("*", "Skeleton3D", true, false):
-		skel = n as Skeleton3D
-		break
-	if skel:
-		skel.force_update_all_bone_transforms()
-	var mesh_min := Vector3(INF, INF, INF)
-	var mesh_max := Vector3(-INF, -INF, -INF)
-	var mesh_ok := false
-	for n in model.find_children("*", "MeshInstance3D", true, false):
-		var mi := n as MeshInstance3D
-		if mi == null or mi.mesh == null:
-			continue
-		var a: AABB = mi.global_transform * mi.get_aabb()
-		mesh_min = mesh_min.min(a.position)
-		mesh_max = mesh_max.max(a.position + a.size)
-		mesh_ok = true
-	var bone_min := Vector3(INF, INF, INF)
-	var bone_max := Vector3(-INF, -INF, -INF)
-	var bone_ok := false
-	if skel:
-		for bi in skel.get_bone_count():
-			var p: Vector3 = skel.to_global(skel.get_bone_global_pose(bi).origin)
-			bone_min = bone_min.min(p)
-			bone_max = bone_max.max(p)
-			bone_ok = true
-	var mesh_sz := mesh_max - mesh_min if mesh_ok else Vector3.ZERO
-	var bone_sz := bone_max - bone_min if bone_ok else Vector3.ZERO
-	var mesh_xz := maxf(mesh_sz.x, mesh_sz.z)
-	var bone_xz := maxf(bone_sz.x, bone_sz.z)
-	_dbg_ual("C", "enemy.gd:ext@" + stage, "mesh_vs_bone_extent", {
-		"id": id,
-		"stage": stage,
-		"mesh_size": [mesh_sz.x, mesh_sz.y, mesh_sz.z],
-		"bone_size": [bone_sz.x, bone_sz.y, bone_sz.z],
-		"mesh_xz": mesh_xz,
-		"bone_xz": bone_xz,
-		"collapse_ratio": (mesh_xz / bone_xz) if bone_xz > 0.01 else -1.0,
-		"collapsed": bone_xz > 0.2 and mesh_xz < bone_xz * 0.35,
-	})
-# #endregion
 
 
 func _force_oneshot_clips(names: Array) -> void :

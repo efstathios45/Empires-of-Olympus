@@ -18,11 +18,7 @@ var lib_path: String = ""
 var height_m: float = 1.75
 var spawn_yaw: float = 0.0
 
-var _base_yaw: float = 0.0
-
-var idle_clip: String = "Idle_Neutral"
-
-var greek_role: String = "citizen"
+var idle_clip: String = "ual1_Idle"
 
 var flavour_line: String = ""
 
@@ -34,9 +30,6 @@ var _anim: AnimationPlayer
 var _player: Node3D
 var _bubble: Label3D = null
 var _face_tween: Tween = null
-var _idle_variants: PackedStringArray = PackedStringArray()
-var _idle_timer: float = 0.0
-var _idle_idx: int = 0
 
 static func create(p_id: String, p_name: String, p_glb: String, p_lib: String, 
 		at: Vector3, p_height: float, yaw_deg: float) -> StaticBody3D:
@@ -77,56 +70,24 @@ func _ready() -> void :
 	if scene != null:
 		_model = scene.instantiate()
 		add_child(_model)
-
-		_base_yaw = _model.rotation.y
 		ModelUtils.setup_character_for_movement(_model, height_m)
-		_model.rotation.y = _base_yaw + spawn_yaw
-
-		# Only paint untextured greys (greek_* Tripo). Textured UAL/Quaternius
-		# packs keep their albedo — GreekLook made them flat brown.
-		var gpath: = glb_path.to_lower()
-		if _model_needs_greek_paint(_model, gpath):
-			var role: = _resolve_greek_role(gpath)
-			var GreekLook = load("res://scripts/utils/greek_look.gd")
-			GreekLook.apply(_model, role)
+		_model.rotation.y = spawn_yaw
 		_anim = _model.find_child("AnimationPlayer", true) as AnimationPlayer
 		if _anim == null:
 			_anim = AnimationPlayer.new()
-			_anim.name = "AnimationPlayer"
 			_model.add_child(_anim)
 		if lib_path != "" and ResourceLoader.exists(lib_path):
 			var lib: = load(lib_path) as AnimationLibrary
 			if lib:
-				lib = ModelUtils.retarget_general_skeleton_library(lib, _anim, _model)
 				if _anim.has_animation_library(""):
 					_anim.remove_animation_library("")
 				_anim.add_animation_library("", lib)
+		_bind_ual_skeleton(_model)
 		ModelUtils.set_animation_loops(_anim)
-		ModelUtils.bind_leg_plant_anim(_model, _anim)
-		# Quaternius native Idle is already upright. UAL/Mixamo ual1_* packs
-		# (and any leftover non-Quaternius citizen meshes) need posture fix —
-		# same root cause that made the old guard-hero stare at the sky.
-		ModelUtils.install_ual_posture_fix(_model, _anim)
 		if not _anim.has_animation(idle_clip):
-			if _anim.has_animation("Idle"):
-				idle_clip = "Idle"
-			elif _anim.has_animation("Idle_Neutral"):
-				idle_clip = "Idle_Neutral"
-			elif _anim.has_animation("Idle_Sword"):
-				idle_clip = "Idle_Sword"
-			elif _anim.has_animation("ual1_Idle"):
-				idle_clip = "ual1_Idle"
-			else:
-				# Last resort: play whatever clip the library actually has so the
-				# model is never left frozen in its bind (T-pose) rest.
-				var all: = _anim.get_animation_list()
-				if all.size() > 0:
-					idle_clip = all[0]
-		_idle_variants = _collect_idle_variants()
+			idle_clip = "ual1_Idle"
 		if _anim.has_animation(idle_clip):
 			_anim.play(idle_clip)
-		_idle_timer = randf_range(2.5, 5.0)
-		set_process(true)
 
 
 	var world: = get_tree().get_first_node_in_group("game_world")
@@ -134,66 +95,33 @@ func _ready() -> void :
 		global_position.y = world.sample_height(global_position.x, global_position.z)
 
 
-func _model_needs_greek_paint(model: Node3D, gpath: String) -> bool:
-	# Explicit untextured greek_* cast, or any mesh with no albedo textures.
-	if "greek_" in gpath:
-		return true
-	for node in model.find_children("*", "MeshInstance3D", true, false):
-		var mi: = node as MeshInstance3D
-		if mi == null:
+func _bind_ual_skeleton(model: Node3D) -> void :
+	if model == null or _anim == null:
+		return
+	var needs_gs := false
+	for an in _anim.get_animation_list():
+		var a := _anim.get_animation(an)
+		if a == null:
 			continue
-		var mat: Material = mi.get_active_material(0)
-		if mat is StandardMaterial3D and (mat as StandardMaterial3D).albedo_texture != null:
-			return false
-		if mat is ORMMaterial3D and (mat as ORMMaterial3D).albedo_texture != null:
-			return false
-	# Vertex-colored Quaternius etc. already look painted.
-	if ModelUtils._is_quaternius_model(model):
-		return false
-	return false
-
-
-func _resolve_greek_role(gpath: String) -> String:
-	if greek_role != "" and greek_role != "citizen":
-		return greek_role
-	if npc_id == "priestess" or "oracle" in gpath:
-		return "oracle"
-	if npc_id == "smith" or "smith" in gpath or "blacksmith" in gpath:
-		return "smith"
-	if "guard" in gpath or "hoplite" in gpath or "spartan" in gpath:
-		return "guard"
-	if "merchant" in gpath:
-		return "merchant"
-	if "woman" in gpath or "citizen" in gpath:
-		return "citizen"
-	return "citizen"
-
-
-func _collect_idle_variants() -> PackedStringArray:
-	var out: PackedStringArray = PackedStringArray()
-	if _anim == null:
-		return out
-	for clip in [idle_clip, "Idle", "Idle_Neutral", "Idle_Sword", "Wave", "Interact", 
-			"ual1_Idle", "ual1_Idle_Talking", "ual1_Idle_LookAround", "ual2_Idle_FoldArms", "ual2_Idle_Rail"]:
-		if _anim.has_animation(clip) and not out.has(clip):
-			out.append(clip)
-	return out
-
-
-func _process(delta: float) -> void :
-	if _anim == null or _idle_variants.is_empty():
+		for ti in a.get_track_count():
+			if String(a.track_get_path(ti)).begins_with("%GeneralSkeleton"):
+				needs_gs = true
+				break
+		if needs_gs:
+			break
+	if not needs_gs:
 		return
+	var skel: Skeleton3D = null
+	for node in model.find_children("*", "Skeleton3D", true, false):
+		skel = node as Skeleton3D
+		break
+	if skel == null or skel.find_bone("Hips") < 0:
+		return
+	if skel.name != "GeneralSkeleton":
+		skel.name = "GeneralSkeleton"
+	skel.unique_name_in_owner = true
+	_anim.clear_caches()
 
-	if _face_tween != null and _face_tween.is_running():
-		return
-	_idle_timer -= delta
-	if _idle_timer > 0.0:
-		return
-	_idle_timer = randf_range(3.0, 6.5)
-	_idle_idx = (_idle_idx + 1 + randi() % maxi(1, _idle_variants.size())) % _idle_variants.size()
-	var next: = _idle_variants[_idle_idx]
-	if _anim.current_animation != next:
-		_anim.play(next)
 
 func get_prompt() -> String:
 	return "Speak with %s" % display_name
@@ -226,14 +154,15 @@ func _face_local_player() -> void :
 	if dir.length_squared() < 0.0001:
 		return
 
-	var target_yaw: float = _base_yaw + ModelUtils.yaw_from_direction(dir.normalized())
+
+	var target_yaw: float = ModelUtils.yaw_from_direction(dir.normalized()) + PI
 	if _face_tween != null and _face_tween.is_valid():
 		_face_tween.kill()
 	_face_tween = create_tween()
 	_face_tween.tween_property(_model, "rotation:y", target_yaw, 0.28)\
 	.set_trans(Tween.TRANS_SINE).set_ease(Tween.EASE_OUT)
 	_face_tween.tween_interval(FACE_SECONDS)
-	_face_tween.tween_property(_model, "rotation:y", _base_yaw + spawn_yaw, 0.45)\
+	_face_tween.tween_property(_model, "rotation:y", spawn_yaw, 0.45)\
 	.set_trans(Tween.TRANS_SINE).set_ease(Tween.EASE_IN_OUT)
 
 
