@@ -82,13 +82,13 @@ func _ready() -> void :
 		ModelUtils.setup_character_for_movement(_model, height_m)
 		_model.rotation.y = _base_yaw + spawn_yaw
 
-		# greek_* plaza meshes are untextured Tripo greys — paint Hellenic
-		# palettes so they are not solid white. Textured legacy packs keep
-		# GreekLook only when they are the Quaternius/hero_king stand-ins.
+		# Only paint untextured greys (greek_* Tripo). Textured UAL/Quaternius
+		# packs keep their albedo — GreekLook made them flat brown.
 		var gpath: = glb_path.to_lower()
-		var role: = _resolve_greek_role(gpath)
-		var GreekLook = load("res://scripts/utils/greek_look.gd")
-		GreekLook.apply(_model, role)
+		if _model_needs_greek_paint(_model, gpath):
+			var role: = _resolve_greek_role(gpath)
+			var GreekLook = load("res://scripts/utils/greek_look.gd")
+			GreekLook.apply(_model, role)
 		_anim = _model.find_child("AnimationPlayer", true) as AnimationPlayer
 		if _anim == null:
 			_anim = AnimationPlayer.new()
@@ -145,6 +145,25 @@ func _install_posture_fix() -> void :
 	skel.add_child(fix)
 	if fix.has_method("bind_anim"):
 		fix.call("bind_anim", _anim)
+
+
+func _model_needs_greek_paint(model: Node3D, gpath: String) -> bool:
+	# Explicit untextured greek_* cast, or any mesh with no albedo textures.
+	if "greek_" in gpath:
+		return true
+	for node in model.find_children("*", "MeshInstance3D", true, false):
+		var mi: = node as MeshInstance3D
+		if mi == null:
+			continue
+		var mat: Material = mi.get_active_material(0)
+		if mat is StandardMaterial3D and (mat as StandardMaterial3D).albedo_texture != null:
+			return false
+		if mat is ORMMaterial3D and (mat as ORMMaterial3D).albedo_texture != null:
+			return false
+	# Vertex-colored Quaternius etc. already look painted.
+	if ModelUtils._is_quaternius_model(model):
+		return false
+	return false
 
 
 func _resolve_greek_role(gpath: String) -> String:

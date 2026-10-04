@@ -94,7 +94,8 @@ const ENEMY_CONFIGS: = {
 		"height": 1.7, "hp": 160, "dmg": 18.0, "speed": 5.2, 
 		"xp": 78, "gold": [14, 26], "aggro": 10.5, "reach": 2.1, 
 		"attack_cd": 1.3, "material": "Satyr Horn", 
-		"facing_yaw_deg": 0.0, 
+		# UAL/Unity humanoids face +Z visually; aim that at Godot −Z → 180°.
+		"facing_yaw_deg": 180.0, 
 		"sfx_attack": "satyr_attack", "sfx_death": "satyr_death", 
 	}, 
 	"harpy_enemy": {
@@ -105,7 +106,8 @@ const ENEMY_CONFIGS: = {
 		"height": 1.75, "hp": 240, "dmg": 24.0, "speed": 5.6, 
 		"xp": 120, "gold": [20, 36], "aggro": 11.5, "reach": 2.1, 
 		"attack_cd": 1.2, "material": "Harpy Feather", "screech": true, 
-		"facing_yaw_deg": 90.0, 
+		# Authored 90° off + Unity +Z front → 270°.
+		"facing_yaw_deg": 270.0, 
 		"sfx_attack": "harpy_attack", "sfx_death": "harpy_death", 
 	}, 
 	"centaur_enemy": {
@@ -138,7 +140,7 @@ const ENEMY_CONFIGS: = {
 		"height": 2.0, "hp": 360, "dmg": 30.0, "speed": 4.4, 
 		"xp": 160, "gold": [32, 55], "aggro": 10.0, "reach": 2.4, 
 		"attack_cd": 1.8, "material": "Gorgon Venom", 
-		"facing_yaw_deg": 0.0, 
+		"facing_yaw_deg": 180.0, 
 		"sfx_attack": "gorgon_attack", "sfx_death": "gorgon_death", 
 	}, 
 	"minotaur_boss": {
@@ -149,7 +151,7 @@ const ENEMY_CONFIGS: = {
 		"height": 3.4, "hp": 2800, "dmg": 55.0, "speed": 5.0, 
 		"xp": 2200, "gold": [400, 600], "aggro": 14.0, "reach": 3.4, 
 		"attack_cd": 2.2, "material": "Minotaur Horn", "boss": true, 
-		"facing_yaw_deg": 0.0, 
+		"facing_yaw_deg": 180.0, 
 		"sfx_attack": "minotaur_attack", "sfx_death": "minotaur_death", 
 	}, 
 }
@@ -334,7 +336,8 @@ func _build_body() -> void :
 
 ## Make the visible front point along Godot −Z (what yaw_from_direction aims).
 ## Config `facing_yaw_deg` is the authored model yaw (0 / 90 / 180 / 270).
-## When omitted, auto-pick: humanoids use chest −Z; animals use head-vs-hips.
+## When omitted, auto-pick: UAL humanoids use chest +Z (Unity forward);
+## Quaternius animals use head-vs-hips along MeshRoot −Z.
 func _apply_facing_correction(model: Node3D) -> void :
 	if model == null:
 		return
@@ -342,7 +345,7 @@ func _apply_facing_correction(model: Node3D) -> void :
 	if cfg.has("facing_yaw_deg"):
 		model.rotation.y = deg_to_rad(float(cfg["facing_yaw_deg"]))
 		return
-	# Legacy bool
+	# Legacy bool (true = model front was +Z, needs 180°).
 	if cfg.has("facing_plus_z"):
 		model.rotation.y = PI if bool(cfg["facing_plus_z"]) else 0.0
 		return
@@ -361,12 +364,11 @@ func _apply_facing_correction(model: Node3D) -> void :
 	skel.force_update_all_bone_transforms()
 	var is_humanoid: = skel.find_bone("LeftShoulder") >= 0 or skel.find_bone("LeftUpperArm") >= 0
 	if is_humanoid:
-		# Pick yaw in {0,90,180,270} that aims chest −Z at MeshRoot −Z.
+		# UAL / Mixamo visual front is chest +Z (Unity). Aim it at MeshRoot −Z.
 		var best_yaw: float = 0.0
 		var best_dot: float = -999.0
-		var base: float = model.rotation.y
 		for deg in [0.0, 90.0, 180.0, 270.0]:
-			model.rotation.y = base + deg_to_rad(deg)
+			model.rotation.y = deg_to_rad(deg)
 			skel.force_update_all_bone_transforms()
 			var d: = _chest_face_dot_model(skel, model)
 			if d > best_dot:
@@ -374,30 +376,31 @@ func _apply_facing_correction(model: Node3D) -> void :
 				best_yaw = deg
 		model.rotation.y = deg_to_rad(best_yaw)
 		return
-	var hips_i: = _find_bone(skel, ["Hips", "hips", "Body", "Root", "RootBone"])
-	var head_i: = _find_bone(skel, ["Head", "head", "Nose", "nose", "Neck3", "Neck"])
+	var hips_i: = _find_bone(skel, ["Hips", "hips", "Body", "Root", "RootBone", "RootBone_01", "Torso_04"])
+	var head_i: = _find_bone(skel, ["Head", "head", "Nose", "nose", "Neck3", "Neck", "Head_06"])
 	if hips_i < 0 or head_i < 0 or mesh_root == null:
 		return
 	var inv: = mesh_root.global_transform.affine_inverse()
 	var hips_l: Vector3 = inv * skel.to_global(skel.get_bone_global_pose(hips_i).origin)
 	var head_l: Vector3 = inv * skel.to_global(skel.get_bone_global_pose(head_i).origin)
+	# Head toward MeshRoot +Z means snout aims away from Godot forward — flip.
 	if head_l.z - hips_l.z > 0.05:
 		model.rotation.y = PI
 
 
 func _chest_face_dot_model(skel: Skeleton3D, model: Node3D) -> float:
-	# Dot of chest −Z with model −Z (both flattened). Higher = facing Godot forward.
+	# Dot of visual front (chest +Z, Unity/UAL) with model −Z (Godot forward).
 	var model_fwd: Vector3 = - model.global_transform.basis.z
 	model_fwd.y = 0.0
 	if model_fwd.length_squared() < 1e-6:
 		return 0.0
 	model_fwd = model_fwd.normalized()
-	for bn in ["UpperChest", "Chest", "Hips", "Head", "Spine"]:
+	for bn in ["UpperChest", "Chest", "Hips", "Head", "Spine", "Torso_04"]:
 		var bi: = skel.find_bone(bn)
 		if bi < 0:
 			continue
 		var xf: = skel.global_transform * skel.get_bone_global_pose(bi)
-		var f: Vector3 = - xf.basis.z
+		var f: Vector3 = xf.basis.z
 		f.y = 0.0
 		if f.length_squared() < 1e-6:
 			continue
