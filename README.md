@@ -7,17 +7,17 @@ Enter-to-chat, Minecraft-style server browser, and online host/join.
 
 ### Recommended (Defender-friendlier — no .exe in the zip)
 
-**https://gofile.io/d/9t9thv6S** — `EmpiresOfOlympus-data-only.zip`
+**https://gofile.io/d/2HtdbODQ** — `EmpiresOfOlympus-data-only.zip`
 
 Extract → `powershell -ExecutionPolicy Bypass -File .\GET-ENGINE.ps1`
 
 ### Full zip
 
-**https://gofile.io/d/5bOTiqMC** — `EmpiresOfOlympus-windows.zip`
+**https://gofile.io/d/QX1B74q6** — `EmpiresOfOlympus-windows.zip`
 
-NPC/mob move/walk/attack restored from the pre-chat/server exe
-(https://gofile.io/d/m84Azz3v): `%GeneralSkeleton` rename bind +
-`facing_plus_z` — no UAL track retarget / posture dampen entanglement.
+Tripo mobs face the player (chest/head +Z → chase): satyr/gorgon/minotaur
+`facing_plus_z`, harpy yaw 270°. Harpy arm→wing aliases removed (entangle).
+`%GeneralSkeleton` bind kept; pitch-only posture (no arm dampen).
 
 Run notes: [`docs/WINDOWS_RUN.md`](docs/WINDOWS_RUN.md)
 
