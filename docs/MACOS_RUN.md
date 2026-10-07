@@ -1,29 +1,46 @@
 Empires of Olympus — macOS (Intel + Apple Silicon)
 =================================================
 
-Psifidoto of the Agora + old-exe motion baseline
-------------------------------------------------
-- Restored m84 UAL meshes + GeneralSkeleton binds (no entangle)
-- Side quest: fullscreen Psifidoto painter (~2.3k tesserae, seal at 48)
-- Save & leave / continue later; sealed art stays on your square forever
-- Chat, settings, server browser, multiplayer kept
+If the app says "cannot be opened" or "is damaged"
+----------------------------------------------------
+That is normal for an unsigned download. macOS blocks it.
 
-Universal binary (x86_64 + arm64). Unsigned — Gatekeeper steps below.
+**Easiest fix:** after unzipping, double-click:
+
+  `OPEN-ON-MAC.command`
+
+(First time: right-click it → Open → Open.)
+
+That clears the quarantine flag and launches the game.
 
 ------------------------------------------------------------
 Download
 ------------------------------------------------------------
-https://gofile.io/d/hUzUxV3r
+https://gofile.io/d/ILUvNHLV
   EmpiresOfOlympus-macos.zip
-  SHA-256: 24f1b9f0bf6a7792a426f1b1f1a80b59f96736bd8cae609ed52502b2d41757db
+  SHA-256: fa07246b286dbe92b1e674f4ff4e014f2fcfe8ad8724aaa2603662177ca55460
 
 ------------------------------------------------------------
-Install
+Manual Terminal fix
 ------------------------------------------------------------
-1. Unzip EmpiresOfOlympus-macos.zip
-2. Drag "Empires of Olympus.app" into Applications (or anywhere)
-3. First launch: right-click the app → Open → Open
-   (double-click alone is blocked for unsigned apps)
+cd into the unzipped folder, then:
 
-Or clear quarantine in Terminal:
-  xattr -dr com.apple.quarantine "/Applications/Empires of Olympus.app"
+```sh
+xattr -dr com.apple.quarantine "Empires of Olympus.app"
+open "Empires of Olympus.app"
+```
+
+------------------------------------------------------------
+Still blocked? (macOS Sequoia / Sonoma)
+------------------------------------------------------------
+1. Try once to open the app (so macOS records the block)
+2. System Settings → Privacy & Security
+3. Scroll down → **Open Anyway** for Empires of Olympus
+4. Confirm Open
+
+------------------------------------------------------------
+What's inside
+------------------------------------------------------------
+- Universal binary (x86_64 + arm64), ad-hoc signed (not Apple-notarized)
+- Psifidoto of the Agora + old-exe motion baseline
+- Chat, settings, server browser, multiplayer
