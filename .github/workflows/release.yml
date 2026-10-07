@@ -44,10 +44,11 @@ jobs:
       - name: Export builds
         run: |
           set -euo pipefail
-          mkdir -p dist/windows dist/linux dist/web
+          mkdir -p dist/windows dist/linux dist/web dist/macos
           godot --headless --path . --export-release "Windows Desktop" dist/windows/EmpiresOfOlympus.exe
           godot --headless --path . --export-release "Linux"           dist/linux/EmpiresOfOlympus.x86_64
           godot --headless --path . --export-release "Web"             dist/web/index.html
+          godot --headless --path . --export-release "macOS"           dist/macos/EmpiresOfOlympus.app.zip
           chmod +x dist/linux/EmpiresOfOlympus.x86_64
 
       - name: Package archives
@@ -57,6 +58,7 @@ jobs:
           (cd windows && zip -qr ../EmpiresOfOlympus-windows.zip .)
           (cd linux   && zip -qr ../EmpiresOfOlympus-linux.zip .)
           (cd web     && zip -qr ../EmpiresOfOlympus-web.zip .)
+          cp macos/EmpiresOfOlympus.app.zip EmpiresOfOlympus-macos.zip
           ls -la ./*.zip
 
       - name: Upload build artifacts (for manual runs)

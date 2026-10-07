@@ -21,6 +21,13 @@ old-exe UAL motion baseline, plus chat / settings / multiplayer.
 
 Run notes: [`docs/WINDOWS_RUN.md`](docs/WINDOWS_RUN.md)
 
+## macOS download
+
+**https://gofile.io/d/hUzUxV3r** — `EmpiresOfOlympus-macos.zip`
+
+Universal app (Intel + Apple Silicon). First launch: right-click → Open
+(unsigned). Run notes: [`docs/MACOS_RUN.md`](docs/MACOS_RUN.md)
+
 ## Build yourself
 
 See [`README_EXPORT.md`](README_EXPORT.md) and [`.github/workflows/release.yml`](.github/workflows/release.yml).
