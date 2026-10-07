@@ -56,39 +56,54 @@ const CLASSES: = {
 		"credit": "PS1/PSX Hoplite Chan by Seifert — CC-BY 4.0", 
 		"base_dmg": 14.0, "base_hp": 130, "base_mp": 60, 
 		"attack_range": 3.2, "attack_arc": 1.9, 
-		"skill_name": "Spear of Achilles", 
-		"skill_desc": "A devastating thrust that pierces all foes before you.", 
-		"skill_mp": 25, "skill_mult": 2.6, "skill_cd": 8.0, 
-		"ranged": false, 
-	}, 
+		"skill_name": "Spear of Achilles",
+		"skill_desc": "A devastating thrust that pierces all foes before you.",
+		"skill_mp": 25, "skill_mult": 2.6, "skill_cd": 8.0,
+		"skill_anim": "skill", "skill_hit_delay": 0.42,
+		"skill2_name": "Phalanx Guard",
+		"skill2_desc": "Brace — brief damage reduction and a shield bash.",
+		"skill2_mp": 18, "skill2_mult": 1.5, "skill2_cd": 12.0,
+		"skill2_anim": "skill2", "skill2_hit_delay": 0.28,
+		"ranged": false,
+	},
 	"toxotes": {
-		"name": "Toxotes", 
-		"desc": "Cretan bow. Death arrives before the whisper of the string.", 
-		"character": "res://assets/characters/kaykit_rogue/Rogue.glb", 
-		"idle": "Idle", 
-		"weapon": "res://assets/props/weapons/cretan_bow.glb", 
-		"weapon_name": "Cretan Bow", 
-		"base_dmg": 11.0, "base_hp": 100, "base_mp": 80, 
-		"attack_range": 22.0, "attack_arc": 0.5, 
-		"skill_name": "Artemis Volley", 
-		"skill_desc": "Loose a fan of five arrows blessed by the Huntress.", 
-		"skill_mp": 30, "skill_mult": 1.4, "skill_cd": 9.0, 
-		"ranged": true, "projectile_speed": 26.0, 
-	}, 
+		"name": "Toxotes",
+		"desc": "Cretan bow. Death arrives before the whisper of the string.",
+		"character": "res://assets/characters/kaykit_rogue/Rogue.glb",
+		"idle": "Idle",
+		"weapon": "res://assets/props/weapons/cretan_bow.glb",
+		"weapon_name": "Cretan Bow",
+		"base_dmg": 11.0, "base_hp": 100, "base_mp": 80,
+		"attack_range": 22.0, "attack_arc": 0.5,
+		"skill_name": "Artemis Volley",
+		"skill_desc": "Loose a fan of five arrows blessed by the Huntress.",
+		"skill_mp": 30, "skill_mult": 1.4, "skill_cd": 9.0,
+		"skill_anim": "skill", "skill_hit_delay": 0.35,
+		"skill2_name": "Apollo's Mark",
+		"skill2_desc": "A piercing shot that strikes the marked foe hard.",
+		"skill2_mp": 22, "skill2_mult": 2.2, "skill2_cd": 11.0,
+		"skill2_anim": "skill2", "skill2_hit_delay": 0.30,
+		"ranged": true, "projectile_speed": 26.0,
+	},
 	"magos": {
-		"name": "Magos", 
-		"desc": "Theurgist of storm and shadow. Olympus answers his call.", 
-		"character": "res://assets/characters/kaykit_mage/Mage.glb", 
-		"idle": "Spellcasting", 
-		"weapon": "res://assets/props/weapons/theurgist_staff.glb", 
-		"weapon_name": "Theurgist Staff", 
-		"base_dmg": 12.0, "base_hp": 90, "base_mp": 110, 
-		"attack_range": 18.0, "attack_arc": 0.6, 
-		"skill_name": "Zeus's Thunderbolt", 
-		"skill_desc": "Call down heaven's wrath in a burst of divine lightning.", 
-		"skill_mp": 35, "skill_mult": 3.0, "skill_cd": 10.0, 
-		"ranged": true, "projectile_speed": 20.0, 
-	}, 
+		"name": "Magos",
+		"desc": "Theurgist of storm and shadow. Olympus answers his call.",
+		"character": "res://assets/characters/kaykit_mage/Mage.glb",
+		"idle": "Spellcasting",
+		"weapon": "res://assets/props/weapons/theurgist_staff.glb",
+		"weapon_name": "Theurgist Staff",
+		"base_dmg": 12.0, "base_hp": 90, "base_mp": 110,
+		"attack_range": 18.0, "attack_arc": 0.6,
+		"skill_name": "Zeus's Thunderbolt",
+		"skill_desc": "Call down heaven's wrath in a burst of divine lightning.",
+		"skill_mp": 35, "skill_mult": 3.0, "skill_cd": 10.0,
+		"skill_anim": "skill", "skill_hit_delay": 0.48,
+		"skill2_name": "Hades' Grasp",
+		"skill2_desc": "A dark nova that wounds and slows nearby foes.",
+		"skill2_mp": 28, "skill2_mult": 1.8, "skill2_cd": 13.0,
+		"skill2_anim": "skill2", "skill2_hit_delay": 0.40,
+		"ranged": true, "projectile_speed": 20.0,
+	},
 }
 
 
@@ -326,11 +341,69 @@ const ITEM_DEFS: = {
 
 
 const SHOP_ITEMS: = {
-	"health_potion": {"name": "Health Potion", "desc": "Restores 60 HP.", "price": 25, "icon": "res://assets/ui/icon_potion.png"}, 
-	"mana_potion": {"name": "Mana Potion", "desc": "Restores 40 MP.", "price": 25, "icon": "res://assets/ui/icon_mana.png"}, 
-	"hephaestus": {"name": "Papyrus of Hephaestus", "desc": "Tempers at the base forge rate.", "price": 60, "icon": "res://assets/ui/icon_scroll.png"}, 
-	"titan": {"name": "Titan's Ember", "desc": "Locks temper chance at a fixed 75%.", "price": 150, "icon": "res://assets/ui/icon_gem.png"}, 
-	"oracle": {"name": "Pythia's Ward", "desc": "Failure cannot downgrade or shatter the blade.", "price": 220, "icon": "res://assets/ui/icon_scroll.png"}, 
+	"health_potion": {"name": "Health Potion", "desc": "Restores 60 HP.", "price": 25, "icon": "res://assets/ui/icon_potion.png"},
+	"mana_potion": {"name": "Mana Potion", "desc": "Restores 40 MP.", "price": 25, "icon": "res://assets/ui/icon_mana.png"},
+	"hephaestus": {"name": "Papyrus of Hephaestus", "desc": "Tempers at the base forge rate.", "price": 60, "icon": "res://assets/ui/icon_scroll.png"},
+	"titan": {"name": "Titan's Ember", "desc": "Locks temper chance at a fixed 75%.", "price": 150, "icon": "res://assets/ui/icon_gem.png"},
+	"oracle": {"name": "Pythia's Ward", "desc": "Failure cannot downgrade or shatter the blade.", "price": 220, "icon": "res://assets/ui/icon_scroll.png"},
+}
+
+## Plaza merchant stock (npc shop_id -> item ids from ITEM_DEFS / SHOP_ITEMS).
+const MERCHANT_SHOPS: = {
+	"oil": {
+		"title": "Hesiod's Oils",
+		"quote": "Finest olive oil — and a flask for the road.",
+		"items": ["health_potion", "mana_potion", "olive_necklace"],
+	},
+	"potter": {
+		"title": "Kleon's Amphorae",
+		"quote": "Clay for the living, bronze for the brave.",
+		"items": ["leather_bracelet", "bronze_earring", "aspis"],
+	},
+	"fruit": {
+		"title": "Xanthos's Stall",
+		"quote": "Figs, dates, and a little luck.",
+		"items": ["health_potion", "leather_boots", "bronze_knife"],
+	},
+}
+
+## Material sinks — craft at the smith.
+const CRAFT_RECIPES: = {
+	"craft_cuirass": {
+		"name": "Boiled Cuirass Kit",
+		"desc": "Turn wolf pelts into a leather cuirass.",
+		"result": "leather_cuirass",
+		"cost_gold": 40,
+		"mats": {"mat_wolf_pelt": 3},
+	},
+	"craft_greaves": {
+		"name": "Tusk Greaves",
+		"desc": "Boar ivory bound into bronze greaves.",
+		"result": "bronze_greaves",
+		"cost_gold": 80,
+		"mats": {"mat_boar_tusk": 2, "mat_wolf_pelt": 1},
+	},
+	"craft_bow": {
+		"name": "Feathered Bowstring",
+		"desc": "Harpy feathers and satyr horn restring a Cretan bow.",
+		"result": "hunting_bow",
+		"cost_gold": 120,
+		"mats": {"mat_harpy_feather": 2, "mat_satyr_horn": 1},
+	},
+	"craft_thorax": {
+		"name": "Hero's Thorax",
+		"desc": "Centaur hoof and gorgon venom temper a bronze thorax.",
+		"result": "bronze_thorax",
+		"cost_gold": 220,
+		"mats": {"mat_centaur_hoof": 2, "mat_gorgon_venom": 1},
+	},
+	"craft_torque": {
+		"name": "Labyrinth Torque",
+		"desc": "A Minotaur horn melted into a gold torque.",
+		"result": "gold_torque",
+		"cost_gold": 300,
+		"mats": {"mat_minotaur_horn": 1, "mat_centaur_hoof": 1},
+	},
 }
 
 
@@ -410,7 +483,7 @@ var mosaic_rewarded: bool = false
 const MOSAIC_QUEST: = {
 	"id": "agora_mosaic",
 	"title": "Psifidoto of the Agora",
-	"brief": "Old Myrrine remembers when the square's pebble mosaic shone for every feast. Restore the circular Psifidoto by hand — each tessera set like the old craftsmen — then seal it for Athena's court. Your artwork will stay on this square forever for you.",
+	"brief": "Old Myrrine remembers when the square's pebble mosaic shone for every feast. Restore the circular Psifidoto by hand — each tessera set like the old craftsmen — then seal it forever for Athena's court. On a hosted world, friends see the same sealed art.",
 	"reward_gold": 650,
 	"reward_xp": 480,
 }
@@ -418,6 +491,14 @@ var quest_kills: Dictionary = {}
 var omphaloi_destroyed: int = 0
 var minotaur_slain: bool = false
 
+## 0 = not started, then steps advance; 99 = finished.
+var tutorial_step: int = 0
+
+## Host-authoritative shared world (peer-to-peer save). Personal gear stays per account.
+var world_host_account: String = ""
+var world_host_name: String = ""
+## peer_id(str) -> {name, empire, level, account, class}
+var world_peers: Dictionary = {}
 
 var clan_name: String = ""
 var clan_rank: String = ""
@@ -446,12 +527,20 @@ func reset_run() -> void :
 	quest_kills = {}
 	omphaloi_destroyed = 0
 	minotaur_slain = false
+	tutorial_step = 0
+	world_host_account = ""
+	world_host_name = ""
+	world_peers.clear()
+	mosaic_quest_stage = "none"
+	mosaic_tiles = PackedByteArray()
+	mosaic_rewarded = false
 	clan_name = ""
 	clan_rank = ""
 	_seed_starter_bag()
 	stats_changed.emit()
 	inventory_changed.emit()
 	potions_changed.emit()
+	mosaic_changed.emit()
 
 
 
@@ -472,25 +561,29 @@ func to_save_dict() -> Dictionary:
 	for k in quest_kills:
 		qk[String(k)] = int(quest_kills[k])
 	return {
-		"v": 1, 
-		"empire": empire, 
-		"player_class": player_class, 
-		"player_name": player_name, 
-		"level": level, 
-		"xp": xp, 
-		"gold": gold, 
-		"weapon_refine": weapon_refine, 
-		"bag": bag_copy, 
-		"equipped": eq, 
-		"quest_index": quest_index, 
-		"quest_kills": qk, 
-		"omphaloi_destroyed": omphaloi_destroyed, 
-		"minotaur_slain": minotaur_slain, 
-		"clan_name": clan_name, 
-		"clan_rank": clan_rank, 
-		"mosaic_quest_stage": mosaic_quest_stage, 
-		"mosaic_tiles": MosaicArt.tiles_to_array(mosaic_tiles), 
-		"mosaic_rewarded": mosaic_rewarded, 
+		"v": 2,
+		"empire": empire,
+		"player_class": player_class,
+		"player_name": player_name,
+		"level": level,
+		"xp": xp,
+		"gold": gold,
+		"weapon_refine": weapon_refine,
+		"bag": bag_copy,
+		"equipped": eq,
+		"quest_index": quest_index,
+		"quest_kills": qk,
+		"omphaloi_destroyed": omphaloi_destroyed,
+		"minotaur_slain": minotaur_slain,
+		"tutorial_step": tutorial_step,
+		"world_host_account": world_host_account,
+		"world_host_name": world_host_name,
+		"world_peers": world_peers.duplicate(true),
+		"clan_name": clan_name,
+		"clan_rank": clan_rank,
+		"mosaic_quest_stage": mosaic_quest_stage,
+		"mosaic_tiles": MosaicArt.tiles_to_array(mosaic_tiles),
+		"mosaic_rewarded": mosaic_rewarded,
 	}
 
 
@@ -537,6 +630,16 @@ func apply_save_dict(data: Dictionary) -> bool:
 			quest_kills[String(k)] = int(raw_qk[k])
 	omphaloi_destroyed = maxi(0, int(data.get("omphaloi_destroyed", 0)))
 	minotaur_slain = bool(data.get("minotaur_slain", false))
+	tutorial_step = maxi(0, int(data.get("tutorial_step", 0)))
+	world_host_account = String(data.get("world_host_account", ""))
+	world_host_name = String(data.get("world_host_name", ""))
+	world_peers = {}
+	var raw_peers = data.get("world_peers", {})
+	if typeof(raw_peers) == TYPE_DICTIONARY:
+		for k in raw_peers:
+			var row = raw_peers[k]
+			if typeof(row) == TYPE_DICTIONARY:
+				world_peers[String(k)] = row.duplicate(true)
 	clan_name = String(data.get("clan_name", ""))
 	clan_rank = String(data.get("clan_rank", ""))
 	mosaic_quest_stage = String(data.get("mosaic_quest_stage", "none"))
@@ -584,8 +687,183 @@ func attack_damage() -> float:
 
 func skill_damage() -> float:
 	var cd: = class_data()
-	var d: float = attack_damage() * cd["skill_mult"] * empire_data().get("spell_mult", 1.0)
+	var d: float = attack_damage() * float(cd.get("skill_mult", 2.0)) * empire_data().get("spell_mult", 1.0)
 	return d
+
+
+func skill2_damage() -> float:
+	var cd: = class_data()
+	var d: float = attack_damage() * float(cd.get("skill2_mult", 1.5)) * empire_data().get("spell_mult", 1.0)
+	return d
+
+
+func ensure_world_host_identity() -> void:
+	if world_host_account != "" and world_host_name != "":
+		return
+	var acct: = ""
+	if AccountSystem != null:
+		acct = String(AccountSystem.username)
+	if acct.strip_edges() == "":
+		acct = "host"
+	world_host_account = acct
+	world_host_name = String(player_name) if String(player_name) != "" else "Champion"
+	var pid: = 1
+	if PartyShare != null:
+		pid = PartyShare.local_peer_id()
+	add_world_peer(pid, {
+		"name": world_host_name,
+		"empire": empire,
+		"level": level,
+		"account": world_host_account,
+		"class": player_class,
+	})
+
+
+func to_world_sync_dict() -> Dictionary:
+	## Shared host world — guests adopt this; personal bag/equip/level stay local.
+	var qk: = {}
+	for k in quest_kills:
+		qk[String(k)] = int(quest_kills[k])
+	return {
+		"v": 2,
+		"world_host_account": world_host_account,
+		"world_host_name": world_host_name,
+		"world_peers": world_peers.duplicate(true),
+		"quest_index": quest_index,
+		"quest_kills": qk,
+		"omphaloi_destroyed": omphaloi_destroyed,
+		"minotaur_slain": minotaur_slain,
+		"tutorial_step": tutorial_step,
+		"mosaic_quest_stage": mosaic_quest_stage,
+		"mosaic_tiles": MosaicArt.tiles_to_array(mosaic_tiles),
+		"mosaic_rewarded": mosaic_rewarded,
+	}
+
+
+func apply_world_sync_dict(data: Dictionary) -> void:
+	if data.is_empty():
+		return
+	world_host_account = String(data.get("world_host_account", world_host_account))
+	world_host_name = String(data.get("world_host_name", world_host_name))
+	world_peers = {}
+	var raw_peers = data.get("world_peers", {})
+	if typeof(raw_peers) == TYPE_DICTIONARY:
+		for k in raw_peers:
+			var row = raw_peers[k]
+			if typeof(row) == TYPE_DICTIONARY:
+				world_peers[String(k)] = row.duplicate(true)
+	quest_index = maxi(0, int(data.get("quest_index", quest_index)))
+	quest_kills = {}
+	var raw_qk = data.get("quest_kills", {})
+	if typeof(raw_qk) == TYPE_DICTIONARY:
+		for k in raw_qk:
+			quest_kills[String(k)] = int(raw_qk[k])
+	omphaloi_destroyed = maxi(0, int(data.get("omphaloi_destroyed", omphaloi_destroyed)))
+	minotaur_slain = bool(data.get("minotaur_slain", minotaur_slain))
+	## Guests keep their own tutorial if further along; otherwise adopt host.
+	tutorial_step = maxi(tutorial_step, int(data.get("tutorial_step", tutorial_step)))
+	mosaic_quest_stage = String(data.get("mosaic_quest_stage", mosaic_quest_stage))
+	if mosaic_quest_stage != "accepted" and mosaic_quest_stage != "complete":
+		mosaic_quest_stage = "none"
+	mosaic_tiles = MosaicArt.tiles_from_array(data.get("mosaic_tiles", []))
+	mosaic_rewarded = bool(data.get("mosaic_rewarded", mosaic_rewarded))
+	quest_advanced.emit(current_quest().get("id", ""), quest_index)
+	mosaic_changed.emit()
+	stats_changed.emit()
+
+
+func add_world_peer(peer_id: int, data: Dictionary) -> void:
+	world_peers[str(peer_id)] = {
+		"name": String(data.get("name", "Champion")),
+		"empire": String(data.get("empire", "sparta")),
+		"level": int(data.get("level", 1)),
+		"account": String(data.get("account", "")),
+		"class": String(data.get("class", data.get("player_class", "hoplite"))),
+	}
+
+
+func remove_world_peer(peer_id: int) -> void:
+	world_peers.erase(str(peer_id))
+
+
+func craft_recipe(recipe_id: String) -> Dictionary:
+	var rec = CRAFT_RECIPES.get(recipe_id, {})
+	if typeof(rec) != TYPE_DICTIONARY or rec.is_empty():
+		return {"ok": false, "reason": "unknown"}
+	var gold_cost: = int(rec.get("cost_gold", 0))
+	if gold < gold_cost:
+		return {"ok": false, "reason": "gold"}
+	var mats: Dictionary = rec.get("mats", {})
+	for mat_id in mats:
+		var need: = int(mats[mat_id])
+		var have: = _count_item(String(mat_id))
+		if have < need:
+			return {"ok": false, "reason": "mats", "missing": String(mat_id)}
+	for mat_id in mats:
+		_consume_item(String(mat_id), int(mats[mat_id]))
+	gold -= gold_cost
+	gold_changed.emit(gold)
+	var result_id: = String(rec.get("result", ""))
+	if result_id != "":
+		try_add_to_bag(result_id, 1)
+	inventory_changed.emit()
+	stats_changed.emit()
+	return {"ok": true, "result": result_id, "name": String(rec.get("name", result_id))}
+
+
+func _count_item(item_id: String) -> int:
+	var n: = 0
+	for e in bag:
+		if typeof(e) == TYPE_DICTIONARY and String(e.get("id", "")) == item_id:
+			n += int(e.get("count", 1))
+	return n
+
+
+func _consume_item(item_id: String, amount: int) -> void:
+	var left: = amount
+	var i: = 0
+	while i < bag.size() and left > 0:
+		var e = bag[i]
+		if typeof(e) != TYPE_DICTIONARY or String(e.get("id", "")) != item_id:
+			i += 1
+			continue
+		var c: = int(e.get("count", 1))
+		if c <= left:
+			left -= c
+			bag.remove_at(i)
+			continue
+		e["count"] = c - left
+		left = 0
+		i += 1
+	_resync_derived_counts()
+
+
+func advance_tutorial(step: int) -> void:
+	if step <= tutorial_step:
+		return
+	tutorial_step = step
+	quest_advanced.emit("tutorial", tutorial_step)
+
+
+func buy_merchant_item(shop_id: String, item_id: String) -> bool:
+	var shop = MERCHANT_SHOPS.get(shop_id, {})
+	if typeof(shop) != TYPE_DICTIONARY:
+		return false
+	var items: Array = shop.get("items", [])
+	if not items.has(item_id):
+		return false
+	if SHOP_ITEMS.has(item_id):
+		return buy_item(item_id)
+	var def: = item_def(item_id)
+	var price: = int(def.get("price", 0))
+	if price <= 0 or not can_fit(item_id):
+		return false
+	if not spend_gold(price):
+		return false
+	if not try_add_to_bag(item_id):
+		add_gold(price)
+		return false
+	return true
 
 func max_hp() -> int:
 	return int(class_data()["base_hp"] + (level - 1) * 14 + _equip_stat("hp"))
@@ -1226,13 +1504,29 @@ const QUESTS: = [
 		"turn_in": "The way stands open. The Labyrinth awaits, champion.", 
 	}, 
 	{
-		"id": "minotaur", 
-		"title": "The Labyrinth", 
-		"brief": "Enter the arena and slay the Minotaur. End the curse at its root.", 
-		"boss": true, 
-		"reward_gold": 1000, "reward_xp": 1500, 
-		"turn_in": "The beast is felled. Olympus itself sings your name!", 
-	}, 
+		"id": "minotaur",
+		"title": "The Labyrinth",
+		"brief": "Enter the arena and slay the Minotaur. End the curse at its root.",
+		"boss": true,
+		"reward_gold": 1000, "reward_xp": 1500,
+		"turn_in": "The beast is felled. Olympus itself sings your name!",
+	},
+	{
+		"id": "aftermath",
+		"title": "Ashes of the Labyrinth",
+		"brief": "The curse broke — but satyrs and harpies still stalk the wilds. Cull them for Melite.",
+		"kills": {"satyr_enemy": 5, "harpy_enemy": 4},
+		"reward_gold": 700, "reward_xp": 900,
+		"turn_in": "The wilds quiet. Yet centaur banners gather to the south…",
+	},
+	{
+		"id": "champions",
+		"title": "Trial of Champions",
+		"brief": "Prove the Labyrinth did not make you soft — fell centaur elites and a gorgon.",
+		"kills": {"centaur_enemy": 4, "gorgon_enemy": 2},
+		"reward_gold": 900, "reward_xp": 1200,
+		"turn_in": "Athena's court names you Champion of the Agora. Walk free — refine, craft, and host friends.",
+	},
 ]
 
 func current_quest() -> Dictionary:
@@ -1298,6 +1592,10 @@ func turn_in_quest() -> bool:
 	quest_kills = {}
 	quest_advanced.emit(current_quest().get("id", ""), quest_index)
 	stats_changed.emit()
+	if NetSession.is_hosting():
+		NetSession.broadcast_world_save()
+	elif AccountSystem.is_logged_in():
+		AccountSystem.save_game()
 	return true
 
 func is_quest_objective_done() -> bool:
@@ -1383,7 +1681,9 @@ func seal_mosaic_artwork() -> Dictionary:
 	mosaic_changed.emit()
 	quest_advanced.emit(String(MOSAIC_QUEST["id"]), -1)
 	stats_changed.emit()
-	if AccountSystem.is_logged_in():
+	if NetSession.is_hosting():
+		NetSession.broadcast_world_save()
+	elif AccountSystem.is_logged_in():
 		AccountSystem.save_game()
 	return {"ok": true, "first_reward": first, "gold": gold_amt, "xp": xp_amt}
 

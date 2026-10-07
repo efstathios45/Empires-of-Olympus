@@ -15,9 +15,10 @@ Extract → `powershell -ExecutionPolicy Bypass -File .\GET-ENGINE.ps1`
 
 **https://gofile.io/d/S2MzFXG9** — `EmpiresOfOlympus-windows.zip`
 
-This build includes the **Psifidoto of the Agora** quest (fullscreen tessera
-painter, save & continue, art stays forever on your square) on top of the
-old-exe UAL motion baseline, plus chat / settings / multiplayer.
+This build includes the **Psifidoto of the Agora**, host peer-to-peer save
+(joiners adopt the host world — no conflicts), parties, animated Q/R skills,
+tutorial tips, plaza merchants, smith crafting, and post-Minotaur trials —
+on the old-exe UAL motion baseline.
 
 Run notes: [`docs/WINDOWS_RUN.md`](docs/WINDOWS_RUN.md)
 

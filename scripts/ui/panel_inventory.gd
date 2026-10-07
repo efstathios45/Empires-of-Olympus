@@ -104,7 +104,7 @@ func _build_shell() -> void :
 	_tabs.add_theme_constant_override("separation", 10)
 	v.add_child(_tabs)
 	_add_tab("gear", "Panoply")
-	_add_tab("clan", "Clan")
+	_add_tab("clan", "Party")
 
 	_body = Control.new()
 	_body.size_flags_vertical = Control.SIZE_EXPAND_FILL
@@ -932,15 +932,59 @@ func _build_clan() -> void :
 	box.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
 	box.add_theme_constant_override("separation", 8)
 	_body.add_child(box)
-	box.add_child(Kit.make_label("Your Clan", 18, Kit.INK_GOLD))
-	if GameState.clan_name == "":
+	box.add_child(Kit.make_label("Party", 18, Kit.INK_GOLD))
+	box.add_child(Kit.make_label(
+		"Host a world — joiners share the host save (quests & mosaic). Invite peers into your party for map markers.",
+		13, Kit.INK_SOFT))
+	if GameState.world_host_name != "":
 		box.add_child(Kit.make_label(
-			"You walk alone. Found a brotherhood when the gods will it.", 
-			13, Kit.INK_SOFT))
-	else:
-		box.add_child(Kit.make_label(GameState.clan_name, 16, Kit.INK_TITLE))
-		if GameState.clan_rank != "":
-			box.add_child(Kit.make_label("Rank: %s" % GameState.clan_rank, 13, Kit.INK))
+			"Host save: %s (%s)" % [GameState.world_host_name, GameState.world_host_account],
+			14, Kit.INK_TITLE))
+	var members: = PartyShare.member_list()
+	if members.is_empty():
+		PartyShare.ensure_local_member()
+		members = PartyShare.member_list()
+	for row in members:
+		var line: = "%s  ·  Lv %d  ·  %s%s" % [
+			String(row.get("name", "?")),
+			int(row.get("level", 1)),
+			String(row.get("empire", "")).capitalize(),
+			"  (leader)" if bool(row.get("leader", false)) else "",
+		]
+		box.add_child(Kit.make_label(line, 14, Kit.INK))
+	box.add_child(Kit.spacer(6))
+	box.add_child(Kit.make_label("Online peers", 16, Kit.INK_GOLD))
+	var invited_any: = false
+	if NetSession.is_online():
+		for pid in NetSession._avatars.keys():
+			var av = NetSession._avatars[pid]
+			if av == null or not is_instance_valid(av):
+				continue
+			invited_any = true
+			var nm: = String(av.get("display_name")) if "display_name" in av else "Champion"
+			var row_h: = HBoxContainer.new()
+			row_h.add_theme_constant_override("separation", 10)
+			box.add_child(row_h)
+			row_h.add_child(Kit.make_label(nm, 14, Kit.INK))
+			var inv: = Kit.make_button("Invite", false)
+			inv.pressed.connect(func() -> void:
+				var msg: = PartyShare.invite_peer(int(pid))
+				if is_instance_valid(_detail):
+					_detail.text = msg
+			)
+			row_h.add_child(inv)
+	if not invited_any:
+		box.add_child(Kit.make_label("No other champions in this world yet.", 13, Kit.INK_SOFT))
+	var leave: = Kit.make_button("Leave Party", true)
+	leave.pressed.connect(func() -> void:
+		var msg: = PartyShare.leave_party()
+		if is_instance_valid(_detail):
+			_detail.text = msg
+		for c in _body.get_children():
+			c.queue_free()
+		_build_clan()
+	)
+	box.add_child(leave)
 
 
 func _close() -> void :

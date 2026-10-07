@@ -42,6 +42,7 @@ func _ready() -> void :
 
 	_build_header(v)
 	_build_refinery(v)
+	_build_craft(v)
 	_build_wares(v)
 
 	v.add_child(Kit.spacer(4))
@@ -129,6 +130,47 @@ func _make_scroll_row(scroll_id: String) -> HBoxContainer:
 	row.add_child(btn)
 	_scroll_buttons[scroll_id] = btn
 	return row
+
+func _build_craft(v: VBoxContainer) -> void :
+	v.add_child(Kit.make_label("Craft from Spoils", 23, Kit.INK_TITLE))
+	v.add_child(Kit.make_label(
+		"Spend materials from the wilds — a real sink for pelts, tusks, and horns.",
+		14, Kit.INK_SOFT))
+	for recipe_id in GameState.CRAFT_RECIPES.keys():
+		var rec: Dictionary = GameState.CRAFT_RECIPES[recipe_id]
+		var row: = HBoxContainer.new()
+		row.add_theme_constant_override("separation", 10)
+		v.add_child(row)
+		var text: = VBoxContainer.new()
+		text.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+		row.add_child(text)
+		text.add_child(Kit.make_label(String(rec.get("name", recipe_id)), 16, Kit.INK))
+		var mats_line: = ""
+		var mats: Dictionary = rec.get("mats", {})
+		for mid in mats:
+			if mats_line != "":
+				mats_line += ", "
+			mats_line += "%s×%d" % [String(mid).replace("mat_", "").replace("_", " "), int(mats[mid])]
+		text.add_child(Kit.make_label("%s · %d gold" % [mats_line, int(rec.get("cost_gold", 0))], 13, Kit.INK_SOFT))
+		var btn: = Kit.make_button("Craft", false)
+		btn.pressed.connect(_on_craft.bind(String(recipe_id)))
+		row.add_child(btn)
+	v.add_child(_divider())
+
+
+func _on_craft(recipe_id: String) -> void :
+	var result: Dictionary = GameState.craft_recipe(recipe_id)
+	if bool(result.get("ok", false)):
+		_result_label.text = "Forged: %s" % String(result.get("name", "item"))
+		_set_result_color(Kit.INK_GOOD)
+		AudioManager.play_sfx("gold_pickup", -2.0)
+		if NetSession.is_hosting():
+			NetSession.broadcast_world_save()
+	else:
+		_result_label.text = "Need more materials or gold."
+		_set_result_color(WARN)
+	_refresh()
+
 
 func _build_wares(v: VBoxContainer) -> void :
 	var head: = HBoxContainer.new()

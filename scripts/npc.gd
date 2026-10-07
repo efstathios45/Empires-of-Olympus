@@ -23,6 +23,8 @@ var idle_clip: String = "ual1_Idle"
 var flavour_line: String = ""
 ## When true, interact opens the agora Psifidoto quest / painter panel.
 var offers_mosaic: bool = false
+## Plaza merchant shop key (GameState.MERCHANT_SHOPS) — empty = no shop.
+var shop_id: String = ""
 
 const BUBBLE_SECONDS: = 4.5
 const FACE_SECONDS: = 4.0
@@ -134,14 +136,19 @@ func get_prompt() -> String:
 				return "Refine the Psifidoto with %s" % display_name
 			_:
 				return "Hear %s's commission" % display_name
+	if shop_id != "":
+		return "Browse %s's wares" % display_name
 	return "Speak with %s" % display_name
 
 func interact() -> void :
-
 	_face_local_player()
 	var hud: = get_tree().get_first_node_in_group("hud")
 	if offers_mosaic and hud != null and hud.has_method("open_mosaic"):
 		hud.open_mosaic(self)
+		return
+	if shop_id != "" and hud != null and hud.has_method("open_shop"):
+		hud.open_shop(self)
+		_say(flavour_line)
 		return
 	if flavour_line != "":
 		_say(flavour_line)
@@ -150,6 +157,8 @@ func interact() -> void :
 		return
 	if npc_id == "priestess" and hud.has_method("open_dialogue"):
 		hud.open_dialogue(self)
+		if GameState.tutorial_step < 2:
+			GameState.advance_tutorial(2)
 	elif npc_id == "smith" and hud.has_method("open_smith"):
 		hud.open_smith(self)
 

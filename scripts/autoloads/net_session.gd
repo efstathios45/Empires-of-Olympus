@@ -118,9 +118,13 @@ func host(port: int = DEFAULT_PORT, world_name: String = "Hellas World") -> Stri
 		return _status
 	multiplayer.multiplayer_peer = peer
 	_wire_signals()
+	GameState.ensure_world_host_identity()
+	PartyShare.clear()
+	PartyShare.ensure_local_member()
+	PartyShare.leader_peer = multiplayer.get_unique_id()
 	_invite = "0.0.0.0:%d" % port
 	_status = "Hosting '%s' — preparing invite (host only)…" % _server_name
-	_announce("World '%s' is open. Friends on your network can find it in Server Browser." % _server_name)
+	_announce("World '%s' is open. Your save is the host version — friends receive it on join." % _server_name)
 	_announce("Internet friends: use Copy Invite (only you see the address), they Add Server by name.")
 	if ServerBrowser:
 		ServerBrowser.start_advertise(_server_name, port, 1, 8)
@@ -257,7 +261,7 @@ func _wire_signals() -> void :
 func _on_connected_ok() -> void :
 	var label: = _join_label if _join_label != "" else "the world"
 	_status = "Joined %s" % label
-	_announce("Joined %s. Rivals of other empires can be fought. Press Enter to chat." % label)
+	_announce("Joined %s. Host world save is shared — no conflicts. Press Enter to chat." % label)
 	_hello.rpc(_identity())
 	session_changed.emit()
 
@@ -286,12 +290,15 @@ func _on_peer_connected(id: int) -> void :
 func _on_peer_disconnected(id: int) -> void :
 	_remove_avatar(id)
 	_seen_peer_ips.erase(id)
+	PartyShare.remove_member(id)
+	GameState.remove_world_peer(id)
 	_announce("A champion left the world.")
 	if multiplayer.is_server():
 		var n: = multiplayer.get_peers().size()
 		_status = "Hosting '%s' — %d player(s) connected" % [_server_name, n + 1]
 		if ServerBrowser:
 			ServerBrowser.update_advertise(n + 1, 8)
+		broadcast_world_save()
 		session_changed.emit()
 
 
@@ -320,11 +327,13 @@ func _peer_remote_address(peer_id: int) -> String:
 
 func _identity() -> Dictionary:
 	return {
-		"name": String(GameState.player_name), 
-		"empire": String(GameState.empire), 
-		"level": int(GameState.level), 
-		"hp": _local_hp(), 
-		"max_hp": float(GameState.max_hp()), 
+		"name": String(GameState.player_name),
+		"empire": String(GameState.empire),
+		"level": int(GameState.level),
+		"hp": _local_hp(),
+		"max_hp": float(GameState.max_hp()),
+		"account": String(AccountSystem.username) if AccountSystem else "",
+		"class": String(GameState.player_class),
 	}
 
 
@@ -351,6 +360,8 @@ func _hello(data: Dictionary) -> void :
 		return
 	_spawn_or_update_avatar(id, data)
 	_hello_ack.rpc_id(id, _identity())
+	if multiplayer.is_server():
+		_host_admit_peer(id, data)
 
 
 @rpc("any_peer", "reliable")
@@ -359,6 +370,86 @@ func _hello_ack(data: Dictionary) -> void :
 	if id == 0:
 		return
 	_spawn_or_update_avatar(id, data)
+
+
+func _host_admit_peer(peer_id: int, data: Dictionary) -> void :
+	## Host world is canonical. Add joiner to roster/party and push host save.
+	GameState.ensure_world_host_identity()
+	GameState.add_world_peer(peer_id, data)
+	PartyShare.ensure_local_member()
+	PartyShare.upsert_member(peer_id, data)
+	if PartyShare.leader_peer == 0:
+		PartyShare.leader_peer = multiplayer.get_unique_id()
+	var snap: = GameState.to_world_sync_dict()
+	snap["party"] = {
+		"leader": PartyShare.leader_peer,
+		"roster": PartyShare._roster_payload(),
+	}
+	_rpc_world_snapshot.rpc_id(peer_id, snap)
+	_announce("%s was added to the host save (shared world — no merge conflicts)." % String(data.get("name", "Champion")))
+	if AccountSystem.is_logged_in():
+		AccountSystem.save_game()
+
+
+func broadcast_world_save() -> void :
+	if not is_hosting():
+		return
+	GameState.ensure_world_host_identity()
+	var snap: = GameState.to_world_sync_dict()
+	snap["party"] = {
+		"leader": PartyShare.leader_peer,
+		"roster": PartyShare._roster_payload(),
+	}
+	_rpc_world_snapshot.rpc(snap)
+	if AccountSystem.is_logged_in():
+		AccountSystem.save_game()
+
+
+@rpc("authority", "reliable")
+func _rpc_world_snapshot(payload: Dictionary) -> void :
+	## Guests receive host world version and save it locally (personal gear kept).
+	if multiplayer.is_server():
+		return
+	if payload.is_empty():
+		return
+	GameState.apply_world_sync_dict(payload)
+	var party = payload.get("party", {})
+	if typeof(party) == TYPE_DICTIONARY:
+		var roster = party.get("roster", {})
+		if typeof(roster) == TYPE_DICTIONARY:
+			PartyShare.members.clear()
+			for k in roster.keys():
+				var row = roster[k]
+				if typeof(row) == TYPE_DICTIONARY:
+					PartyShare._set_member(int(k), row)
+			PartyShare.leader_peer = int(party.get("leader", 1))
+			PartyShare.ensure_local_member()
+			PartyShare.party_changed.emit()
+	var world: = get_tree().get_first_node_in_group("game_world")
+	if world != null and world.has_method("apply_player_mosaic"):
+		world.apply_player_mosaic()
+	var hud: = get_tree().get_first_node_in_group("hud")
+	if hud != null and hud.has_method("_refresh_quest"):
+		hud._refresh_quest()
+	if AccountSystem.is_logged_in():
+		AccountSystem.save_game()
+	_announce("Host world loaded onto your save (quests, mosaic, progress). Your gear stays yours.")
+
+
+func request_skill_fx(skill_id: String, origin: Vector3, yaw: float) -> void :
+	if not is_online():
+		return
+	_rpc_skill_fx.rpc(skill_id, origin, yaw, String(GameState.player_class))
+
+
+@rpc("any_peer", "unreliable")
+func _rpc_skill_fx(skill_id: String, origin: Vector3, yaw: float, p_class: String) -> void :
+	var id: = multiplayer.get_remote_sender_id()
+	if id == 0:
+		return
+	var av: Node = _avatars.get(id)
+	if av != null and is_instance_valid(av) and av.has_method("play_skill_fx"):
+		av.call("play_skill_fx", skill_id, origin, yaw, p_class)
 
 
 func _spawn_or_update_avatar(id: int, data: Dictionary) -> void :

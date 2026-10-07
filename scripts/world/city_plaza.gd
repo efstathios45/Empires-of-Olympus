@@ -322,15 +322,18 @@ const GUARD_LIB: = "res://assets/characters/city_guard/city_guard_animations.tre
 
 static func _townsfolk(world) -> void :
 	var folk: = [
-		{"kind": "merchant", "name": "Hesiod the Oil Merchant", 
-			"at": Vector3(13.9, 0.0, -3.8), "yaw": 100.0, "idle": "ual2_Idle_FoldArms", 
-			"line": "Finest olive oil in Hellas — pressed this very morning!"}, 
-		{"kind": "merchant", "name": "Kleon the Potter", 
-			"at": Vector3(13.9, 0.0, 5.4), "yaw": 80.0, "idle": "ual1_Idle", 
-			"line": "Amphorae, hero! Sturdy enough to outlive your grandchildren."}, 
-		{"kind": "merchant", "name": "Xanthos the Fruit-Seller", 
-			"at": Vector3(17.0, 0.0, 9.8), "yaw": 130.0, "idle": "ual1_Idle_Talking", 
-			"line": "Figs, dates, honey cakes! Coin first, glory later."}, 
+		{"kind": "merchant", "name": "Hesiod the Oil Merchant",
+			"at": Vector3(13.9, 0.0, -3.8), "yaw": 100.0, "idle": "ual2_Idle_FoldArms",
+			"line": "Finest olive oil in Hellas — pressed this very morning!",
+			"shop": "oil"},
+		{"kind": "merchant", "name": "Kleon the Potter",
+			"at": Vector3(13.9, 0.0, 5.4), "yaw": 80.0, "idle": "ual1_Idle",
+			"line": "Amphorae, hero! Sturdy enough to outlive your grandchildren.",
+			"shop": "potter"},
+		{"kind": "merchant", "name": "Xanthos the Fruit-Seller",
+			"at": Vector3(17.0, 0.0, 9.8), "yaw": 130.0, "idle": "ual1_Idle_Talking",
+			"line": "Figs, dates, honey cakes! Coin first, glory later.",
+			"shop": "fruit"},
 		{"kind": "woman", "name": "Thalia", "at": Vector3(2.9, 0.0, 3.2), 
 			"yaw": 205.0, "idle": "ual1_Idle_Talking", 
 			"line": "", "mosaic": true}, 
@@ -368,10 +371,14 @@ static func _townsfolk(world) -> void :
 			continue
 		idx += 1
 		var offers_mosaic: = bool(f.get("mosaic", false))
+		var shop: = String(f.get("shop", ""))
 		var npc_id: = "mosaic_keeper" if offers_mosaic else ("citizen_%d" % idx)
-		var n = NpcScript.create_flavour(npc_id, String(f["name"]), 
-			glb, lib, f["at"], height, float(f["yaw"]), 
+		if shop != "":
+			npc_id = "merchant_%s" % shop
+		var n = NpcScript.create_flavour(npc_id, String(f["name"]),
+			glb, lib, f["at"], height, float(f["yaw"]),
 			String(f["idle"]), String(f["line"]))
 		n.offers_mosaic = offers_mosaic
+		n.shop_id = shop
 		world.add_child(n)
 		world.add_interactable(n)
