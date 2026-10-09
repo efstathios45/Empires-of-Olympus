@@ -4,6 +4,9 @@ extends Node
 
 signal share_announced(message: String)
 signal party_changed
+## HUD shows Accept/Decline (wired through SocialSystem.invite_received).
+signal invite_pending(from_peer: int, from_name: String, payload: Dictionary)
+signal invite_declined(from_name: String)
 
 ## peer_id (int) -> {name, empire, level, account}
 var members: Dictionary = {}
@@ -159,8 +162,26 @@ func _rpc_party_invite(payload: Dictionary) -> void:
 	var roster = payload.get("roster", {})
 	if typeof(roster) != TYPE_DICTIONARY:
 		roster = {}
-	accept_invite(from_id, roster, leader)
-	_announce("%s invited you to the party." % String((roster.get(str(from_id), {}) as Dictionary).get("name", "A champion")))
+	var from_name: = "A champion"
+	var row = roster.get(str(from_id), {})
+	if typeof(row) == TYPE_DICTIONARY:
+		from_name = String(row.get("name", from_name))
+	var data: = {"roster": roster, "leader": leader, "name": from_name}
+	invite_pending.emit(from_id, from_name, data)
+	## Also surface through SocialSystem so one HUD path handles all invites.
+	if SocialSystem:
+		SocialSystem.queue_invite("party", from_id, from_name, data)
+
+
+func decline_invite(from_peer: int, my_name: String) -> void:
+	if NetSession.is_online() and from_peer > 0:
+		_rpc_party_decline.rpc_id(from_peer, my_name)
+
+
+@rpc("any_peer", "reliable")
+func _rpc_party_decline(from_name: String) -> void:
+	invite_declined.emit(from_name)
+	_announce("%s declined the group invite." % from_name)
 
 
 @rpc("any_peer", "reliable", "call_local")

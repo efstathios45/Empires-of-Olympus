@@ -1,5 +1,5 @@
 extends Node
-## Friends, whispers, trade, and duel — peer RPCs + local persistence.
+## Friends, whispers, trade, duel — invites require Accept / Decline.
 
 
 signal friends_changed
@@ -8,14 +8,18 @@ signal trade_updated(offer: Dictionary)
 signal trade_closed
 signal duel_changed(peer_id: int, active: bool)
 signal whisper_received(from_name: String, text: String)
+## kind: friend | trade | duel | party — HUD shows Accept/Decline.
+signal invite_received(kind: String, from_peer: int, from_name: String, data: Dictionary)
+signal invite_result(kind: String, accepted: bool, peer_name: String)
 
-## account/name keys
 var friends: Array = [] ## [{account, name}]
 var duel_peer: int = 0
 var _trade_peer: int = 0
-var _my_offer: Array = [] ## item ids offered
+var _my_offer: Array = []
 var _their_offer: Array = []
 var _trade_locked: bool = false
+## Pending inbound invites keyed by kind+peer
+var _pending: Dictionary = {}
 
 
 func _ready() -> void:
@@ -60,28 +64,29 @@ func send_friend_request(peer_id: int) -> String:
 		"account": String(AccountSystem.username) if AccountSystem else "",
 		"name": String(GameState.player_name),
 	})
-	return "Friend request sent."
+	return "Friend request sent to that champion."
 
 
 @rpc("any_peer", "reliable")
 func _rpc_friend_req(payload: Dictionary) -> void:
 	var from_peer: = int(payload.get("from_peer", 0))
-	var acct: = String(payload.get("account", ""))
 	var nm: = String(payload.get("name", "Champion"))
-	if ChatSystem:
-		ChatSystem.announce_local("%s wants to be your friend. Accepting…" % nm)
-	_add_friend(acct, nm)
-	_rpc_friend_accept.rpc_id(from_peer, {
-		"account": String(AccountSystem.username) if AccountSystem else "",
-		"name": String(GameState.player_name),
-	})
+	queue_invite("friend", from_peer, nm, payload)
 
 
 @rpc("any_peer", "reliable")
 func _rpc_friend_accept(payload: Dictionary) -> void:
 	_add_friend(String(payload.get("account", "")), String(payload.get("name", "Champion")))
+	invite_result.emit("friend", true, String(payload.get("name", "Champion")))
 	if ChatSystem:
 		ChatSystem.announce_local("%s is now your friend." % String(payload.get("name", "Champion")))
+
+
+@rpc("any_peer", "reliable")
+func _rpc_friend_decline(from_name: String) -> void:
+	invite_result.emit("friend", false, from_name)
+	if ChatSystem:
+		ChatSystem.announce_local("%s declined your friend request." % from_name)
 
 
 func _add_friend(account: String, name: String) -> void:
@@ -98,8 +103,6 @@ func send_whisper(peer_id: int, text: String) -> String:
 		return "Cannot whisper."
 	var who: = String(GameState.player_name)
 	_rpc_whisper.rpc_id(peer_id, who, text, multiplayer.get_unique_id())
-	if ChatSystem:
-		ChatSystem.announce_local("[Whisper →] %s" % text)
 	return "Whisper sent."
 
 
@@ -108,24 +111,20 @@ func _rpc_whisper(from_name: String, text: String, from_peer: int) -> void:
 	whisper_received.emit(from_name, text)
 	if ChatSystem:
 		ChatSystem.announce_local("[Whisper %s] %s" % [from_name, text])
-	## Bubble on their avatar for local view of whisper? skip — private.
+	## HUD opens/focuses the whisper window for this peer.
+	invite_received.emit("whisper_msg", from_peer, from_name, {"text": text})
 
 
 func request_trade(peer_id: int) -> String:
 	if not NetSession.is_online():
 		return "Go online first."
 	_rpc_trade_invite.rpc_id(peer_id, multiplayer.get_unique_id(), String(GameState.player_name))
-	return "Trade invite sent."
+	return "Trade request sent."
 
 
 @rpc("any_peer", "reliable")
 func _rpc_trade_invite(from_peer: int, from_name: String) -> void:
-	_trade_peer = from_peer
-	_my_offer.clear()
-	_their_offer.clear()
-	_trade_locked = false
-	trade_opened.emit(from_peer, from_name)
-	_rpc_trade_accept.rpc_id(from_peer, multiplayer.get_unique_id(), String(GameState.player_name))
+	queue_invite("trade", from_peer, from_name, {"name": from_name})
 
 
 @rpc("any_peer", "reliable")
@@ -135,6 +134,14 @@ func _rpc_trade_accept(from_peer: int, from_name: String) -> void:
 	_their_offer.clear()
 	_trade_locked = false
 	trade_opened.emit(from_peer, from_name)
+	invite_result.emit("trade", true, from_name)
+
+
+@rpc("any_peer", "reliable")
+func _rpc_trade_decline(from_name: String) -> void:
+	invite_result.emit("trade", false, from_name)
+	if ChatSystem:
+		ChatSystem.announce_local("%s declined the trade." % from_name)
 
 
 func set_trade_offer(item_ids: Array) -> void:
@@ -162,7 +169,6 @@ func _rpc_trade_confirm(their_items: Array) -> void:
 	if not _trade_locked:
 		trade_updated.emit({"theirs": _their_offer, "mine": _my_offer, "they_locked": true})
 		return
-	## Both locked — each side removes own offer and gains the other's.
 	_finish_trade_local(_my_offer, _their_offer)
 	_rpc_trade_finish.rpc_id(_trade_peer, _their_offer, _my_offer)
 	close_trade()
@@ -202,16 +208,20 @@ func request_duel(peer_id: int) -> String:
 
 @rpc("any_peer", "reliable")
 func _rpc_duel_invite(from_peer: int, from_name: String) -> void:
-	## Auto-accept for playability (no modal stack); announce.
-	if ChatSystem:
-		ChatSystem.announce_local("%s challenged you to a duel — accepted!" % from_name)
-	_begin_duel(from_peer)
-	_rpc_duel_start.rpc_id(from_peer, multiplayer.get_unique_id())
+	queue_invite("duel", from_peer, from_name, {"name": from_name})
 
 
 @rpc("any_peer", "reliable")
 func _rpc_duel_start(from_peer: int) -> void:
 	_begin_duel(from_peer)
+	invite_result.emit("duel", true, "")
+
+
+@rpc("any_peer", "reliable")
+func _rpc_duel_decline(from_name: String) -> void:
+	invite_result.emit("duel", false, from_name)
+	if ChatSystem:
+		ChatSystem.announce_local("%s declined the duel." % from_name)
 
 
 func _begin_duel(peer_id: int) -> void:
@@ -249,7 +259,6 @@ func is_dueling(peer_id: int) -> bool:
 
 
 func duel_death_drops() -> Dictionary:
-	## 15% gold + one random bag item.
 	var drops: Array = []
 	var gold_take: = int(floor(float(GameState.gold) * 0.15))
 	if gold_take > 0:
@@ -266,3 +275,64 @@ func duel_death_drops() -> Dictionary:
 		if GameState.remove_one_from_bag(pick):
 			drops.append(pick)
 	return {"drops": drops, "gold": gold_take}
+
+
+func queue_invite(kind: String, from_peer: int, from_name: String, data: Dictionary) -> void:
+	var key: = "%s:%d" % [kind, from_peer]
+	var bag: = data.duplicate(true)
+	if not bag.has("name"):
+		bag["name"] = from_name
+	_pending[key] = {"kind": kind, "from_peer": from_peer, "from_name": from_name, "data": bag}
+	invite_received.emit(kind, from_peer, from_name, bag)
+	if ChatSystem and kind != "whisper_msg":
+		ChatSystem.announce_local("%s — incoming %s invite." % [from_name, kind])
+
+
+## Kept for older call sites.
+func _queue_invite(kind: String, from_peer: int, from_name: String, data: Dictionary) -> void:
+	queue_invite(kind, from_peer, from_name, data)
+
+
+func respond_invite(kind: String, from_peer: int, accepted: bool, data: Dictionary = {}) -> void:
+	var key: = "%s:%d" % [kind, from_peer]
+	_pending.erase(key)
+	var my_name: = String(GameState.player_name)
+	match kind:
+		"friend":
+			if accepted:
+				var acct: = String(data.get("account", ""))
+				var nm: = String(data.get("name", "Champion"))
+				_add_friend(acct, nm)
+				_rpc_friend_accept.rpc_id(from_peer, {
+					"account": String(AccountSystem.username) if AccountSystem else "",
+					"name": my_name,
+				})
+				if ChatSystem:
+					ChatSystem.announce_local("You are now friends with %s." % nm)
+			else:
+				_rpc_friend_decline.rpc_id(from_peer, my_name)
+		"trade":
+			if accepted:
+				_trade_peer = from_peer
+				_my_offer.clear()
+				_their_offer.clear()
+				_trade_locked = false
+				trade_opened.emit(from_peer, String(data.get("name", "Champion")))
+				_rpc_trade_accept.rpc_id(from_peer, multiplayer.get_unique_id(), my_name)
+			else:
+				_rpc_trade_decline.rpc_id(from_peer, my_name)
+		"duel":
+			if accepted:
+				_begin_duel(from_peer)
+				_rpc_duel_start.rpc_id(from_peer, multiplayer.get_unique_id())
+			else:
+				_rpc_duel_decline.rpc_id(from_peer, my_name)
+		"party":
+			if accepted and PartyShare:
+				var roster = data.get("roster", {})
+				var leader: = int(data.get("leader", from_peer))
+				if typeof(roster) != TYPE_DICTIONARY:
+					roster = {}
+				PartyShare.accept_invite(from_peer, roster, leader)
+			elif PartyShare:
+				PartyShare.decline_invite(from_peer, my_name)

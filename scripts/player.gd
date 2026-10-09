@@ -508,7 +508,10 @@ func _unhandled_input(event: InputEvent) -> void :
 				_mmb_looking = false
 			return
 		if event.button_index == MOUSE_BUTTON_RIGHT and event.pressed and state == State.FREE:
+			## Social menu first (any remote under cursor / near crosshair).
+			## Same-empire friends used to fail because aim only picked rivals.
 			if _try_open_player_menu():
+				get_viewport().set_input_as_handled()
 				return
 			_try_heavy_attack()
 			return
@@ -1099,7 +1102,9 @@ func _die() -> void :
 
 
 func _try_open_player_menu() -> bool:
-	var target: = _find_aim_target(12.0, 0.82)
+	if not NetSession or not NetSession.is_online():
+		return false
+	var target: = _find_social_target()
 	if target == null or not target.is_in_group("remote_player"):
 		return false
 	var hud: = get_tree().get_first_node_in_group("hud")
@@ -1107,6 +1112,47 @@ func _try_open_player_menu() -> bool:
 		return false
 	hud.open_player_menu(target)
 	return true
+
+
+func _find_social_target() -> Node3D:
+	## Prefer physics pick under the mouse (Metin2-style), then screen-near remotes.
+	if camera == null or not is_inside_tree():
+		return null
+	var mouse: = get_viewport().get_mouse_position()
+	var from: = camera.project_ray_origin(mouse)
+	var dir: = camera.project_ray_normal(mouse)
+	var space: = get_world_3d().direct_space_state
+	if space != null:
+		var q: = PhysicsRayQueryParameters3D.create(from, from + dir * 48.0)
+		q.collision_mask = 2 ## player layer
+		q.exclude = [get_rid()]
+		var hit: = space.intersect_ray(q)
+		if not hit.is_empty():
+			var col = hit.get("collider")
+			if col is Node and (col as Node).is_in_group("remote_player"):
+				return col as Node3D
+	## Fallback: nearest remote projected near the cursor / screen center.
+	var best: Node3D = null
+	var best_d: = 72.0 ## px
+	var vp: = get_viewport().get_visible_rect().size
+	var anchor: = mouse if mouse.x > 1.0 else vp * 0.5
+	for n in get_tree().get_nodes_in_group("remote_player"):
+		if n == null or not is_instance_valid(n) or not (n is Node3D):
+			continue
+		if n.get("dead") == true:
+			continue
+		var p3: Node3D = n as Node3D
+		if camera.is_position_behind(p3.global_position + Vector3(0, 1.0, 0)):
+			continue
+		var dist3: = camera.global_position.distance_to(p3.global_position)
+		if dist3 > 28.0:
+			continue
+		var sp: = camera.unproject_position(p3.global_position + Vector3(0, 1.0, 0))
+		var d: = sp.distance_to(anchor)
+		if d < best_d:
+			best_d = d
+			best = p3
+	return best
 
 func _respawn() -> void :
 

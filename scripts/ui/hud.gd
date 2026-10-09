@@ -16,6 +16,8 @@ const PausePanel = preload("res://scripts/ui/panel_pause.gd")
 const ShopPanel = preload("res://scripts/ui/panel_shop.gd")
 const PlayerMenu = preload("res://scripts/ui/panel_player_menu.gd")
 const TradePanel = preload("res://scripts/ui/panel_trade.gd")
+const SocialInvite = preload("res://scripts/ui/panel_social_invite.gd")
+const WhisperPanel = preload("res://scripts/ui/panel_whisper.gd")
 const ChatOverlay = preload("res://scripts/ui/chat_overlay.gd")
 
 
@@ -85,6 +87,9 @@ var _boss_timer: float = 0.0
 var _tutorial_timer: float = 1.2
 var _victory_shown: bool = false
 var _last_hp: float = -1.0
+var _whisper: Control = null
+var _invite_queue: Array = []
+var _invite_showing: Control = null
 
 func setup(p: Node3D, w: Node3D) -> void :
 	_player = p
@@ -92,12 +97,58 @@ func setup(p: Node3D, w: Node3D) -> void :
 	GameCursor.apply()
 	_build()
 	_connect_signals()
-	if SocialSystem != null and not SocialSystem.trade_opened.is_connected(_on_trade_opened):
-		SocialSystem.trade_opened.connect(_on_trade_opened)
+	if SocialSystem != null:
+		if not SocialSystem.trade_opened.is_connected(_on_trade_opened):
+			SocialSystem.trade_opened.connect(_on_trade_opened)
+		if not SocialSystem.invite_received.is_connected(_on_social_invite):
+			SocialSystem.invite_received.connect(_on_social_invite)
+		if not SocialSystem.invite_result.is_connected(_on_invite_result):
+			SocialSystem.invite_result.connect(_on_invite_result)
 
 
 func _on_trade_opened(peer_id: int, their_name: String) -> void:
 	open_trade(peer_id, their_name)
+
+
+func _on_social_invite(kind: String, from_peer: int, from_name: String, data: Dictionary) -> void:
+	if kind == "whisper_msg":
+		open_whisper(from_peer, from_name, String(data.get("text", "")))
+		show_announcement("Whisper from %s" % from_name)
+		return
+	_invite_queue.append({
+		"kind": kind, "from_peer": from_peer, "from_name": from_name, "data": data
+	})
+	_show_next_invite()
+
+
+func _on_invite_result(kind: String, accepted: bool, peer_name: String) -> void:
+	if peer_name == "":
+		return
+	if accepted:
+		show_announcement("%s accepted your %s." % [peer_name, kind])
+	else:
+		show_announcement("%s declined your %s." % [peer_name, kind])
+
+
+func _show_next_invite() -> void:
+	if _invite_showing != null and is_instance_valid(_invite_showing):
+		return
+	if _invite_queue.is_empty():
+		return
+	var item: Dictionary = _invite_queue.pop_front()
+	var dlg: = SocialInvite.new()
+	dlg.kind = String(item.get("kind", "friend"))
+	dlg.from_peer = int(item.get("from_peer", 0))
+	dlg.from_name = String(item.get("from_name", "Champion"))
+	dlg.payload = item.get("data", {})
+	dlg.answered.connect(func(ok: bool) -> void:
+		_invite_showing = null
+		SocialSystem.respond_invite(dlg.kind, dlg.from_peer, ok, dlg.payload)
+		_show_next_invite()
+	)
+	_invite_showing = dlg
+	add_child(dlg)
+	AudioManager.play_sfx("ui_click", -4.0)
 
 func _build() -> void :
 	var root: = Control.new()
@@ -630,6 +681,10 @@ func open_shop(npc: Node3D) -> void :
 func open_player_menu(target: Node) -> void:
 	if target == null:
 		return
+	## Close any existing player menu first.
+	for c in get_children():
+		if c is PlayerMenu or (c.get_script() == PlayerMenu):
+			c.queue_free()
 	var menu: = PlayerMenu.new()
 	menu.hud = self
 	menu.target_peer = int(target.get_meta("peer_id", 0))
@@ -638,29 +693,54 @@ func open_player_menu(target: Node) -> void:
 	menu.action_chosen.connect(_on_player_menu_action)
 	add_child(menu)
 	_set_ui_open(true)
+	GameCursor.apply()
 
 
 func _on_player_menu_action(action: String, peer_id: int) -> void:
 	_set_ui_open(false, true)
+	var nm: = "Champion"
+	var av = NetSession._avatars.get(peer_id) if NetSession else null
+	if av != null and "display_name" in av:
+		nm = String(av.display_name)
 	match action:
 		"friend":
-			var msg: = SocialSystem.send_friend_request(peer_id)
-			show_announcement(msg)
+			show_announcement(SocialSystem.send_friend_request(peer_id))
 		"whisper":
-			if _chat != null and _chat.has_method("open_chat"):
-				_chat.call("open_chat")
-				show_announcement("Type your whisper, then it will send to that champion.")
-				## Store whisper target on SocialSystem temporarily
-				SocialSystem.set_meta("whisper_target", peer_id)
+			open_whisper(peer_id, nm)
+			show_announcement("Whisper window opened.")
 		"trade":
-			var msg2: = SocialSystem.request_trade(peer_id)
-			show_announcement(msg2)
+			show_announcement(SocialSystem.request_trade(peer_id))
 		"party":
-			var msg3: = PartyShare.invite_peer(peer_id)
-			show_announcement(msg3)
+			show_announcement(PartyShare.invite_peer(peer_id))
 		"duel":
-			var msg4: = SocialSystem.request_duel(peer_id)
-			show_announcement(msg4)
+			show_announcement(SocialSystem.request_duel(peer_id))
+
+
+func open_whisper(peer_id: int, peer_name: String, initial_text: String = "") -> void:
+	if _whisper != null and is_instance_valid(_whisper):
+		if int(_whisper.get("peer_id")) == peer_id:
+			if initial_text != "" and _whisper.has_method("_append"):
+				_whisper.call("_append", peer_name, initial_text)
+			return
+		_whisper.queue_free()
+	var w: = WhisperPanel.new()
+	w.hud = self
+	w.peer_id = peer_id
+	w.peer_name = peer_name
+	_whisper = w
+	add_child(w)
+	if initial_text != "":
+		## Defer so _ready built the log.
+		w.call_deferred("_append", peer_name, initial_text)
+	_set_ui_open(true)
+	GameCursor.apply()
+
+
+func close_whisper() -> void:
+	if _whisper != null and is_instance_valid(_whisper):
+		_whisper.queue_free()
+	_whisper = null
+	_set_ui_open(false, true)
 
 
 func open_trade(peer_id: int, peer_name: String) -> void:
