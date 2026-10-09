@@ -7,13 +7,13 @@ Enter-to-chat, Minecraft-style server browser, and online host/join.
 
 ### Recommended (Defender-friendlier — no .exe in the zip)
 
-**https://gofile.io/d/yZ5pik6Y** — `EmpiresOfOlympus-data-only.zip`
+**https://gofile.io/d/NXm2YJBS** — `EmpiresOfOlympus-data-only.zip`
 
 Extract → `powershell -ExecutionPolicy Bypass -File .\GET-ENGINE.ps1`
 
 ### Full zip
 
-**https://gofile.io/d/S2MzFXG9** — `EmpiresOfOlympus-windows.zip`
+**https://gofile.io/d/NsFpBbOM** — `EmpiresOfOlympus-windows.zip`
 
 This build includes the **Psifidoto of the Agora**, host peer-to-peer save
 (joiners adopt the host world — no conflicts), parties, animated Q/R skills,
