@@ -1,38 +1,20 @@
 Empires of Olympus — macOS (Intel + Apple Silicon)
 =================================================
 
-Remote body fix + social multiplayer build (same as Windows).
+Metin2-style RMB social menu + Accept/Decline invites (same as Windows).
 
-macOS shows “cannot verify” / “may harm your Mac” for this build.
-That is Gatekeeper. The app is **not Apple-notarized** — expected.
+macOS shows “cannot verify” for this build — Gatekeeper; not notarized.
 
 ------------------------------------------------------------
 Download
 ------------------------------------------------------------
-https://gofile.io/d/31PpRukE
+https://gofile.io/d/FwSg146x
   EmpiresOfOlympus-macos.zip
-  SHA-256: e528f051b9b54284e5cbb3e51685de271c86d6c88787bb087be7c3ddd8ce02ae
+  SHA-256: bde9f7cfbf8459c6971cdf7626fb3aaf92b0279d69d266ad266bed0886cd6997
 
 ------------------------------------------------------------
-Fix the warning (Sonoma / Sequoia)
+Open on Mac
 ------------------------------------------------------------
-
-### Option A — helper script
 1. Unzip
-2. **Right-click** `OPEN-ON-MAC.command` → **Open** → **Open**
-   (First time: do not double-click.)
-
-### Option B — Privacy & Security → Open Anyway
-1. Try to open `Empires of Olympus.app` once
-2. Click **Done** (do **not** Move to Trash)
-3. **System Settings → Privacy & Security** → scroll to the **bottom**
-4. Click **Open Anyway** → password / Touch ID → **Open**
-
-### Option C — Terminal
-From the unzipped folder:
-
-```sh
-xattr -dr com.apple.quarantine "Empires of Olympus.app"
-codesign --force --deep --sign - "Empires of Olympus.app"
-open "Empires of Olympus.app"
-```
+2. Right-click `OPEN-ON-MAC.command` → Open → Open
+   (or System Settings → Privacy & Security → Open Anyway)
