@@ -79,14 +79,18 @@ func _build_body() -> void:
 func _rebuild_model() -> void:
 	if mesh_root == null:
 		return
+	## Free immediately — queue_free leaves stale skinned meshes for a frame
+	## and can leave remotes as floating weapons while the body is mid-replace.
 	for c in mesh_root.get_children():
-		c.queue_free()
+		mesh_root.remove_child(c)
+		c.free()
 	_model = null
 	anim = null
 	var path: = FALLBACK_GLB
+	var cd: Dictionary = {}
 	var gs: = get_node_or_null("/root/GameState")
 	if gs != null:
-		var cd: Dictionary = gs.CLASSES.get(class_id, {})
+		cd = gs.CLASSES.get(class_id, {})
 		var p: = String(cd.get("character", ""))
 		if p != "" and ResourceLoader.exists(p):
 			path = p
@@ -96,7 +100,16 @@ func _rebuild_model() -> void:
 		return
 	_model = load(path).instantiate()
 	mesh_root.add_child(_model)
-	ModelUtils.setup_character_for_movement(_model, 1.85)
+	## Must match player.gd: Hoplite Chan / builtin-weapon rigs are already in
+	## meters. setup_character_for_movement runs Maya-cm *100 on small prop
+	## meshes then crushes the root (~0.012) — body vanishes, weapons float.
+	var authored: = bool(cd.get("builtin_weapons", false)) \
+		or path.contains("hoplite_chan")
+	if authored:
+		ModelUtils.setup_authored_humanoid(_model, 1.85)
+	else:
+		ModelUtils.setup_character_for_movement(_model, 1.85)
+	_harden_body_materials(_model)
 	anim = _model.find_child("AnimationPlayer", true) as AnimationPlayer
 	if anim == null:
 		anim = AnimationPlayer.new()
@@ -106,6 +119,28 @@ func _rebuild_model() -> void:
 	ModelUtils.bind_leg_plant_anim(_model, anim)
 	HeroAnim.play(anim, "idle")
 	_apply_status_tint()
+
+
+func _harden_body_materials(model: Node3D) -> void:
+	## Hoplite Chan body surface ships with ALPHA_DEPTH_PRE_PASS; on some
+	## drivers that sorts the body away while opaque weapons stay. Force opaque.
+	if model == null:
+		return
+	for node in model.find_children("*", "MeshInstance3D", true, false):
+		var mi: = node as MeshInstance3D
+		if mi == null or mi.mesh == null:
+			continue
+		if mi.get_aabb().size.y < 0.75:
+			continue
+		var base: = mi.get_active_material(0)
+		if base == null or not (base is BaseMaterial3D):
+			continue
+		var bm: = base as BaseMaterial3D
+		if bm.transparency == BaseMaterial3D.TRANSPARENCY_DISABLED:
+			continue
+		var fixed: = bm.duplicate() as BaseMaterial3D
+		fixed.transparency = BaseMaterial3D.TRANSPARENCY_DISABLED
+		mi.material_override = fixed
 
 
 func _on_party_changed() -> void:
