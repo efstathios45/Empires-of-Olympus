@@ -7,6 +7,7 @@ signal mana_changed(mp: float, max_mp: float)
 signal died
 signal respawned
 signal skill_cooldown_started(duration: float)
+signal skill2_cooldown_started(duration: float)
 signal combo_performed
 
 
@@ -67,6 +68,10 @@ var combo_window: float = 0.0
 var dodge_timer: float = 0.0
 var dodge_dir: = Vector3.ZERO
 var skill_cd: float = 0.0
+var skill2_cd: float = 0.0
+var _skill_pending: String = ""
+var _skill_hit_timer: float = 0.0
+var _phalanx_guard: float = 0.0
 var invuln_timer: float = 0.0
 var death_timer: float = 0.0
 var cam_yaw: float = 0.0
@@ -459,6 +464,13 @@ func _physics_process(delta: float) -> void :
 	camera_pivot.rotation.x = cam_pitch
 
 	skill_cd = maxf(0.0, skill_cd - delta)
+	skill2_cd = maxf(0.0, skill2_cd - delta)
+	_phalanx_guard = maxf(0.0, _phalanx_guard - delta)
+	if _skill_pending != "" and _skill_hit_timer > 0.0:
+		_skill_hit_timer = maxf(0.0, _skill_hit_timer - delta)
+		if _skill_hit_timer <= 0.0:
+			_resolve_skill_hit(_skill_pending)
+			_skill_pending = ""
 	combo_window = maxf(0.0, combo_window - delta)
 	invuln_timer = maxf(0.0, invuln_timer - delta)
 
@@ -521,7 +533,9 @@ func _process_free(delta: float) -> void :
 		_try_light_attack()
 
 	elif Input.is_action_just_pressed("skill"):
-		_try_skill()
+		_try_skill("q")
+	elif Input.is_action_just_pressed("skill2"):
+		_try_skill("r")
 	elif Input.is_action_just_pressed("dodge") and dir.length() > 0.1:
 		_start_dodge(dir)
 	elif Input.is_action_pressed("block"):
@@ -803,68 +817,119 @@ func _find_aim_target(max_dist: float = 30.0, min_dot: float = 0.85) -> Node3D:
 			best = enemy
 	return best
 
-func _try_skill() -> void :
-	var cd: = GameState.class_data()
-	if skill_cd > 0.0 or mp < cd["skill_mp"]:
+func _try_skill(which: String = "q") -> void :
+	if state == State.DEAD or state == State.ATTACK:
 		return
-	mp -= cd["skill_mp"]
-	skill_cd = cd["skill_cd"]
-	skill_cooldown_started.emit(skill_cd)
+	var cd: = GameState.class_data()
+	var is_r: = which == "r"
+	var mp_cost: = int(cd.get("skill2_mp" if is_r else "skill_mp", 25))
+	var cool: = float(cd.get("skill2_cd" if is_r else "skill_cd", 8.0))
+	if is_r:
+		if skill2_cd > 0.0 or mp < mp_cost:
+			return
+		mp -= mp_cost
+		skill2_cd = cool
+		skill2_cooldown_started.emit(skill2_cd)
+	else:
+		if skill_cd > 0.0 or mp < mp_cost:
+			return
+		mp -= mp_cost
+		skill_cd = cool
+		skill_cooldown_started.emit(skill_cd)
 	mana_changed.emit(mp, GameState.max_mp())
 	_face_camera()
-	_play_alias("attack_heavy", false)
+	state = State.ATTACK
+	attack_timer = float(cd.get("skill2_hit_delay" if is_r else "skill_hit_delay", 0.4)) + 0.55
+	attack_hit_done = true
+	var anim_alias: = String(cd.get("skill2_anim" if is_r else "skill_anim", "skill"))
+	if anim != null and HeroAnim.play(anim, anim_alias, false) == "":
+		_play_alias("attack_heavy" if not bool(cd.get("ranged", false)) else "attack_ranged", false)
+	else:
+		_play_alias(anim_alias, false)
+	_skill_pending = "r" if is_r else "q"
+	_skill_hit_timer = float(cd.get("skill2_hit_delay" if is_r else "skill_hit_delay", 0.4))
+	## Wind-up VFX so the animated attack is visible immediately.
+	if mesh_root != null:
+		VfxHelper.spawn_strike(global_position + Vector3(0, 0.55, 0), -mesh_root.global_transform.basis.z, self)
+	AudioManager.play_sfx(MALE_ATTACK_VOICES[randi() % MALE_ATTACK_VOICES.size()], -2.0, randf_range(0.92, 1.08))
+	if NetSession.is_online():
+		NetSession.request_skill_fx(_skill_pending, global_position, float(mesh_root.rotation.y) if mesh_root else 0.0)
+	if GameState.tutorial_step < 4:
+		GameState.advance_tutorial(4)
 
+
+func _resolve_skill_hit(which: String) -> void :
+	var is_r: = which == "r"
 	match GameState.player_class:
 		"hoplite":
-
-			var dmg: = GameState.skill_damage()
-			for enemy in get_tree().get_nodes_in_group("enemies"):
-				if not is_instance_valid(enemy) or enemy.get("dead"):
-					continue
-				var to: Vector3 = enemy.global_position - global_position
-				to.y = 0
-				if to.length() <= 4.5:
-					enemy.take_damage(dmg, global_position)
-					VfxHelper.spawn_hit(enemy.global_position + Vector3(0, 1.2, 0), self)
-			for other in get_tree().get_nodes_in_group("player"):
-				if not is_rival_player(other):
-					continue
-				var to_p: Vector3 = other.global_position - global_position
-				to_p.y = 0
-				if to_p.length() <= 4.5:
-					_deal_pvp_hit(other, dmg)
-					VfxHelper.spawn_hit(other.global_position + Vector3(0, 1.2, 0), self)
-			VfxHelper.spawn_strike(global_position + Vector3(0, 0.4, 0), - mesh_root.global_transform.basis.z, self)
-			AudioManager.play_sfx("spear_clash", 0.0)
+			if is_r:
+				_phalanx_guard = 4.0
+				var dmg: = GameState.skill2_damage()
+				_skill_melee_burst(dmg, 3.2)
+				AudioManager.play_sfx("bronze_hit", -1.0)
+			else:
+				var dmg_q: = GameState.skill_damage()
+				_skill_melee_burst(dmg_q, 4.8)
+				VfxHelper.spawn_strike(global_position + Vector3(0, 0.4, 0), -mesh_root.global_transform.basis.z, self)
+				AudioManager.play_sfx("spear_clash", 0.0)
 		"toxotes":
-
-			var dmg: = GameState.skill_damage()
-			var base_dir: = - camera.global_transform.basis.z
-			for i in range(-2, 3):
-				var dir: = base_dir.rotated(Vector3.UP, deg_to_rad(i * 8.0))
-				ProjectileScript.spawn(get_parent(), global_position + Vector3(0, 1.4, 0), dir, 28.0, dmg, false)
-			AudioManager.play_sfx("sword_swing", 0.0, 0.8)
+			if is_r:
+				var dmg: = GameState.skill2_damage()
+				var dir: = -camera.global_transform.basis.z
+				var aim: = _find_aim_target()
+				if aim:
+					dir = (aim.global_position + Vector3(0, 1.0, 0) - (global_position + Vector3(0, 1.4, 0))).normalized()
+				ProjectileScript.spawn(get_parent(), global_position + Vector3(0, 1.4, 0), dir, 34.0, dmg, false)
+				AudioManager.play_sfx("sword_swing", 0.0, 1.15)
+			else:
+				var dmg_q: = GameState.skill_damage()
+				var base_dir: = -camera.global_transform.basis.z
+				for i in range(-2, 3):
+					var dir2: = base_dir.rotated(Vector3.UP, deg_to_rad(i * 8.0))
+					ProjectileScript.spawn(get_parent(), global_position + Vector3(0, 1.4, 0), dir2, 28.0, dmg_q, false)
+				AudioManager.play_sfx("sword_swing", 0.0, 0.8)
 		"magos":
-
-			var dmg: = GameState.skill_damage()
-			var target_pos: = global_position + - camera_pivot.global_transform.basis.z * 9.0
+			var dmg: = GameState.skill2_damage() if is_r else GameState.skill_damage()
+			var target_pos: = global_position + -camera_pivot.global_transform.basis.z * (6.0 if is_r else 9.0)
 			var aim: = _find_aim_target()
 			if aim:
 				target_pos = aim.global_position
 			if world and world.has_method("sample_height"):
 				target_pos.y = world.sample_height(target_pos.x, target_pos.z)
 			VfxHelper.spawn_strike(target_pos + Vector3(0, 0.5, 0), Vector3.FORWARD, self)
-			AudioManager.play_sfx("thunderbolt", 2.0)
+			if is_r:
+				VfxHelper.spawn_explosion(target_pos + Vector3(0, 0.3, 0), self)
+			AudioManager.play_sfx("thunderbolt", 2.0 if not is_r else 0.5)
+			var radius: = 3.2 if is_r else 4.0
 			for enemy in get_tree().get_nodes_in_group("enemies"):
 				if not is_instance_valid(enemy) or enemy.get("dead"):
 					continue
-				if enemy.global_position.distance_to(target_pos) <= 4.0:
+				if enemy.global_position.distance_to(target_pos) <= radius:
 					enemy.take_damage(dmg, global_position)
 			for other in get_tree().get_nodes_in_group("player"):
 				if not is_rival_player(other):
 					continue
-				if other.global_position.distance_to(target_pos) <= 4.0:
+				if other.global_position.distance_to(target_pos) <= radius:
 					_deal_pvp_hit(other, dmg)
+
+
+func _skill_melee_burst(dmg: float, reach: float) -> void :
+	for enemy in get_tree().get_nodes_in_group("enemies"):
+		if not is_instance_valid(enemy) or enemy.get("dead"):
+			continue
+		var to: Vector3 = enemy.global_position - global_position
+		to.y = 0
+		if to.length() <= reach:
+			enemy.take_damage(dmg, global_position)
+			VfxHelper.spawn_hit(enemy.global_position + Vector3(0, 1.2, 0), self)
+	for other in get_tree().get_nodes_in_group("player"):
+		if not is_rival_player(other):
+			continue
+		var to_p: Vector3 = other.global_position - global_position
+		to_p.y = 0
+		if to_p.length() <= reach:
+			_deal_pvp_hit(other, dmg)
+			VfxHelper.spawn_hit(other.global_position + Vector3(0, 1.2, 0), self)
 
 func _start_dodge(dir: Vector3) -> void :
 	state = State.DODGE
@@ -907,6 +972,8 @@ func _apply_damage(amount: float, from_position: Vector3, attacker_peer: int) ->
 	if attacker_peer != 0:
 		_last_pvp_attacker = attacker_peer
 	var dmg: = amount * GameState.damage_taken_mult()
+	if _phalanx_guard > 0.0:
+		dmg *= 0.55
 	if state == State.BLOCK:
 		dmg *= 0.35
 		AudioManager.play_sfx("spear_clash", -2.0)

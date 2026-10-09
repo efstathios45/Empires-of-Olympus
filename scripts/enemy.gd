@@ -959,8 +959,8 @@ func _die() -> void :
 
 	var gold_range: Array = cfg["gold"]
 	var gold_amount: = randi_range(int(gold_range[0]), int(gold_range[1]))
-	GameState.add_gold(gold_amount)
-	GameState.add_xp(cfg["xp"])
+	PartyShare.note_nearby(self, global_position, 16.0)
+	PartyShare.award_xp_and_gold(self, int(cfg["xp"]), gold_amount)
 	GameState.add_material(cfg["material"], 1)
 	if randf() < 0.12:
 		GameState.health_potions += 1
@@ -969,6 +969,10 @@ func _die() -> void :
 	GameState.register_kill(String(cfg.get("quest_id", enemy_id)))
 	if is_boss:
 		GameState.register_minotaur_kill()
+	if GameState.tutorial_step < 3:
+		GameState.advance_tutorial(3)
+	if NetSession.is_hosting():
+		NetSession.broadcast_world_save()
 	enemy_died.emit(enemy_id, global_position)
 
 

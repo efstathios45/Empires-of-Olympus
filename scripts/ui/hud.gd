@@ -13,6 +13,7 @@ const SmithPanel = preload("res://scripts/ui/panel_smith.gd")
 const MosaicPanel = preload("res://scripts/ui/panel_mosaic.gd")
 const InventoryPanel = preload("res://scripts/ui/panel_inventory.gd")
 const PausePanel = preload("res://scripts/ui/panel_pause.gd")
+const ShopPanel = preload("res://scripts/ui/panel_shop.gd")
 const ChatOverlay = preload("res://scripts/ui/chat_overlay.gd")
 
 
@@ -62,6 +63,7 @@ var _prompt: Label
 var _potion1_text: Label
 var _potion2_text: Label
 var _skill_cd_text: Label
+var _skill2_cd_text: Label
 var _boss_box: Control
 var _boss_bar: ProgressBar
 var _vignette: ColorRect
@@ -72,10 +74,13 @@ var _victory_stats: Label
 var _open_panel: Control = null
 var _map_field: Control = null
 var _map_marker: Control = null
+var _party_markers: Dictionary = {}
 var _map_where: Label = null
 var _skill_cd_left: float = 0.0
+var _skill2_cd_left: float = 0.0
 var _track_timer: float = 0.0
 var _boss_timer: float = 0.0
+var _tutorial_timer: float = 1.2
 var _victory_shown: bool = false
 var _last_hp: float = -1.0
 
@@ -248,6 +253,9 @@ func _build_hotbar(root: Control) -> void :
 	var slot3: = _make_slot(skill_icon, "Q")
 	_skill_cd_text = slot3.get_meta("count_label")
 	hotbar.add_child(slot3)
+	var slot4: = _make_slot("icon_laurel" if GameState.player_class != "magos" else "icon_gem", "R")
+	_skill2_cd_text = slot4.get_meta("count_label")
+	hotbar.add_child(slot4)
 
 func _make_slot(icon_name: String, key: String) -> PanelContainer:
 	var slot: = Kit.make_dark_panel(0.7)
@@ -403,7 +411,9 @@ func _connect_signals() -> void :
 	_player.mana_changed.connect(_on_mana)
 	_player.died.connect( func() -> void : _death_overlay.visible = true)
 	_player.respawned.connect( func() -> void : _death_overlay.visible = false)
-	_player.skill_cooldown_started.connect( func(d: float) -> void : _skill_cd_left = d)
+	_player.skill_cooldown_started.connect(func(d: float) -> void: _skill_cd_left = d)
+	if _player.has_signal("skill2_cooldown_started"):
+		_player.skill2_cooldown_started.connect(func(d: float) -> void: _skill2_cd_left = d)
 	GameState.gold_changed.connect( func(_g: int) -> void : _refresh_all())
 	GameState.xp_changed.connect( func(_x: int, _n: int, _l: int) -> void : _refresh_all())
 	GameState.potions_changed.connect( func() -> void : _refresh_all())
@@ -492,6 +502,16 @@ func _process(delta: float) -> void :
 		_skill_cd_text.text = "%d" % ceili(_skill_cd_left)
 		if _skill_cd_left <= 0.0:
 			_skill_cd_text.text = "Q"
+	if _skill2_cd_left > 0.0 and _skill2_cd_text != null:
+		_skill2_cd_left -= delta
+		_skill2_cd_text.text = "%d" % ceili(_skill2_cd_left)
+		if _skill2_cd_left <= 0.0:
+			_skill2_cd_text.text = "R"
+
+	_tutorial_timer -= delta
+	if _tutorial_timer <= 0.0:
+		_tutorial_timer = 3.5
+		_tick_tutorial()
 
 	var target: Node3D = null
 	if _world != null and not ui_open and _world.has_method("get_nearest_interactable"):
@@ -587,6 +607,17 @@ func open_dialogue(_npc: Node3D) -> void :
 
 func open_smith(_npc: Node3D) -> void :
 	_open(SmithPanel.new())
+
+
+func open_shop(npc: Node3D) -> void :
+	var p: = ShopPanel.new()
+	if npc != null:
+		if "shop_id" in npc:
+			p.shop_id = String(npc.shop_id)
+		if "display_name" in npc:
+			p.speaker_name = String(npc.display_name)
+	_open(p)
+
 
 func open_mosaic(npc: Node3D) -> void :
 	var p: = MosaicPanel.new()
@@ -826,6 +857,52 @@ func _update_map_marker() -> void :
 	_map_marker.position = _world_to_map(here) - Vector2(10, 10)
 	if is_instance_valid(_map_where):
 		_map_where.text = "You stand at %s" % _nearest_region_name(here)
+	_update_party_map_markers()
+
+
+func _update_party_map_markers() -> void :
+	if _map_field == null or not is_instance_valid(_map_field):
+		return
+	var seen: Dictionary = {}
+	for row in PartyShare.member_list():
+		var pid: = int(row.get("peer_id", 0))
+		if pid == PartyShare.local_peer_id():
+			continue
+		seen[pid] = true
+		var marker: Control = _party_markers.get(pid)
+		if marker == null or not is_instance_valid(marker):
+			marker = _map_circle(14.0, Color(0.35, 0.75, 1.0, 0.95), Color(0.05, 0.15, 0.25))
+			_map_field.add_child(marker)
+			_party_markers[pid] = marker
+		var pos: = Vector2.ZERO
+		var av = NetSession._avatars.get(pid) if NetSession else null
+		if av != null and is_instance_valid(av) and av is Node3D:
+			pos = Vector2((av as Node3D).global_position.x, (av as Node3D).global_position.z)
+		marker.position = _world_to_map(pos) - Vector2(7, 7)
+		marker.visible = true
+	for pid in _party_markers.keys():
+		if not seen.has(pid):
+			var m: Control = _party_markers[pid]
+			if m != null and is_instance_valid(m):
+				m.queue_free()
+			_party_markers.erase(pid)
+
+
+func _tick_tutorial() -> void :
+	if GameState.tutorial_step >= 99:
+		return
+	match GameState.tutorial_step:
+		0:
+			show_announcement("Welcome, champion — WASD to move, mouse to look. Press E near Melite.")
+			GameState.advance_tutorial(1)
+		1:
+			show_announcement("LMB light attack · RMB heavy · Q skill (animated) · R second skill · F block · C dodge.")
+		2:
+			show_announcement("Open your bag with I. Buy from plaza merchants or craft mats at Brontes the Smith.")
+		3:
+			show_announcement("Host a world from Pause — friends join your save (peer sync, no conflicts). Party: L.")
+		_:
+			pass
 
 func _nearest_region_name(here: Vector2) -> String:
 	var best: = "the open wilds"

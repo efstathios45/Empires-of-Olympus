@@ -134,3 +134,14 @@ func mark_dead() -> void :
 	dead = true
 	if anim:
 		HeroAnim.play(anim, "death", false)
+
+
+func play_skill_fx(_skill_id: String, origin: Vector3, yaw: float, _p_class: String) -> void :
+	if mesh_root:
+		mesh_root.rotation.y = yaw
+	if anim:
+		if HeroAnim.play(anim, "skill", false) == "":
+			HeroAnim.play(anim, "attack_heavy", false)
+	var VfxHelper = load("res://scripts/vfx_helper.gd")
+	if VfxHelper != null and VfxHelper.has_method("spawn_strike"):
+		VfxHelper.spawn_strike(origin + Vector3(0, 0.5, 0), Vector3.FORWARD.rotated(Vector3.UP, yaw), get_parent())

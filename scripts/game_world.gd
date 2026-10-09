@@ -769,10 +769,14 @@ func _autosave() -> void :
 	var extra: = {}
 	if player != null and is_instance_valid(player):
 		extra["pos"] = {
-			"x": player.global_position.x, 
-			"y": player.global_position.y, 
-			"z": player.global_position.z, 
+			"x": player.global_position.x,
+			"y": player.global_position.y,
+			"z": player.global_position.z,
 		}
+	## Host pushes shared world; guests still save personal + last host snapshot locally.
+	if NetSession.is_hosting():
+		GameState.ensure_world_host_identity()
+		NetSession.broadcast_world_save()
 	AccountSystem.save_game(extra)
 
 

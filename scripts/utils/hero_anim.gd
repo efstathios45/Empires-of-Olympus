@@ -19,8 +19,11 @@ const ALIASES: = {
 	"attack_1": ["DORY ATACK", "Sword_Slash", "Punch_Right", "ual2_Sword_Light_A", "ual1_Sword_Attack", "1H_Melee_Attack_Chop"], 
 	"attack_2": ["XIPHOS side SLASH", "Sword_Slash", "Punch_Left", "ual2_Sword_Light_B", "ual1_Sword_Attack", "1H_Melee_Attack_Slice_Diagonal"], 
 	"attack_3": ["DORY ATACK", "Kick_Right", "Sword_Slash", "ual2_Sword_Light_C", "ual1_Sword_Attack", "1H_Melee_Attack_Stab"], 
-	"attack_heavy": ["XIPHOS side SLASH", "Sword_Slash", "Kick_Left", "ual2_Sword_Heavy_A", "ual1_Sword_Attack", "2H_Melee_Attack_Chop"], 
-	"attack_ranged": ["Gun_Shoot", "Idle_Gun_Shoot", "ual1_Sword_Attack", "1H_Ranged_Shoot", "Spellcast_Shoot"], 
+	"attack_heavy": ["XIPHOS side SLASH", "Sword_Slash", "Kick_Left", "ual2_Sword_Heavy_A", "ual1_Sword_Attack", "2H_Melee_Attack_Chop"],
+	"attack_ranged": ["Gun_Shoot", "Idle_Gun_Shoot", "ual1_Sword_Attack", "1H_Ranged_Shoot", "Spellcast_Shoot"],
+	## Class Q / R skills — prefer dedicated clips, fall back to heavy/ranged.
+	"skill": ["Spellcast_Long", "Spellcasting", "Spellcast_Shoot", "2H_Melee_Attack_Spin", "ual2_Sword_Heavy_A", "XIPHOS side SLASH", "Sword_Slash", "1H_Ranged_Shoot", "Gun_Shoot"],
+	"skill2": ["Spellcast_Raise", "Spellcast_Shoot", "1H_Melee_Attack_Stab", "ual2_Sword_Light_C", "DORY ATACK", "Sword_Slash", "1H_Ranged_Shoot", "Gun_Shoot", "Blocking"],
 }
 
 
