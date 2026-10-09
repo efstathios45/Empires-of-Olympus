@@ -1,16 +1,16 @@
 Empires of Olympus — macOS (Intel + Apple Silicon)
 =================================================
 
-Metin2-style RMB social menu + Accept/Decline invites (same as Windows).
+Party 50/50 share + host-synced mobs/plaza (same as Windows).
 
 macOS shows “cannot verify” for this build — Gatekeeper; not notarized.
 
 ------------------------------------------------------------
 Download
 ------------------------------------------------------------
-https://gofile.io/d/FwSg146x
+https://gofile.io/d/UXq9P21u
   EmpiresOfOlympus-macos.zip
-  SHA-256: bde9f7cfbf8459c6971cdf7626fb3aaf92b0279d69d266ad266bed0886cd6997
+  SHA-256: 23f557363de11c431b881328302bfd6749df169de6147d3d1a9eb55cc412ff22
 
 ------------------------------------------------------------
 Open on Mac
