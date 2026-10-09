@@ -14,6 +14,8 @@ const MosaicPanel = preload("res://scripts/ui/panel_mosaic.gd")
 const InventoryPanel = preload("res://scripts/ui/panel_inventory.gd")
 const PausePanel = preload("res://scripts/ui/panel_pause.gd")
 const ShopPanel = preload("res://scripts/ui/panel_shop.gd")
+const PlayerMenu = preload("res://scripts/ui/panel_player_menu.gd")
+const TradePanel = preload("res://scripts/ui/panel_trade.gd")
 const ChatOverlay = preload("res://scripts/ui/chat_overlay.gd")
 
 
@@ -90,6 +92,12 @@ func setup(p: Node3D, w: Node3D) -> void :
 	GameCursor.apply()
 	_build()
 	_connect_signals()
+	if SocialSystem != null and not SocialSystem.trade_opened.is_connected(_on_trade_opened):
+		SocialSystem.trade_opened.connect(_on_trade_opened)
+
+
+func _on_trade_opened(peer_id: int, their_name: String) -> void:
+	open_trade(peer_id, their_name)
 
 func _build() -> void :
 	var root: = Control.new()
@@ -616,6 +624,50 @@ func open_shop(npc: Node3D) -> void :
 			p.shop_id = String(npc.shop_id)
 		if "display_name" in npc:
 			p.speaker_name = String(npc.display_name)
+	_open(p)
+
+
+func open_player_menu(target: Node) -> void:
+	if target == null:
+		return
+	var menu: = PlayerMenu.new()
+	menu.hud = self
+	menu.target_peer = int(target.get_meta("peer_id", 0))
+	menu.target_name = String(target.get("display_name")) if "display_name" in target else "Champion"
+	menu.target_account = ""
+	menu.action_chosen.connect(_on_player_menu_action)
+	add_child(menu)
+	_set_ui_open(true)
+
+
+func _on_player_menu_action(action: String, peer_id: int) -> void:
+	_set_ui_open(false, true)
+	match action:
+		"friend":
+			var msg: = SocialSystem.send_friend_request(peer_id)
+			show_announcement(msg)
+		"whisper":
+			if _chat != null and _chat.has_method("open_chat"):
+				_chat.call("open_chat")
+				show_announcement("Type your whisper, then it will send to that champion.")
+				## Store whisper target on SocialSystem temporarily
+				SocialSystem.set_meta("whisper_target", peer_id)
+		"trade":
+			var msg2: = SocialSystem.request_trade(peer_id)
+			show_announcement(msg2)
+		"party":
+			var msg3: = PartyShare.invite_peer(peer_id)
+			show_announcement(msg3)
+		"duel":
+			var msg4: = SocialSystem.request_duel(peer_id)
+			show_announcement(msg4)
+
+
+func open_trade(peer_id: int, peer_name: String) -> void:
+	var p: = TradePanel.new()
+	p.hud = self
+	p.peer_id = peer_id
+	p.peer_name = peer_name
 	_open(p)
 
 

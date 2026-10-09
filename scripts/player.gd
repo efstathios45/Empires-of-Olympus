@@ -121,12 +121,53 @@ func _ready() -> void :
 	GameState.stats_changed.connect(_refresh_nameplate)
 	if ChatSystem != null and not ChatSystem.message_received.is_connected(_on_chat_message):
 		ChatSystem.message_received.connect(_on_chat_message)
+	if PartyShare != null and not PartyShare.party_changed.is_connected(_on_social_tint_changed):
+		PartyShare.party_changed.connect(_on_social_tint_changed)
+	if SocialSystem != null and not SocialSystem.duel_changed.is_connected(_on_duel_tint_changed):
+		SocialSystem.duel_changed.connect(_on_duel_tint_changed)
 	call_deferred("_late_ready")
 
 func _late_ready() -> void :
 	health_changed.emit(hp, GameState.max_hp())
 	mana_changed.emit(mp, GameState.max_mp())
 	_refresh_nameplate()
+	_apply_social_tint()
+
+
+func _on_social_tint_changed(_a: Variant = null) -> void:
+	_apply_social_tint()
+
+
+func _on_duel_tint_changed(_peer: int = 0, _active: bool = false) -> void:
+	_apply_social_tint()
+
+
+func _apply_social_tint() -> void:
+	## Soft overlay — party blue / duel orange; never flat albedo override (pink bug).
+	if mesh_root == null:
+		return
+	var in_party: = false
+	if PartyShare != null:
+		## Blue only when at least one other champion shares the group.
+		in_party = PartyShare.member_list().size() > 1
+	var in_duel: = SocialSystem != null and SocialSystem.duel_peer != 0
+	var tint: Color = Color(1, 1, 1, 1)
+	if in_party:
+		tint = Color(0.55, 0.75, 1.0)
+	elif in_duel:
+		tint = Color(1.0, 0.55, 0.45)
+	for node in mesh_root.find_children("*", "MeshInstance3D", true, false):
+		var mi: = node as MeshInstance3D
+		if mi == null:
+			continue
+		if tint.r >= 0.99 and tint.g >= 0.99 and tint.b >= 0.99:
+			mi.material_overlay = null
+			continue
+		var overlay: = StandardMaterial3D.new()
+		overlay.albedo_color = Color(tint.r, tint.g, tint.b, 0.35)
+		overlay.transparency = BaseMaterial3D.TRANSPARENCY_ALPHA
+		overlay.shading_mode = BaseMaterial3D.SHADING_MODE_UNSHADED
+		mi.material_overlay = overlay
 
 
 func _sync_identity_meta() -> void :
@@ -152,6 +193,15 @@ func is_rival_player(other: Node) -> bool:
 		return false
 	if other.get("dead") == true or other.get("state") == State.DEAD:
 		return false
+	var pid: = int(other.get_meta("peer_id", 0))
+	## Party members are never rivals (friendly blue).
+	if PartyShare != null and pid != 0:
+		for row in PartyShare.member_list():
+			if int(row.get("peer_id", -1)) == pid:
+				return false
+	## Active duel overrides empire friendship.
+	if SocialSystem != null and pid != 0 and SocialSystem.is_dueling(pid):
+		return true
 	var their_emp: = String(other.get_meta("empire", ""))
 	if their_emp == "" and other.has_method("empire_id"):
 		their_emp = String(other.call("empire_id"))
@@ -178,15 +228,17 @@ func _deal_pvp_hit(other: Node, dmg: float) -> void :
 		other.take_damage(dmg, global_position)
 
 
-func _on_chat_message(sender: String, text: String, _stamp: float) -> void :
-
-	if text == "" or sender == "Herald":
+func _on_chat_message(sender: String, text: String, _stamp: float, peer_id: int = -1) -> void:
+	if text == "" or sender == "Herald" or sender.begins_with("["):
 		return
 	var mine: = ""
 	if ChatSystem:
 		mine = ChatSystem.display_name()
 	if mine == "":
 		mine = GameState.player_name
+	var my_peer: = multiplayer.get_unique_id() if NetSession and NetSession.is_online() else 1
+	if peer_id > 0 and peer_id != my_peer and sender != mine:
+		return
 	var tagged: = String(get_meta("chat_name", ""))
 	var for_me: = (sender == mine) or (tagged != "" and sender == tagged)
 	if not for_me:
@@ -433,6 +485,8 @@ func _unhandled_input(event: InputEvent) -> void :
 				_mmb_looking = false
 			return
 		if event.button_index == MOUSE_BUTTON_RIGHT and event.pressed and state == State.FREE:
+			if _try_open_player_menu():
+				return
 			_try_heavy_attack()
 			return
 	if event is InputEventMouseMotion and _mmb_down:
@@ -1001,14 +1055,35 @@ func _die() -> void :
 	AudioManager.play_music_once("defeat")
 
 	if _last_pvp_attacker != 0:
-		var drops: Array = GameState.take_pvp_death_drops(2, 3)
-		if not drops.is_empty():
-			if NetSession:
-				NetSession.notify_death_loot(drops, global_position)
+		var drops: Array = []
+		var gold_drop: = 0
+		if SocialSystem != null and SocialSystem.is_dueling(_last_pvp_attacker):
+			var duel_loot: Dictionary = SocialSystem.duel_death_drops()
+			drops = duel_loot.get("drops", [])
+			gold_drop = int(duel_loot.get("gold", 0))
+			if ChatSystem:
+				ChatSystem.call("_push_system",
+					"Duel lost — dropped a random item and %d δρ (15%%)." % gold_drop)
+			SocialSystem.end_duel()
+		else:
+			drops = GameState.take_pvp_death_drops(2, 3)
 			if ChatSystem:
 				ChatSystem.call("_push_system", "Defeated in rival combat — spoils scatter on the ground.")
+		if (not drops.is_empty() or gold_drop > 0) and NetSession:
+			NetSession.notify_death_loot(drops, global_position, gold_drop)
 	_last_pvp_attacker = 0
 	died.emit()
+
+
+func _try_open_player_menu() -> bool:
+	var target: = _find_aim_target(12.0, 0.82)
+	if target == null or not target.is_in_group("remote_player"):
+		return false
+	var hud: = get_tree().get_first_node_in_group("hud")
+	if hud == null or not hud.has_method("open_player_menu"):
+		return false
+	hud.open_player_menu(target)
+	return true
 
 func _respawn() -> void :
 

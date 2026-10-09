@@ -310,8 +310,26 @@ func _host_note_peer_ip(peer_id: int) -> void :
 	var ip: = _peer_remote_address(peer_id)
 	if ip == "":
 		ip = "(unknown)"
+	var ms: = _peer_rtt_ms(peer_id)
+	var ms_txt: = ("%d ms" % ms) if ms >= 0 else "… ms"
 	if ChatSystem and ChatSystem.has_method("announce_local"):
-		ChatSystem.announce_local("Player connected from %s (peer %d) — host notice only." % [ip, peer_id])
+		ChatSystem.announce_local(
+			"[Host only] Peer %d connected from %s · latency %s" % [peer_id, ip, ms_txt])
+
+
+func _peer_rtt_ms(peer_id: int) -> int:
+	var mp: = multiplayer.multiplayer_peer
+	if mp == null or not (mp is ENetMultiplayerPeer):
+		return -1
+	var enet: = mp as ENetMultiplayerPeer
+	var ep: = enet.get_peer(peer_id)
+	if ep == null:
+		return -1
+	## ENetPeer round-trip time in milliseconds (Godot 4).
+	if ep.has_method("get_statistic"):
+		var rtt: = float(ep.get_statistic(ENetPacketPeer.PEER_ROUND_TRIP_TIME))
+		return int(rtt)
+	return -1
 
 
 func _peer_remote_address(peer_id: int) -> String:
@@ -335,6 +353,22 @@ func _identity() -> Dictionary:
 		"account": String(AccountSystem.username) if AccountSystem else "",
 		"class": String(GameState.player_class),
 	}
+
+
+func avatar_for_peer(peer_id: int) -> Node:
+	return _avatars.get(peer_id)
+
+
+func _host_announce_latencies() -> void:
+	if not is_hosting() or ChatSystem == null:
+		return
+	for pid in multiplayer.get_peers():
+		var ip: = _peer_remote_address(int(pid))
+		var ms: = _peer_rtt_ms(int(pid))
+		var av: Node = _avatars.get(int(pid))
+		var nm: = String(av.get("display_name")) if av != null and "display_name" in av else ("peer %d" % int(pid))
+		var ms_txt: = ("%d ms" % ms) if ms >= 0 else "? ms"
+		ChatSystem.announce_local("[Host only] %s · %s · %s" % [nm, ip if ip != "" else "?", ms_txt])
 
 
 func _local_player() -> Node:
@@ -456,15 +490,17 @@ func _spawn_or_update_avatar(id: int, data: Dictionary) -> void :
 	var world: = get_tree().get_first_node_in_group("game_world")
 	if world == null:
 		return
+	var p_class: = String(data.get("class", data.get("player_class", "hoplite")))
 	var av: Node = _avatars.get(id)
 	if av == null or not is_instance_valid(av):
 		var RemoteAvatar: = load("res://scripts/remote_avatar.gd")
 		av = CharacterBody3D.new()
 		av.set_script(RemoteAvatar)
-		av.call("setup", id, 
-			String(data.get("name", "Champion")), 
-			String(data.get("empire", "sparta")), 
-			int(data.get("level", 1)))
+		av.call("setup", id,
+			String(data.get("name", "Champion")),
+			String(data.get("empire", "sparta")),
+			int(data.get("level", 1)),
+			p_class)
 		world.add_child(av)
 		var anchor: = Vector3(2.0 * float(id % 5), 0.0, 2.0)
 		if world.has_method("get_respawn_point"):
@@ -475,18 +511,14 @@ func _spawn_or_update_avatar(id: int, data: Dictionary) -> void :
 		_avatars[id] = av
 		peer_avatar_spawned.emit(id)
 		_announce("%s of %s entered the field." % [
-			String(data.get("name", "Champion")), 
+			String(data.get("name", "Champion")),
 			String(data.get("empire", "?")).capitalize()])
 	else:
-		av.call("setup", id, 
-			String(data.get("name", "Champion")), 
-			String(data.get("empire", "sparta")), 
-			int(data.get("level", 1)))
-		if av.has_node("PlayerNameplate") or av.get("_nameplate"):
-			var plate = av.get("_nameplate")
-			if plate:
-				plate.call("set_plate", String(data.get("name", "Champion")), 
-					int(data.get("level", 1)), String(data.get("empire", "sparta")))
+		av.call("setup", id,
+			String(data.get("name", "Champion")),
+			String(data.get("empire", "sparta")),
+			int(data.get("level", 1)),
+			p_class)
 
 
 func _remove_avatar(id: int) -> void :
@@ -503,9 +535,17 @@ func _clear_avatars() -> void :
 	_avatars.clear()
 
 
+var _latency_accum: float = 0.0
+
 func _process(delta: float) -> void :
 	if not is_online():
 		return
+	## Host-only: refresh peer latency in chat every ~8s.
+	if is_hosting():
+		_latency_accum += delta
+		if _latency_accum >= 8.0:
+			_latency_accum = 0.0
+			_host_announce_latencies()
 	_sync_accum += delta
 	if _sync_accum < 1.0 / SYNC_HZ:
 		return
@@ -558,19 +598,19 @@ func _rpc_damage(amount: float, from_pos: Vector3, attacker_peer: int) -> void :
 	p.call("take_pvp_damage", amount, from_pos, attacker_peer)
 
 
-func notify_death_loot(drop_ids: Array, at: Vector3) -> void :
+func notify_death_loot(drop_ids: Array, at: Vector3, gold_amt: int = 0) -> void :
 	if is_online():
-		_rpc_spawn_loot.rpc(drop_ids, at)
+		_rpc_spawn_loot.rpc(drop_ids, at, gold_amt)
 	else:
-		_spawn_loot_local(drop_ids, at)
+		_spawn_loot_local(drop_ids, at, gold_amt)
 
 
 @rpc("any_peer", "reliable", "call_local")
-func _rpc_spawn_loot(drop_ids: Array, at: Vector3) -> void :
-	_spawn_loot_local(drop_ids, at)
+func _rpc_spawn_loot(drop_ids: Array, at: Vector3, gold_amt: int = 0) -> void :
+	_spawn_loot_local(drop_ids, at, gold_amt)
 
 
-func _spawn_loot_local(drop_ids: Array, at: Vector3) -> void :
+func _spawn_loot_local(drop_ids: Array, at: Vector3, gold_amt: int = 0) -> void :
 	var world: = get_tree().get_first_node_in_group("game_world")
 	if world == null:
 		return
@@ -585,6 +625,11 @@ func _spawn_loot_local(drop_ids: Array, at: Vector3) -> void :
 		world.add_child(drop)
 		if drop.has_method("setup"):
 			drop.call("setup", loot_id, at + Vector3(randf_range(-0.6, 0.6), 0.2, randf_range(-0.6, 0.6)), 0)
+	if gold_amt > 0:
+		var gdrop: Node = LootPickup.new()
+		world.add_child(gdrop)
+		if gdrop.has_method("setup"):
+			gdrop.call("setup", "gold_coin", at + Vector3(randf_range(-0.4, 0.4), 0.2, randf_range(-0.4, 0.4)), gold_amt)
 
 
 func _announce(msg: String) -> void :
