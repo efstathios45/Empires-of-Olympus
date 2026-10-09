@@ -7,26 +7,25 @@ Enter-to-chat, Minecraft-style server browser, and online host/join.
 
 ### Recommended (Defender-friendlier — no .exe in the zip)
 
-**https://gofile.io/d/YjZsm1mo** — `EmpiresOfOlympus-data-only.zip`
+**https://gofile.io/d/1nrZ94so** — `EmpiresOfOlympus-data-only.zip`
 
 Extract → `powershell -ExecutionPolicy Bypass -File .\GET-ENGINE.ps1`
 
 ### Full zip
 
-**https://gofile.io/d/23r0SiSB** — `EmpiresOfOlympus-windows.zip`
+**https://gofile.io/d/Pl4NirAe** — `EmpiresOfOlympus-windows.zip`
 
-This build adds **multiplayer social** on the peer-save / party baseline:
-Browse → Join → account; host-only peer IP + latency; class-correct remote
-characters (no pink stub); synced chat bubbles; right-click friend / whisper /
-trade / party (blue) / duel (15% gold + random item).
+Includes the **remote body fix** (other players show full class character, not
+floating weapons), plus Browse → Join social MP, host IP/latency, synced chat
+bubbles, right-click friend/whisper/trade/party/duel.
 
 Run notes: [`docs/WINDOWS_RUN.md`](docs/WINDOWS_RUN.md)
 
 ## macOS download
 
-**https://gofile.io/d/CflPpcoX** — `EmpiresOfOlympus-macos.zip`
+**https://gofile.io/d/31PpRukE** — `EmpiresOfOlympus-macos.zip`
 
-Universal app (Intel + Apple Silicon), same social multiplayer build as Windows.
+Universal app (Intel + Apple Silicon), same build as Windows.
 If macOS says it “cannot be opened”, right-click `OPEN-ON-MAC.command` →
 Open (or see [`docs/MACOS_RUN.md`](docs/MACOS_RUN.md)).
 
