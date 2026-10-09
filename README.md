@@ -5,30 +5,20 @@ Enter-to-chat, Minecraft-style server browser, and online host/join.
 
 ## Windows download
 
-### Recommended (Defender-friendlier — no .exe in the zip)
+**https://gofile.io/d/MGbxYdpH** — `EmpiresOfOlympus-windows.zip`
 
-**https://gofile.io/d/NXm2YJBS** — `EmpiresOfOlympus-data-only.zip`
-
-Extract → `powershell -ExecutionPolicy Bypass -File .\GET-ENGINE.ps1`
-
-### Full zip
-
-**https://gofile.io/d/NsFpBbOM** — `EmpiresOfOlympus-windows.zip`
-
-This build includes the **Psifidoto of the Agora**, host peer-to-peer save
-(joiners adopt the host world — no conflicts), parties, animated Q/R skills,
-tutorial tips, plaza merchants, smith crafting, and post-Minotaur trials —
-on the old-exe UAL motion baseline.
+Party 50/50 XP·gold·loot (any level), host-synced mobs/stones, plaza mosaic
+& quests saved on the host for both clients. Also: RMB social menu,
+remote body fix, host IP/latency, synced bubbles.
 
 Run notes: [`docs/WINDOWS_RUN.md`](docs/WINDOWS_RUN.md)
 
 ## macOS download
 
-**https://gofile.io/d/M8MpF0Ov** — `EmpiresOfOlympus-macos.zip`
+**https://gofile.io/d/UXq9P21u** — `EmpiresOfOlympus-macos.zip`
 
-Universal app (Intel + Apple Silicon), same peer-save build as Windows.
-If macOS says it “cannot be opened”, right-click `OPEN-ON-MAC.command` →
-Open (or see [`docs/MACOS_RUN.md`](docs/MACOS_RUN.md)).
+Universal app (Intel + Apple Silicon). If macOS blocks it, right-click
+`OPEN-ON-MAC.command` → Open (see [`docs/MACOS_RUN.md`](docs/MACOS_RUN.md)).
 
 ## Build yourself
 

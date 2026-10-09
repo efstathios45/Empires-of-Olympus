@@ -171,6 +171,8 @@ enum State{IDLE, CHASE, ATTACK, HIT, DEAD}
 
 var enemy_id: String = "wolf_enemy"
 var cfg: Dictionary = {}
+var net_id: int = 0
+var is_proxy: bool = false
 var hp: float = 50.0
 var max_hp: float = 50.0
 var level: int = 1
@@ -736,8 +738,11 @@ func _physics_process(delta: float) -> void :
 	_telegraph_cd = maxf(0.0, _telegraph_cd - delta)
 
 	if dead:
+		velocity = Vector3.ZERO
+		return
 
-
+	## Proxies are visual replicas — host owns AI / combat.
+	if is_proxy:
 		velocity = Vector3.ZERO
 		return
 
@@ -916,30 +921,60 @@ func _play(clip: String, loop_ok: bool = true) -> void :
 func take_damage(amount: float, from_position: Vector3) -> void :
 	if dead:
 		return
+	## Guests forward hits to the host so every client shares one instance.
+	if NetSession and NetSession.is_online() and not NetSession.is_hosting() \
+			and not has_meta("_net_damage_direct"):
+		if net_id > 0:
+			NetSession.request_enemy_damage(net_id, amount, from_position)
+		## Local hit spark so combat still feels responsive.
+		DamageNumbers.spawn(get_parent(), global_position + Vector3(0, cfg["height"] + 0.3, 0), int(amount))
+		return
+	apply_network_damage(amount, from_position)
+
+
+func apply_network_damage(amount: float, from_position: Vector3) -> void:
+	if dead:
+		return
 	hp -= amount
 	DamageNumbers.spawn(get_parent(), global_position + Vector3(0, cfg["height"] + 0.3, 0), int(amount))
-
 	damaged = true
 	_plate_timer = 0.0
 	_update_plate()
-
 	if player != null and is_instance_valid(player) and player.has_method("add_camera_shake"):
 		player.add_camera_shake(0.05, 0.14)
-
 	if state == State.IDLE:
 		state = State.CHASE
 		_telegraph_aggro()
+	if NetSession and NetSession.is_hosting() and net_id > 0:
+		NetSession.sync_mob_hp(net_id, hp, max_hp, global_position)
 	if hp <= 0.0:
 		_die()
 		return
-
 	if not is_boss and state != State.ATTACK:
 		state = State.HIT
 		state_timer = 0.35
 		_play(_clip("hit"), false)
 	velocity += (global_position - from_position).normalized() * 2.2
 
+
+func mark_proxy_dead(_pos: Vector3) -> void:
+	## Guest-side death VFX only — rewards already distributed by host.
+	if dead:
+		return
+	dead = true
+	state = State.DEAD
+	collision_layer = 0
+	if plate != null:
+		plate.visible = false
+	var settle_s: float = _start_death_performance()
+	var tree: = get_tree()
+	if tree:
+		tree.create_timer(settle_s).timeout.connect(_fade_out)
+
+
 func _die() -> void :
+	if dead:
+		return
 	dead = true
 	state = State.DEAD
 	targeted = false
@@ -956,29 +991,39 @@ func _die() -> void :
 	if beacon != null:
 		beacon.visible = false
 
+	## Proxies never grant rewards (host already did / will).
+	if is_proxy:
+		enemy_died.emit(enemy_id, global_position)
+		var settle_p: float = _start_death_performance()
+		var tree_p: = get_tree()
+		if tree_p:
+			tree_p.create_timer(settle_p).timeout.connect(_fade_out)
+		return
 
 	var gold_range: Array = cfg["gold"]
 	var gold_amount: = randi_range(int(gold_range[0]), int(gold_range[1]))
+	var potions: = 1 if randf() < 0.12 else 0
+	var drops: Array = _roll_gear_drop_ids()
 	PartyShare.note_nearby(self, global_position, 16.0)
-	PartyShare.award_xp_and_gold(self, int(cfg["xp"]), gold_amount)
-	GameState.add_material(cfg["material"], 1)
-	if randf() < 0.12:
-		GameState.health_potions += 1
-		GameState.potions_changed.emit()
-	_spawn_gear_drops()
+	PartyShare.award_xp_and_gold(self, int(cfg["xp"]), gold_amount, global_position, {
+		"material": String(cfg["material"]),
+		"material_count": 1,
+		"potions": potions,
+		"drops": drops,
+	})
 	GameState.register_kill(String(cfg.get("quest_id", enemy_id)))
 	if is_boss:
 		GameState.register_minotaur_kill()
 	if GameState.tutorial_step < 3:
 		GameState.advance_tutorial(3)
-	if NetSession.is_hosting():
+	if NetSession and NetSession.is_hosting():
+		if net_id > 0:
+			NetSession.host_mob_died(net_id, global_position)
 		NetSession.broadcast_world_save()
 	enemy_died.emit(enemy_id, global_position)
 
-
-
 	var settle_s: float = _start_death_performance()
-	print("[enemy] death id=", enemy_id, " skeletal=", _skeletal_anims, 
+	print("[enemy] death id=", enemy_id, " skeletal=", _skeletal_anims,
 		" clip=", _death_clip, " settle_s=", settle_s)
 	var tree: = get_tree()
 	if tree:
@@ -986,27 +1031,31 @@ func _die() -> void :
 		t.timeout.connect(_fade_out)
 
 
-
-func _spawn_gear_drops() -> void :
+func _roll_gear_drop_ids() -> Array:
+	var out: Array = []
 	var rolls: = 2 if is_boss else 1
 	var chance: = 0.55 if is_boss else 0.38
-
 	chance += clampf(float(cfg.get("level", 1)) * 0.03, 0.0, 0.2)
+	for _i in rolls:
+		var loot_id: String = GameState.roll_loot_drop(chance, is_boss)
+		if loot_id != "":
+			out.append(loot_id)
+	return out
+
+
+func _spawn_gear_drops() -> void :
+	## Kept for offline tools; live path uses party extras + NetSession loot RPC.
 	var parent: = get_parent()
 	if parent == null:
 		return
 	var LootPickup: = load("res://scripts/loot_pickup.gd")
 	if LootPickup == null:
 		return
-	for _i in rolls:
-		var loot_id: String = GameState.roll_loot_drop(chance, is_boss)
-		if loot_id == "":
-			continue
+	for loot_id in _roll_gear_drop_ids():
 		var drop: Node = LootPickup.new()
 		parent.add_child(drop)
 		if drop.has_method("setup"):
-			drop.setup(loot_id, global_position + Vector3(0, 0.2, 0))
-
+			drop.setup(String(loot_id), global_position + Vector3(0, 0.2, 0))
 
 
 

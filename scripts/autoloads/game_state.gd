@@ -772,6 +772,50 @@ func apply_world_sync_dict(data: Dictionary) -> void:
 	stats_changed.emit()
 
 
+## Partial world mutation (guest → host → broadcast). Host state is canonical.
+func apply_world_patch(patch: Dictionary) -> void:
+	if patch.is_empty():
+		return
+	var touched_quest: = false
+	var touched_mosaic: = false
+	if patch.has("quest_index"):
+		quest_index = maxi(0, int(patch["quest_index"]))
+		touched_quest = true
+	if patch.has("quest_kills"):
+		quest_kills = {}
+		var raw_qk = patch["quest_kills"]
+		if typeof(raw_qk) == TYPE_DICTIONARY:
+			for k in raw_qk:
+				quest_kills[String(k)] = int(raw_qk[k])
+		touched_quest = true
+	if patch.has("omphaloi_destroyed"):
+		omphaloi_destroyed = maxi(0, int(patch["omphaloi_destroyed"]))
+		touched_quest = true
+	if patch.has("minotaur_slain"):
+		minotaur_slain = bool(patch["minotaur_slain"])
+		touched_quest = true
+	if patch.has("mosaic_quest_stage"):
+		mosaic_quest_stage = String(patch["mosaic_quest_stage"])
+		if mosaic_quest_stage != "accepted" and mosaic_quest_stage != "complete":
+			mosaic_quest_stage = "none"
+		touched_mosaic = true
+	if patch.has("mosaic_tiles"):
+		mosaic_tiles = MosaicArt.tiles_from_array(patch["mosaic_tiles"])
+		touched_mosaic = true
+	if patch.has("mosaic_rewarded"):
+		mosaic_rewarded = bool(patch["mosaic_rewarded"])
+		touched_mosaic = true
+	if touched_quest:
+		quest_advanced.emit(current_quest().get("id", ""), quest_index)
+	if touched_mosaic:
+		ensure_mosaic_tiles()
+		mosaic_changed.emit()
+	if touched_quest or touched_mosaic:
+		stats_changed.emit()
+	if AccountSystem != null and AccountSystem.is_logged_in():
+		AccountSystem.save_game()
+
+
 func add_world_peer(peer_id: int, data: Dictionary) -> void:
 	world_peers[str(peer_id)] = {
 		"name": String(data.get("name", "Champion")),
@@ -1586,16 +1630,18 @@ func turn_in_quest() -> bool:
 	var q: = current_quest()
 	if q.is_empty():
 		return false
+	## Personal turn-in rewards; quest index advances on the host world.
 	add_gold(q["reward_gold"])
 	add_xp(q["reward_xp"])
-	quest_index += 1
-	quest_kills = {}
-	quest_advanced.emit(current_quest().get("id", ""), quest_index)
-	stats_changed.emit()
-	if NetSession.is_hosting():
-		NetSession.broadcast_world_save()
-	elif AccountSystem.is_logged_in():
-		AccountSystem.save_game()
+	var next_idx: = quest_index + 1
+	var patch: = {
+		"quest_index": next_idx,
+		"quest_kills": {},
+	}
+	if NetSession != null and NetSession.is_online():
+		NetSession.propose_world_patch(patch)
+	else:
+		apply_world_patch(patch)
 	return true
 
 func is_quest_objective_done() -> bool:
@@ -1620,10 +1666,16 @@ func ensure_mosaic_tiles() -> void:
 func accept_mosaic_quest() -> bool:
 	if mosaic_quest_stage != "none":
 		return false
-	mosaic_quest_stage = "accepted"
 	ensure_mosaic_tiles()
-	mosaic_changed.emit()
-	quest_advanced.emit(String(MOSAIC_QUEST["id"]), -1)
+	var patch: = {
+		"mosaic_quest_stage": "accepted",
+		"mosaic_tiles": MosaicArt.tiles_to_array(mosaic_tiles),
+	}
+	## Guest → host applies + broadcasts; host save is superior.
+	if NetSession != null and NetSession.is_online():
+		NetSession.propose_world_patch(patch)
+	else:
+		apply_world_patch(patch)
 	return true
 
 
@@ -1647,17 +1699,22 @@ func mosaic_progress_text() -> String:
 
 
 func save_mosaic_progress(tiles: PackedByteArray = PackedByteArray()) -> bool:
-	## Persist draft without sealing. Artwork stays on this square for this account.
+	## Persist draft without sealing. Artwork stays on the shared plaza (host save).
 	if mosaic_quest_stage == "none":
 		return false
 	if tiles.size() > 0:
 		mosaic_tiles = MosaicArt.ensure_tiles(tiles)
 	else:
 		ensure_mosaic_tiles()
-	mosaic_changed.emit()
-	quest_advanced.emit(String(MOSAIC_QUEST["id"]), -1)
-	if AccountSystem.is_logged_in():
-		AccountSystem.save_game()
+	var patch: = {
+		"mosaic_quest_stage": mosaic_quest_stage,
+		"mosaic_tiles": MosaicArt.tiles_to_array(mosaic_tiles),
+		"mosaic_rewarded": mosaic_rewarded,
+	}
+	if NetSession != null and NetSession.is_online():
+		NetSession.propose_world_patch(patch)
+	else:
+		apply_world_patch(patch)
 	return true
 
 
@@ -1669,22 +1726,23 @@ func seal_mosaic_artwork() -> Dictionary:
 	if MosaicArt.painted_count(mosaic_tiles) < MosaicArt.SEAL_MIN:
 		return {"ok": false, "reason": "too_sparse"}
 	var first: = not mosaic_rewarded
-	mosaic_quest_stage = "complete"
 	var gold_amt: = 0
 	var xp_amt: = 0
+	## Personal reward stays with the sealer; plaza seal syncs via host.
 	if first:
 		gold_amt = int(MOSAIC_QUEST["reward_gold"])
 		xp_amt = int(MOSAIC_QUEST["reward_xp"])
 		add_gold(gold_amt)
 		add_xp(xp_amt)
-		mosaic_rewarded = true
-	mosaic_changed.emit()
-	quest_advanced.emit(String(MOSAIC_QUEST["id"]), -1)
-	stats_changed.emit()
-	if NetSession.is_hosting():
-		NetSession.broadcast_world_save()
-	elif AccountSystem.is_logged_in():
-		AccountSystem.save_game()
+	var patch: = {
+		"mosaic_quest_stage": "complete",
+		"mosaic_tiles": MosaicArt.tiles_to_array(mosaic_tiles),
+		"mosaic_rewarded": true,
+	}
+	if NetSession != null and NetSession.is_online():
+		NetSession.propose_world_patch(patch)
+	else:
+		apply_world_patch(patch)
 	return {"ok": true, "first_reward": first, "gold": gold_amt, "xp": xp_amt}
 
 
