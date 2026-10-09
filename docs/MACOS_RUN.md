@@ -1,8 +1,9 @@
 Empires of Olympus — macOS (Intel + Apple Silicon)
 =================================================
 
-Peer-save build: host world sync, parties, animated Q/R skills,
-tutorial, merchants, crafting, post-Minotaur, Psifidoto mosaic.
+Social multiplayer + peer-save build: Browse→Join, host IP/latency,
+synced chat bubbles, class-correct remotes, RMB friend/whisper/trade/
+party/duel, plus parties, Q/R skills, agora mosaic.
 
 macOS shows “cannot verify” / “may harm your Mac” for this build.
 That is Gatekeeper. The app is **not Apple-notarized** — expected.
@@ -10,9 +11,9 @@ That is Gatekeeper. The app is **not Apple-notarized** — expected.
 ------------------------------------------------------------
 Download
 ------------------------------------------------------------
-https://gofile.io/d/M8MpF0Ov
+https://gofile.io/d/CflPpcoX
   EmpiresOfOlympus-macos.zip
-  SHA-256: 73e0349ccea0417d086c751229538b05d09b8d3d23228d5108c664adfa929ecc
+  SHA-256: aa0baf8951e89cae2b006a08444fb755a9d72cb0d32ff37f4e8c2204eee764ff
 
 ------------------------------------------------------------
 Fix the warning (Sonoma / Sequoia)
@@ -42,4 +43,4 @@ open "Empires of Olympus.app"
 What's inside
 ------------------------------------------------------------
 - Universal binary (x86_64 + arm64), ad-hoc signed (not notarized)
-- Same content as the Windows peer-save build
+- Same content as the Windows social multiplayer build
