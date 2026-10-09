@@ -29,6 +29,11 @@ var pending_join_address: String = ""
 var pending_join_port: int = DEFAULT_PORT
 var pending_join_name: String = ""
 
+## Host-authoritative world mobs (net_id -> Node)
+var _world_mobs: Dictionary = {}
+var _next_mob_id: int = 1
+var _enemy_sync_accum: float = 0.0
+
 
 func status_text() -> String:
 	return _status
@@ -126,6 +131,8 @@ func host(port: int = DEFAULT_PORT, world_name: String = "Hellas World") -> Stri
 	_status = "Hosting '%s' — preparing invite (host only)…" % _server_name
 	_announce("World '%s' is open. Your save is the host version — friends receive it on join." % _server_name)
 	_announce("Internet friends: use Copy Invite (only you see the address), they Add Server by name.")
+	## Mid-session host: publish already-spawned mobs under net ids.
+	call_deferred("host_register_existing_world")
 	if ServerBrowser:
 		ServerBrowser.start_advertise(_server_name, port, 1, 8)
 	session_changed.emit()
@@ -261,7 +268,9 @@ func _wire_signals() -> void :
 func _on_connected_ok() -> void :
 	var label: = _join_label if _join_label != "" else "the world"
 	_status = "Joined %s" % label
-	_announce("Joined %s. Host world save is shared — no conflicts. Press Enter to chat." % label)
+	_announce("Joined %s. Host world + mobs are shared — no conflicts. Press Enter to chat." % label)
+	## Drop divergent local spawns; host will send the roster.
+	_clear_local_world_mobs()
 	_hello.rpc(_identity())
 	session_changed.emit()
 
@@ -420,7 +429,9 @@ func _host_admit_peer(peer_id: int, data: Dictionary) -> void :
 		"roster": PartyShare._roster_payload(),
 	}
 	_rpc_world_snapshot.rpc_id(peer_id, snap)
-	_announce("%s was added to the host save (shared world — no merge conflicts)." % String(data.get("name", "Champion")))
+	## Same mob instances on every client.
+	push_mob_roster_to(peer_id)
+	_announce("%s was added to the host save (shared world — no conflicts)." % String(data.get("name", "Champion")))
 	if AccountSystem.is_logged_in():
 		AccountSystem.save_game()
 
@@ -547,6 +558,10 @@ func _process(delta: float) -> void :
 			_latency_accum = 0.0
 			_host_announce_latencies()
 	_sync_accum += delta
+	_enemy_sync_accum += delta
+	if is_hosting() and _enemy_sync_accum >= 0.35:
+		_enemy_sync_accum = 0.0
+		_host_pulse_mob_positions()
 	if _sync_accum < 1.0 / SYNC_HZ:
 		return
 	_sync_accum = 0.0
@@ -569,6 +584,16 @@ func _process(delta: float) -> void :
 		String(GameState.empire), 
 		String(GameState.player_name)
 	)
+
+
+func _host_pulse_mob_positions() -> void:
+	for nid in _world_mobs.keys():
+		var n: Node = _world_mobs[nid]
+		if n == null or not is_instance_valid(n) or n.get("dead") == true:
+			continue
+		if not n.is_in_group("enemies"):
+			continue
+		sync_mob_hp(int(nid), float(n.get("hp")), float(n.get("max_hp")), (n as Node3D).global_position)
 
 
 @rpc("any_peer", "unreliable_ordered")
@@ -630,6 +655,391 @@ func _spawn_loot_local(drop_ids: Array, at: Vector3, gold_amt: int = 0) -> void 
 		world.add_child(gdrop)
 		if gdrop.has_method("setup"):
 			gdrop.call("setup", "gold_coin", at + Vector3(randf_range(-0.4, 0.4), 0.2, randf_range(-0.4, 0.4)), gold_amt)
+
+
+## --- Party equal share -------------------------------------------------------
+
+func distribute_party_rewards(
+		peers: Array, xp_parts: Array, gold_parts: Array,
+		mat_id: String, mat_count: int, potions: int,
+		drop_ids: Array, at: Vector3
+	) -> void:
+	var n: = peers.size()
+	## Materials/potions/gear: equal 1/N split (level-agnostic). Remainder → index 0.
+	var mat_parts: = _split_parts(mat_count, n)
+	var pot_parts: = _split_parts(potions, n)
+	## Round-robin gear drops so each member gets a fair share (not a ground race).
+	var loot_by_peer: Dictionary = {}
+	for i in n:
+		loot_by_peer[int(peers[i])] = []
+	for di in drop_ids.size():
+		var loot_id: = String(drop_ids[di])
+		if loot_id == "":
+			continue
+		var owner_pid: = int(peers[di % n])
+		(loot_by_peer[owner_pid] as Array).append(loot_id)
+	for i in n:
+		var pid: = int(peers[i])
+		var xp: = int(xp_parts[i]) if i < xp_parts.size() else 0
+		var gold: = int(gold_parts[i]) if i < gold_parts.size() else 0
+		var mc: = int(mat_parts[i]) if i < mat_parts.size() else 0
+		var pc: = int(pot_parts[i]) if i < pot_parts.size() else 0
+		var my_drops: Array = loot_by_peer.get(pid, [])
+		if is_online():
+			_rpc_party_reward.rpc_id(pid, xp, gold, mat_id, mc, pc, my_drops)
+		else:
+			_apply_party_reward(xp, gold, mat_id, mc, pc, my_drops)
+	## Visual ground loot for atmosphere (gold already granted via share).
+	if not drop_ids.is_empty() and n <= 1:
+		notify_death_loot(drop_ids, at, 0)
+
+
+func _split_parts(total: int, n: int) -> Array:
+	var parts: Array = []
+	if n <= 0:
+		return parts
+	var base: = int(total / n) if total > 0 else 0
+	var rem: = total % n if total > 0 else 0
+	for i in n:
+		parts.append(base + (1 if i < rem else 0))
+	return parts
+
+
+@rpc("any_peer", "reliable")
+func _rpc_party_reward(xp: int, gold: int, mat_id: String, mat_count: int, potions: int, drops: Array = []) -> void:
+	_apply_party_reward(xp, gold, mat_id, mat_count, potions, drops)
+
+
+func _apply_party_reward(xp: int, gold: int, mat_id: String, mat_count: int, potions: int, drops: Array = []) -> void:
+	if xp > 0:
+		GameState.add_xp(xp)
+	if gold > 0:
+		GameState.add_gold(gold)
+	if mat_id != "" and mat_count > 0:
+		GameState.add_material(mat_id, mat_count)
+	if potions > 0:
+		GameState.health_potions += potions
+		GameState.potions_changed.emit()
+	## Direct bag grant — equal loot share, no race to the ground pile.
+	var hud: = get_tree().get_first_node_in_group("hud") if get_tree() else null
+	for d in drops:
+		var loot_id: = String(d)
+		if loot_id == "":
+			continue
+		if GameState.try_add_to_bag(loot_id):
+			if hud != null and hud.has_method("show_announcement"):
+				hud.show_announcement("Party loot: %s" % GameState.item_name(loot_id))
+		elif hud != null and hud.has_method("show_announcement"):
+			hud.show_announcement("Bag full — missed party loot: %s" % GameState.item_name(loot_id))
+
+
+## --- Host-authoritative mobs -------------------------------------------------
+
+func should_spawn_world_mobs_locally() -> bool:
+	## Guests never local-spawn; pending/connecting clients wait for host roster.
+	if pending_join_address != "":
+		return false
+	if is_hosting():
+		return true
+	if is_online():
+		return false
+	## Connecting client (peer exists, not yet CONNECTION_CONNECTED).
+	if multiplayer.has_multiplayer_peer():
+		var peer: = multiplayer.multiplayer_peer
+		if peer != null and not (peer is OfflineMultiplayerPeer):
+			var st: = peer.get_connection_status()
+			if st == MultiplayerPeer.CONNECTION_CONNECTING:
+				return false
+			if st == MultiplayerPeer.CONNECTION_CONNECTED and not multiplayer.is_server():
+				return false
+	return true
+
+
+func host_register_enemy(enemy: Node) -> int:
+	if enemy == null or not is_hosting():
+		return 0
+	var nid: = _next_mob_id
+	_next_mob_id += 1
+	enemy.set("net_id", nid)
+	enemy.set("is_proxy", false)
+	_world_mobs[nid] = enemy
+	_rpc_mob_spawn.rpc(
+		nid, "enemy", String(enemy.get("enemy_id")),
+		(enemy as Node3D).global_position,
+		float(enemy.get("hp")), float(enemy.get("max_hp")),
+		0
+	)
+	return nid
+
+
+func host_register_stone(stone: Node) -> int:
+	if stone == null or not is_hosting():
+		return 0
+	var nid: = _next_mob_id
+	_next_mob_id += 1
+	stone.set("net_id", nid)
+	stone.set("is_proxy", false)
+	_world_mobs[nid] = stone
+	_rpc_mob_spawn.rpc(
+		nid, "stone", "",
+		(stone as Node3D).global_position,
+		float(stone.get("hp")), float(stone.get("max_hp")),
+		int(stone.get("stone_tier"))
+	)
+	return nid
+
+
+func host_register_existing_world() -> void:
+	## Call when hosting starts mid-session so guests get live mobs.
+	if not is_hosting():
+		return
+	_world_mobs.clear()
+	_next_mob_id = 1
+	var tree: = get_tree()
+	if tree == null:
+		return
+	for e in tree.get_nodes_in_group("enemies"):
+		if e == null or not is_instance_valid(e) or e.get("dead") == true:
+			continue
+		if e.is_in_group("oracle_stones"):
+			continue
+		host_register_enemy(e)
+	for s in tree.get_nodes_in_group("oracle_stones"):
+		if s != null and is_instance_valid(s) and s.get("dead") != true:
+			host_register_stone(s)
+
+
+func push_mob_roster_to(peer_id: int) -> void:
+	if not is_hosting():
+		return
+	var rows: Array = []
+	for nid in _world_mobs.keys():
+		var n: Node = _world_mobs[nid]
+		if n == null or not is_instance_valid(n) or n.get("dead") == true:
+			continue
+		var kind: = "stone" if n.is_in_group("oracle_stones") else "enemy"
+		rows.append({
+			"id": int(nid),
+			"kind": kind,
+			"enemy_id": String(n.get("enemy_id")) if kind == "enemy" else "",
+			"tier": int(n.get("stone_tier")) if kind == "stone" else 0,
+			"pos": (n as Node3D).global_position,
+			"hp": float(n.get("hp")),
+			"max_hp": float(n.get("max_hp")),
+		})
+	_rpc_mob_roster.rpc_id(peer_id, rows)
+
+
+func request_enemy_damage(net_id: int, amount: float, from_pos: Vector3) -> void:
+	if not is_online() or net_id <= 0:
+		return
+	if is_hosting():
+		_host_apply_mob_damage(net_id, amount, from_pos)
+	else:
+		_rpc_mob_damage.rpc_id(1, net_id, amount, from_pos)
+
+
+@rpc("any_peer", "reliable")
+func _rpc_mob_damage(net_id: int, amount: float, from_pos: Vector3) -> void:
+	if not multiplayer.is_server():
+		return
+	_host_apply_mob_damage(net_id, amount, from_pos)
+
+
+func _host_apply_mob_damage(net_id: int, amount: float, from_pos: Vector3) -> void:
+	var n: Node = _world_mobs.get(net_id)
+	if n == null or not is_instance_valid(n):
+		return
+	if n.has_method("apply_network_damage"):
+		n.call("apply_network_damage", amount, from_pos)
+	elif n.has_method("take_damage"):
+		## Bypass guest-forward path.
+		n.set_meta("_net_damage_direct", true)
+		n.call("take_damage", amount, from_pos)
+		n.remove_meta("_net_damage_direct")
+
+
+func sync_mob_hp(net_id: int, hp: float, max_hp: float, pos: Vector3) -> void:
+	if not is_hosting():
+		return
+	_rpc_mob_hp.rpc(net_id, hp, max_hp, pos)
+
+
+func host_mob_died(net_id: int, pos: Vector3) -> void:
+	if not is_hosting():
+		return
+	_world_mobs.erase(net_id)
+	_rpc_mob_died.rpc(net_id, pos)
+
+
+@rpc("authority", "reliable")
+func _rpc_mob_spawn(net_id: int, kind: String, enemy_id: String, pos: Vector3, hp: float, max_hp: float, tier: int) -> void:
+	if multiplayer.is_server():
+		return
+	_spawn_proxy_mob(net_id, kind, enemy_id, pos, hp, max_hp, tier)
+
+
+@rpc("authority", "reliable")
+func _rpc_mob_roster(rows: Array) -> void:
+	if multiplayer.is_server():
+		return
+	_clear_local_world_mobs()
+	for row in rows:
+		if typeof(row) != TYPE_DICTIONARY:
+			continue
+		_spawn_proxy_mob(
+			int(row.get("id", 0)),
+			String(row.get("kind", "enemy")),
+			String(row.get("enemy_id", "wolf_enemy")),
+			row.get("pos", Vector3.ZERO),
+			float(row.get("hp", 1)),
+			float(row.get("max_hp", 1)),
+			int(row.get("tier", 1))
+		)
+
+
+@rpc("authority", "unreliable_ordered")
+func _rpc_mob_hp(net_id: int, hp: float, max_hp: float, pos: Vector3) -> void:
+	if multiplayer.is_server():
+		return
+	var n: Node = _world_mobs.get(net_id)
+	if n == null or not is_instance_valid(n):
+		return
+	if "hp" in n:
+		n.hp = hp
+	if "max_hp" in n:
+		n.max_hp = max_hp
+	if n is Node3D and pos != Vector3.ZERO:
+		## Soft follow for stones/enemies that move.
+		if n.is_in_group("enemies"):
+			(n as Node3D).global_position = (n as Node3D).global_position.lerp(pos, 0.35)
+	if n.has_method("_set_bar_fraction") and max_hp > 0.0:
+		n.call("_set_bar_fraction", hp / max_hp)
+
+
+@rpc("authority", "reliable")
+func _rpc_mob_died(net_id: int, pos: Vector3) -> void:
+	if multiplayer.is_server():
+		return
+	var n: Node = _world_mobs.get(net_id)
+	_world_mobs.erase(net_id)
+	if n != null and is_instance_valid(n):
+		if n.has_method("mark_proxy_dead"):
+			n.call("mark_proxy_dead", pos)
+		else:
+			n.queue_free()
+
+
+func _spawn_proxy_mob(net_id: int, kind: String, enemy_id: String, pos: Vector3, hp: float, max_hp: float, tier: int) -> void:
+	if net_id <= 0:
+		return
+	if _world_mobs.has(net_id) and is_instance_valid(_world_mobs[net_id]):
+		return
+	var world: = get_tree().get_first_node_in_group("game_world")
+	if world == null:
+		return
+	var node: Node = null
+	if kind == "stone":
+		var OracleStoneScript = load("res://scripts/oracle_stone.gd")
+		node = OracleStoneScript.create(pos, tier)
+	else:
+		var EnemyScript = load("res://scripts/enemy.gd")
+		node = EnemyScript.create(enemy_id if enemy_id != "" else "wolf_enemy", pos)
+	if node == null:
+		return
+	node.set("net_id", net_id)
+	node.set("is_proxy", true)
+	world.add_child(node)
+	if "hp" in node:
+		node.hp = hp
+	if "max_hp" in node:
+		node.max_hp = max_hp
+	_world_mobs[net_id] = node
+
+
+func _clear_local_world_mobs() -> void:
+	var tree: = get_tree()
+	if tree:
+		for e in tree.get_nodes_in_group("enemies"):
+			if e != null and is_instance_valid(e):
+				e.queue_free()
+		for s in tree.get_nodes_in_group("oracle_stones"):
+			if s != null and is_instance_valid(s):
+				s.queue_free()
+	_world_mobs.clear()
+
+
+## --- Guest → host world patches (mosaic / plaza / quest) ----------------------
+
+func propose_world_patch(patch: Dictionary) -> void:
+	if patch.is_empty():
+		return
+	if is_hosting() or not is_online():
+		GameState.apply_world_patch(patch)
+		if is_hosting():
+			broadcast_world_save()
+		return
+	## Guest: optimistic local apply for UI; host save remains superior after RPC.
+	GameState.apply_world_patch(patch)
+	_rpc_world_patch.rpc_id(1, patch)
+
+
+@rpc("any_peer", "reliable")
+func _rpc_world_patch(patch: Dictionary) -> void:
+	if not multiplayer.is_server():
+		return
+	var sanitized: = _sanitize_world_patch(patch)
+	if sanitized.is_empty():
+		## Still push host truth so guest UI reconciles.
+		broadcast_world_save()
+		return
+	GameState.apply_world_patch(sanitized)
+	broadcast_world_save()
+
+
+func _mosaic_stage_rank(stage: String) -> int:
+	match stage:
+		"complete":
+			return 2
+		"accepted":
+			return 1
+		_:
+			return 0
+
+
+func _sanitize_world_patch(patch: Dictionary) -> Dictionary:
+	## Host never regresses shared world progress from a guest proposal.
+	var out: = {}
+	if patch.has("quest_index"):
+		var qi: = int(patch["quest_index"])
+		if qi >= GameState.quest_index:
+			out["quest_index"] = qi
+			if patch.has("quest_kills"):
+				out["quest_kills"] = patch["quest_kills"]
+	elif patch.has("quest_kills") and typeof(patch["quest_kills"]) == TYPE_DICTIONARY:
+		## Merge kill counts upward only.
+		var merged: = GameState.quest_kills.duplicate()
+		var raw = patch["quest_kills"]
+		for k in raw:
+			var key: = String(k)
+			merged[key] = maxi(int(merged.get(key, 0)), int(raw[k]))
+		out["quest_kills"] = merged
+	if patch.has("omphaloi_destroyed"):
+		out["omphaloi_destroyed"] = maxi(GameState.omphaloi_destroyed, int(patch["omphaloi_destroyed"]))
+	if patch.has("minotaur_slain") and bool(patch["minotaur_slain"]):
+		out["minotaur_slain"] = true
+	if patch.has("mosaic_quest_stage"):
+		var stage: = String(patch["mosaic_quest_stage"])
+		if _mosaic_stage_rank(stage) >= _mosaic_stage_rank(GameState.mosaic_quest_stage):
+			out["mosaic_quest_stage"] = stage
+	## Accept plaza paint while open, or as part of sealing to complete.
+	var sealing: = String(patch.get("mosaic_quest_stage", "")) == "complete" \
+			or GameState.mosaic_quest_stage != "complete"
+	if patch.has("mosaic_tiles") and sealing:
+		out["mosaic_tiles"] = patch["mosaic_tiles"]
+	if patch.has("mosaic_rewarded") and bool(patch["mosaic_rewarded"]):
+		out["mosaic_rewarded"] = true
+	return out
 
 
 func _announce(msg: String) -> void :

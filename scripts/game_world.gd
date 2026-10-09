@@ -95,7 +95,9 @@ func _ready() -> void :
 	_build_wilds()
 	_build_arena()
 	_spawn_player()
-	_spawn_zones()
+	## Guests skip local mob spawns — host pushes the shared instance roster.
+	if NetSession == null or NetSession.should_spawn_world_mobs_locally():
+		_spawn_zones()
 	_build_grass()
 	_build_forests()
 	_build_hud()
@@ -573,28 +575,40 @@ func _build_arena() -> void :
 		if col != null:
 			_add_pillar_collider(col, 0.5, 6.0)
 
-	var boss: = EnemyScript.create("minotaur_boss", 
-		Vector3(ARENA_POS.x, sample_height(ARENA_POS.x, ARENA_POS.y), ARENA_POS.y))
-	add_child(boss)
-	_boss_node = boss
-	boss.enemy_died.connect(_on_boss_died)
-
-func _on_boss_died(_id: String, _pos: Vector3) -> void :
-
-
-	AudioManager.play_music_once("victory")
-
-	var t: = get_tree().create_timer(120.0)
-	t.timeout.connect(_respawn_boss)
-
-func _respawn_boss() -> void :
-	if is_instance_valid(_boss_node):
+	## Guests receive the boss as a host proxy — one shared instance.
+	if NetSession and not NetSession.should_spawn_world_mobs_locally():
 		return
 	var boss: = EnemyScript.create("minotaur_boss", 
 		Vector3(ARENA_POS.x, sample_height(ARENA_POS.x, ARENA_POS.y), ARENA_POS.y))
 	add_child(boss)
 	_boss_node = boss
 	boss.enemy_died.connect(_on_boss_died)
+	if NetSession and NetSession.is_hosting():
+		NetSession.host_register_enemy(boss)
+
+func _on_boss_died(_id: String, _pos: Vector3) -> void :
+
+
+	AudioManager.play_music_once("victory")
+
+	## Only the host schedules the shared boss respawn.
+	if NetSession and NetSession.is_online() and not NetSession.is_hosting():
+		return
+	var t: = get_tree().create_timer(120.0)
+	t.timeout.connect(_respawn_boss)
+
+func _respawn_boss() -> void :
+	if is_instance_valid(_boss_node):
+		return
+	if NetSession and not NetSession.should_spawn_world_mobs_locally():
+		return
+	var boss: = EnemyScript.create("minotaur_boss", 
+		Vector3(ARENA_POS.x, sample_height(ARENA_POS.x, ARENA_POS.y), ARENA_POS.y))
+	add_child(boss)
+	_boss_node = boss
+	boss.enemy_died.connect(_on_boss_died)
+	if NetSession and NetSession.is_hosting():
+		NetSession.host_register_enemy(boss)
 
 
 
@@ -619,6 +633,8 @@ func _spawn_zones() -> void :
 			_spawn_enemy_in_zone(id, zi)
 
 func _spawn_enemy_in_zone(enemy_id: String, zone_idx: int) -> void :
+	if NetSession and not NetSession.should_spawn_world_mobs_locally():
+		return
 	var zone: Dictionary = ZONES[zone_idx]
 	var c: Vector2 = zone["c"]
 	var a: = randf() * TAU
@@ -629,9 +645,13 @@ func _spawn_enemy_in_zone(enemy_id: String, zone_idx: int) -> void :
 	add_child(e)
 	e.set_meta("zone_idx", zone_idx)
 	e.enemy_died.connect(_on_zone_enemy_died)
+	if NetSession and NetSession.is_hosting():
+		NetSession.host_register_enemy(e)
 
 func _on_zone_enemy_died(enemy_id: String, pos: Vector3) -> void :
-
+	## Only the host (or offline) respawns into the shared world.
+	if NetSession and NetSession.is_online() and not NetSession.is_hosting():
+		return
 	var best: = 0
 	var best_d: = 1000000000.0
 	for zi in ZONES.size():
@@ -789,12 +809,18 @@ func _alive_oracle_stones() -> int:
 
 
 func _spawn_oracle_stone(pos: Vector2, tier: int) -> void :
+	if NetSession and not NetSession.should_spawn_world_mobs_locally():
+		return
 	var stone: = OracleStoneScript.create(
 		Vector3(pos.x, sample_height(pos.x, pos.y), pos.y), tier)
 	add_child(stone)
+	if NetSession and NetSession.is_hosting():
+		NetSession.host_register_stone(stone)
 
 
 func _try_random_stone_spawn() -> void :
+	if NetSession and not NetSession.should_spawn_world_mobs_locally():
+		return
 	if _alive_oracle_stones() >= STONE_MAX_ALIVE:
 		return
 
