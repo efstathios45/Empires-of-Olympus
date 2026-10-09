@@ -297,6 +297,7 @@ func _build_body() -> void :
 		ModelUtils.setup_authored_humanoid(model, 1.85)
 	else:
 		ModelUtils.setup_character_for_movement(model, 1.85)
+	_harden_body_materials(model)
 
 	if USE_GREEK_LOOK:
 		GreekLook.apply(model, "hoplite")
@@ -344,6 +345,27 @@ func _build_body() -> void :
 		GameState.inventory_changed.connect(_on_gear_changed)
 
 
+func _harden_body_materials(model: Node3D) -> void:
+	## Same as remote_avatar — keep large body surfaces opaque.
+	if model == null:
+		return
+	for node in model.find_children("*", "MeshInstance3D", true, false):
+		var mi: = node as MeshInstance3D
+		if mi == null or mi.mesh == null:
+			continue
+		if mi.get_aabb().size.y < 0.75:
+			continue
+		var base: = mi.get_active_material(0)
+		if base == null or not (base is BaseMaterial3D):
+			continue
+		var bm: = base as BaseMaterial3D
+		if bm.transparency == BaseMaterial3D.TRANSPARENCY_DISABLED:
+			continue
+		var fixed: = bm.duplicate() as BaseMaterial3D
+		fixed.transparency = BaseMaterial3D.TRANSPARENCY_DISABLED
+		mi.material_override = fixed
+
+
 func _apply_class_tint(model: Node3D, cd: Dictionary) -> void :
 	if not cd.has("tint"):
 		return
@@ -361,6 +383,7 @@ func _apply_class_tint(model: Node3D, cd: Dictionary) -> void :
 			if base != null and base is BaseMaterial3D:
 				mat.albedo_texture = (base as BaseMaterial3D).albedo_texture
 		mat.albedo_color = tint
+		mat.transparency = BaseMaterial3D.TRANSPARENCY_DISABLED
 		mi.material_override = mat
 
 
