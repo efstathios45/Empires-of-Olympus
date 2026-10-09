@@ -1,18 +1,18 @@
 Empires of Olympus — macOS (Intel + Apple Silicon)
 =================================================
 
+Peer-save build: host world sync, parties, animated Q/R skills,
+tutorial, merchants, crafting, post-Minotaur, Psifidoto mosaic.
+
 macOS shows “cannot verify” / “may harm your Mac” for this build.
-That is Gatekeeper. The app is **not Apple-notarized** — expected for
-an indie export without a paid Developer ID + notarization.
+That is Gatekeeper. The app is **not Apple-notarized** — expected.
 
 ------------------------------------------------------------
 Download
 ------------------------------------------------------------
-https://gofile.io/d/J12j72sy
+https://gofile.io/d/M8MpF0Ov
   EmpiresOfOlympus-macos.zip
-
-(If you already have this zip, you do not need to re-download for the
-Open Anyway steps below — they work on the copy you have.)
+  SHA-256: 73e0349ccea0417d086c751229538b05d09b8d3d23228d5108c664adfa929ecc
 
 ------------------------------------------------------------
 Fix the warning (Sonoma / Sequoia)
@@ -25,11 +25,9 @@ Fix the warning (Sonoma / Sequoia)
 
 ### Option B — Privacy & Security → Open Anyway
 1. Try to open `Empires of Olympus.app` once
-2. In the warning, click **Done** (do **not** Move to Trash)
-3. **System Settings → Privacy & Security**
-4. Scroll to the **bottom**
-5. Find: *“Empires of Olympus” was blocked…*
-6. Click **Open Anyway** → password / Touch ID → **Open**
+2. Click **Done** (do **not** Move to Trash)
+3. **System Settings → Privacy & Security** → scroll to the **bottom**
+4. Click **Open Anyway** → password / Touch ID → **Open**
 
 ### Option C — Terminal
 From the unzipped folder:
@@ -40,11 +38,8 @@ codesign --force --deep --sign - "Empires of Olympus.app"
 open "Empires of Olympus.app"
 ```
 
-If it still warns, finish with Option B (Open Anyway).
-
 ------------------------------------------------------------
 What's inside
 ------------------------------------------------------------
 - Universal binary (x86_64 + arm64), ad-hoc signed (not notarized)
-- Psifidoto of the Agora + old-exe motion baseline
-- Chat, settings, server browser, multiplayer
+- Same content as the Windows peer-save build
