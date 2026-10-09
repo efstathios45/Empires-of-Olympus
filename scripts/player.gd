@@ -121,12 +121,53 @@ func _ready() -> void :
 	GameState.stats_changed.connect(_refresh_nameplate)
 	if ChatSystem != null and not ChatSystem.message_received.is_connected(_on_chat_message):
 		ChatSystem.message_received.connect(_on_chat_message)
+	if PartyShare != null and not PartyShare.party_changed.is_connected(_on_social_tint_changed):
+		PartyShare.party_changed.connect(_on_social_tint_changed)
+	if SocialSystem != null and not SocialSystem.duel_changed.is_connected(_on_duel_tint_changed):
+		SocialSystem.duel_changed.connect(_on_duel_tint_changed)
 	call_deferred("_late_ready")
 
 func _late_ready() -> void :
 	health_changed.emit(hp, GameState.max_hp())
 	mana_changed.emit(mp, GameState.max_mp())
 	_refresh_nameplate()
+	_apply_social_tint()
+
+
+func _on_social_tint_changed(_a: Variant = null) -> void:
+	_apply_social_tint()
+
+
+func _on_duel_tint_changed(_peer: int = 0, _active: bool = false) -> void:
+	_apply_social_tint()
+
+
+func _apply_social_tint() -> void:
+	## Soft overlay — party blue / duel orange; never flat albedo override (pink bug).
+	if mesh_root == null:
+		return
+	var in_party: = false
+	if PartyShare != null:
+		## Blue only when at least one other champion shares the group.
+		in_party = PartyShare.member_list().size() > 1
+	var in_duel: = SocialSystem != null and SocialSystem.duel_peer != 0
+	var tint: Color = Color(1, 1, 1, 1)
+	if in_party:
+		tint = Color(0.55, 0.75, 1.0)
+	elif in_duel:
+		tint = Color(1.0, 0.55, 0.45)
+	for node in mesh_root.find_children("*", "MeshInstance3D", true, false):
+		var mi: = node as MeshInstance3D
+		if mi == null:
+			continue
+		if tint.r >= 0.99 and tint.g >= 0.99 and tint.b >= 0.99:
+			mi.material_overlay = null
+			continue
+		var overlay: = StandardMaterial3D.new()
+		overlay.albedo_color = Color(tint.r, tint.g, tint.b, 0.35)
+		overlay.transparency = BaseMaterial3D.TRANSPARENCY_ALPHA
+		overlay.shading_mode = BaseMaterial3D.SHADING_MODE_UNSHADED
+		mi.material_overlay = overlay
 
 
 func _sync_identity_meta() -> void :
@@ -152,6 +193,15 @@ func is_rival_player(other: Node) -> bool:
 		return false
 	if other.get("dead") == true or other.get("state") == State.DEAD:
 		return false
+	var pid: = int(other.get_meta("peer_id", 0))
+	## Party members are never rivals (friendly blue).
+	if PartyShare != null and pid != 0:
+		for row in PartyShare.member_list():
+			if int(row.get("peer_id", -1)) == pid:
+				return false
+	## Active duel overrides empire friendship.
+	if SocialSystem != null and pid != 0 and SocialSystem.is_dueling(pid):
+		return true
 	var their_emp: = String(other.get_meta("empire", ""))
 	if their_emp == "" and other.has_method("empire_id"):
 		their_emp = String(other.call("empire_id"))
@@ -178,15 +228,17 @@ func _deal_pvp_hit(other: Node, dmg: float) -> void :
 		other.take_damage(dmg, global_position)
 
 
-func _on_chat_message(sender: String, text: String, _stamp: float) -> void :
-
-	if text == "" or sender == "Herald":
+func _on_chat_message(sender: String, text: String, _stamp: float, peer_id: int = -1) -> void:
+	if text == "" or sender == "Herald" or sender.begins_with("["):
 		return
 	var mine: = ""
 	if ChatSystem:
 		mine = ChatSystem.display_name()
 	if mine == "":
 		mine = GameState.player_name
+	var my_peer: = multiplayer.get_unique_id() if NetSession and NetSession.is_online() else 1
+	if peer_id > 0 and peer_id != my_peer and sender != mine:
+		return
 	var tagged: = String(get_meta("chat_name", ""))
 	var for_me: = (sender == mine) or (tagged != "" and sender == tagged)
 	if not for_me:
@@ -245,6 +297,7 @@ func _build_body() -> void :
 		ModelUtils.setup_authored_humanoid(model, 1.85)
 	else:
 		ModelUtils.setup_character_for_movement(model, 1.85)
+	_harden_body_materials(model)
 
 	if USE_GREEK_LOOK:
 		GreekLook.apply(model, "hoplite")
@@ -292,6 +345,27 @@ func _build_body() -> void :
 		GameState.inventory_changed.connect(_on_gear_changed)
 
 
+func _harden_body_materials(model: Node3D) -> void:
+	## Same as remote_avatar — keep large body surfaces opaque.
+	if model == null:
+		return
+	for node in model.find_children("*", "MeshInstance3D", true, false):
+		var mi: = node as MeshInstance3D
+		if mi == null or mi.mesh == null:
+			continue
+		if mi.get_aabb().size.y < 0.75:
+			continue
+		var base: = mi.get_active_material(0)
+		if base == null or not (base is BaseMaterial3D):
+			continue
+		var bm: = base as BaseMaterial3D
+		if bm.transparency == BaseMaterial3D.TRANSPARENCY_DISABLED:
+			continue
+		var fixed: = bm.duplicate() as BaseMaterial3D
+		fixed.transparency = BaseMaterial3D.TRANSPARENCY_DISABLED
+		mi.material_override = fixed
+
+
 func _apply_class_tint(model: Node3D, cd: Dictionary) -> void :
 	if not cd.has("tint"):
 		return
@@ -309,6 +383,7 @@ func _apply_class_tint(model: Node3D, cd: Dictionary) -> void :
 			if base != null and base is BaseMaterial3D:
 				mat.albedo_texture = (base as BaseMaterial3D).albedo_texture
 		mat.albedo_color = tint
+		mat.transparency = BaseMaterial3D.TRANSPARENCY_DISABLED
 		mi.material_override = mat
 
 
@@ -433,6 +508,11 @@ func _unhandled_input(event: InputEvent) -> void :
 				_mmb_looking = false
 			return
 		if event.button_index == MOUSE_BUTTON_RIGHT and event.pressed and state == State.FREE:
+			## Social menu first (any remote under cursor / near crosshair).
+			## Same-empire friends used to fail because aim only picked rivals.
+			if _try_open_player_menu():
+				get_viewport().set_input_as_handled()
+				return
 			_try_heavy_attack()
 			return
 	if event is InputEventMouseMotion and _mmb_down:
@@ -1001,14 +1081,78 @@ func _die() -> void :
 	AudioManager.play_music_once("defeat")
 
 	if _last_pvp_attacker != 0:
-		var drops: Array = GameState.take_pvp_death_drops(2, 3)
-		if not drops.is_empty():
-			if NetSession:
-				NetSession.notify_death_loot(drops, global_position)
+		var drops: Array = []
+		var gold_drop: = 0
+		if SocialSystem != null and SocialSystem.is_dueling(_last_pvp_attacker):
+			var duel_loot: Dictionary = SocialSystem.duel_death_drops()
+			drops = duel_loot.get("drops", [])
+			gold_drop = int(duel_loot.get("gold", 0))
+			if ChatSystem:
+				ChatSystem.call("_push_system",
+					"Duel lost — dropped a random item and %d δρ (15%%)." % gold_drop)
+			SocialSystem.end_duel()
+		else:
+			drops = GameState.take_pvp_death_drops(2, 3)
 			if ChatSystem:
 				ChatSystem.call("_push_system", "Defeated in rival combat — spoils scatter on the ground.")
+		if (not drops.is_empty() or gold_drop > 0) and NetSession:
+			NetSession.notify_death_loot(drops, global_position, gold_drop)
 	_last_pvp_attacker = 0
 	died.emit()
+
+
+func _try_open_player_menu() -> bool:
+	if not NetSession or not NetSession.is_online():
+		return false
+	var target: = _find_social_target()
+	if target == null or not target.is_in_group("remote_player"):
+		return false
+	var hud: = get_tree().get_first_node_in_group("hud")
+	if hud == null or not hud.has_method("open_player_menu"):
+		return false
+	hud.open_player_menu(target)
+	return true
+
+
+func _find_social_target() -> Node3D:
+	## Prefer physics pick under the mouse (Metin2-style), then screen-near remotes.
+	if camera == null or not is_inside_tree():
+		return null
+	var mouse: = get_viewport().get_mouse_position()
+	var from: = camera.project_ray_origin(mouse)
+	var dir: = camera.project_ray_normal(mouse)
+	var space: = get_world_3d().direct_space_state
+	if space != null:
+		var q: = PhysicsRayQueryParameters3D.create(from, from + dir * 48.0)
+		q.collision_mask = 2 ## player layer
+		q.exclude = [get_rid()]
+		var hit: = space.intersect_ray(q)
+		if not hit.is_empty():
+			var col = hit.get("collider")
+			if col is Node and (col as Node).is_in_group("remote_player"):
+				return col as Node3D
+	## Fallback: nearest remote projected near the cursor / screen center.
+	var best: Node3D = null
+	var best_d: = 72.0 ## px
+	var vp: = get_viewport().get_visible_rect().size
+	var anchor: = mouse if mouse.x > 1.0 else vp * 0.5
+	for n in get_tree().get_nodes_in_group("remote_player"):
+		if n == null or not is_instance_valid(n) or not (n is Node3D):
+			continue
+		if n.get("dead") == true:
+			continue
+		var p3: Node3D = n as Node3D
+		if camera.is_position_behind(p3.global_position + Vector3(0, 1.0, 0)):
+			continue
+		var dist3: = camera.global_position.distance_to(p3.global_position)
+		if dist3 > 28.0:
+			continue
+		var sp: = camera.unproject_position(p3.global_position + Vector3(0, 1.0, 0))
+		var d: = sp.distance_to(anchor)
+		if d < best_d:
+			best_d = d
+			best = p3
+	return best
 
 func _respawn() -> void :
 

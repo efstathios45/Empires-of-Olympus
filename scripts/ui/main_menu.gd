@@ -323,6 +323,7 @@ func _styled_line_edit(placeholder: String, secret: bool = false) -> LineEdit:
 
 func _build_auth_form(page: VBoxContainer) -> void :
 	page.add_child(Kit.spacer(10))
+	page.add_child(_sub_line("1) Browse Servers & Join  ·  2) Create account / Sign in  ·  3) Enter the world"))
 	page.add_child(_sub_line("Create an account to save your legend on this PC."))
 
 	var form: = VBoxContainer.new()
@@ -359,9 +360,10 @@ func _build_auth_form(page: VBoxContainer) -> void :
 	)
 	form.add_child(guest)
 
-	var guest_browse: = Kit.make_button("Browse Servers", false)
+	var guest_browse: = Kit.make_button("Browse Servers → Join", true)
 	guest_browse.pressed.connect(_open_server_browser)
 	form.add_child(guest_browse)
+	page.add_child(_sub_line("After Join Selected: register or sign in, pick empire/class, then Play to connect."))
 
 
 func _build_logged_in_actions(page: VBoxContainer) -> void :
@@ -394,9 +396,10 @@ func _build_logged_in_actions(page: VBoxContainer) -> void :
 	actions.add_child(begin)
 
 
-	var browse_btn: = Kit.make_button("Browse Servers", true)
+	var browse_btn: = Kit.make_button("Browse Servers → Join", true)
 	browse_btn.pressed.connect(_open_server_browser)
 	actions.add_child(browse_btn)
+	actions.add_child(_sub_line("Pick a world → Join Selected → continue to empire/class → Play joins automatically."))
 
 	var logout: = Kit.make_button("Sign Out", false)
 	logout.pressed.connect( func() -> void :

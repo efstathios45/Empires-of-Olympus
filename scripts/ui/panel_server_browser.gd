@@ -197,19 +197,15 @@ func _on_join_selected() -> void :
 		_status.text = NetSession.join("%s:%d" % [addr, port], port, nm)
 	else:
 		_status.text = NetSession.set_pending_join("%s:%d" % [addr, port], nm)
-
-		_boot_into_world()
-
-
-func _boot_into_world() -> void :
-	if NetSession.pending_join_address == "":
-		return
-	var acc: = get_node_or_null("/root/AccountSystem")
-	if acc != null and acc.has_method("has_local_save") and bool(acc.call("has_local_save"))\
-	and acc.has_method("load_game") and bool(acc.call("load_game")):
-		pass
-	GameCursor.apply()
-	LoadingScreen.preload_and_change_scene("res://scenes/game_world.tscn", 1.2)
+		var acc: = get_node_or_null("/root/AccountSystem")
+		var logged: = acc != null and acc.has_method("is_logged_in") and bool(acc.call("is_logged_in"))
+		if logged:
+			_status.text += " — choose empire/class then Play to connect."
+			## Stay on menu so they finish character; Play will join via pending.
+			queue_free()
+		else:
+			_status.text += " — next: Register or Sign In, then empire/class → Play."
+			queue_free()
 
 
 func _on_host() -> void :
