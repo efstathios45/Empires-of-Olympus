@@ -653,10 +653,12 @@ func _build_roads() -> void :
 	mat.ao_light_affect = 0.55
 	mat.metallic = 0.0
 	## World-triplanar so paving tiles continuously along every bend.
+	mat.albedo_color = Color(0.92, 0.88, 0.8) ## warm Hellenic limestone tint
 	mat.uv1_triplanar = true
 	mat.uv1_world_triplanar = true
 	mat.uv1_triplanar_sharpness = 8.0
-	mat.uv1_scale = Vector3(0.38, 0.38, 0.38)
+	## ~0.22 → large flagstones (~4–5 m tile), reads as Roman/Hellenic paving not gravel.
+	mat.uv1_scale = Vector3(0.22, 0.22, 0.22)
 	mat.texture_filter = BaseMaterial3D.TEXTURE_FILTER_LINEAR_WITH_MIPMAPS_ANISOTROPIC
 
 	var slab: = BoxMesh.new()
@@ -664,8 +666,8 @@ func _build_roads() -> void :
 	slab.material = mat
 
 	var curb_mat: = mat.duplicate() as StandardMaterial3D
-	curb_mat.albedo_color = Color(0.82, 0.78, 0.7)
-	curb_mat.uv1_scale = Vector3(0.55, 0.55, 0.55)
+	curb_mat.albedo_color = Color(0.7, 0.64, 0.55)
+	curb_mat.uv1_scale = Vector3(0.35, 0.35, 0.35)
 	var curb: = BoxMesh.new()
 	curb.size = Vector3(0.45, 0.22, SLAB_L)
 	curb.material = curb_mat
