@@ -5,10 +5,14 @@ Enter-to-chat, Minecraft-style server browser, and online host/join.
 
 ## Windows download
 
-**https://gofile.io/d/cJmHKKwl** — `EmpiresOfOlympus-windows.zip`
+**https://gofile.io/d/kgAdnofc** — `EmpiresOfOlympus-windows.zip`
 
-Larger Hellas with walled **Athens**, **Sparta**, and **Thebes**, wide mob
-belts between cities, party 50/50 share, and host-synced world/mobs.
+Vulkan Forward+ performance build: uncapped FPS by default, quality
+presets, three walled cities (Athens / Sparta / Thebes), party share,
+host-synced mobs.
+
+In **Settings**: leave V-Sync **Off**, Max FPS **Uncapped**, turn on
+**Show FPS** to verify. Use Quality → Performance if you need more FPS.
 
 Run notes: [`docs/WINDOWS_RUN.md`](docs/WINDOWS_RUN.md)
 
@@ -16,10 +20,7 @@ Run notes: [`docs/WINDOWS_RUN.md`](docs/WINDOWS_RUN.md)
 
 **https://gofile.io/d/UXq9P21u** — `EmpiresOfOlympus-macos.zip`
 
-(Previous social/party build — re-export macOS if you need the three-city map.)
-
-Universal app (Intel + Apple Silicon). If macOS blocks it, right-click
-`OPEN-ON-MAC.command` → Open (see [`docs/MACOS_RUN.md`](docs/MACOS_RUN.md)).
+(Older social build — re-export macOS for the latest map/perf changes.)
 
 ## Build yourself
 
