@@ -1,13 +1,16 @@
 extends Node
-## Party roster + XP/gold share. Online peers can invite/leave; map HUD reads members.
+## Party roster + equal XP/gold/loot share (level-agnostic 1/N).
 
 
 signal share_announced(message: String)
 signal party_changed
+signal invite_pending(from_peer: int, from_name: String, payload: Dictionary)
+signal invite_declined(from_name: String)
 
 ## peer_id (int) -> {name, empire, level, account}
 var members: Dictionary = {}
 var leader_peer: int = 0
+const SHARE_RADIUS: = 18.0
 
 
 func clear() -> void:
@@ -25,7 +28,7 @@ func local_peer_id() -> int:
 
 
 func is_in_party() -> bool:
-	return members.size() > 0
+	return members.size() > 1
 
 
 func member_list() -> Array:
@@ -133,7 +136,6 @@ func leave_party() -> String:
 
 
 func bootstrap_with_host(host_peer: int, host_data: Dictionary, guest_data: Dictionary) -> void:
-	## Called when a guest joins a world — host's party becomes the shared party.
 	members.clear()
 	leader_peer = host_peer
 	_set_member(host_peer, host_data)
@@ -159,8 +161,25 @@ func _rpc_party_invite(payload: Dictionary) -> void:
 	var roster = payload.get("roster", {})
 	if typeof(roster) != TYPE_DICTIONARY:
 		roster = {}
-	accept_invite(from_id, roster, leader)
-	_announce("%s invited you to the party." % String((roster.get(str(from_id), {}) as Dictionary).get("name", "A champion")))
+	var from_name: = "A champion"
+	var row = roster.get(str(from_id), {})
+	if typeof(row) == TYPE_DICTIONARY:
+		from_name = String(row.get("name", from_name))
+	var data: = {"roster": roster, "leader": leader, "name": from_name}
+	invite_pending.emit(from_id, from_name, data)
+	if SocialSystem:
+		SocialSystem.queue_invite("party", from_id, from_name, data)
+
+
+func decline_invite(from_peer: int, my_name: String) -> void:
+	if NetSession.is_online() and from_peer > 0:
+		_rpc_party_decline.rpc_id(from_peer, my_name)
+
+
+@rpc("any_peer", "reliable")
+func _rpc_party_decline(from_name: String) -> void:
+	invite_declined.emit(from_name)
+	_announce("%s declined the group invite." % from_name)
 
 
 @rpc("any_peer", "reliable", "call_local")
@@ -200,22 +219,13 @@ func note(target: Object, contributor: Node) -> void:
 	target.set_meta("_party_share", bag)
 
 
-func contributors(target: Object) -> Array:
-	var out: Array = []
-	if target == null:
-		return out
-	var bag: Dictionary = target.get_meta("_party_share", {})
-	for k in bag.keys():
-		var n: Variant = bag[k]
-		if n is Node and is_instance_valid(n) and (n as Node).is_in_group("player"):
-			out.append(n)
-	if out.is_empty():
-		var tree: = get_tree()
-		if tree:
-			for p in tree.get_nodes_in_group("player"):
-				out.append(p)
-				break
-	return out
+func note_nearby(target: Object, origin: Vector3, radius: float = SHARE_RADIUS) -> void:
+	var tree: = get_tree()
+	if tree == null:
+		return
+	for p in tree.get_nodes_in_group("player"):
+		if p is Node3D and (p as Node3D).global_position.distance_to(origin) <= radius:
+			note(target, p)
 
 
 func _split_int(total: int, n: int) -> Array:
@@ -233,32 +243,105 @@ func _split_int(total: int, n: int) -> Array:
 	return parts
 
 
-func award_xp_and_gold(target: Object, xp_total: int, gold_total: int) -> Array:
-	var people: Array = contributors(target)
-	var n: = maxi(1, people.size())
+## Peers in the party within radius of origin (equal share, any level).
+func nearby_member_peers(origin: Vector3, radius: float = SHARE_RADIUS) -> Array:
+	var out: Array = []
+	var me: = local_peer_id()
+	if members.size() <= 1:
+		## Solo / no formal party — just the local killer.
+		out.append(me)
+		return out
+	var tree: = get_tree()
+	for pid in members.keys():
+		var id: int = int(pid)
+		var pos: Variant = _peer_world_pos(id)
+		if pos == null:
+			## Offline roster row with no body — still include local.
+			if id == me:
+				out.append(id)
+			continue
+		if (pos as Vector3).distance_to(origin) <= radius:
+			out.append(id)
+	if out.is_empty():
+		out.append(me)
+	out.sort()
+	return out
+
+
+func _peer_world_pos(peer_id: int) -> Variant:
+	var me: = local_peer_id()
+	if peer_id == me:
+		var lp: = _local_player()
+		if lp is Node3D:
+			return (lp as Node3D).global_position
+		return null
+	if NetSession:
+		var av = NetSession._avatars.get(peer_id)
+		if av is Node3D and is_instance_valid(av):
+			return (av as Node3D).global_position
+	return null
+
+
+## Equal 1/N XP + gold (+ materials/potions). Online: host/killer distributes via NetSession.
+func award_xp_and_gold(target: Object, xp_total: int, gold_total: int, origin: Vector3 = Vector3.ZERO, extras: Dictionary = {}) -> Array:
+	var at: = origin
+	if at == Vector3.ZERO and target is Node3D:
+		at = (target as Node3D).global_position
+	var peers: Array = nearby_member_peers(at, SHARE_RADIUS)
+	var n: = maxi(1, peers.size())
 	var xp_parts: = _split_int(maxi(0, xp_total), n)
 	var gold_parts: = _split_int(maxi(0, gold_total), n)
-	var local_player: = _local_player()
-	var local_idx: = 0
-	if local_player != null:
-		for i in people.size():
-			if people[i] == local_player:
-				local_idx = i
-				break
-	var xp_grant: int = int(xp_parts[local_idx]) if local_idx < xp_parts.size() else xp_total
-	var gold_grant: int = int(gold_parts[local_idx]) if local_idx < gold_parts.size() else gold_total
-	if xp_grant > 0:
-		GameState.add_xp(xp_grant)
-	if gold_grant > 0:
-		GameState.add_gold(gold_grant)
+	var mat_id: = String(extras.get("material", ""))
+	var mat_count: = int(extras.get("material_count", 0))
+	var potions: = int(extras.get("potions", 0))
+	var drop_ids: Array = extras.get("drops", [])
+	if typeof(drop_ids) != TYPE_ARRAY:
+		drop_ids = []
+
+	## Online: only the authority (host) or the local killer when solo hostless distributes.
+	var should_distribute: = true
+	if NetSession and NetSession.is_online():
+		should_distribute = NetSession.is_hosting()
+	if should_distribute and NetSession and NetSession.has_method("distribute_party_rewards"):
+		NetSession.distribute_party_rewards(peers, xp_parts, gold_parts, mat_id, mat_count, potions, drop_ids, at)
+	else:
+		## Offline / no NetSession helper — grant local slice only.
+		var me: = local_peer_id()
+		var idx: = peers.find(me)
+		if idx < 0:
+			idx = 0
+		_grant_local(
+			int(xp_parts[idx]) if idx < xp_parts.size() else xp_total,
+			int(gold_parts[idx]) if idx < gold_parts.size() else gold_total,
+			mat_id, mat_count, potions
+		)
+		if not drop_ids.is_empty() and NetSession:
+			NetSession.notify_death_loot(drop_ids, at, 0)
+
 	if n > 1:
-		var msg: = "Shared among %d champions — you received %d XP" % [n, xp_grant]
-		if gold_grant > 0:
-			msg += " and %d δ" % gold_grant
-		msg += "."
+		var me2: = local_peer_id()
+		var li: = peers.find(me2)
+		var xp_you: = int(xp_parts[li]) if li >= 0 and li < xp_parts.size() else 0
+		var g_you: = int(gold_parts[li]) if li >= 0 and li < gold_parts.size() else 0
+		var msg: = "Party share (%d) — you received %d XP" % [n, xp_you]
+		if g_you > 0:
+			msg += " and %d δ" % g_you
+		msg += " (equal split)."
 		share_announced.emit(msg)
 		_announce(msg)
-	return people
+	return peers
+
+
+func _grant_local(xp: int, gold: int, mat_id: String, mat_count: int, potions: int) -> void:
+	if xp > 0:
+		GameState.add_xp(xp)
+	if gold > 0:
+		GameState.add_gold(gold)
+	if mat_id != "" and mat_count > 0:
+		GameState.add_material(mat_id, mat_count)
+	if potions > 0:
+		GameState.health_potions += potions
+		GameState.potions_changed.emit()
 
 
 func _local_player() -> Node:
@@ -269,18 +352,9 @@ func _local_player() -> Node:
 	if players.is_empty():
 		return null
 	for p in players:
-		if p is Node and p.is_multiplayer_authority():
+		if p is Node and not p.is_in_group("remote_player"):
 			return p
 	return players[0]
-
-
-func note_nearby(target: Object, origin: Vector3, radius: float = 14.0) -> void:
-	var tree: = get_tree()
-	if tree == null:
-		return
-	for p in tree.get_nodes_in_group("player"):
-		if p is Node3D and (p as Node3D).global_position.distance_to(origin) <= radius:
-			note(target, p)
 
 
 func _announce(msg: String) -> void:

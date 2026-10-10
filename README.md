@@ -5,30 +5,22 @@ Enter-to-chat, Minecraft-style server browser, and online host/join.
 
 ## Windows download
 
-### Recommended (Defender-friendlier — no .exe in the zip)
+**https://gofile.io/d/q0xhjxTi** — `EmpiresOfOlympus-windows.zip`
 
-**https://gofile.io/d/NXm2YJBS** — `EmpiresOfOlympus-data-only.zip`
+Vulkan Forward+ build: Athens / Sparta / Thebes open war (free rival
+PvP), giant beast dens between capitals, M-key map with capitals + dens,
+uncapped FPS, party share, host-synced mobs.
 
-Extract → `powershell -ExecutionPolicy Bypass -File .\GET-ENGINE.ps1`
-
-### Full zip
-
-**https://gofile.io/d/NsFpBbOM** — `EmpiresOfOlympus-windows.zip`
-
-This build includes the **Psifidoto of the Agora**, host peer-to-peer save
-(joiners adopt the host world — no conflicts), parties, animated Q/R skills,
-tutorial tips, plaza merchants, smith crafting, and post-Minotaur trials —
-on the old-exe UAL motion baseline.
+In **Settings**: leave V-Sync **Off**, Max FPS **Uncapped**, turn on
+**Show FPS** to verify. Use Quality → Performance if you need more FPS.
 
 Run notes: [`docs/WINDOWS_RUN.md`](docs/WINDOWS_RUN.md)
 
 ## macOS download
 
-**https://gofile.io/d/M8MpF0Ov** — `EmpiresOfOlympus-macos.zip`
+**https://gofile.io/d/UXq9P21u** — `EmpiresOfOlympus-macos.zip`
 
-Universal app (Intel + Apple Silicon), same peer-save build as Windows.
-If macOS says it “cannot be opened”, right-click `OPEN-ON-MAC.command` →
-Open (or see [`docs/MACOS_RUN.md`](docs/MACOS_RUN.md)).
+(Older social build — re-export macOS for the latest map/perf changes.)
 
 ## Build yourself
 

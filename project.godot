@@ -13,6 +13,8 @@ config_version=5
 config/name="Empires of Olympus"
 run/main_scene="res://scenes/ui/main_menu.tscn"
 config/features=PackedStringArray("4.4", "Forward Plus")
+run/low_processor_usage_mode=false
+run/delta_smoothing=true
 
 [audio]
 
@@ -27,6 +29,7 @@ AccountSystem="*res://scripts/autoloads/account_system.gd"
 ChatSystem="*res://scripts/autoloads/chat_system.gd"
 DisplaySettings="*res://scripts/autoloads/display_settings.gd"
 PartyShare="*res://scripts/autoloads/party_share.gd"
+SocialSystem="*res://scripts/autoloads/social_system.gd"
 NetSession="*res://scripts/autoloads/net_session.gd"
 ServerBrowser="*res://scripts/autoloads/server_browser.gd"
 TesanaWorldEditor="*res://addons/tesana_world_editor/scene_export.gd"
@@ -180,6 +183,18 @@ chat={
 
 [rendering]
 
-renderer/rendering_method="gl_compatibility"
+## Vulkan Forward+ saturates modern GPUs; Compatibility (OpenGL) left GPU idle.
+renderer/rendering_method="forward_plus"
+renderer/rendering_method.mobile="gl_compatibility"
+renderer/rendering_method.web="gl_compatibility"
 textures/vram_compression/import_etc2_astc=true
 textures/default_texture_filter=3
+anti_aliasing/quality/msaa_3d=0
+lights_and_shadows/directional_shadow/size=4096
+lights_and_shadows/directional_shadow/soft_shadow_filter_quality=2
+environment/defaults/default_clear_color=Color(0.12, 0.12, 0.14, 1)
+
+[physics]
+
+common/physics_ticks_per_second=60
+3d/run_on_separate_thread=true
