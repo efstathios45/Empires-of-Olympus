@@ -624,22 +624,27 @@ func _paint_roads_on_splat(splatmap: Image) -> void :
 
 ## Paved Hellenic / Roman-style roads between capitals and dens.
 func _build_roads() -> void :
+	## Packed earth + worn stone — not agora mosaic floors.
 	var mat: = StandardMaterial3D.new()
-	mat.albedo_color = Color(0.72, 0.68, 0.58)
-	if ResourceLoader.exists("res://assets/textures/stone/greek_pebble_mosaic.png"):
-		mat.albedo_texture = load("res://assets/textures/stone/greek_pebble_mosaic.png")
-	mat.roughness = 0.92
-	mat.uv1_scale = Vector3(2.5, 2.5, 2.5)
+	mat.albedo_color = Color(0.68, 0.6, 0.48)
+	if ResourceLoader.exists("res://assets/textures/nature/mediterranean_ground.png"):
+		mat.albedo_texture = load("res://assets/textures/nature/mediterranean_ground.png")
+	elif ResourceLoader.exists("res://assets/textures/nature/terrain_dirt.png"):
+		mat.albedo_texture = load("res://assets/textures/nature/terrain_dirt.png")
+	mat.roughness = 0.95
+	mat.uv1_scale = Vector3(1.8, 1.8, 1.8)
 	var edge_mat: = StandardMaterial3D.new()
-	edge_mat.albedo_color = Color(0.82, 0.8, 0.74)
-	if ResourceLoader.exists("res://assets/textures/stone/white_marble.png"):
+	edge_mat.albedo_color = Color(0.78, 0.74, 0.66)
+	if ResourceLoader.exists("res://assets/textures/stone/terrain_rock.png"):
+		edge_mat.albedo_texture = load("res://assets/textures/stone/terrain_rock.png")
+	elif ResourceLoader.exists("res://assets/textures/stone/white_marble.png"):
 		edge_mat.albedo_texture = load("res://assets/textures/stone/white_marble.png")
-	edge_mat.roughness = 0.85
+	edge_mat.roughness = 0.9
 
 	var slab_mesh: = BoxMesh.new()
-	slab_mesh.size = Vector3(ROAD_HALF_W * 2.0, 0.12, 3.2)
+	slab_mesh.size = Vector3(ROAD_HALF_W * 2.0, 0.1, 3.2)
 	var curb_mesh: = BoxMesh.new()
-	curb_mesh.size = Vector3(0.35, 0.28, 3.0)
+	curb_mesh.size = Vector3(0.42, 0.22, 3.0)
 
 	var i: = 0
 	for sample in HellasMapData.road_segment_samples(3.1):
