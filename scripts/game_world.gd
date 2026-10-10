@@ -198,8 +198,9 @@ func _setup_environment() -> void :
 	env.glow_bloom = 0.08
 	env.fog_enabled = true
 	env.fog_light_color = Color(0.92, 0.82, 0.66)
-	env.fog_sun_scatter = 0.35
-	env.fog_density = 0.004
+	env.fog_sun_scatter = 0.28
+	## Larger Hellas — keep atmosphere but let distant capitals read.
+	env.fog_density = 0.0022
 	var world_env: = WorldEnvironment.new()
 	world_env.environment = env
 	add_child(world_env)
