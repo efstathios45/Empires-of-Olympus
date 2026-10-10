@@ -43,9 +43,8 @@ const REDENSIFY_THRESHOLD: = 80
 
 
 const TIERS: = {
-	## Keep render_scale at 1.0 — downscaling left the GPU idle while the
-	## main thread still paid for grass streaming.
-	"performance": {"mode": MODE_NORMAL, "render_scale": 1.0},
+	## Bounded Hellas grass ignores mode; render_scale is applied by DisplaySettings.
+	"performance": {"mode": MODE_NORMAL, "render_scale": 0.85},
 	"balanced": {"mode": MODE_RIM, "render_scale": 1.0},
 	"quality": {"mode": MODE_MAP, "render_scale": 1.0},
 }
@@ -53,7 +52,7 @@ const TIERS: = {
 var terrain
 var focus_node: Node3D
 var grass_mode: = MODE_RIM
-var clusters_per_cell: = 460
+var clusters_per_cell: = 42
 
 
 
@@ -88,12 +87,12 @@ var _type_noise: = FastNoiseLite.new()
 
 
 var bounded: = true
-var playable_half: = 92.0
+var playable_half: = 72.0
 var outer_half: = 0.0
-var sparse_clusters: = 50
-const TILE_SIZE: = 20.0
-const TILE_VIEW_DIST: = 150.0
-const OUTER_HALF_CAP: = 200.0
+var sparse_clusters: = 10
+const TILE_SIZE: = 24.0
+var tile_view_dist: = 110.0
+const OUTER_HALF_CAP: = 160.0
 var _shared_mesh: ArrayMesh = null
 var _tiles: Array[MultiMeshInstance3D] = []
 var _active_outer: = 0.0
@@ -136,9 +135,9 @@ func build(leaf_tex: Texture2D = null, sun_travel_dir: = Vector3(0.5, -0.72, 0.4
 func _apply_method() -> void :
 	_teardown()
 	if bounded:
-
-		_mat.set_shader_parameter("view_fade_start", TILE_VIEW_DIST - 30.0)
-		_mat.set_shader_parameter("view_fade_end", TILE_VIEW_DIST - 8.0)
+		var fade_end: = maxf(40.0, tile_view_dist)
+		_mat.set_shader_parameter("view_fade_start", fade_end - 28.0)
+		_mat.set_shader_parameter("view_fade_end", fade_end - 6.0)
 		_build_static_grid()
 	else:
 		material_override = _mat
@@ -168,12 +167,16 @@ func _teardown() -> void :
 
 func set_tier(tier: String) -> void :
 	var t: Dictionary = TIERS.get(tier, TIERS["balanced"])
-	var vp: = get_viewport()
-	if vp != null:
-		vp.scaling_3d_mode = Viewport.SCALING_3D_MODE_BILINEAR
-		vp.scaling_3d_scale = float(t["render_scale"])
+	## Viewport scale is owned by DisplaySettings — don't fight it here.
 	if not bounded:
 		set_grass_mode(int(t["mode"]))
+
+
+## Rebuild the static Hellas grass grid after quality / density changes.
+func rebuild_bounded() -> void :
+	if not bounded or _mat == null:
+		return
+	_apply_method()
 
 
 
@@ -624,6 +627,7 @@ func _build_tile(tx: float, tz: float) -> void :
 	mmi.cast_shadow = GeometryInstance3D.SHADOW_CASTING_SETTING_OFF
 	mmi.position = Vector3(tx, 0.0, tz)
 	mmi.custom_aabb = AABB(Vector3( - half - 1.0, -60.0, - half - 1.0), Vector3(TILE_SIZE + 2.0, 120.0, TILE_SIZE + 2.0))
-	mmi.visibility_range_end = TILE_VIEW_DIST
+	mmi.visibility_range_end = tile_view_dist
+	mmi.visibility_range_fade_mode = GeometryInstance3D.VISIBILITY_RANGE_FADE_SELF
 	add_child(mmi)
 	_tiles.append(mmi)
