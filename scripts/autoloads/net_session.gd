@@ -482,19 +482,34 @@ func _rpc_world_snapshot(payload: Dictionary) -> void :
 
 
 func request_skill_fx(skill_id: String, origin: Vector3, yaw: float) -> void :
+	## Skills + basic attacks share one reliable combat FX channel.
+	request_combat_fx(skill_id, origin, yaw)
+
+
+func request_combat_fx(fx_id: String, origin: Vector3, yaw: float) -> void :
 	if not is_online():
 		return
-	_rpc_skill_fx.rpc(skill_id, origin, yaw, String(GameState.player_class))
+	_rpc_combat_fx.rpc(fx_id, origin, yaw, String(GameState.player_class))
 
 
-@rpc("any_peer", "unreliable")
-func _rpc_skill_fx(skill_id: String, origin: Vector3, yaw: float, p_class: String) -> void :
+@rpc("any_peer", "reliable")
+func _rpc_combat_fx(fx_id: String, origin: Vector3, yaw: float, p_class: String) -> void :
 	var id: = multiplayer.get_remote_sender_id()
 	if id == 0:
 		return
 	var av: Node = _avatars.get(id)
-	if av != null and is_instance_valid(av) and av.has_method("play_skill_fx"):
-		av.call("play_skill_fx", skill_id, origin, yaw, p_class)
+	if av == null or not is_instance_valid(av):
+		return
+	if av.has_method("play_combat_fx"):
+		av.call("play_combat_fx", fx_id, origin, yaw, p_class)
+	elif av.has_method("play_skill_fx"):
+		av.call("play_skill_fx", fx_id, origin, yaw, p_class)
+
+
+## Legacy name kept so older call sites / hot-reload still resolve.
+@rpc("any_peer", "reliable")
+func _rpc_skill_fx(skill_id: String, origin: Vector3, yaw: float, p_class: String) -> void :
+	_rpc_combat_fx(skill_id, origin, yaw, p_class)
 
 
 func _spawn_or_update_avatar(id: int, data: Dictionary) -> void :
@@ -859,10 +874,10 @@ func _host_apply_mob_damage(net_id: int, amount: float, from_pos: Vector3) -> vo
 		n.remove_meta("_net_damage_direct")
 
 
-func sync_mob_hp(net_id: int, hp: float, max_hp: float, pos: Vector3) -> void:
+func sync_mob_hp(net_id: int, hp: float, max_hp: float, pos: Vector3, hit_amount: float = 0.0) -> void:
 	if not is_hosting():
 		return
-	_rpc_mob_hp.rpc(net_id, hp, max_hp, pos)
+	_rpc_mob_hp.rpc(net_id, hp, max_hp, pos, hit_amount)
 
 
 func host_mob_died(net_id: int, pos: Vector3) -> void:
@@ -899,12 +914,13 @@ func _rpc_mob_roster(rows: Array) -> void:
 
 
 @rpc("authority", "unreliable_ordered")
-func _rpc_mob_hp(net_id: int, hp: float, max_hp: float, pos: Vector3) -> void:
+func _rpc_mob_hp(net_id: int, hp: float, max_hp: float, pos: Vector3, hit_amount: float = 0.0) -> void:
 	if multiplayer.is_server():
 		return
 	var n: Node = _world_mobs.get(net_id)
 	if n == null or not is_instance_valid(n):
 		return
+	var prev_hp: float = float(n.get("hp")) if "hp" in n else hp
 	if "hp" in n:
 		n.hp = hp
 	if "max_hp" in n:
@@ -915,6 +931,12 @@ func _rpc_mob_hp(net_id: int, hp: float, max_hp: float, pos: Vector3) -> void:
 			(n as Node3D).global_position = (n as Node3D).global_position.lerp(pos, 0.35)
 	if n.has_method("_set_bar_fraction") and max_hp > 0.0:
 		n.call("_set_bar_fraction", hp / max_hp)
+	## Hit react so peers see swings land, not just a quiet HP tick.
+	var dmg: float = hit_amount
+	if dmg <= 0.0 and hp < prev_hp - 0.05:
+		dmg = prev_hp - hp
+	if dmg > 0.0 and n.has_method("apply_proxy_hit"):
+		n.call("apply_proxy_hit", dmg)
 
 
 @rpc("authority", "reliable")

@@ -143,6 +143,109 @@ const ENEMY_CONFIGS: = {
 		"facing_yaw_deg": 180.0, 
 		"sfx_attack": "minotaur_attack", "sfx_death": "minotaur_death", 
 	}, 
+	## Mid / high tier — tinted + scaled variants for the Melite chain to ~30.
+	"siren_enemy": {
+		"name": "Isthmus Siren",
+		"level": 16,
+		"glb": "res://assets/characters/harpy_enemy/harpy_enemy.glb",
+		"lib": "res://assets/characters/harpy_enemy/harpy_enemy_animations.tres",
+		"height": 1.9, "hp": 520, "dmg": 36.0, "speed": 5.8,
+		"xp": 280, "gold": [40, 70], "aggro": 12.0, "reach": 2.2,
+		"attack_cd": 1.15, "material": "Siren Scale", "screech": true,
+		"facing_yaw_deg": 180.0,
+		"tint": Color(0.35, 0.55, 0.85),
+		"sfx_attack": "harpy_attack", "sfx_death": "harpy_death",
+	},
+	"gorgon_matron": {
+		"name": "Cadmean Matron",
+		"level": 18,
+		"glb": "res://assets/characters/gorgon_enemy/gorgon_enemy.glb",
+		"lib": "res://assets/characters/gorgon_enemy/gorgon_enemy_animations.tres",
+		"height": 2.35, "hp": 720, "dmg": 42.0, "speed": 4.2,
+		"xp": 360, "gold": [55, 90], "aggro": 11.0, "reach": 2.6,
+		"attack_cd": 1.7, "material": "Matron Venom",
+		"facing_yaw_deg": 180.0,
+		"tint": Color(0.45, 0.75, 0.4),
+		"sfx_attack": "gorgon_attack", "sfx_death": "gorgon_death",
+	},
+	"centaur_champion": {
+		"name": "Taygetus Champion",
+		"level": 20,
+		"glb": "res://assets/characters/centaur_enemy/centaur_enemy.glb",
+		"lib": "res://assets/characters/centaur_enemy/centaur_enemy_animations.tres",
+		"height": 2.6, "hp": 880, "dmg": 48.0, "speed": 6.2,
+		"xp": 430, "gold": [70, 110], "aggro": 12.0, "reach": 2.8,
+		"attack_cd": 1.5, "material": "Champion Hoof",
+		"facing_yaw_deg": 180.0,
+		"tint": Color(0.85, 0.55, 0.35),
+		"sfx_attack": "centaur_attack", "sfx_death": "centaur_death",
+	},
+	"harpy_matriarch": {
+		"name": "Boreas Matriarch",
+		"level": 22,
+		"glb": "res://assets/characters/harpy_enemy/harpy_enemy.glb",
+		"lib": "res://assets/characters/harpy_enemy/harpy_enemy_animations.tres",
+		"height": 2.1, "hp": 980, "dmg": 52.0, "speed": 6.0,
+		"xp": 520, "gold": [80, 130], "aggro": 13.0, "reach": 2.3,
+		"attack_cd": 1.1, "material": "Matriarch Feather", "screech": true,
+		"facing_yaw_deg": 180.0,
+		"tint": Color(0.7, 0.75, 0.95),
+		"sfx_attack": "harpy_attack", "sfx_death": "harpy_death",
+	},
+	"hellhound_enemy": {
+		"name": "Hound of Hades",
+		"level": 24,
+		"quest_id": "hellhound_enemy",
+		"glb": "res://assets/characters/_free_cc0/quaternius_wolf.glb",
+		"lib": "",
+		"height": 1.55, "hp": 1100, "dmg": 58.0, "speed": 5.4,
+		"xp": 600, "gold": [90, 150], "aggro": 13.5, "reach": 2.3,
+		"attack_cd": 1.25, "material": "Stygian Hide",
+		"facing_yaw_deg": 180.0,
+		"tint": Color(0.55, 0.12, 0.1),
+		"sfx_attack": "wolf_dire_attack", "sfx_death": "wolf_dire_death",
+		"sfx_aggro": "wolf_aggro",
+		"clips": {
+			"idle": "Idle", "walk": "Walk", "sprint": "Gallop",
+			"attack": "Attack", "hit": "Idle_HitReact1", "death": "Death",
+		},
+	},
+	"hydra_boss": {
+		"name": "Lernaean Hydra",
+		"level": 26,
+		"glb": "res://assets/characters/minotaur_boss/minotaur_boss.glb",
+		"lib": "res://assets/characters/minotaur_boss/minotaur_boss_animations.tres",
+		"height": 3.8, "hp": 5200, "dmg": 72.0, "speed": 4.6,
+		"xp": 3800, "gold": [700, 1100], "aggro": 15.0, "reach": 3.6,
+		"attack_cd": 2.0, "material": "Hydra Scale", "boss": true,
+		"facing_yaw_deg": 180.0,
+		"tint": Color(0.25, 0.65, 0.35),
+		"sfx_attack": "minotaur_attack", "sfx_death": "minotaur_death",
+	},
+	"titan_thrall": {
+		"name": "Titan Thrall",
+		"level": 28,
+		"glb": "res://assets/characters/centaur_enemy/centaur_enemy.glb",
+		"lib": "res://assets/characters/centaur_enemy/centaur_enemy_animations.tres",
+		"height": 2.9, "hp": 1400, "dmg": 64.0, "speed": 5.0,
+		"xp": 720, "gold": [120, 190], "aggro": 12.5, "reach": 3.0,
+		"attack_cd": 1.55, "material": "Titan Bone",
+		"facing_yaw_deg": 180.0,
+		"tint": Color(0.55, 0.5, 0.45),
+		"sfx_attack": "centaur_attack", "sfx_death": "centaur_death",
+	},
+	"olympian_shade": {
+		"name": "Olympian Shade",
+		"level": 30,
+		"glb": "res://assets/characters/gorgon_enemy/gorgon_enemy.glb",
+		"lib": "res://assets/characters/gorgon_enemy/gorgon_enemy_animations.tres",
+		"height": 2.5, "hp": 1600, "dmg": 70.0, "speed": 5.2,
+		"xp": 900, "gold": [150, 240], "aggro": 14.0, "reach": 2.7,
+		"attack_cd": 1.4, "material": "Shade Essence",
+		"facing_yaw_deg": 180.0,
+		"tint": Color(0.85, 0.8, 0.55),
+		"sfx_attack": "gorgon_attack", "sfx_death": "gorgon_death",
+	},
 }
 
 
@@ -940,8 +1043,8 @@ func take_damage(amount: float, from_position: Vector3) -> void :
 			and not has_meta("_net_damage_direct"):
 		if net_id > 0:
 			NetSession.request_enemy_damage(net_id, amount, from_position)
-		## Local hit spark so combat still feels responsive.
-		DamageNumbers.spawn(get_parent(), global_position + Vector3(0, cfg["height"] + 0.3, 0), int(amount))
+		## Local spark only — floating numbers arrive with host HP sync so peers match.
+		VfxHelper.spawn_hit(global_position + Vector3(0, 1.1, 0), self)
 		return
 	apply_network_damage(amount, from_position)
 
@@ -960,7 +1063,7 @@ func apply_network_damage(amount: float, from_position: Vector3) -> void:
 		state = State.CHASE
 		_telegraph_aggro()
 	if NetSession and NetSession.is_hosting() and net_id > 0:
-		NetSession.sync_mob_hp(net_id, hp, max_hp, global_position)
+		NetSession.sync_mob_hp(net_id, hp, max_hp, global_position, amount)
 	if hp <= 0.0:
 		_die()
 		return
@@ -969,6 +1072,20 @@ func apply_network_damage(amount: float, from_position: Vector3) -> void:
 		state_timer = 0.35
 		_play(_clip("hit"), false)
 	velocity += (global_position - from_position).normalized() * 2.2
+
+
+func apply_proxy_hit(amount: float) -> void:
+	## Guest presentation when host reports a hit — anim + numbers + spark.
+	if dead or not is_proxy:
+		return
+	if amount > 0.0:
+		DamageNumbers.spawn(get_parent(), global_position + Vector3(0, float(cfg.get("height", 1.5)) + 0.3, 0), int(amount))
+	damaged = true
+	_plate_timer = 0.0
+	_update_plate()
+	VfxHelper.spawn_hit(global_position + Vector3(0, 1.15, 0), self)
+	if not is_boss:
+		_play(_clip("hit"), false)
 
 
 func mark_proxy_dead(_pos: Vector3) -> void:

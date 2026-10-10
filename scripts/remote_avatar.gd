@@ -26,6 +26,8 @@ var _bubble_timer: float = 0.0
 var _target_pos: Vector3 = Vector3.ZERO
 var _target_yaw: float = 0.0
 var _has_target: bool = false
+## While > 0, state sync must not clobber skill/attack clips with walk/idle.
+var _fx_lock: float = 0.0
 
 
 func setup(p_peer: int, p_name: String, p_empire: String, p_level: int, p_class: String = "hoplite") -> void:
@@ -194,11 +196,14 @@ func apply_state(pos: Vector3, yaw: float, p_hp: float, p_max_hp: float, p_level
 		set_meta("level", level)
 		if _nameplate:
 			_nameplate.call("set_plate", display_name, level, empire_id)
-	if anim and not dead:
+	## Never overwrite an in-flight combat clip — that made remotes look idle while casting.
+	if anim and not dead and _fx_lock <= 0.0:
 		HeroAnim.play(anim, "walk" if moving else "idle")
 
 
 func _physics_process(delta: float) -> void:
+	if _fx_lock > 0.0:
+		_fx_lock = maxf(0.0, _fx_lock - delta)
 	if _bubble_timer > 0.0:
 		_bubble_timer -= delta
 		if _bubble_timer <= 0.0 and _chat_bubble != null:
@@ -206,7 +211,7 @@ func _physics_process(delta: float) -> void:
 	if not _has_target or dead:
 		return
 	global_position = global_position.lerp(_target_pos, clampf(12.0 * delta, 0.0, 1.0))
-	if mesh_root:
+	if mesh_root and _fx_lock <= 0.0:
 		mesh_root.rotation.y = lerp_angle(mesh_root.rotation.y, _target_yaw, 10.0 * delta)
 
 
@@ -224,15 +229,54 @@ func mark_dead() -> void:
 		HeroAnim.play(anim, "death", false)
 
 
-func play_skill_fx(_skill_id: String, origin: Vector3, yaw: float, _p_class: String) -> void:
+func play_skill_fx(skill_id: String, origin: Vector3, yaw: float, p_class: String) -> void:
+	## Compat wrapper — combat sync uses play_combat_fx.
+	play_combat_fx(skill_id, origin, yaw, p_class)
+
+
+func play_combat_fx(fx_id: String, origin: Vector3, yaw: float, _p_class: String) -> void:
+	if dead:
+		return
 	if mesh_root:
 		mesh_root.rotation.y = yaw
+	var alias: = _alias_for_fx(fx_id)
+	var lock: = 0.55
+	match fx_id:
+		"q", "skill":
+			alias = "skill"
+			lock = 0.9
+		"r", "skill2":
+			alias = "skill2"
+			lock = 1.0
+		"attack_heavy":
+			lock = 0.85
+		"attack_ranged":
+			lock = 0.65
 	if anim:
-		if HeroAnim.play(anim, "skill", false) == "":
+		if HeroAnim.play(anim, alias, false) == "":
 			HeroAnim.play(anim, "attack_heavy", false)
+	_fx_lock = maxf(_fx_lock, lock)
 	var VfxHelper = load("res://scripts/vfx_helper.gd")
-	if VfxHelper != null and VfxHelper.has_method("spawn_strike"):
-		VfxHelper.spawn_strike(origin + Vector3(0, 0.5, 0), Vector3.FORWARD.rotated(Vector3.UP, yaw), get_parent())
+	if VfxHelper == null:
+		return
+	var forward: = Vector3.FORWARD.rotated(Vector3.UP, yaw)
+	if fx_id == "q" or fx_id == "r" or fx_id == "skill" or fx_id == "skill2" or fx_id == "attack_heavy":
+		if VfxHelper.has_method("spawn_strike"):
+			VfxHelper.spawn_strike(origin + Vector3(0, 0.5, 0), forward, get_parent())
+	elif VfxHelper.has_method("spawn_hit"):
+		VfxHelper.spawn_hit(origin + Vector3(0, 1.0, 0) + forward * 1.2, get_parent())
+
+
+func _alias_for_fx(fx_id: String) -> String:
+	match fx_id:
+		"q", "skill":
+			return "skill"
+		"r", "skill2":
+			return "skill2"
+		"attack_1", "attack_2", "attack_3", "attack_heavy", "attack_ranged":
+			return fx_id
+		_:
+			return fx_id if fx_id != "" else "attack_1"
 
 
 func _on_chat_message(sender: String, text: String, _stamp: float, peer: int = -1) -> void:
