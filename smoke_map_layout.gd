@@ -113,6 +113,18 @@ func _check_world_wiring() -> int:
 	if src.find("_build_roads") < 0 or src.find("_paint_roads_on_splat") < 0:
 		print("FAIL game_world missing road builders")
 		return 1
+	if src.find("path_stone.glb") < 0:
+		print("FAIL roads not using Kenney path_stone meshes")
+		return 1
+	if src.find("BoxMesh.new()") >= 0 and src.find("_build_roads") >= 0:
+		## Guard against regressing to procedural box-slab roads.
+		var roads_fn: = src.find("func _build_roads")
+		var dens_fn: = src.find("func _build_dens")
+		if roads_fn >= 0 and dens_fn > roads_fn:
+			var roads_body: = src.substr(roads_fn, dens_fn - roads_fn)
+			if roads_body.find("BoxMesh") >= 0:
+				print("FAIL roads still use BoxMesh slabs")
+				return 1
 	if src.find("OLIVE_ORCHARDS") < 0:
 		print("FAIL forests not using olive orchards")
 		return 1
