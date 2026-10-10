@@ -114,7 +114,7 @@ func _replay_history() -> void :
 		_append_line(String(entry.get("sender", "?")), String(entry.get("text", "")))
 
 
-func _on_message(sender: String, text: String, _stamp: float) -> void :
+func _on_message(sender: String, text: String, _stamp: float, _peer_id: int = 0) -> void :
 	_append_line(sender, text)
 
 
@@ -153,9 +153,15 @@ func close_chat(recapture: bool = true) -> void :
 func _on_submit(text: String) -> void :
 	var chat: = _chat()
 	if chat != null:
-		chat.call("send_say", text)
+		var whisper_to: = 0
+		if SocialSystem != null and SocialSystem.has_meta("whisper_target"):
+			whisper_to = int(SocialSystem.get_meta("whisper_target"))
+		if whisper_to > 0 and SocialSystem != null:
+			SocialSystem.send_whisper(whisper_to, text)
+			SocialSystem.remove_meta("whisper_target")
+		else:
+			chat.call("send_say", text)
 	_input.text = ""
-
 	_input.grab_focus()
 
 

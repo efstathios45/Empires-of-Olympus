@@ -1,22 +1,17 @@
 extends Node
 
 
-
-
-
-signal message_received(sender: String, text: String, stamp: float)
+signal message_received(sender: String, text: String, stamp: float, peer_id: int)
 signal history_cleared
 
 const MAX_HISTORY: = 80
 const MAX_CHARS: = 120
 
-
 var history: Array = []
 
 
-func _ready() -> void :
-
-	_push_system("Press Enter to chat. Messages reach other players when multiplayer is online.")
+func _ready() -> void:
+	_push_system("Press Enter to chat. Browse Servers → Join → create/login, then enter the world.")
 
 
 func display_name() -> String:
@@ -39,11 +34,9 @@ func is_networked() -> bool:
 	var peer: = multiplayer.multiplayer_peer
 	if peer == null:
 		return false
-
 	if peer is OfflineMultiplayerPeer:
 		return false
 	return peer.get_connection_status() == MultiplayerPeer.CONNECTION_CONNECTED
-
 
 
 func send_say(text: String) -> bool:
@@ -51,10 +44,11 @@ func send_say(text: String) -> bool:
 	if text == "":
 		return false
 	var who: = display_name()
+	var pid: = multiplayer.get_unique_id() if is_networked() else 1
 	if is_networked():
-		_rpc_chat.rpc(who, text)
+		_rpc_chat.rpc(who, text, pid)
 	else:
-		_deliver(who, text)
+		_deliver(who, text, pid)
 	return true
 
 
@@ -67,30 +61,33 @@ func _sanitize(text: String) -> String:
 
 
 @rpc("any_peer", "reliable", "call_local")
-func _rpc_chat(sender: String, text: String) -> void :
-	_deliver(String(sender), _sanitize(text))
+func _rpc_chat(sender: String, text: String, peer_id: int = 0) -> void:
+	var pid: = peer_id
+	if pid == 0:
+		pid = multiplayer.get_remote_sender_id()
+	_deliver(String(sender), _sanitize(text), pid)
 
 
-func _push_system(text: String) -> void :
-	_deliver("Herald", text)
+func _push_system(text: String) -> void:
+	_deliver("Herald", text, 0)
 
 
-
-func announce_local(text: String) -> void :
+func announce_local(text: String) -> void:
+	## Host-only / local notices — never RPC'd to other peers.
 	_push_system(text)
 
 
-func _deliver(sender: String, text: String) -> void :
+func _deliver(sender: String, text: String, peer_id: int = 0) -> void:
 	if text == "":
 		return
 	var stamp: = Time.get_unix_time_from_system()
-	history.append({"sender": sender, "text": text, "t": stamp})
+	history.append({"sender": sender, "text": text, "t": stamp, "peer": peer_id})
 	while history.size() > MAX_HISTORY:
 		history.pop_front()
-	message_received.emit(sender, text, stamp)
+	message_received.emit(sender, text, stamp, peer_id)
 
 
-func clear_history() -> void :
+func clear_history() -> void:
 	history.clear()
 	history_cleared.emit()
 	_push_system("Chat cleared.")

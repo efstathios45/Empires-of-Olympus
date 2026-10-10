@@ -1,23 +1,5 @@
 extends RefCounted
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
+## Greek city agora — build at an origin with optional empire theme.
 
 
 const NpcScript = preload("res://scripts/npc.gd")
@@ -38,44 +20,69 @@ const ANVIL: = "res://assets/props/tools/blacksmith_anvil.glb"
 const AMPHORA: = "res://assets/props/containers/amphora.glb"
 
 const MOSAIC_TEX: = "res://assets/textures/stone/greek_pebble_mosaic.png"
-
 const MOSAIC_TILE_TEX: = "res://assets/textures/stone/old_mosaic_floor_cc0.png"
 const FREE_VASE: = "res://assets/props/decorations/free_antique_ceramic_vase_01/antique_ceramic_vase_01.glb"
 const FREE_BUST: = "res://assets/props/decorations/free_marble_bust_01/marble_bust_01.glb"
-
 
 const TEMPLE_POS: = Vector2(0.0, -20.0)
 const TEMPLE_H: = 13.5
 const TEMPLE_HALF_X: = 8.35
 const TEMPLE_HALF_Z: = 7.4
 const TEMPLE_STEP_TOP: = 1.52
-
 const PAVE_R: = 13.0
 const COLUMN_RING_R: = 10.5
 
+const MERCHANT_GLB: = "res://assets/characters/citizen_merchant/citizen_merchant.glb"
+const MERCHANT_LIB: = "res://assets/characters/citizen_merchant/citizen_merchant_animations.tres"
+const WOMAN_GLB: = "res://assets/characters/citizen_woman/citizen_woman.glb"
+const WOMAN_LIB: = "res://assets/characters/citizen_woman/citizen_woman_animations.tres"
+const GUARD_GLB: = "res://assets/characters/city_guard/city_guard.glb"
+const GUARD_LIB: = "res://assets/characters/city_guard/city_guard_animations.tres"
 
-static func build(world) -> void :
+static var _ox: float = 0.0
+static var _oz: float = 0.0
+static var _theme: String = "athens"
+static var _city_id: String = "athens"
+static var _has_mosaic: bool = true
+
+
+static func build(world, origin: Vector2 = Vector2.ZERO, opts: Dictionary = {}) -> void:
+	_ox = origin.x
+	_oz = origin.y
+	_theme = String(opts.get("theme", "athens"))
+	_city_id = String(opts.get("id", _theme))
+	_has_mosaic = bool(opts.get("mosaic", _theme == "athens"))
 	_paving(world)
 	_temple_precinct(world)
 	_fountain_court(world)
 	_market_row(world)
 	_stoa_and_houses(world)
-	_south_gate(world)
+	## Outer curtain-walls own the main gates; keep a ceremonial inner arch only at Athens.
+	if _theme == "athens":
+		_south_gate(world)
 	_smith_yard(world)
 	_townsfolk(world)
 
 
+static func _lx(x: float) -> float:
+	return _ox + x
 
 
+static func _lz(z: float) -> float:
+	return _oz + z
 
 
-static func _paving(world) -> void :
+static func _paving(world) -> void:
 	var court_mat: = StandardMaterial3D.new()
-
-	court_mat.albedo_color = Color(0.82, 0.74, 0.62)
+	match _theme:
+		"sparta":
+			court_mat.albedo_color = Color(0.78, 0.62, 0.52)
+		"thebes":
+			court_mat.albedo_color = Color(0.7, 0.74, 0.58)
+		_:
+			court_mat.albedo_color = Color(0.82, 0.74, 0.62)
 	if ResourceLoader.exists(MOSAIC_TEX):
 		court_mat.albedo_texture = load(MOSAIC_TEX)
-
 	court_mat.uv1_scale = Vector3(1.0, 1.0, 1.0)
 	court_mat.texture_filter = BaseMaterial3D.TEXTURE_FILTER_LINEAR_WITH_MIPMAPS
 	court_mat.roughness = 0.92
@@ -91,18 +98,19 @@ static func _paving(world) -> void :
 	road_mat.roughness = 0.94
 	road_mat.metallic = 0.0
 
-	var gy: float = world.sample_height(0.0, 0.0)
+	var gy: float = world.sample_height(_lx(0.0), _lz(0.0))
 
 	var disc: = MeshInstance3D.new()
-	disc.name = "PlazaMosaicDisc"
-	# Unit UVs across the diameter so a player Psifidoto ImageTexture maps cleanly.
+	disc.name = "PlazaMosaicDisc_%s" % _city_id
 	disc.mesh = _make_disc_mesh(PAVE_R, 64, 1.8, true)
 	disc.material_override = court_mat
 	disc.cast_shadow = GeometryInstance3D.SHADOW_CASTING_SETTING_OFF
-	disc.add_to_group("plaza_mosaic_disc")
+	if _has_mosaic:
+		disc.add_to_group("plaza_mosaic_disc")
+	disc.set_meta("city_id", _city_id)
 	world.add_child(disc)
-	disc.global_position = Vector3(0.0, gy + 0.02, 0.0)
-	if world.has_method("apply_player_mosaic"):
+	disc.global_position = Vector3(_lx(0.0), gy + 0.02, _lz(0.0))
+	if _has_mosaic and world.has_method("apply_player_mosaic"):
 		world.call_deferred("apply_player_mosaic")
 
 	var road: = MeshInstance3D.new()
@@ -112,9 +120,7 @@ static func _paving(world) -> void :
 	road.material_override = road_mat
 	road.cast_shadow = GeometryInstance3D.SHADOW_CASTING_SETTING_OFF
 	world.add_child(road)
-	road.global_position = Vector3(0.0, gy + 0.02, 19.0)
-
-
+	road.global_position = Vector3(_lx(0.0), gy + 0.02, _lz(19.0))
 
 
 static func _make_disc_mesh(radius: float, segments: int, metres_per_tile: float = 2.0, unit_uv: bool = false) -> ArrayMesh:
@@ -141,130 +147,115 @@ static func _make_disc_mesh(radius: float, segments: int, metres_per_tile: float
 	return st.commit()
 
 
+static func _temple_precinct(world) -> void:
+	var tx: = _lx(TEMPLE_POS.x)
+	var tz: = _lz(TEMPLE_POS.y)
+	var gy: float = world.sample_height(tx, tz)
 
-static func _temple_precinct(world) -> void :
-	var gy: float = world.sample_height(TEMPLE_POS.x, TEMPLE_POS.y)
-
-	var temple = world._place_glb(TEMPLE, TEMPLE_POS.x, TEMPLE_POS.y, TEMPLE_H, 180.0, 0)
+	var temple = world._place_glb(TEMPLE, tx, tz, TEMPLE_H, 180.0, 0)
 	if temple != null:
-
-
-		world._add_box_collider(temple, 
-			Vector3(TEMPLE_HALF_X * 2.0, TEMPLE_STEP_TOP, TEMPLE_HALF_Z * 2.0), 
+		world._add_box_collider(temple,
+			Vector3(TEMPLE_HALF_X * 2.0, TEMPLE_STEP_TOP, TEMPLE_HALF_Z * 2.0),
 			Vector3(0.0, TEMPLE_STEP_TOP * 0.5, 0.0))
-
-
-		var front_z: float = TEMPLE_POS.y + TEMPLE_HALF_Z
+		var front_z: float = tz + TEMPLE_HALF_Z
 		world._add_ramp_collider(
-			Vector3(0.0, gy + 0.02, front_z + 4.7), 
-			Vector3(0.0, gy + TEMPLE_STEP_TOP, front_z + 0.05), 4.4)
+			Vector3(tx, gy + 0.02, front_z + 4.7),
+			Vector3(tx, gy + TEMPLE_STEP_TOP, front_z + 0.05), 4.4)
 
-
-	var altar = world._place_glb(ALTAR, -4.6, -6.6, 2.2, 20.0, 0)
+	var altar = world._place_glb(ALTAR, _lx(-4.6), _lz(-6.6), 2.2, 20.0, 0)
 	if altar != null:
 		world._add_box_collider(altar, Vector3(1.4, 1.1, 1.4), Vector3(0.0, 0.55, 0.0))
 
 	_brazier(world, -6.4, -10.6)
 	_brazier(world, 6.4, -10.6)
-
 	_statue(world, -11.6, -13.4, 200.0)
 	_statue(world, 11.6, -13.4, 160.0)
 
-
-	var priestess = NpcScript.create("priestess", "Priestess Melite", 
-		"res://assets/characters/oracle_priestess/oracle_priestess.glb", 
-		"res://assets/characters/oracle_priestess/oracle_priestess_animations.tres", 
-		Vector3(-7.4, 0.0, -5.8), 1.75, 130.0)
+	var priestess_name: = "Priestess Melite"
+	match _theme:
+		"sparta":
+			priestess_name = "Priestess Gorgo"
+		"thebes":
+			priestess_name = "Priestess Teiresias"
+	var priestess = NpcScript.create("priestess", priestess_name,
+		"res://assets/characters/oracle_priestess/oracle_priestess.glb",
+		"res://assets/characters/oracle_priestess/oracle_priestess_animations.tres",
+		Vector3(_lx(-7.4), 0.0, _lz(-5.8)), 1.75, 130.0)
 	world.add_child(priestess)
 	world.add_interactable(priestess)
 
 
-
-static func _fountain_court(world) -> void :
-	var fountain = world._place_glb(FOUNTAIN, 0.0, 0.0, 2.6, 0.0, 0)
+static func _fountain_court(world) -> void:
+	var fountain = world._place_glb(FOUNTAIN, _lx(0.0), _lz(0.0), 2.6, 0.0, 0)
 	if fountain != null:
-		world._add_box_collider(fountain, Vector3(2.5, 1.25, 1.7), 
+		world._add_box_collider(fountain, Vector3(2.5, 1.25, 1.7),
 			Vector3(0.0, 0.62, 0.0))
-
-
 
 	for i in 6:
 		var a: float = TAU * float(i) / 6.0
 		var cx: float = cos(a) * COLUMN_RING_R
 		var cz: float = sin(a) * COLUMN_RING_R
-		var col = world._place_glb(COLUMN, cx, cz, 6.2, 0.0, 0)
+		var col = world._place_glb(COLUMN, _lx(cx), _lz(cz), 6.2, 0.0, 0)
 		if col != null:
 			world._add_pillar_collider(col, 0.52, 6.2, Vector3.ZERO)
 
 	_brazier(world, -8.6, 4.6)
 	_brazier(world, 8.6, 4.6)
 
-
-	var vase = world._place_glb(FREE_VASE, 6.8, -3.2, 0.95, 25.0, 0)
+	var vase = world._place_glb(FREE_VASE, _lx(6.8), _lz(-3.2), 0.95, 25.0, 0)
 	if vase != null:
 		world._add_pillar_collider(vase, 0.22, 0.95, Vector3.ZERO)
-	var bust = world._place_glb(FREE_BUST, -7.2, 2.4, 1.15, 140.0, 0)
+	var bust = world._place_glb(FREE_BUST, _lx(-7.2), _lz(2.4), 1.15, 140.0, 0)
 	if bust != null:
 		world._add_pillar_collider(bust, 0.28, 1.15, Vector3.ZERO)
 
 
-
-static func _market_row(world) -> void :
-
+static func _market_row(world) -> void:
 	for z in [-6.2, -1.6, 3.0, 7.6]:
-		var stall = world._place_glb(STALL, 15.6, float(z), 3.0, 90.0, 0)
+		var stall = world._place_glb(STALL, _lx(15.6), _lz(float(z)), 3.0, 90.0, 0)
 		if stall != null:
-
 			world._add_box_collider(stall, Vector3(1.6, 1.6, 1.8), Vector3(0.0, 0.8, 0.0))
 	_cart(world, 12.9, -9.2, 25.0)
 	_cart(world, 17.4, 0.8, 200.0)
-	for p in [Vector2(13.1, -6.6), Vector2(13.8, -5.5), Vector2(17.2, -4.4), 
+	for p in [Vector2(13.1, -6.6), Vector2(13.8, -5.5), Vector2(17.2, -4.4),
 			Vector2(13.3, 7.6), Vector2(17.4, 6.4), Vector2(13.6, 2.2)]:
 		_amphora(world, p.x, p.y)
 
 
-
-static func _stoa_and_houses(world) -> void :
-
-	var stoa = world._place_glb(STOA, -17.6, 0.0, 7.0, 90.0, 0)
+static func _stoa_and_houses(world) -> void:
+	var stoa = world._place_glb(STOA, _lx(-17.6), _lz(0.0), 7.0, 90.0, 0)
 	if stoa != null:
-
-		world._add_box_collider(stoa, Vector3(11.0, 5.5, 2.4), 
+		world._add_box_collider(stoa, Vector3(11.0, 5.5, 2.4),
 			Vector3(0.0, 2.75, 0.0))
 
-
 	var houses: = [
-		[-25.5, -12.5, 8.0, 115.0], 
-		[-24.5, 12.2, 7.6, 65.0], 
-		[19.6, -17.6, 8.4, 205.0], 
-		[21.2, 13.6, 7.8, 300.0], 
-		[-9.6, 22.2, 8.0, 355.0], 
+		[-25.5, -12.5, 8.0, 115.0],
+		[-24.5, 12.2, 7.6, 65.0],
+		[19.6, -17.6, 8.4, 205.0],
+		[21.2, 13.6, 7.8, 300.0],
+		[-9.6, 22.2, 8.0, 355.0],
 	]
 	for h in houses:
-		var house = world._place_glb(TOWNHOUSE, float(h[0]), float(h[1]), float(h[2]), float(h[3]), 0)
+		var house = world._place_glb(TOWNHOUSE, _lx(float(h[0])), _lz(float(h[1])), float(h[2]), float(h[3]), 0)
 		if house != null:
-
-			world._add_box_collider(house, Vector3(4.2, 4.8, 3.6), 
+			world._add_box_collider(house, Vector3(4.2, 4.8, 3.6),
 				Vector3(0.0, 2.4, 0.0))
 	_cart(world, -13.2, -9.4, 160.0)
 	_amphora(world, -13.4, 5.6)
 	_amphora(world, -12.9, 6.5)
 
 
-
-static func _south_gate(world) -> void :
-	var gate = world._place_glb(GATE_ARCH, 0.0, 26.0, 9.0, 0.0, 0)
+static func _south_gate(world) -> void:
+	var gate = world._place_glb(GATE_ARCH, _lx(0.0), _lz(26.0), 9.0, 0.0, 0)
 	if gate != null:
-
 		world._add_box_collider(gate, Vector3(2.6, 8.5, 2.2), Vector3(3.2, 4.25, 0.0))
 		world._add_box_collider(gate, Vector3(2.6, 8.5, 2.2), Vector3(-3.2, 4.25, 0.0))
 	_brazier(world, -4.8, 24.4)
 	_brazier(world, 4.8, 24.4)
 
 
-
-static func _smith_yard(world) -> void :
-	var anvil = world._place_glb(ANVIL, 10.6, 15.6, 1.1, 110.0, 0)
+static func _smith_yard(world) -> void:
+	var anvil = world._place_glb(ANVIL, _lx(10.6), _lz(15.6), 1.1, 110.0, 0)
 	if anvil != null:
 		world._add_box_collider(anvil, Vector3(1.1, 0.9, 0.7), Vector3(0.0, 0.45, 0.0))
 	_dummy(world, 13.4, 17.6, 15.0)
@@ -273,86 +264,140 @@ static func _smith_yard(world) -> void :
 	_amphora(world, 9.0, 17.3)
 	_amphora(world, 11.9, 19.8)
 
-
-	var smith = NpcScript.create("smith", "Brontes the Smith", 
-		"res://assets/characters/blacksmith_npc/blacksmith_npc.glb", 
-		"res://assets/characters/blacksmith_npc/blacksmith_npc_animations.tres", 
-		Vector3(9.4, 0.0, 14.2), 1.8, 150.0)
+	var smith_name: = "Brontes the Smith"
+	match _theme:
+		"sparta":
+			smith_name = "Lykurgos the Armourer"
+		"thebes":
+			smith_name = "Kadmos the Smith"
+	var smith = NpcScript.create("smith", smith_name,
+		"res://assets/characters/blacksmith_npc/blacksmith_npc.glb",
+		"res://assets/characters/blacksmith_npc/blacksmith_npc_animations.tres",
+		Vector3(_lx(9.4), 0.0, _lz(14.2)), 1.8, 150.0)
 	world.add_child(smith)
 	world.add_interactable(smith)
 
 
-
-static func _brazier(world, x: float, z: float) -> void :
-	var b = world._place_glb(BRAZIER, x, z, 1.6, 0.0, 0)
+static func _brazier(world, x: float, z: float) -> void:
+	var b = world._place_glb(BRAZIER, _lx(x), _lz(z), 1.6, 0.0, 0)
 	if b != null:
 		world._add_pillar_collider(b, 0.42, 1.6, Vector3.ZERO)
 
-static func _statue(world, x: float, z: float, yaw: float) -> void :
-	var s = world._place_glb(STATUE, x, z, 3.4, yaw, 0)
+
+static func _statue(world, x: float, z: float, yaw: float) -> void:
+	var s = world._place_glb(STATUE, _lx(x), _lz(z), 3.4, yaw, 0)
 	if s != null:
 		world._add_pillar_collider(s, 0.52, 3.4, Vector3.ZERO)
 
-static func _dummy(world, x: float, z: float, yaw: float) -> void :
-	var d = world._place_glb(DUMMY, x, z, 2.0, yaw, 0)
+
+static func _dummy(world, x: float, z: float, yaw: float) -> void:
+	var d = world._place_glb(DUMMY, _lx(x), _lz(z), 2.0, yaw, 0)
 	if d != null:
 		world._add_pillar_collider(d, 0.3, 2.0, Vector3.ZERO)
 
-static func _cart(world, x: float, z: float, yaw: float) -> void :
-	var c = world._place_glb(CART, x, z, 1.4, yaw, 0)
+
+static func _cart(world, x: float, z: float, yaw: float) -> void:
+	var c = world._place_glb(CART, _lx(x), _lz(z), 1.4, yaw, 0)
 	if c != null:
 		world._add_box_collider(c, Vector3(1.6, 1.2, 2.2), Vector3(0.0, 0.6, 0.0))
 
-static func _amphora(world, x: float, z: float) -> void :
-	var a = world._place_glb(AMPHORA, x, z, 0.9, randf() * 360.0, 0)
+
+static func _amphora(world, x: float, z: float) -> void:
+	var a = world._place_glb(AMPHORA, _lx(x), _lz(z), 0.9, randf() * 360.0, 0)
 	if a != null:
 		world._add_pillar_collider(a, 0.22, 0.9, Vector3.ZERO)
 
 
+static func _folk_for_theme() -> Array:
+	match _theme:
+		"sparta":
+			return [
+				{"kind": "merchant", "name": "Brasidas the Arms-Broker",
+					"at": Vector3(13.9, 0.0, -3.8), "yaw": 100.0, "idle": "ual2_Idle_FoldArms",
+					"line": "Laconic bronze — spears that do not bend.", "shop": "oil"},
+				{"kind": "merchant", "name": "Agesilaos the Provisioner",
+					"at": Vector3(13.9, 0.0, 5.4), "yaw": 80.0, "idle": "ual1_Idle",
+					"line": "Black broth and better steel. Coin first.", "shop": "potter"},
+				{"kind": "merchant", "name": "Gylippus the Quartermaster",
+					"at": Vector3(17.0, 0.0, 9.8), "yaw": 130.0, "idle": "ual1_Idle_Talking",
+					"line": "Shield straps, greaves, and quiet courage.", "shop": "fruit"},
+				{"kind": "woman", "name": "Lampito", "at": Vector3(2.9, 0.0, 3.2),
+					"yaw": 205.0, "idle": "ual1_Idle_Talking",
+					"line": "Come home with your shield — or on it."},
+				{"kind": "woman", "name": "Chilonis", "at": Vector3(-2.6, 0.0, 4.6),
+					"yaw": 25.0, "idle": "ual1_Idle_LookAround",
+					"line": "The Eurotas runs cold. So do our vows."},
+				{"kind": "guard", "name": "Hippeis Leon", "at": Vector3(-3.4, 0.0, 22.0),
+					"yaw": 0.0, "idle": "ual2_Idle_Rail",
+					"line": "Centaurs west of the walls. Prove your phalanx."},
+				{"kind": "guard", "name": "Hippeis Kleomenes", "at": Vector3(3.4, 0.0, 22.0),
+					"yaw": 0.0, "idle": "ual1_Idle",
+					"line": "Sparta's gate opens for the brave — and closes on the rest."},
+				{"kind": "guard", "name": "Perioikos Theron", "at": Vector3(-4.2, 0.0, -10.6),
+					"yaw": 175.0, "idle": "ual2_Idle_Rail",
+					"line": "Mind the temple steps. Ares hears every footfall."},
+			]
+		"thebes":
+			return [
+				{"kind": "merchant", "name": "Epaminondas the Trader",
+					"at": Vector3(13.9, 0.0, -3.8), "yaw": 100.0, "idle": "ual2_Idle_FoldArms",
+					"line": "Boeotian grain and Cadmean bronze!", "shop": "oil"},
+				{"kind": "merchant", "name": "Pelopidas the Potter",
+					"at": Vector3(13.9, 0.0, 5.4), "yaw": 80.0, "idle": "ual1_Idle",
+					"line": "Jars stamped with the sphinx of Thebes.", "shop": "potter"},
+				{"kind": "merchant", "name": "Ismenias the Fruit-Seller",
+					"at": Vector3(17.0, 0.0, 9.8), "yaw": 130.0, "idle": "ual1_Idle_Talking",
+					"line": "Figs from the Ismenos — sweet as victory.", "shop": "fruit"},
+				{"kind": "woman", "name": "Antigone", "at": Vector3(2.9, 0.0, 3.2),
+					"yaw": 205.0, "idle": "ual1_Idle_Talking",
+					"line": "Thebes remembers every oath."},
+				{"kind": "woman", "name": "Jocasta", "at": Vector3(-2.6, 0.0, 4.6),
+					"yaw": 25.0, "idle": "ual1_Idle_LookAround",
+					"line": "Watch the hills — harpies nest beyond the vines."},
+				{"kind": "guard", "name": "Sacred Band Hektor", "at": Vector3(-3.4, 0.0, 22.0),
+					"yaw": 0.0, "idle": "ual2_Idle_Rail",
+					"line": "Satyrs eastward. The Band does not flee."},
+				{"kind": "guard", "name": "Sacred Band Asterion", "at": Vector3(3.4, 0.0, 22.0),
+					"yaw": 0.0, "idle": "ual1_Idle",
+					"line": "Seven gates once — now two of stone and iron will."},
+				{"kind": "guard", "name": "Sentry Melanippos", "at": Vector3(-4.2, 0.0, -10.6),
+					"yaw": 175.0, "idle": "ual2_Idle_Rail",
+					"line": "Dionysus and Ares share this square. Behave for both."},
+			]
+		_:
+			return [
+				{"kind": "merchant", "name": "Hesiod the Oil Merchant",
+					"at": Vector3(13.9, 0.0, -3.8), "yaw": 100.0, "idle": "ual2_Idle_FoldArms",
+					"line": "Finest olive oil in Hellas — pressed this very morning!", "shop": "oil"},
+				{"kind": "merchant", "name": "Kleon the Potter",
+					"at": Vector3(13.9, 0.0, 5.4), "yaw": 80.0, "idle": "ual1_Idle",
+					"line": "Amphorae, hero! Sturdy enough to outlive your grandchildren.", "shop": "potter"},
+				{"kind": "merchant", "name": "Xanthos the Fruit-Seller",
+					"at": Vector3(17.0, 0.0, 9.8), "yaw": 130.0, "idle": "ual1_Idle_Talking",
+					"line": "Figs, dates, honey cakes! Coin first, glory later.", "shop": "fruit"},
+				{"kind": "woman", "name": "Thalia", "at": Vector3(2.9, 0.0, 3.2),
+					"yaw": 205.0, "idle": "ual1_Idle_Talking",
+					"line": "", "mosaic": true},
+				{"kind": "woman", "name": "Eirene", "at": Vector3(-2.6, 0.0, 4.6),
+					"yaw": 25.0, "idle": "ual1_Idle_LookAround",
+					"line": "", "mosaic": true},
+				{"kind": "woman", "name": "Old Myrrine", "at": Vector3(-11.4, 0.0, 8.2),
+					"yaw": 90.0, "idle": "ual1_Idle_LookAround",
+					"line": "", "mosaic": true},
+				{"kind": "guard", "name": "Guard Lysandros", "at": Vector3(-3.4, 0.0, 22.0),
+					"yaw": 0.0, "idle": "ual2_Idle_Rail",
+					"line": "Wolves beyond that gate, and worse. Sharpen your spear first."},
+				{"kind": "guard", "name": "Guard Nikanor", "at": Vector3(3.4, 0.0, 22.0),
+					"yaw": 0.0, "idle": "ual1_Idle",
+					"line": "The Minotaur's arena lies south. Nobody who goes comes back."},
+				{"kind": "guard", "name": "Sentry Damon", "at": Vector3(-4.2, 0.0, -10.6),
+					"yaw": 175.0, "idle": "ual2_Idle_Rail",
+					"line": "Mind the sacred steps, stranger. Athena watches this square."},
+			]
 
 
-
-
-const MERCHANT_GLB: = "res://assets/characters/citizen_merchant/citizen_merchant.glb"
-const MERCHANT_LIB: = "res://assets/characters/citizen_merchant/citizen_merchant_animations.tres"
-const WOMAN_GLB: = "res://assets/characters/citizen_woman/citizen_woman.glb"
-const WOMAN_LIB: = "res://assets/characters/citizen_woman/citizen_woman_animations.tres"
-const GUARD_GLB: = "res://assets/characters/city_guard/city_guard.glb"
-const GUARD_LIB: = "res://assets/characters/city_guard/city_guard_animations.tres"
-
-static func _townsfolk(world) -> void :
-	var folk: = [
-		{"kind": "merchant", "name": "Hesiod the Oil Merchant",
-			"at": Vector3(13.9, 0.0, -3.8), "yaw": 100.0, "idle": "ual2_Idle_FoldArms",
-			"line": "Finest olive oil in Hellas — pressed this very morning!",
-			"shop": "oil"},
-		{"kind": "merchant", "name": "Kleon the Potter",
-			"at": Vector3(13.9, 0.0, 5.4), "yaw": 80.0, "idle": "ual1_Idle",
-			"line": "Amphorae, hero! Sturdy enough to outlive your grandchildren.",
-			"shop": "potter"},
-		{"kind": "merchant", "name": "Xanthos the Fruit-Seller",
-			"at": Vector3(17.0, 0.0, 9.8), "yaw": 130.0, "idle": "ual1_Idle_Talking",
-			"line": "Figs, dates, honey cakes! Coin first, glory later.",
-			"shop": "fruit"},
-		{"kind": "woman", "name": "Thalia", "at": Vector3(2.9, 0.0, 3.2), 
-			"yaw": 205.0, "idle": "ual1_Idle_Talking", 
-			"line": "", "mosaic": true}, 
-		{"kind": "woman", "name": "Eirene", "at": Vector3(-2.6, 0.0, 4.6), 
-			"yaw": 25.0, "idle": "ual1_Idle_LookAround", 
-			"line": "", "mosaic": true}, 
-		{"kind": "woman", "name": "Old Myrrine", "at": Vector3(-11.4, 0.0, 8.2), 
-			"yaw": 90.0, "idle": "ual1_Idle_LookAround", 
-			"line": "", "mosaic": true}, 
-		{"kind": "guard", "name": "Guard Lysandros", "at": Vector3(-3.4, 0.0, 22.0), 
-			"yaw": 0.0, "idle": "ual2_Idle_Rail", 
-			"line": "Wolves beyond that gate, and worse. Sharpen your spear first."}, 
-		{"kind": "guard", "name": "Guard Nikanor", "at": Vector3(3.4, 0.0, 22.0), 
-			"yaw": 0.0, "idle": "ual1_Idle", 
-			"line": "The Minotaur's arena lies south. Nobody who goes comes back."}, 
-		{"kind": "guard", "name": "Sentry Damon", "at": Vector3(-4.2, 0.0, -10.6), 
-			"yaw": 175.0, "idle": "ual2_Idle_Rail", 
-			"line": "Mind the sacred steps, stranger. Athena watches this square."}, 
-	]
+static func _townsfolk(world) -> void:
+	var folk: = _folk_for_theme()
 	var idx: = 0
 	for f in folk:
 		var kind: String = String(f["kind"])
@@ -370,13 +415,15 @@ static func _townsfolk(world) -> void :
 		if not ResourceLoader.exists(glb):
 			continue
 		idx += 1
-		var offers_mosaic: = bool(f.get("mosaic", false))
+		var offers_mosaic: = bool(f.get("mosaic", false)) and _has_mosaic
 		var shop: = String(f.get("shop", ""))
-		var npc_id: = "mosaic_keeper" if offers_mosaic else ("citizen_%d" % idx)
+		var npc_id: = "mosaic_keeper" if offers_mosaic else ("%s_citizen_%d" % [_city_id, idx])
 		if shop != "":
-			npc_id = "merchant_%s" % shop
+			npc_id = "%s_merchant_%s" % [_city_id, shop]
+		var at: Vector3 = f["at"]
+		var world_at: = Vector3(_lx(at.x), at.y, _lz(at.z))
 		var n = NpcScript.create_flavour(npc_id, String(f["name"]),
-			glb, lib, f["at"], height, float(f["yaw"]),
+			glb, lib, world_at, height, float(f["yaw"]),
 			String(f["idle"]), String(f["line"]))
 		n.offers_mosaic = offers_mosaic
 		n.shop_id = shop

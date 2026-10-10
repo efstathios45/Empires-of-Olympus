@@ -46,6 +46,8 @@ var dead: bool = false
 var destroyed: bool = false
 var emerging: bool = true
 var cfg: Dictionary = {}
+var net_id: int = 0
+var is_proxy: bool = false
 
 var _body: Node3D
 var _glow: MeshInstance3D
@@ -283,21 +285,56 @@ func interact() -> void :
 func take_damage(amount: float, from_position: Vector3) -> void :
 	if dead or emerging:
 		return
+	if NetSession and NetSession.is_online() and not NetSession.is_hosting() \
+			and not has_meta("_net_damage_direct"):
+		if net_id > 0:
+			NetSession.request_enemy_damage(net_id, amount, from_position)
+		DamageNumbers.spawn(get_parent(), global_position + Vector3(0, 2.2, 0), int(amount))
+		return
+	apply_network_damage(amount, from_position)
+
+
+func apply_network_damage(amount: float, from_position: Vector3) -> void:
+	if dead or emerging:
+		return
 	hp -= amount
 	DamageNumbers.spawn(get_parent(), global_position + Vector3(0, 2.2, 0), int(amount))
 	_set_bar_fraction(hp / max_hp)
 	PartyShare.note_nearby(self, from_position, 6.0)
 	PartyShare.note_nearby(self, global_position, 12.0)
-
-	PartyShare.award_xp_and_gold(self, int(cfg["xp_hit"]), 0)
+	## Hit XP only from host so it can be party-split once.
+	if not is_proxy and (not NetSession or not NetSession.is_online() or NetSession.is_hosting()):
+		PartyShare.award_xp_and_gold(self, int(cfg["xp_hit"]), 0, global_position)
 	AudioManager.play_sfx("oracle_pulse", -12.0, randf_range(0.95, 1.1))
 	VfxHelper.spawn_hit(global_position + Vector3(0, 1.3, 0), get_parent())
+	if NetSession and NetSession.is_hosting() and net_id > 0:
+		NetSession.sync_mob_hp(net_id, hp, max_hp, global_position)
 	_try_spawn_guardians()
 	if hp <= 0.0:
 		_shatter()
 
 
+func mark_proxy_dead(_pos: Vector3) -> void:
+	if dead:
+		return
+	dead = true
+	destroyed = true
+	collision_layer = 0
+	AudioManager.play_sfx("stone_shatter", -2.0)
+	VfxHelper.spawn_explosion(global_position + Vector3(0, 1.2, 0), get_parent())
+	if is_instance_valid(_body):
+		_body.visible = false
+	if is_instance_valid(plate):
+		plate.visible = false
+	var t: = get_tree().create_timer(1.4)
+	t.timeout.connect(queue_free)
+
+
 func _try_spawn_guardians() -> void :
+	if is_proxy:
+		return
+	if NetSession and NetSession.is_online() and not NetSession.is_hosting():
+		return
 	if _hit_spawn_cd > 0.0:
 		return
 	if _spawned >= int(cfg["spawn_max"]):
@@ -317,18 +354,28 @@ func _try_spawn_guardians() -> void :
 		wy = world.sample_height(wx, wz) + 0.5
 	var e: = EnemyScript.create(pick, Vector3(wx, wy, wz))
 	world.add_child(e)
+	if NetSession and NetSession.is_hosting():
+		NetSession.host_register_enemy(e)
 	_spawned += 1
 
 
 func _shatter() -> void :
+	if dead:
+		return
 	dead = true
 	destroyed = true
 	collision_layer = 0
+	if is_proxy:
+		mark_proxy_dead(global_position)
+		return
 	GameState.register_stone_destroyed()
 	PartyShare.note_nearby(self, global_position, 16.0)
 	var gold_range: Array = cfg["gold"]
 	var gold_amt: int = randi_range(int(gold_range[0]), int(gold_range[1]))
-	PartyShare.award_xp_and_gold(self, int(cfg["xp_break"]), gold_amt)
+	PartyShare.award_xp_and_gold(self, int(cfg["xp_break"]), gold_amt, global_position)
+	if NetSession and NetSession.is_hosting() and net_id > 0:
+		NetSession.host_mob_died(net_id, global_position)
+		NetSession.broadcast_world_save()
 	AudioManager.play_sfx("stone_shatter", -2.0)
 	AudioManager.play_sfx("oracle_pulse", -4.0)
 	VfxHelper.spawn_explosion(global_position + Vector3(0, 1.2, 0), get_parent())
