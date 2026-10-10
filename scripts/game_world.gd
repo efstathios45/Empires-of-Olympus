@@ -1215,7 +1215,7 @@ func _build_forests() -> void :
 	var placed: = 0
 	var attempts: = 0
 	var loners: Array[Vector2] = []
-	while placed < 48 and attempts < 900:
+	while placed < 32 and attempts < 700:
 		attempts += 1
 		var wx: = rng.randf_range(-WALL_HALF + 18.0, WALL_HALF - 18.0)
 		var wz: = rng.randf_range(-WALL_HALF + 18.0, WALL_HALF - 18.0)
