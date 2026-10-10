@@ -31,7 +31,7 @@ const DIM: = Color(0.86, 0.82, 0.72)
 const EMPIRE_LORE: = {
 	"sparta": "Born upon the shield, buried beneath it. In Laconia the phalanx moves as one beast of bronze, and it never breaks.", 
 	"athens": "Under Athena's olive the academy lamps burn until dawn. A mind honed to an edge cuts deeper than any blade.", 
-	"corinth": "Two seas, one isthmus, and every keel in Hellas paying toll. Corinth buys what she cannot outrun.", 
+	"corinth": "Two seas, one isthmus — and a foothold in walled Thebes. Corinth buys what she cannot outrun.", 
 }
 
 

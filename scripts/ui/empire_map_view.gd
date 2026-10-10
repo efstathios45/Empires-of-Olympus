@@ -45,11 +45,11 @@ const CHRONICLE: = {
 		"name": "Corinth", 
 		"king": "Tyrant Kypselos the Coin-Weigher", 
 		"queen": "Lady Melissa of Two Seas", 
-		"capital": "Corinth", 
+		"capital": "Thebes (Boeotian foothold)", 
 		"rival": "Both — and neither", 
 		"war": "The Toll Wars — every keel taxed, every rival bribed", 
 		"battle": "The Burning of the Diolkos warehouses", 
-		"detail": "Two seas, one isthmus, and Kypselos' ledgers thicker than any shield. Corinth sells grain to Sparta and timber to Athens in the same week, then funds both sides' next campaign. Drachmae are her phalanx.", 
+		"detail": "Two seas, one isthmus — and walled Thebes as Corinth's inland gate. Kypselos sells grain to Sparta and timber to Athens in the same week, then funds both sides' next campaign. Drachmae are her phalanx.", 
 	}, 
 }
 
