@@ -1,11 +1,12 @@
 extends Node
-## Video + performance. Defaults favor uncapped FPS and Vulkan Forward+.
+## Video + performance. Vulkan Forward+; default Max FPS 144 for smooth play.
 
 
 signal settings_changed
 
 const CFG_PATH: = "user://display_settings.cfg"
 const SECTION: = "video"
+const SETTINGS_VERSION: = 3
 
 const RESOLUTIONS: Array = [
 	{"id": "1280x720", "label": "1280 × 720", "size": Vector2i(1280, 720)},
@@ -14,6 +15,8 @@ const RESOLUTIONS: Array = [
 	{"id": "2560x1440", "label": "2560 × 1440", "size": Vector2i(2560, 1440)},
 	{"id": "native", "label": "Desktop native", "size": Vector2i.ZERO},
 ]
+
+const MAX_FPS_OPTIONS: Array = [0, 60, 120, 144, 240]
 
 ## Quality presets drive render scale, grass, shadows, glow, MSAA.
 const QUALITY_PRESETS: Dictionary = {
@@ -49,14 +52,29 @@ const QUALITY_PRESETS: Dictionary = {
 	},
 }
 
+const SHADOW_OVERRIDES: Dictionary = {
+	"low": 55.0,
+	"med": 90.0,
+	"high": 130.0,
+}
+
+const GRASS_OVERRIDES: Dictionary = {
+	"low": {"grass": "performance", "grass_half": 72.0, "grass_clusters": 55},
+	"med": {"grass": "balanced", "grass_half": 96.0, "grass_clusters": 80},
+	"high": {"grass": "quality", "grass_half": 120.0, "grass_clusters": 110},
+}
+
 var window_mode: String = "windowed"
 var resolution_id: String = "1920x1080"
 ## Off by default — V-Sync often caps FPS while leaving GPU idle.
 var vsync: bool = false
-## 0 = uncapped (uses the PC fully when vsync is off).
-var max_fps: int = 0
+## 144 keeps frames smooth without burning the GPU at unlimited FPS.
+var max_fps: int = 144
 var quality: String = "balanced"
-var show_fps: bool = false
+var show_fps: bool = true
+## "preset" follows the quality tier; otherwise low/med/high.
+var shadow_override: String = "preset"
+var grass_override: String = "preset"
 
 
 func _ready() -> void:
@@ -77,25 +95,37 @@ func load_settings() -> void:
 	max_fps = int(cfg.get_value(SECTION, "max_fps", max_fps))
 	quality = String(cfg.get_value(SECTION, "quality", quality))
 	show_fps = bool(cfg.get_value(SECTION, "show_fps", show_fps))
+	shadow_override = String(cfg.get_value(SECTION, "shadow_override", shadow_override))
+	grass_override = String(cfg.get_value(SECTION, "grass_override", grass_override))
 	if not QUALITY_PRESETS.has(quality):
 		quality = "balanced"
+	if shadow_override not in ["preset", "low", "med", "high"]:
+		shadow_override = "preset"
+	if grass_override not in ["preset", "low", "med", "high"]:
+		grass_override = "preset"
 	## v2: old builds defaulted V-Sync on + OpenGL, which left GPUs idle.
 	if ver < 2:
 		vsync = false
-		max_fps = 0
+		max_fps = 144
 		if quality == "":
 			quality = "balanced"
+	## v3: uncapped (0) often feels like lag/heat; prefer a smooth 144 cap.
+	if ver < 3 and max_fps == 0 and not vsync:
+		max_fps = 144
+		show_fps = true
 
 
 func save_settings() -> void:
 	var cfg: = ConfigFile.new()
-	cfg.set_value(SECTION, "settings_version", 2)
+	cfg.set_value(SECTION, "settings_version", SETTINGS_VERSION)
 	cfg.set_value(SECTION, "window_mode", window_mode)
 	cfg.set_value(SECTION, "resolution_id", resolution_id)
 	cfg.set_value(SECTION, "vsync", vsync)
 	cfg.set_value(SECTION, "max_fps", max_fps)
 	cfg.set_value(SECTION, "quality", quality)
 	cfg.set_value(SECTION, "show_fps", show_fps)
+	cfg.set_value(SECTION, "shadow_override", shadow_override)
+	cfg.set_value(SECTION, "grass_override", grass_override)
 	cfg.save(CFG_PATH)
 
 
@@ -116,15 +146,36 @@ func resolution_size() -> Vector2i:
 
 
 func quality_preset() -> Dictionary:
-	return QUALITY_PRESETS.get(quality, QUALITY_PRESETS["balanced"])
+	var preset: Dictionary = QUALITY_PRESETS.get(quality, QUALITY_PRESETS["balanced"]).duplicate()
+	if SHADOW_OVERRIDES.has(shadow_override):
+		preset["shadow_dist"] = float(SHADOW_OVERRIDES[shadow_override])
+	if GRASS_OVERRIDES.has(grass_override):
+		var g: Dictionary = GRASS_OVERRIDES[grass_override]
+		for k in g:
+			preset[k] = g[k]
+	return preset
+
+
+func renderer_label() -> String:
+	## Prefer the project setting — runtime driver can fall back (e.g. CI/X11).
+	var method: = String(ProjectSettings.get_setting("rendering/renderer/rendering_method", ""))
+	match method:
+		"forward_plus":
+			return "Vulkan Forward+"
+		"mobile":
+			return "Mobile renderer"
+		"gl_compatibility":
+			return "OpenGL Compatibility"
+		_:
+			return method
 
 
 func apply() -> void:
 	OS.low_processor_usage_mode = false
 	DisplayServer.window_set_vsync_mode(
 		DisplayServer.VSYNC_ENABLED if vsync else DisplayServer.VSYNC_DISABLED)
-	## Uncapped when vsync is off so the GPU can actually work.
-	Engine.max_fps = 0 if (not vsync and max_fps <= 0) else maxi(0, max_fps)
+	## Cap when set; 0 = unlimited (GPU runs flat-out).
+	Engine.max_fps = maxi(0, max_fps)
 
 	match window_mode:
 		"fullscreen":
@@ -197,11 +248,24 @@ func set_quality(id: String) -> void:
 	apply()
 
 
+func set_shadow_override(id: String) -> void:
+	if id not in ["preset", "low", "med", "high"]:
+		return
+	shadow_override = id
+	apply()
+
+
+func set_grass_override(id: String) -> void:
+	if id not in ["preset", "low", "med", "high"]:
+		return
+	grass_override = id
+	apply()
+
+
 func cycle_max_fps() -> void:
-	## 0 (uncapped) → 60 → 120 → 144 → 240 → 0
-	var opts: Array = [0, 60, 120, 144, 240]
+	var opts: Array = MAX_FPS_OPTIONS
 	var idx: = opts.find(max_fps)
-	max_fps = int(opts[(idx + 1) % opts.size()]) if idx >= 0 else 0
+	max_fps = int(opts[(idx + 1) % opts.size()]) if idx >= 0 else 144
 	apply()
 
 
@@ -214,9 +278,33 @@ func cycle_quality() -> void:
 
 func max_fps_label() -> String:
 	if max_fps <= 0:
-		return "Uncapped"
+		return "Unlimited"
 	return "%d FPS" % max_fps
 
 
 func quality_label() -> String:
 	return String(quality_preset().get("label", quality.capitalize()))
+
+
+func shadow_label() -> String:
+	match shadow_override:
+		"low":
+			return "Low"
+		"med":
+			return "Medium"
+		"high":
+			return "High"
+		_:
+			return "Follow quality"
+
+
+func grass_label() -> String:
+	match grass_override:
+		"low":
+			return "Low"
+		"med":
+			return "Medium"
+		"high":
+			return "High"
+		_:
+			return "Follow quality"

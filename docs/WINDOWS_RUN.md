@@ -4,14 +4,16 @@ Empires of Olympus — Windows 10 / 11
 Performance (Vulkan Forward+)
 -----------------------------
 This build uses Vulkan Forward+ so the GPU can actually work.
-Defaults: V-Sync off, Max FPS uncapped, Quality = Balanced.
+Defaults: V-Sync off, Max FPS 144, Quality = Balanced, Show FPS on.
 
-Settings (gear / pause menu):
+Video Settings (main menu or pause → Settings):
+- Max FPS: 60 / 120 / 144 / 240 / Unlimited (default 144)
 - Quality: Performance / Balanced / Quality
-- V-Sync: leave Off for highest FPS
-- Max FPS: Uncapped (or 144 / 240 if you prefer a cap)
-- Show FPS: On to verify
+- Shadows & Grass density: Follow quality, or Low / Medium / High
+- V-Sync: leave Off for the smoothest feel with a Max FPS cap
+- Renderer line shows Vulkan Forward+ (not removed)
 
+If you lag: Quality → Performance, Grass → Low, Max FPS → 144.
 If an ancient GPU fails to start Vulkan, run with:
   EmpiresOfOlympus.exe --rendering-method gl_compatibility
 

@@ -11,8 +11,9 @@ Vulkan Forward+ build: Hellenic cobblestone roads (Poly Haven paving),
 spread dens/capitals, olive orchards, peer combat FX sync, Melite quest
 chain to ~30, Athens / Sparta / Thebes open war, uncapped FPS.
 
-In **Settings**: leave V-Sync **Off**, Max FPS **Uncapped**, turn on
-**Show FPS** to verify. Use Quality → Performance if you need more FPS.
+In **Video Settings**: Max FPS defaults to **144**, V-Sync **Off**,
+Show FPS **On**. Use Quality → Performance and Grass → Low if you lag.
+Renderer stays **Vulkan Forward+**.
 
 Run notes: [`docs/WINDOWS_RUN.md`](docs/WINDOWS_RUN.md)
 
