@@ -5,17 +5,18 @@ Enter-to-chat, Minecraft-style server browser, and online host/join.
 
 ## Windows download
 
-**https://gofile.io/d/MGbxYdpH** — `EmpiresOfOlympus-windows.zip`
+**https://gofile.io/d/MOVVJ2UK** — `EmpiresOfOlympus-windows.zip`
 
-Party 50/50 XP·gold·loot (any level), host-synced mobs/stones, plaza mosaic
-& quests saved on the host for both clients. Also: RMB social menu,
-remote body fix, host IP/latency, synced bubbles.
+Larger Hellas with walled **Athens**, **Sparta**, and **Thebes**, wide mob
+belts between cities, party 50/50 share, and host-synced world/mobs.
 
 Run notes: [`docs/WINDOWS_RUN.md`](docs/WINDOWS_RUN.md)
 
 ## macOS download
 
 **https://gofile.io/d/UXq9P21u** — `EmpiresOfOlympus-macos.zip`
+
+(Previous social/party build — re-export macOS if you need the three-city map.)
 
 Universal app (Intel + Apple Silicon). If macOS blocks it, right-click
 `OPEN-ON-MAC.command` → Open (see [`docs/MACOS_RUN.md`](docs/MACOS_RUN.md)).
