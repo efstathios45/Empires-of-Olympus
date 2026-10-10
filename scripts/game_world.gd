@@ -354,6 +354,8 @@ func ground_kind(x: float, z: float) -> String:
 	var arena_r: float = ARENA_RADIUS * 0.9
 	if p.distance_squared_to(ARENA_POS) < arena_r * arena_r:
 		return "dirt"
+	if HellasMapData.dist_to_nearest_road(p) < ROAD_HALF_W:
+		return "dirt"
 	for den in HellasMapData.DENS:
 		var dr: float = float(den["r"]) * 0.9
 		if p.distance_squared_to(den["pos"]) < dr * dr:
