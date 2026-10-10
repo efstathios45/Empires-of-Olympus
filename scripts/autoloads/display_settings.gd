@@ -6,7 +6,7 @@ signal settings_changed
 
 const CFG_PATH: = "user://display_settings.cfg"
 const SECTION: = "video"
-const SETTINGS_VERSION: = 3
+const SETTINGS_VERSION: = 4
 
 const RESOLUTIONS: Array = [
 	{"id": "1280x720", "label": "1280 × 720", "size": Vector2i(1280, 720)},
@@ -19,49 +19,60 @@ const RESOLUTIONS: Array = [
 const MAX_FPS_OPTIONS: Array = [0, 60, 120, 144, 240]
 
 ## Quality presets drive render scale, grass, shadows, glow, MSAA.
+## Hellas is large — Balanced used to mean MSAA2 + dense grass + long shadows
+## and felt like "the game always lags". Defaults lean leaner; Quality stays pretty.
 const QUALITY_PRESETS: Dictionary = {
 	"performance": {
 		"label": "Performance",
-		"render_scale": 1.0,
+		"render_scale": 0.85,
 		"grass": "performance",
-		"shadow_dist": 55.0,
+		"shadow_dist": 45.0,
+		"shadow_size": 1024,
 		"glow": false,
 		"msaa": Viewport.MSAA_DISABLED,
-		"grass_half": 72.0,
-		"grass_clusters": 55,
+		"grass_half": 56.0,
+		"grass_clusters": 28,
+		"grass_view": 85.0,
+		"road_detail": false,
 	},
 	"balanced": {
 		"label": "Balanced",
 		"render_scale": 1.0,
 		"grass": "balanced",
-		"shadow_dist": 90.0,
-		"glow": true,
-		"msaa": Viewport.MSAA_2X,
-		"grass_half": 96.0,
-		"grass_clusters": 80,
+		"shadow_dist": 70.0,
+		"shadow_size": 2048,
+		"glow": false,
+		"msaa": Viewport.MSAA_DISABLED,
+		"grass_half": 72.0,
+		"grass_clusters": 42,
+		"grass_view": 110.0,
+		"road_detail": true,
 	},
 	"quality": {
 		"label": "Quality",
 		"render_scale": 1.0,
 		"grass": "quality",
-		"shadow_dist": 130.0,
+		"shadow_dist": 110.0,
+		"shadow_size": 4096,
 		"glow": true,
-		"msaa": Viewport.MSAA_4X,
-		"grass_half": 120.0,
-		"grass_clusters": 110,
+		"msaa": Viewport.MSAA_2X,
+		"grass_half": 96.0,
+		"grass_clusters": 70,
+		"grass_view": 140.0,
+		"road_detail": true,
 	},
 }
 
 const SHADOW_OVERRIDES: Dictionary = {
-	"low": 55.0,
-	"med": 90.0,
-	"high": 130.0,
+	"low": 45.0,
+	"med": 70.0,
+	"high": 110.0,
 }
 
 const GRASS_OVERRIDES: Dictionary = {
-	"low": {"grass": "performance", "grass_half": 72.0, "grass_clusters": 55},
-	"med": {"grass": "balanced", "grass_half": 96.0, "grass_clusters": 80},
-	"high": {"grass": "quality", "grass_half": 120.0, "grass_clusters": 110},
+	"low": {"grass": "performance", "grass_half": 56.0, "grass_clusters": 28, "grass_view": 85.0},
+	"med": {"grass": "balanced", "grass_half": 72.0, "grass_clusters": 42, "grass_view": 110.0},
+	"high": {"grass": "quality", "grass_half": 96.0, "grass_clusters": 70, "grass_view": 140.0},
 }
 
 var window_mode: String = "windowed"
@@ -70,7 +81,8 @@ var resolution_id: String = "1920x1080"
 var vsync: bool = false
 ## 144 keeps frames smooth without burning the GPU at unlimited FPS.
 var max_fps: int = 144
-var quality: String = "balanced"
+## Performance is the ship default — Hellas dens/roads/grass are heavy.
+var quality: String = "performance"
 var show_fps: bool = true
 ## "preset" follows the quality tier; otherwise low/med/high.
 var shadow_override: String = "preset"
@@ -113,6 +125,9 @@ func load_settings() -> void:
 	if ver < 3 and max_fps == 0 and not vsync:
 		max_fps = 144
 		show_fps = true
+	## v4: old "balanced" was too heavy for the full Hellas map — migrate once.
+	if ver < 4 and quality == "balanced":
+		quality = "performance"
 
 
 func save_settings() -> void:

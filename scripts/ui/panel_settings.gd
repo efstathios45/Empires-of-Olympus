@@ -132,7 +132,7 @@ func _ready() -> void:
 	v.add_child(_status)
 
 	var tip: = Kit.make_label(
-		"Tip: Max FPS 144 + V-Sync Off is the smooth default. If you lag, set Quality → Performance and Grass → Low. Ancient GPUs: launch with --rendering-method gl_compatibility.",
+		"Tip: Default is Performance + 144 FPS (V-Sync Off). Hellas dens/roads/grass are heavy — use Balanced/Quality only if your GPU can take it. Ancient GPUs: --rendering-method gl_compatibility.",
 		12, Kit.INK_SOFT, HORIZONTAL_ALIGNMENT_CENTER)
 	tip.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
 	tip.custom_minimum_size = Vector2(560, 0)

@@ -858,16 +858,18 @@ func _flash_plate() -> void :
 	_flash_tween = name_label.create_tween()
 	_flash_tween.tween_property(name_label, "modulate", _plate_color(), 0.8).set_delay(0.3)
 
-## Sleep far AI — keeps ~95-mob worlds from starving the main thread.
-const AI_SLEEP_DIST: = 72.0
+## Sleep far AI — 150+ dens + caravan escorts starve the main thread otherwise.
+const AI_SLEEP_DIST: = 64.0
 const AI_SLEEP_DIST_SQ: = AI_SLEEP_DIST * AI_SLEEP_DIST
+## Deep sleep: skip move_and_slide / plate entirely most frames when very far.
+const AI_DEEP_SLEEP_DIST: = 110.0
+const AI_DEEP_SLEEP_DIST_SQ: = AI_DEEP_SLEEP_DIST * AI_DEEP_SLEEP_DIST
+const AI_DEEP_SLEEP_TICK: = 0.55
+
+var _deep_sleep_timer: float = 0.0
 
 
 func _physics_process(delta: float) -> void :
-	_plate_timer -= delta
-	if _plate_timer <= 0.0:
-		_plate_timer = PLATE_TICK
-		_update_plate()
 	_telegraph_cd = maxf(0.0, _telegraph_cd - delta)
 
 	if dead:
@@ -886,14 +888,36 @@ func _physics_process(delta: float) -> void :
 			move_and_slide()
 			return
 
-	## Distant idle mobs skip chase/attack logic (still visible).
+	## Distant idle mobs: deep-sleep most frames, light-sleep nearby ring.
 	if not is_boss and state == State.IDLE:
 		var d2: = global_position.distance_squared_to(player.global_position)
-		if d2 > AI_SLEEP_DIST_SQ:
+		if d2 > AI_DEEP_SLEEP_DIST_SQ:
+			_deep_sleep_timer -= delta
+			if _deep_sleep_timer > 0.0:
+				return
+			_deep_sleep_timer = AI_DEEP_SLEEP_TICK
 			velocity = Vector3.ZERO
+			return
+		if d2 > AI_SLEEP_DIST_SQ:
+			_plate_timer -= delta
+			if _plate_timer <= 0.0:
+				_plate_timer = PLATE_TICK * 2.0
+				_update_plate()
+			velocity = Vector3.ZERO
+			## Gravity + slide only every other deep-sleep cadence (~0.55s).
+			_deep_sleep_timer -= delta
+			if _deep_sleep_timer > 0.0:
+				return
+			_deep_sleep_timer = AI_DEEP_SLEEP_TICK
 			_apply_gravity(delta)
 			move_and_slide()
 			return
+		_deep_sleep_timer = 0.0
+
+	_plate_timer -= delta
+	if _plate_timer <= 0.0:
+		_plate_timer = PLATE_TICK
+		_update_plate()
 
 	attack_cooldown = maxf(0.0, attack_cooldown - delta)
 	state_timer = maxf(0.0, state_timer - delta)

@@ -14,6 +14,10 @@ const CART_BACK: = 3.2
 const HORSE_FORWARD: = 2.8
 const HORSE_HEIGHT: = 2.05
 const CART_HEIGHT: = 2.3
+## Far caravans skip path snaps / escort teleports until the player approaches.
+const FAR_SLEEP_DIST: = 120.0
+const FAR_SLEEP_DIST_SQ: = FAR_SLEEP_DIST * FAR_SLEEP_DIST
+const FAR_SLEEP_TICK: = 0.5
 
 var road_name: String = ""
 var path_pts: Array = [] ## Array[Vector2]
@@ -28,6 +32,8 @@ var _cart: Node3D = null
 var _members: Array = [] ## Enemy CharacterBody3D
 var _moving: bool = false
 var _rng: = RandomNumberGenerator.new()
+var _far_timer: float = 0.0
+var _player: Node3D = null
 
 
 static func create(p_road_name: String, pts: Array, start_frac: float, seed_i: int) -> Node3D:
@@ -161,6 +167,32 @@ func _physics_process(delta: float) -> void:
 	if fighting:
 		_update_fighting()
 		return
+	## Sleep when the player is far — 6 caravans * escorts was a steady CPU tax.
+	if _player == null or not is_instance_valid(_player):
+		if _world != null:
+			_player = _world.get("player") as Node3D
+		if _player == null:
+			_player = get_tree().get_first_node_in_group("player") as Node3D
+	if _player != null:
+		var d2: = global_position.distance_squared_to(_player.global_position)
+		if d2 > FAR_SLEEP_DIST_SQ:
+			_moving = false
+			_far_timer -= delta
+			if _far_timer > 0.0:
+				return
+			_far_timer = FAR_SLEEP_TICK
+			## Cheap catch-up so the convoy isn't frozen forever at one spot.
+			var dir_far: float = 1.0 if going_forward else -1.0
+			progress_m += SPEED * dir_far * FAR_SLEEP_TICK
+			if progress_m >= _path_len:
+				progress_m = _path_len
+				going_forward = false
+			elif progress_m <= 0.0:
+				progress_m = 0.0
+				going_forward = true
+			_snap_to_progress(false)
+			return
+	_far_timer = 0.0
 	_moving = true
 	var dir: float = 1.0 if going_forward else -1.0
 	progress_m += SPEED * dir * delta
