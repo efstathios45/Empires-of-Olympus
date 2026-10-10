@@ -21,8 +21,8 @@ If an ancient GPU fails to start Vulkan, run with:
 Download
 ------------------------------------------------------------
 Full zip (includes .exe):
-  https://gofile.io/d/WHxoqm3c
-  SHA-256: 3ef34a8afe51ecbc352c4b2e859817c53e625cf069a238e17a38ce5a1a1f7cfd
+  https://gofile.io/d/UPyQLlc4
+  SHA-256: 76d06c30a179fc096b611641d2819495d2a1cb1230baea4e1f0b2261cee360d0
 
 Engine SHA-256 (stock Godot 4.4.1 template):
   b493c1d53fb915f7805f360cfe42d1c3126e720dfc234a4b0f2feb99200f9a4b
