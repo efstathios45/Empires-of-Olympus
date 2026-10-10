@@ -5,14 +5,14 @@ Enter-to-chat, Minecraft-style server browser, and online host/join.
 
 ## Windows download
 
-**https://gofile.io/d/IQSsdiWF** — `EmpiresOfOlympus-windows.zip`
+**https://gofile.io/d/UPyQLlc4** — `EmpiresOfOlympus-windows.zip`
 
-Vulkan Forward+ build: peer combat FX sync (skills/attacks + mob hits),
-Melite quest chain to ~30 with new dens/mobs on the map, Athens / Sparta
-/ Thebes open war, uncapped FPS, party share, host-synced world.
+Vulkan Forward+ build: Hellenic cobblestone roads, horse caravans,
+spread dens/capitals, olive orchards, Max FPS **144** default, Video
+Settings (quality / shadows / grass), peer combat FX sync, Melite chain.
 
-In **Settings**: leave V-Sync **Off**, Max FPS **Uncapped**, turn on
-**Show FPS** to verify. Use Quality → Performance if you need more FPS.
+In **Video Settings**: Max FPS **144**, V-Sync **Off**, Show FPS **On**.
+Use Quality → Performance and Grass → Low if you lag.
 
 Run notes: [`docs/WINDOWS_RUN.md`](docs/WINDOWS_RUN.md)
 

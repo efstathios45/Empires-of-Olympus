@@ -21,11 +21,11 @@ const MAP_SCALE: = Vector3(1.0, 26.0, 1.0)
 const TERRAIN_OFFSET: = Vector3(-384.0, 0.0, -384.0)
 const WALL_HALF: = 340.0
 
-## Capitals — Athens keeps the mosaic quest; Sparta / Thebes are full sister cities.
+## Capitals — keep in sync with HellasMapData.CAPITALS (wide triangle).
 const CITIES: = [
 	{"id": "athens", "empire": "athens", "c": Vector2(0.0, 0.0), "theme": "athens", "mosaic": true},
-	{"id": "sparta", "empire": "sparta", "c": Vector2(-240.0, 210.0), "theme": "sparta", "mosaic": false},
-	{"id": "thebes", "empire": "corinth", "c": Vector2(240.0, -190.0), "theme": "thebes", "mosaic": false},
+	{"id": "sparta", "empire": "sparta", "c": Vector2(-280.0, 200.0), "theme": "sparta", "mosaic": false},
+	{"id": "thebes", "empire": "corinth", "c": Vector2(270.0, -180.0), "theme": "thebes", "mosaic": false},
 ]
 
 const HUB_POS: = Vector2(0.0, 0.0)
@@ -33,24 +33,15 @@ const HUB_RADIUS: = 50.0
 const HUB_H: = 0.45
 const CITY_WALL_R: = 38.0
 const DEN_H: = 0.48
+const ROAD_H: = 0.46
+const ROAD_HALF_W: = 4.2
+const OUTER_HALF_CAP_GRASS: = 160.0
 
 const PLAZA_R: = HUB_RADIUS * 0.55
 const SANCTUARY_R: = PLAZA_R
-const ARENA_POS: = Vector2(0.0, 280.0)
+const ARENA_POS: = Vector2(90.0, 290.0)
 const ARENA_RADIUS: = 26.0
 const ARENA_H: = 0.42
-
-const GROVES: = [
-	{"c": Vector2(118.0, -58.0), "r": 26.0, "h": 0.52, "count": 14, "seed": 11},
-	{"c": Vector2(-118.0, -88.0), "r": 28.0, "h": 0.5, "count": 16, "seed": 23},
-	{"c": Vector2(-52.0, -136.0), "r": 24.0, "h": 0.48, "count": 12, "seed": 37},
-	{"c": Vector2(96.0, 96.0), "r": 24.0, "h": 0.5, "count": 12, "seed": 51},
-	{"c": Vector2(-280.0, 140.0), "r": 26.0, "h": 0.5, "count": 14, "seed": 67},
-	{"c": Vector2(-160.0, 280.0), "r": 24.0, "h": 0.48, "count": 12, "seed": 71},
-	{"c": Vector2(280.0, -100.0), "r": 26.0, "h": 0.5, "count": 14, "seed": 83},
-	{"c": Vector2(150.0, -280.0), "r": 24.0, "h": 0.48, "count": 12, "seed": 97},
-	{"c": Vector2(0.0, -200.0), "r": 22.0, "h": 0.5, "count": 10, "seed": 101},
-]
 
 ## Giant dens between hostile capitals — filled from HellasMapData at ready.
 var ZONES: Array = []
@@ -76,6 +67,13 @@ var _boss_node: Node3D = null
 var _stone_timer: float = 8.0
 var _autosave_timer: float = 45.0
 var _fps_label: Label = null
+## Coarse road mask — grass_weight is called per blade; segment scans are too slow.
+var _road_mask: PackedByteArray = PackedByteArray()
+var _road_mask_n: int = 0
+var _road_mask_half: float = 0.0
+var _road_mask_cell: float = 4.0
+var _road_mmis: Array = [] ## MultiMeshInstance3D road ribbons
+var _grass_built_sig: String = ""
 
 
 class GrassTerrain extends RefCounted:
@@ -92,8 +90,10 @@ func _ready() -> void :
 	ZONES = HellasMapData.zones_for_spawns()
 	_setup_environment()
 	_generate_terrain(20260807)
+	_bake_road_mask()
 	_build_bounds()
 	_build_hub()
+	_build_roads()
 	_build_dens()
 	_build_wilds()
 	_build_arena()
@@ -101,6 +101,7 @@ func _ready() -> void :
 	## Guests skip local mob spawns — host pushes the shared instance roster.
 	if NetSession == null or NetSession.should_spawn_world_mobs_locally():
 		_spawn_zones()
+		_spawn_road_caravans()
 	_build_grass()
 	_build_forests()
 	_build_hud()
@@ -169,21 +170,41 @@ func _setup_environment() -> void :
 	_sun.light_energy = 1.2
 	_sun.shadow_enabled = true
 	_sun.directional_shadow_mode = DirectionalLight3D.SHADOW_PARALLEL_2_SPLITS
-	_sun.directional_shadow_max_distance = 90.0
-	_sun.directional_shadow_fade_start = 0.85
+	_sun.directional_shadow_max_distance = 70.0
+	_sun.directional_shadow_fade_start = 0.8
 	add_child(_sun)
 
 
 func apply_display_quality(preset: Dictionary) -> void:
 	if _sun != null:
-		_sun.directional_shadow_max_distance = float(preset.get("shadow_dist", 90.0))
+		_sun.directional_shadow_max_distance = float(preset.get("shadow_dist", 70.0))
+		## Fewer splits when distance is short — cheaper cascades.
+		if float(preset.get("shadow_dist", 70.0)) <= 50.0:
+			_sun.directional_shadow_mode = DirectionalLight3D.SHADOW_ORTHOGONAL
+		else:
+			_sun.directional_shadow_mode = DirectionalLight3D.SHADOW_PARALLEL_2_SPLITS
 	if _world_env != null and _world_env.environment != null:
-		_world_env.environment.glow_enabled = bool(preset.get("glow", true))
+		_world_env.environment.glow_enabled = bool(preset.get("glow", false))
 	if _grass != null:
-		_grass.playable_half = float(preset.get("grass_half", 96.0))
-		_grass.clusters_per_cell = int(preset.get("grass_clusters", 80))
-		_grass.outer_half = mini(WALL_HALF, _grass.playable_half * 2.4)
+		var half: = float(preset.get("grass_half", 72.0))
+		var clusters: = int(preset.get("grass_clusters", 42))
+		var view: = float(preset.get("grass_view", 110.0))
+		var outer: = mini(OUTER_HALF_CAP_GRASS, half * 1.85)
+		var sig: = "%s|%.0f|%d|%.0f" % [String(preset.get("grass", "balanced")), half, clusters, view]
+		_grass.playable_half = half
+		_grass.clusters_per_cell = clusters
+		_grass.sparse_clusters = maxi(6, int(clusters * 0.22))
+		_grass.outer_half = outer
+		_grass.tile_view_dist = view
 		_grass.set_tier(String(preset.get("grass", "balanced")))
+		if sig != _grass_built_sig and _grass.has_method("rebuild_bounded"):
+			_grass.rebuild_bounded()
+			_grass_built_sig = sig
+	## Road MultiMeshes: shorter draw distance on Performance.
+	var road_end: = 220.0 if bool(preset.get("road_detail", true)) else 140.0
+	for mmi in _road_mmis:
+		if mmi != null and is_instance_valid(mmi):
+			mmi.visibility_range_end = road_end
 	_sync_fps_overlay()
 
 
@@ -244,12 +265,14 @@ func _generate_terrain(seed_val: int) -> void :
 			h = _flatten_toward(h, ARENA_H, Vector2(wx, wz).distance_to(ARENA_POS), ARENA_RADIUS)
 			for den in HellasMapData.DENS:
 				h = _flatten_toward(h, DEN_H, Vector2(wx, wz).distance_to(den["pos"]), float(den["r"]) + 6.0)
-			for g in GROVES:
-				h = _flatten_toward(h, g["h"], Vector2(wx, wz).distance_to(g["c"]), g["r"])
+			for g in HellasMapData.OLIVE_ORCHARDS:
+				h = _flatten_toward(h, 0.5, Vector2(wx, wz).distance_to(g["c"]), float(g["r"]) + 2.0)
 			var fx: = clampf(minf(float(x), float(TERRAIN_SIZE - 1 - x)) / edge_margin, 0.0, 1.0)
 			var fz: = clampf(minf(float(z), float(TERRAIN_SIZE - 1 - z)) / edge_margin, 0.0, 1.0)
 			h = lerpf(0.3, h, fx * fz)
 			heightmap.set_pixel(x, z, Color(h, 0, 0, 1))
+	## Road beds: sample along polylines (cheap) instead of per-pixel distance.
+	_flatten_roads_on_heightmap(heightmap)
 
 
 	var norm_step: = 3
@@ -281,6 +304,8 @@ func _generate_terrain(seed_val: int) -> void :
 					dirt_w = maxf(dirt_w, 0.88 * (1.0 - rock_w) * (1.0 - dd / dr))
 			var grass_w: float = maxf(1.0 - rock_w - dirt_w, 0.0)
 			splatmap.set_pixel(x, z, Color(grass_w, rock_w, dirt_w, 0.0))
+
+	_paint_roads_on_splat(splatmap)
 
 	var full_rect: = Rect2(0, 0, TERRAIN_SIZE, TERRAIN_SIZE)
 	data.notify_region_change(full_rect, HTerrainData.CHANNEL_HEIGHT)
@@ -334,8 +359,38 @@ func sample_height(world_x: float, world_z: float) -> float:
 	return raw_h * MAP_SCALE.y + TERRAIN_OFFSET.y
 
 
+func _bake_road_mask() -> void :
+	## ~4 m cells over the playable disk — O(1) road tests for grass placement.
+	_road_mask_cell = 4.0
+	_road_mask_half = WALL_HALF + 12.0
+	_road_mask_n = int(ceil((_road_mask_half * 2.0) / _road_mask_cell))
+	_road_mask.resize(_road_mask_n * _road_mask_n)
+	_road_mask.fill(0)
+	## Inflate by half a cell so blade samples near cell edges still clear.
+	var clear_r: = ROAD_HALF_W + 1.8 + _road_mask_cell * 0.5
+	for iz in _road_mask_n:
+		for ix in _road_mask_n:
+			var wx: = -_road_mask_half + (float(ix) + 0.5) * _road_mask_cell
+			var wz: = -_road_mask_half + (float(iz) + 0.5) * _road_mask_cell
+			if HellasMapData.dist_to_nearest_road(Vector2(wx, wz)) < clear_r:
+				_road_mask[iz * _road_mask_n + ix] = 1
+
+
+func _on_roadbed(world_x: float, world_z: float) -> bool:
+	if _road_mask.is_empty() or _road_mask_n <= 0:
+		return HellasMapData.dist_to_nearest_road(Vector2(world_x, world_z)) < ROAD_HALF_W + 1.8
+	var ix: = int(floor((world_x + _road_mask_half) / _road_mask_cell))
+	var iz: = int(floor((world_z + _road_mask_half) / _road_mask_cell))
+	if ix < 0 or iz < 0 or ix >= _road_mask_n or iz >= _road_mask_n:
+		return false
+	return _road_mask[iz * _road_mask_n + ix] != 0
+
+
 func grass_weight(world_x: float, world_z: float) -> float:
 	var p: = Vector2(world_x, world_z)
+	## Hard-clear roadbeds (+ shoulder) so blades never sprout through the paving.
+	if _on_roadbed(world_x, world_z):
+		return 0.0
 	for city in CITIES:
 		if p.distance_to(city["c"]) < PLAZA_R:
 			return 0.12
@@ -358,6 +413,8 @@ func ground_kind(x: float, z: float) -> String:
 			return "stone"
 	var arena_r: float = ARENA_RADIUS * 0.9
 	if p.distance_squared_to(ARENA_POS) < arena_r * arena_r:
+		return "dirt"
+	if HellasMapData.dist_to_nearest_road(p) < ROAD_HALF_W:
 		return "dirt"
 	for den in HellasMapData.DENS:
 		var dr: float = float(den["r"]) * 0.9
@@ -478,7 +535,25 @@ func _place_glb(path: String, wx: float, wz: float, height_m: float, yaw_deg: fl
 		ModelUtils.add_collision(obj)
 	elif tier == 2:
 		ModelUtils.add_per_part_convex_collision(obj)
+	## Decorative dens rocks / ruins: skip shadow casters (directional atlas was choking).
+	if tier == 2 or path.contains("cliff_rock") or path.contains("broken_ruins"):
+		_disable_mesh_shadows(obj)
+		_set_mesh_visibility_range(obj, 160.0)
 	return obj
+
+
+func _disable_mesh_shadows(root: Node) -> void:
+	for n in root.find_children("*", "GeometryInstance3D", true, false):
+		var gi: = n as GeometryInstance3D
+		if gi != null:
+			gi.cast_shadow = GeometryInstance3D.SHADOW_CASTING_SETTING_OFF
+
+
+func _set_mesh_visibility_range(root: Node, end_m: float) -> void:
+	for n in root.find_children("*", "GeometryInstance3D", true, false):
+		var gi: = n as GeometryInstance3D
+		if gi != null:
+			gi.visibility_range_end = end_m
 
 
 
@@ -582,6 +657,172 @@ func _build_hub() -> void :
 	apply_player_mosaic()
 
 
+func _flatten_roads_on_heightmap(heightmap: Image) -> void :
+	var radius: = int(ceil(ROAD_HALF_W + 2.5))
+	for sample in HellasMapData.road_segment_samples(2.5):
+		var p: Vector2 = sample["pos"]
+		var cx: = int(p.x - TERRAIN_OFFSET.x)
+		var cz: = int(p.y - TERRAIN_OFFSET.z)
+		for dz in range(-radius, radius + 1):
+			for dx in range(-radius, radius + 1):
+				var ix: = cx + dx
+				var iz: = cz + dz
+				if ix < 0 or iz < 0 or ix >= TERRAIN_SIZE or iz >= TERRAIN_SIZE:
+					continue
+				var dist: = sqrt(float(dx * dx + dz * dz))
+				if dist > float(radius):
+					continue
+				var h: float = heightmap.get_pixel(ix, iz).r
+				h = _flatten_toward(h, ROAD_H, dist, float(radius))
+				heightmap.set_pixel(ix, iz, Color(h, 0, 0, 1))
+
+
+func _paint_roads_on_splat(splatmap: Image) -> void :
+	var radius: = int(ceil(ROAD_HALF_W))
+	for sample in HellasMapData.road_segment_samples(2.0):
+		var p: Vector2 = sample["pos"]
+		var cx: = int(p.x - TERRAIN_OFFSET.x)
+		var cz: = int(p.y - TERRAIN_OFFSET.z)
+		for dz in range(-radius, radius + 1):
+			for dx in range(-radius, radius + 1):
+				var ix: = cx + dx
+				var iz: = cz + dz
+				if ix < 0 or iz < 0 or ix >= TERRAIN_SIZE or iz >= TERRAIN_SIZE:
+					continue
+				var dist: = sqrt(float(dx * dx + dz * dz))
+				if dist > ROAD_HALF_W:
+					continue
+				## Full dirt bed under the paving — no grass channel on the road.
+				splatmap.set_pixel(ix, iz, Color(0.0, 0.05, 1.0, 0.0))
+
+
+## Hellenic roads — Poly Haven cobblestone_large_01 (CC0) paved ribbons + Kenney edge rubble.
+func _build_roads() -> void :
+	const TEX_DIR: = "res://assets/textures/stone/cobblestone_large_01/"
+	const DIFF: = TEX_DIR + "cobblestone_large_01_diff_2k.jpg"
+	const NOR: = TEX_DIR + "cobblestone_large_01_nor_gl_2k.jpg"
+	const ROUGH: = TEX_DIR + "cobblestone_large_01_rough_2k.jpg"
+	const EDGE: = "res://assets/props/roads/path_stone.glb"
+	## Longer slabs + larger step → fewer MultiMesh instances across ~3 km of road.
+	const SLAB_L: = 5.5
+	const SLAB_H: = 0.14
+	const STEP: = SLAB_L * 0.94
+
+	if not ResourceLoader.exists(DIFF):
+		push_warning("game_world: missing cobblestone_large_01 — roads skipped")
+		return
+
+	var want_detail: = true
+	if DisplaySettings:
+		want_detail = bool(DisplaySettings.quality_preset().get("road_detail", true))
+
+	var mat: = StandardMaterial3D.new()
+	mat.albedo_texture = load(DIFF)
+	## Normals stay; AO + anisotropic were a free FPS tax on long ribbons.
+	mat.normal_enabled = want_detail
+	if want_detail and ResourceLoader.exists(NOR):
+		mat.normal_texture = load(NOR)
+		mat.normal_scale = 1.05
+	if want_detail and ResourceLoader.exists(ROUGH):
+		mat.roughness_texture = load(ROUGH)
+		mat.roughness_texture_channel = BaseMaterial3D.TEXTURE_CHANNEL_RED
+	mat.roughness = 1.0
+	mat.ao_enabled = false
+	mat.metallic = 0.0
+	## World-triplanar so paving tiles continuously along every bend.
+	mat.albedo_color = Color(0.92, 0.88, 0.8) ## warm Hellenic limestone tint
+	mat.uv1_triplanar = true
+	mat.uv1_world_triplanar = true
+	mat.uv1_triplanar_sharpness = 6.0
+	## ~0.22 → large flagstones (~4–5 m tile), reads as Roman/Hellenic paving not gravel.
+	mat.uv1_scale = Vector3(0.22, 0.22, 0.22)
+	mat.texture_filter = BaseMaterial3D.TEXTURE_FILTER_LINEAR_WITH_MIPMAPS
+
+	var slab: = BoxMesh.new()
+	slab.size = Vector3(ROAD_HALF_W * 2.05, SLAB_H, SLAB_L)
+	slab.material = mat
+
+	var curb_mat: = mat.duplicate() as StandardMaterial3D
+	curb_mat.albedo_color = Color(0.7, 0.64, 0.55)
+	curb_mat.uv1_scale = Vector3(0.35, 0.35, 0.35)
+	var curb: = BoxMesh.new()
+	curb.size = Vector3(0.45, 0.22, SLAB_L)
+	curb.material = curb_mat
+
+	var xforms: Array[Transform3D] = []
+	var curb_xforms: Array[Transform3D] = []
+	var edge_xforms: Array[Transform3D] = []
+	var i: = 0
+	var rng: = RandomNumberGenerator.new()
+	rng.seed = 77
+	var edge_mesh: Mesh = _first_mesh_from_glb(EDGE) if want_detail else null
+	for sample in HellasMapData.road_segment_samples(STEP):
+		var p: Vector2 = sample["pos"]
+		var near_plaza: = false
+		for city in CITIES:
+			if p.distance_to(city["c"]) < PLAZA_R + 2.0:
+				near_plaza = true
+				break
+		if near_plaza:
+			continue
+		var y: = sample_height(p.x, p.y) + 0.04
+		var yaw: float = float(sample["yaw"])
+		var right: = Vector3(cos(yaw), 0.0, -sin(yaw))
+		var basis: = Basis.from_euler(Vector3(0.0, yaw, 0.0))
+		xforms.append(Transform3D(basis, Vector3(p.x, y, p.y)))
+		## Curbs every other slab — still reads as a road edge, half the draws.
+		if i % 2 == 0:
+			for side in [-1.0, 1.0]:
+				curb_xforms.append(Transform3D(basis,
+					Vector3(p.x, y + 0.04, p.y) + right * side * (ROAD_HALF_W + 0.05)))
+		## Sparse Kenney cobble clusters as roadside rubble (not the road bed).
+		if edge_mesh != null and i % 22 == 0:
+			var side2: = 1.0 if (i % 44 == 0) else -1.0
+			var e_basis: = Basis.from_euler(Vector3(0.0, yaw + rng.randf_range(-0.4, 0.4), 0.0)).scaled(
+				Vector3(2.2, 2.2, 2.2))
+			edge_xforms.append(Transform3D(e_basis,
+				Vector3(p.x, y - 0.02, p.y) + right * side2 * (ROAD_HALF_W + 1.4)))
+		i += 1
+
+	_add_road_multimesh(slab, xforms)
+	_add_road_multimesh(curb, curb_xforms)
+	if edge_mesh != null and not edge_xforms.is_empty():
+		_add_road_multimesh(edge_mesh, edge_xforms)
+
+
+func _first_mesh_from_glb(path: String) -> Mesh:
+	if not ResourceLoader.exists(path):
+		return null
+	var scene: PackedScene = load(path) as PackedScene
+	if scene == null:
+		return null
+	var root: Node = scene.instantiate()
+	var found: Mesh = null
+	for n in root.find_children("*", "MeshInstance3D", true, false):
+		var mi: = n as MeshInstance3D
+		if mi != null and mi.mesh != null:
+			found = mi.mesh
+			break
+	root.free()
+	return found
+
+
+func _add_road_multimesh(mesh: Mesh, xforms: Array[Transform3D]) -> void :
+	if xforms.is_empty():
+		return
+	var mm: = MultiMesh.new()
+	mm.transform_format = MultiMesh.TRANSFORM_3D
+	mm.mesh = mesh
+	mm.instance_count = xforms.size()
+	for idx in xforms.size():
+		mm.set_instance_transform(idx, xforms[idx])
+	var mmi: = MultiMeshInstance3D.new()
+	mmi.multimesh = mm
+	mmi.cast_shadow = GeometryInstance3D.SHADOW_CASTING_SETTING_OFF
+	mmi.visibility_range_end = 200.0
+	mmi.visibility_range_fade_mode = GeometryInstance3D.VISIBILITY_RANGE_FADE_SELF
+	add_child(mmi)
+	_road_mmis.append(mmi)
 ## Giant beast dens between the three hostile capitals — rock rings + ruin camps.
 func _build_dens() -> void :
 	var rng: = RandomNumberGenerator.new()
@@ -596,22 +837,22 @@ func _build_dens() -> void :
 			c.x + rng.randf_range(-4.0, 4.0), c.y + rng.randf_range(-4.0, 4.0),
 			6.5, rng.randf() * 360.0, 0)
 		## Outer rock ring so dens read as fortresses from the roads.
-		var ring_n: = 10 + int(r / 8.0)
+		var ring_n: = 7 + int(r / 12.0)
 		for i in ring_n:
 			var a: float = TAU * float(i) / float(ring_n) + rng.randf_range(-0.12, 0.12)
 			var rr: float = r * rng.randf_range(0.82, 1.05)
 			_place_glb("res://assets/environment/rocks/cliff_rock.glb",
 				c.x + cos(a) * rr, c.y + sin(a) * rr,
 				rng.randf_range(3.2, 5.8), rng.randf() * 360.0, 2)
-		## Inner scatter — dens feel packed.
-		for _j in 5:
+		## Inner scatter — dens feel packed (kept light for draw calls).
+		for _j in 3:
 			var a2: float = rng.randf() * TAU
 			var rr2: float = r * rng.randf_range(0.25, 0.55)
 			_place_glb("res://assets/environment/rocks/cliff_rock.glb",
 				c.x + cos(a2) * rr2, c.y + sin(a2) * rr2,
 				rng.randf_range(1.6, 3.2), rng.randf() * 360.0, 2)
 		## Broken columns mark the dens on the horizon.
-		for k in 3:
+		for k in 2:
 			var a3: float = TAU * float(k) / 3.0 + 0.35
 			var col: = _place_glb("res://assets/environment/structures/marble_column.glb",
 				c.x + cos(a3) * (r * 0.45), c.y + sin(a3) * (r * 0.45),
@@ -657,15 +898,15 @@ func apply_player_mosaic() -> void :
 func _build_wilds() -> void :
 	## Ruins along the roads between capitals.
 	for entry in [
-		[70.0, -32.0, 6.5, 40.0],
-		[94.0, -6.0, 5.0, 160.0],
-		[-70.0, 34.0, 5.5, -60.0],
-		[-150.0, 130.0, 6.0, 25.0],
-		[-200.0, 180.0, 5.5, -40.0],
-		[150.0, -120.0, 6.0, 110.0],
-		[210.0, -160.0, 5.5, 200.0],
-		[40.0, 220.0, 5.0, 15.0],
-		[-40.0, -180.0, 5.5, 90.0],
+		[60.0, -50.0, 6.5, 40.0],
+		[-100.0, 50.0, 5.0, 160.0],
+		[90.0, 80.0, 5.5, -60.0],
+		[-190.0, 100.0, 6.0, 25.0],
+		[180.0, -90.0, 5.5, -40.0],
+		[-60.0, -160.0, 6.0, 110.0],
+		[140.0, 170.0, 5.5, 200.0],
+		[-200.0, -100.0, 5.0, 15.0],
+		[50.0, -250.0, 5.5, 90.0],
 	]:
 		_place_glb("res://assets/environment/structures/broken_ruins.glb",
 			float(entry[0]), float(entry[1]), float(entry[2]), float(entry[3]), 0)
@@ -702,27 +943,27 @@ func _build_wilds() -> void :
 		placed += 1
 
 	for entry in [
-		[Vector2(40.0, -70.0), 1],
-		[Vector2(-70.0, -25.0), 5],
-		[Vector2(35.0, 55.0), 10],
-		[Vector2(-200.0, 240.0), 5],
-		[Vector2(-280.0, 180.0), 10],
-		[Vector2(200.0, -220.0), 5],
-		[Vector2(280.0, -150.0), 15],
-		[Vector2(0.0, 230.0), 10],
+		[Vector2(45.0, -80.0), 1],
+		[Vector2(-100.0, -30.0), 5],
+		[Vector2(80.0, 60.0), 10],
+		[Vector2(-230.0, 250.0), 5],
+		[Vector2(-300.0, 150.0), 10],
+		[Vector2(250.0, -230.0), 5],
+		[Vector2(300.0, -120.0), 15],
+		[Vector2(60.0, 250.0), 10],
 		## High-tier Omphaloi for Titans' Remnant / late chain.
-		[Vector2(200.0, 60.0), 15],
-		[Vector2(240.0, 100.0), 15],
-		[Vector2(-160.0, -140.0), 10],
+		[Vector2(190.0, 50.0), 15],
+		[Vector2(230.0, 100.0), 15],
+		[Vector2(-200.0, -150.0), 10],
 		[Vector2(20.0, -280.0), 15],
 	]:
 		_spawn_oracle_stone(entry[0] as Vector2, int(entry[1]))
 
 	for pos in [
-		Vector2(30.0, -58.0), Vector2(-62.0, 10.0), Vector2(18.0, 88.0),
-		Vector2(-220.0, 250.0), Vector2(-260.0, 190.0),
-		Vector2(220.0, -230.0), Vector2(260.0, -170.0),
-		Vector2(10.0, 240.0),
+		Vector2(35.0, -60.0), Vector2(-90.0, 20.0), Vector2(70.0, 90.0),
+		Vector2(-230.0, 260.0), Vector2(-290.0, 170.0),
+		Vector2(250.0, -240.0), Vector2(280.0, -140.0),
+		Vector2(50.0, 250.0),
 	]:
 		var chest: = ChestScript.create(Vector3(pos.x, sample_height(pos.x, pos.y), pos.y))
 		add_child(chest)
@@ -797,6 +1038,29 @@ func _spawn_zones() -> void :
 		for id in zone["ids"]:
 			_spawn_enemy_in_zone(id, zi)
 
+
+## Horse + olive-cart caravans shuttling the three capital roads.
+func _spawn_road_caravans() -> void :
+	if NetSession and not NetSession.should_spawn_world_mobs_locally():
+		return
+	const CaravanScr = preload("res://scripts/world/road_caravan.gd")
+	var routes: Array = []
+	for road in HellasMapData.ROADS:
+		var nm: String = String(road.get("name", ""))
+		## City↔city highways only (skip dens/spurs).
+		if nm == "Sacred Way (Athens–Sparta)" \
+				or nm == "Boeotian Road (Athens–Thebes)" \
+				or nm == "Isthmus Road (Sparta–Thebes)":
+			routes.append(road)
+	var seed_i: = 501
+	for ri in routes.size():
+		var road: Dictionary = routes[ri]
+		## One caravan per highway (was two) — each still has horse + cart + 3 escorts.
+		var frac: float = 0.28 + 0.12 * float(ri)
+		var c: Node3D = CaravanScr.create(String(road.get("name", "")), road["pts"], frac, seed_i)
+		seed_i += 17
+		add_child(c)
+
 func _spawn_enemy_in_zone(enemy_id: String, zone_idx: int) -> void :
 	if NetSession and not NetSession.should_spawn_world_mobs_locally():
 		return
@@ -836,10 +1100,12 @@ func _build_grass() -> void :
 	_grass.focus_node = player
 	_grass.sun = _sun
 	var preset: Dictionary = DisplaySettings.quality_preset() if DisplaySettings else {}
-	_grass.playable_half = float(preset.get("grass_half", 96.0))
-	_grass.outer_half = mini(WALL_HALF, _grass.playable_half * 2.4)
-	_grass.clusters_per_cell = int(preset.get("grass_clusters", 80))
-	_grass.sparse_clusters = 14
+	var half: = float(preset.get("grass_half", 56.0))
+	_grass.playable_half = half
+	_grass.outer_half = mini(OUTER_HALF_CAP_GRASS, half * 1.85)
+	_grass.clusters_per_cell = int(preset.get("grass_clusters", 28))
+	_grass.sparse_clusters = maxi(6, int(_grass.clusters_per_cell * 0.22))
+	_grass.tile_view_dist = float(preset.get("grass_view", 85.0))
 	_grass.grass_type = "patchy"
 	_grass.grass_color = Color(0.55, 0.58, 0.27)
 	add_child(_grass)
@@ -847,66 +1113,155 @@ func _build_grass() -> void :
 	if ResourceLoader.exists("res://assets/grass/textures/tesana-grass.png"):
 		leaf_tex = load("res://assets/grass/textures/tesana-grass.png")
 	_grass.build(leaf_tex, - _sun.global_transform.basis.z)
-	_grass.set_tier(String(preset.get("grass", "balanced")))
+	_grass.set_tier(String(preset.get("grass", "performance")))
+	_grass_built_sig = "%s|%.0f|%d|%.0f" % [
+		String(preset.get("grass", "performance")),
+		_grass.playable_half,
+		_grass.clusters_per_cell,
+		_grass.tile_view_dist,
+	]
 
 func _build_forests() -> void :
+	## Mediterranean islands: small olive orchards + sparse cypress, not a carpet forest.
 	if not ResourceLoader.exists("res://assets/trees/leaf_atlas.gdshader"):
 		return
 	var leaf_shader: Shader = load("res://assets/trees/leaf_atlas.gdshader")
 	var atlas: Texture2D = load("res://assets/trees/foliage/savanna_dry.png")
-	var leaf_mat: = TreeForest.make_leaf_material(leaf_shader, atlas, {
-		"tint_color": Vector3(0.98, 0.92, 0.62), "tint_strength": 0.22, 
+	var olive_leaf: = TreeForest.make_leaf_material(leaf_shader, atlas, {
+		"tint_color": Vector3(0.72, 0.82, 0.48), "tint_strength": 0.42,
+	})
+	var cypress_leaf: = TreeForest.make_leaf_material(leaf_shader, atlas, {
+		"tint_color": Vector3(0.35, 0.52, 0.28), "tint_strength": 0.55,
 	})
 	var bark_tex: Texture2D = null
 	if ResourceLoader.exists("res://assets/trees/bark/acacia_bark.png"):
 		bark_tex = load("res://assets/trees/bark/acacia_bark.png")
-	var bark_mat: = TreeForest.make_bark_material(Color(0.45, 0.36, 0.28), bark_tex)
+	var olive_bark: = TreeForest.make_bark_material(Color(0.52, 0.42, 0.3), bark_tex)
+	var cypress_bark: = TreeForest.make_bark_material(Color(0.32, 0.28, 0.22), bark_tex)
 
-	var params: = TreeFactory.DEFAULTS.duplicate()
-	params.merge({
-		"branch_mode": 0, "droop": 0.0, "length_falloff": 0.0, 
-		"cluster_flatten": 0.85, "cluster_along": 0.1, 
-		"trunk_height": 9.0, "trunk_radius": 0.24, 
-		"branch_start": 0.55, "upward_bias": 0.35, "leaf_card_size": 1.7, 
+	var olive_params: = TreeFactory.DEFAULTS.duplicate()
+	olive_params.merge({
+		"branch_mode": 0, "droop": 0.38, "length_falloff": 0.12,
+		"cluster_flatten": 0.55, "cluster_along": 0.2,
+		"trunk_height": 4.6, "trunk_radius": 0.16,
+		"branch_start": 0.4, "upward_bias": 0.22, "leaf_card_size": 1.35,
+		"leaves_per_cluster": 6, "cluster_radius": 0.75,
+	}, true)
+	var cypress_params: = TreeFactory.DEFAULTS.duplicate()
+	cypress_params.merge({
+		"branch_mode": 0, "droop": 0.05, "length_falloff": 0.05,
+		"cluster_flatten": 0.25, "cluster_along": 0.35,
+		"trunk_height": 10.5, "trunk_radius": 0.14,
+		"branch_start": 0.25, "upward_bias": 0.72, "leaf_card_size": 1.05,
+		"leaves_per_cluster": 5, "cluster_radius": 0.45,
 	}, true)
 
-	for g in GROVES:
-		var forest: = TreeForest.new()
-		add_child(forest)
+	for g in HellasMapData.OLIVE_ORCHARDS:
+		var kind: = String(g.get("kind", "olive"))
+		var params: Dictionary = olive_params if kind == "olive" else cypress_params
+		var leaf_mat: Material = olive_leaf if kind == "olive" else cypress_leaf
+		var bark_mat: Material = olive_bark if kind == "olive" else cypress_bark
 		var c: Vector2 = g["c"]
-		var base_y: float = sample_height(c.x, c.y)
-		forest.global_position = Vector3(c.x, base_y, c.y)
+		## Keep orchards off road beds and plazas.
+		if HellasMapData.dist_to_nearest_road(c) < ROAD_HALF_W + 3.0:
+			continue
+		var near_plaza: = false
+		for city in CITIES:
+			if c.distance_to(city["c"]) < HUB_RADIUS:
+				near_plaza = true
+				break
+		if near_plaza:
+			continue
+		## Place as individuals — TreeForest's clearing hole fights small orchards.
+		var ogrng: = RandomNumberGenerator.new()
+		ogrng.seed = int(g["seed"])
+		var spots: Array[Vector2] = []
+		var want: = int(g["count"])
+		var tries: = 0
+		var min_sp: = 5.2 if kind == "olive" else 4.2
+		while spots.size() < want and tries < want * 30:
+			tries += 1
+			var ang: = ogrng.randf() * TAU
+			var rr: = float(g["r"]) * sqrt(ogrng.randf())
+			var sp: = c + Vector2(cos(ang) * rr, sin(ang) * rr)
+			var ok: = true
+			for prev in spots:
+				if sp.distance_to(prev) < min_sp:
+					ok = false
+					break
+			if ok:
+				spots.append(sp)
+		for sp2 in spots:
+			var p2: Dictionary = params.duplicate()
+			p2["seed"] = ogrng.randi()
+			p2["trunk_height"] = float(params["trunk_height"]) * ogrng.randf_range(0.88, 1.15)
+			var y2: = sample_height(sp2.x, sp2.y)
+			var xf2: = Transform3D(Basis(Vector3.UP, ogrng.randf() * TAU), Vector3(sp2.x, y2, sp2.y))
+			var t2: = TreeForest.spawn_tree(self, p2, 2, leaf_mat, bark_mat, xf2)
+			var body2: = StaticBody3D.new()
+			body2.collision_layer = 1
+			var sh2: = CollisionShape3D.new()
+			var cyl2: = CylinderShape3D.new()
+			cyl2.radius = 0.26
+			cyl2.height = 3.8 if kind == "olive" else 6.5
+			sh2.shape = cyl2
+			sh2.position.y = cyl2.height * 0.5
+			body2.add_child(sh2)
+			t2.add_child(body2)
 
-		var height_fn: = func(lx: float, lz: float) -> float:
-			return sample_height(c.x + lx, c.y + lz) - base_y
-		forest.setup(params, 2, leaf_mat, bark_mat, int(g["count"]), float(g["r"]), {
-			"seed": int(g["seed"]), "scale_jitter": 0.3, 
-			"variant_jitter": {"trunk_height": 0.2, "leaf_card_size": 0.15}, 
-			"lod_distance": 34.0, "lod_blend_band": 14.0, 
-			"cast_leaf_shadows": false, 
-			"height_sampler": height_fn, 
-		})
-		forest.build()
-
-
-	for pos in [
-		Vector2(20.0, -40.0), Vector2(-25.0, -52.0), Vector2(52.0, 8.0),
-		Vector2(-45.0, 45.0), Vector2(15.0, 40.0), Vector2(-18.0, 68.0),
-		Vector2(-200.0, 180.0), Vector2(-260.0, 240.0), Vector2(-170.0, 230.0),
-		Vector2(200.0, -150.0), Vector2(260.0, -220.0), Vector2(170.0, -210.0),
-		Vector2(30.0, 200.0), Vector2(-40.0, -150.0),
-	]:
-		var y: = sample_height(pos.x, pos.y)
-		var xform: = Transform3D(Basis(Vector3.UP, randf() * TAU), Vector3(pos.x, y, pos.y))
-		var tree: = TreeForest.spawn_tree(self, params, 2, leaf_mat, bark_mat, xform)
+	## Lone trees dotted across Hellas — island density, not woodland.
+	var rng: = RandomNumberGenerator.new()
+	rng.seed = 20261010
+	var placed: = 0
+	var attempts: = 0
+	var loners: Array[Vector2] = []
+	while placed < 32 and attempts < 700:
+		attempts += 1
+		var wx: = rng.randf_range(-WALL_HALF + 18.0, WALL_HALF - 18.0)
+		var wz: = rng.randf_range(-WALL_HALF + 18.0, WALL_HALF - 18.0)
+		var p: = Vector2(wx, wz)
+		if HellasMapData.dist_to_nearest_road(p) < ROAD_HALF_W + 4.0:
+			continue
+		var blocked: = false
+		for city in CITIES:
+			if p.distance_to(city["c"]) < HUB_RADIUS + 6.0:
+				blocked = true
+				break
+		if blocked:
+			continue
+		for den in HellasMapData.DENS:
+			if p.distance_to(den["pos"]) < float(den["r"]) + 4.0:
+				blocked = true
+				break
+		if blocked:
+			continue
+		for prev in loners:
+			if p.distance_to(prev) < 16.0:
+				blocked = true
+				break
+		if blocked:
+			continue
+		loners.append(p)
+		placed += 1
+		var is_olive: = rng.randf() < 0.7
+		var params2: Dictionary = (olive_params if is_olive else cypress_params).duplicate()
+		params2["seed"] = rng.randi()
+		params2["trunk_height"] = float(params2["trunk_height"]) * rng.randf_range(0.85, 1.2)
+		var y: = sample_height(wx, wz)
+		var xform: = Transform3D(Basis(Vector3.UP, rng.randf() * TAU), Vector3(wx, y, wz))
+		var tree: = TreeForest.spawn_tree(
+			self, params2, 2,
+			olive_leaf if is_olive else cypress_leaf,
+			olive_bark if is_olive else cypress_bark,
+			xform)
 		var body: = StaticBody3D.new()
 		body.collision_layer = 1
 		var shape: = CollisionShape3D.new()
 		var cyl: = CylinderShape3D.new()
-		cyl.radius = 0.32
-		cyl.height = 5.0
+		cyl.radius = 0.28
+		cyl.height = 4.2 if is_olive else 7.0
 		shape.shape = cyl
-		shape.position.y = 2.5
+		shape.position.y = cyl.height * 0.5
 		body.add_child(shape)
 		tree.add_child(body)
 

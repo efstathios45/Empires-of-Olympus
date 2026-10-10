@@ -246,8 +246,32 @@ const ENEMY_CONFIGS: = {
 		"tint": Color(0.85, 0.8, 0.55),
 		"sfx_attack": "gorgon_attack", "sfx_death": "gorgon_death",
 	},
+	## Road caravans — peaceful until the player strikes them (aggro 0).
+	"caravan_bandit": {
+		"name": "Road Bandit",
+		"level": 4,
+		"quest_id": "caravan_bandit",
+		"glb": "res://assets/characters/satyr_enemy/satyr_enemy.glb",
+		"lib": "res://assets/characters/satyr_enemy/satyr_enemy_animations.tres",
+		"height": 1.7, "hp": 120, "dmg": 14.0, "speed": 5.0,
+		"xp": 55, "gold": [10, 22], "aggro": 0.0, "reach": 2.0,
+		"attack_cd": 1.35, "material": "Satyr Horn",
+		"facing_yaw_deg": 180.0,
+		"sfx_attack": "satyr_attack", "sfx_death": "satyr_death",
+	},
+	"caravan_guard": {
+		"name": "Caravan Guard",
+		"level": 5,
+		"quest_id": "caravan_bandit",
+		"glb": "res://assets/characters/city_guard/city_guard.glb",
+		"lib": "res://assets/characters/city_guard/city_guard_animations.tres",
+		"height": 1.85, "hp": 150, "dmg": 16.0, "speed": 4.6,
+		"xp": 65, "gold": [12, 26], "aggro": 0.0, "reach": 2.1,
+		"attack_cd": 1.4, "material": "Iron Scrap",
+		"facing_yaw_deg": 180.0,
+		"sfx_attack": "satyr_attack", "sfx_death": "satyr_death",
+	},
 }
-
 
 const DEFAULT_CLIPS: = {
 	"idle": "ual1_Idle", 
@@ -281,6 +305,8 @@ var max_hp: float = 50.0
 var level: int = 1
 var dead: bool = false
 var is_boss: bool = false
+## When set, idle pose/position is driven by a road caravan (no wander).
+var caravan: Node = null
 
 var state: int = State.IDLE
 var state_timer: float = 0.0
@@ -289,7 +315,6 @@ var attack_hit_done: bool = false
 var wander_target: = Vector3.ZERO
 var spawn_point: = Vector3.ZERO
 var hit_flash: float = 0.0
-
 var mesh_root: Node3D
 var anim: AnimationPlayer
 var player: Node3D
@@ -833,16 +858,18 @@ func _flash_plate() -> void :
 	_flash_tween = name_label.create_tween()
 	_flash_tween.tween_property(name_label, "modulate", _plate_color(), 0.8).set_delay(0.3)
 
-## Sleep far AI — keeps ~95-mob worlds from starving the main thread.
-const AI_SLEEP_DIST: = 72.0
+## Sleep far AI — 150+ dens + caravan escorts starve the main thread otherwise.
+const AI_SLEEP_DIST: = 64.0
 const AI_SLEEP_DIST_SQ: = AI_SLEEP_DIST * AI_SLEEP_DIST
+## Deep sleep: skip move_and_slide / plate entirely most frames when very far.
+const AI_DEEP_SLEEP_DIST: = 110.0
+const AI_DEEP_SLEEP_DIST_SQ: = AI_DEEP_SLEEP_DIST * AI_DEEP_SLEEP_DIST
+const AI_DEEP_SLEEP_TICK: = 0.55
+
+var _deep_sleep_timer: float = 0.0
 
 
 func _physics_process(delta: float) -> void :
-	_plate_timer -= delta
-	if _plate_timer <= 0.0:
-		_plate_timer = PLATE_TICK
-		_update_plate()
 	_telegraph_cd = maxf(0.0, _telegraph_cd - delta)
 
 	if dead:
@@ -861,14 +888,36 @@ func _physics_process(delta: float) -> void :
 			move_and_slide()
 			return
 
-	## Distant idle mobs skip chase/attack logic (still visible).
+	## Distant idle mobs: deep-sleep most frames, light-sleep nearby ring.
 	if not is_boss and state == State.IDLE:
 		var d2: = global_position.distance_squared_to(player.global_position)
-		if d2 > AI_SLEEP_DIST_SQ:
+		if d2 > AI_DEEP_SLEEP_DIST_SQ:
+			_deep_sleep_timer -= delta
+			if _deep_sleep_timer > 0.0:
+				return
+			_deep_sleep_timer = AI_DEEP_SLEEP_TICK
 			velocity = Vector3.ZERO
+			return
+		if d2 > AI_SLEEP_DIST_SQ:
+			_plate_timer -= delta
+			if _plate_timer <= 0.0:
+				_plate_timer = PLATE_TICK * 2.0
+				_update_plate()
+			velocity = Vector3.ZERO
+			## Gravity + slide only every other deep-sleep cadence (~0.55s).
+			_deep_sleep_timer -= delta
+			if _deep_sleep_timer > 0.0:
+				return
+			_deep_sleep_timer = AI_DEEP_SLEEP_TICK
 			_apply_gravity(delta)
 			move_and_slide()
 			return
+		_deep_sleep_timer = 0.0
+
+	_plate_timer -= delta
+	if _plate_timer <= 0.0:
+		_plate_timer = PLATE_TICK
+		_update_plate()
 
 	attack_cooldown = maxf(0.0, attack_cooldown - delta)
 	state_timer = maxf(0.0, state_timer - delta)
@@ -891,6 +940,22 @@ func _physics_process(delta: float) -> void :
 	move_and_slide()
 
 func _process_idle(delta: float) -> void :
+	## Caravan escorts stand/walk with the convoy until struck.
+	if caravan != null and is_instance_valid(caravan):
+		velocity.x = 0.0
+		velocity.z = 0.0
+		if caravan.has_method("is_moving") and bool(caravan.is_moving()):
+			_play(_clip("walk"))
+		else:
+			_play(_clip("idle"))
+		if player != null and is_instance_valid(player) and _world_is_sanctuary(player.global_position):
+			return
+		if float(cfg.get("aggro", 0.0)) > 0.05 and _player_distance() < float(cfg["aggro"]):
+			state = State.CHASE
+			_telegraph_aggro()
+			if caravan.has_method("on_member_aggro"):
+				caravan.on_member_aggro(self)
+		return
 
 	var to_target: Vector3 = wander_target - global_position
 	to_target.y = 0
@@ -1062,6 +1127,8 @@ func apply_network_damage(amount: float, from_position: Vector3) -> void:
 	if state == State.IDLE:
 		state = State.CHASE
 		_telegraph_aggro()
+	if caravan != null and is_instance_valid(caravan) and caravan.has_method("on_member_aggro"):
+		caravan.on_member_aggro(self)
 	if NetSession and NetSession.is_hosting() and net_id > 0:
 		NetSession.sync_mob_hp(net_id, hp, max_hp, global_position, amount)
 	if hp <= 0.0:

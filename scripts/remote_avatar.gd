@@ -239,7 +239,7 @@ func play_combat_fx(fx_id: String, origin: Vector3, yaw: float, _p_class: String
 		return
 	if mesh_root:
 		mesh_root.rotation.y = yaw
-	var alias: = _alias_for_fx(fx_id)
+	var alias: String = _alias_for_fx(fx_id)
 	var lock: = 0.55
 	match fx_id:
 		"q", "skill":
