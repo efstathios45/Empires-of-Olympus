@@ -5,11 +5,11 @@ Enter-to-chat, Minecraft-style server browser, and online host/join.
 
 ## Windows download
 
-**https://gofile.io/d/kgAdnofc** — `EmpiresOfOlympus-windows.zip`
+**https://gofile.io/d/q0xhjxTi** — `EmpiresOfOlympus-windows.zip`
 
-Vulkan Forward+ performance build: uncapped FPS by default, quality
-presets, three walled cities (Athens / Sparta / Thebes), party share,
-host-synced mobs.
+Vulkan Forward+ build: Athens / Sparta / Thebes open war (free rival
+PvP), giant beast dens between capitals, M-key map with capitals + dens,
+uncapped FPS, party share, host-synced mobs.
 
 In **Settings**: leave V-Sync **Off**, Max FPS **Uncapped**, turn on
 **Show FPS** to verify. Use Quality → Performance if you need more FPS.

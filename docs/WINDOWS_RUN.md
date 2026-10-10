@@ -19,12 +19,14 @@ If an ancient GPU fails to start Vulkan, run with:
 Download
 ------------------------------------------------------------
 Full zip (includes .exe):
-  https://gofile.io/d/kgAdnofc
-  SHA-256: 9f10961344f2435d6f4a5ad2a803f191d59f40a8e1f9339cfb069b73c0cea6fa
+  https://gofile.io/d/q0xhjxTi
+  SHA-256: 1dfeac749aab202341b96ce4ad479364025d7bded48c1a6493cb615bd5dc345e
 
-Pck SHA-256: 347f28e4e60baeeb8bf80a5a11c7b286bd673eec19683757a64774c13c1b6f9b
+Pck SHA-256: 4ceae38152e358fb1c2df3ccf3e84140a3595407cb10088901c2e352483a2a14
 Engine SHA-256 (stock Godot 4.4.1 template):
   b493c1d53fb915f7805f360cfe42d1c3126e720dfc234a4b0f2feb99200f9a4b
+
+Map dens + open cross-empire PvP (capitals hostile from day one).
 
 If Defender quarantines: Protection history → Allow on this device.
 
