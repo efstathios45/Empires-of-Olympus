@@ -117,6 +117,88 @@ const DENS: Array = [
 			"wolf_enemy", "wolf_enemy", "wolf_black_enemy", "satyr_enemy",
 		],
 	},
+	## Mid / high chain dens (Melite trials → ~30).
+	{
+		"id": "isthmus_shore",
+		"name": "Isthmus Shore",
+		"pos": Vector2(-20.0, 140.0), "r": 40.0,
+		"col": Color(0.28, 0.45, 0.7, 0.88), "icon": "icon_sword",
+		"ids": [
+			"siren_enemy", "siren_enemy", "siren_enemy", "siren_enemy", "siren_enemy",
+			"harpy_enemy", "harpy_enemy", "harpy_enemy", "wolf_black_enemy",
+		],
+	},
+	{
+		"id": "serpent_hollow",
+		"name": "Serpent Hollow",
+		"pos": Vector2(300.0, -280.0), "r": 40.0,
+		"col": Color(0.35, 0.6, 0.3, 0.88), "icon": "icon_sword",
+		"ids": [
+			"gorgon_matron", "gorgon_matron", "gorgon_matron", "gorgon_matron",
+			"gorgon_enemy", "gorgon_enemy", "satyr_enemy", "harpy_enemy",
+		],
+	},
+	{
+		"id": "taygetus_ridge",
+		"name": "Taygetus Ridge",
+		"pos": Vector2(-300.0, 300.0), "r": 42.0,
+		"col": Color(0.7, 0.35, 0.25, 0.88), "icon": "icon_sword",
+		"ids": [
+			"centaur_champion", "centaur_champion", "centaur_champion", "centaur_champion",
+			"satyr_enemy", "satyr_enemy", "satyr_enemy", "centaur_enemy", "gorgon_enemy",
+		],
+	},
+	{
+		"id": "boreas_crags",
+		"name": "Boreas Crags",
+		"pos": Vector2(0.0, -220.0), "r": 40.0,
+		"col": Color(0.55, 0.6, 0.78, 0.88), "icon": "icon_sword",
+		"ids": [
+			"harpy_matriarch", "harpy_matriarch", "harpy_matriarch", "harpy_matriarch",
+			"harpy_matriarch", "harpy_enemy", "harpy_enemy", "siren_enemy",
+		],
+	},
+	{
+		"id": "acheron_gate",
+		"name": "Acheron Gate",
+		"pos": Vector2(180.0, 120.0), "r": 40.0,
+		"col": Color(0.45, 0.15, 0.15, 0.9), "icon": "icon_sword",
+		"ids": [
+			"hellhound_enemy", "hellhound_enemy", "hellhound_enemy", "hellhound_enemy",
+			"hellhound_enemy", "wolf_black_enemy", "wolf_black_enemy", "wolf_dire_enemy",
+		],
+	},
+	{
+		"id": "lerna_marsh",
+		"name": "Lerna Marsh",
+		"pos": Vector2(-180.0, -160.0), "r": 44.0,
+		"col": Color(0.22, 0.5, 0.28, 0.9), "icon": "icon_skull",
+		"ids": [
+			"hydra_boss",
+			"gorgon_matron", "gorgon_matron", "satyr_enemy", "satyr_enemy",
+			"hellhound_enemy", "boar_enemy", "boar_enemy",
+		],
+	},
+	{
+		"id": "ossa_foot",
+		"name": "Ossa Foot",
+		"pos": Vector2(220.0, 80.0), "r": 40.0,
+		"col": Color(0.5, 0.45, 0.4, 0.88), "icon": "icon_sword",
+		"ids": [
+			"titan_thrall", "titan_thrall", "titan_thrall", "titan_thrall",
+			"centaur_champion", "gorgon_matron", "hellhound_enemy",
+		],
+	},
+	{
+		"id": "olympus_approach",
+		"name": "Olympus Approach",
+		"pos": Vector2(0.0, -300.0), "r": 42.0,
+		"col": Color(0.75, 0.65, 0.3, 0.9), "icon": "icon_laurel",
+		"ids": [
+			"olympian_shade", "olympian_shade", "olympian_shade", "olympian_shade",
+			"centaur_champion", "centaur_champion", "harpy_matriarch", "titan_thrall",
+		],
+	},
 ]
 
 

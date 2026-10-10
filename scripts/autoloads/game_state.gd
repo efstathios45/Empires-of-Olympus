@@ -1516,60 +1516,125 @@ func refine_weapon(scroll_id: String) -> Dictionary:
 
 const QUESTS: = [
 	{
-		"id": "wolves", 
-		"title": "Beasts at the Border", 
-		"brief": "Wolves and boars press the farms. Thin them out.", 
-		"kills": {"wolf_enemy": 4, "boar_enemy": 3}, 
-		"reward_gold": 120, "reward_xp": 90, 
-		"turn_in": "The farms breathe again. Sparta — no, all Hellas — thanks you.", 
-	}, 
+		"id": "wolves",
+		"title": "Beasts at the Border",
+		"brief": "Wolves and boars press the farms. Thin them out. (map: Lykaon Den / Boar Wallows)",
+		"kills": {"wolf_enemy": 4, "boar_enemy": 3},
+		"reward_gold": 120, "reward_xp": 120,
+		"turn_in": "The farms breathe again. Hellas thanks you — Melite has more work.",
+	},
 	{
-		"id": "wilds", 
-		"title": "Silence the Wilds", 
-		"brief": "Satyrs raid the vineyards and harpies foul the cliffs.", 
-		"kills": {"satyr_enemy": 4, "harpy_enemy": 3}, 
-		"reward_gold": 220, "reward_xp": 200, 
-		"turn_in": "The songs of the wild grow quieter. Well struck.", 
-	}, 
+		"id": "wilds",
+		"title": "Silence the Wilds",
+		"brief": "Satyrs raid the vineyards and harpies foul the cliffs. (map: Satyr Pass)",
+		"kills": {"satyr_enemy": 4, "harpy_enemy": 3},
+		"reward_gold": 220, "reward_xp": 280,
+		"turn_in": "The songs of the wild grow quieter. Well struck.",
+	},
 	{
-		"id": "stones", 
-		"title": "Shatter the Curse", 
-		"brief": "Three cursed Omphaloi poison the land. Destroy them all.", 
-		"stones": 3, 
-		"reward_gold": 350, "reward_xp": 380, 
-		"turn_in": "The whispers fade. But something ancient stirs below...", 
-	}, 
+		"id": "stones",
+		"title": "Shatter the Curse",
+		"brief": "Three cursed Omphaloi poison the land. Destroy them all.",
+		"stones": 3,
+		"reward_gold": 350, "reward_xp": 450,
+		"turn_in": "The whispers fade. But something ancient stirs below...",
+	},
 	{
-		"id": "elites", 
-		"title": "Heroes of Old", 
-		"brief": "Centaurs and a gorgon guard the path to the Labyrinth.", 
-		"kills": {"centaur_enemy": 3, "gorgon_enemy": 2}, 
-		"reward_gold": 500, "reward_xp": 600, 
-		"turn_in": "The way stands open. The Labyrinth awaits, champion.", 
-	}, 
+		"id": "elites",
+		"title": "Heroes of Old",
+		"brief": "Centaurs and gorgons guard the path to the Labyrinth. (map: Centaur March)",
+		"kills": {"centaur_enemy": 3, "gorgon_enemy": 2},
+		"reward_gold": 500, "reward_xp": 700,
+		"turn_in": "The way stands open. The Labyrinth awaits, champion.",
+	},
 	{
 		"id": "minotaur",
 		"title": "The Labyrinth",
 		"brief": "Enter the arena and slay the Minotaur. End the curse at its root.",
 		"boss": true,
-		"reward_gold": 1000, "reward_xp": 1500,
-		"turn_in": "The beast is felled. Olympus itself sings your name!",
+		"reward_gold": 1000, "reward_xp": 1800,
+		"turn_in": "The beast is felled — yet the Isthmus sings with sirens. Melite needs you still.",
 	},
 	{
 		"id": "aftermath",
 		"title": "Ashes of the Labyrinth",
-		"brief": "The curse broke — but satyrs and harpies still stalk the wilds. Cull them for Melite.",
+		"brief": "Cull the scavengers that poured from the Labyrinth's cracks.",
 		"kills": {"satyr_enemy": 5, "harpy_enemy": 4},
-		"reward_gold": 700, "reward_xp": 900,
-		"turn_in": "The wilds quiet. Yet centaur banners gather to the south…",
+		"reward_gold": 700, "reward_xp": 1100,
+		"turn_in": "The wilds quiet. Centaur banners gather on the Spartan road…",
 	},
 	{
 		"id": "champions",
 		"title": "Trial of Champions",
-		"brief": "Prove the Labyrinth did not make you soft — fell centaur elites and a gorgon.",
+		"brief": "Prove the Labyrinth did not make you soft — fell centaurs and a gorgon.",
 		"kills": {"centaur_enemy": 4, "gorgon_enemy": 2},
-		"reward_gold": 900, "reward_xp": 1200,
-		"turn_in": "Athena's court names you Champion of the Agora. Walk free — refine, craft, and host friends.",
+		"reward_gold": 900, "reward_xp": 1400,
+		"turn_in": "Champion of the Agora — now the coasts call. Sirens haunt the Isthmus Shore.",
+	},
+	{
+		"id": "sirens",
+		"title": "Sirens of the Isthmus",
+		"brief": "Clear the Isthmus Shore dens — sirens and harpies drown travelers. (map: Isthmus Shore)",
+		"kills": {"siren_enemy": 5, "harpy_enemy": 3},
+		"reward_gold": 1200, "reward_xp": 2200,
+		"turn_in": "The shore falls quiet. Thebes whispers of a Cadmean serpent…",
+	},
+	{
+		"id": "serpent",
+		"title": "Cadmean Serpent",
+		"brief": "Hunt Cadmean Matrons in the Serpent Hollow near Thebes. (map: Serpent Hollow)",
+		"kills": {"gorgon_matron": 4},
+		"reward_gold": 1500, "reward_xp": 2800,
+		"turn_in": "Venom fades from Theban wells. Sparta demands a blood rite on Taygetus.",
+	},
+	{
+		"id": "blood_rite",
+		"title": "Spartan Blood Rite",
+		"brief": "Defeat Taygetus Champions and war-satyr packs on the ridge. (map: Taygetus Ridge)",
+		"kills": {"centaur_champion": 4, "satyr_enemy": 4},
+		"reward_gold": 1800, "reward_xp": 3400,
+		"turn_in": "Laconia salutes you. North winds howl — Boreas Crags stir.",
+	},
+	{
+		"id": "boreas",
+		"title": "Wings of Boreas",
+		"brief": "Slay Boreas Matriarchs nesting on the northern crags. (map: Boreas Crags)",
+		"kills": {"harpy_matriarch": 5},
+		"reward_gold": 2100, "reward_xp": 4000,
+		"turn_in": "The north wind stills. From the east — hounds of Hades bay.",
+	},
+	{
+		"id": "hades_hounds",
+		"title": "Hounds of Hades",
+		"brief": "Cull Stygian hellhounds at the Acheron Gate. (map: Acheron Gate)",
+		"kills": {"hellhound_enemy": 5, "wolf_black_enemy": 3},
+		"reward_gold": 2400, "reward_xp": 4800,
+		"turn_in": "The gate holds. South-west, Lerna's marsh coils with something worse…",
+	},
+	{
+		"id": "lerna",
+		"title": "Lerna's Coil",
+		"brief": "Enter Lerna Marsh and slay the Lernaean Hydra. (map: Lerna Marsh)",
+		"kills": {"hydra_boss": 1},
+		"reward_gold": 3500, "reward_xp": 7000,
+		"turn_in": "Heads fall and do not rise. Titan bones rattle on Ossa's foot.",
+	},
+	{
+		"id": "titans",
+		"title": "Titans' Remnant",
+		"brief": "Shatter two high Omphaloi and fell Titan Thralls at Ossa Foot. (map: Ossa Foot)",
+		"kills": {"titan_thrall": 4},
+		"stones": 5,
+		"reward_gold": 4000, "reward_xp": 8500,
+		"turn_in": "The remnant yields. One trial remains — Olympus Approach.",
+	},
+	{
+		"id": "olympus",
+		"title": "Judgement of Olympus",
+		"brief": "Defeat Olympian Shades on the northern approach and return to Melite. (map: Olympus Approach)",
+		"kills": {"olympian_shade": 4, "centaur_champion": 2},
+		"reward_gold": 5000, "reward_xp": 12000,
+		"turn_in": "Olympus names you among the legends. Hellas is yours to walk — host friends, refine, and rule the dens.",
 	},
 ]
 
@@ -1589,13 +1654,33 @@ func quest_progress_text() -> String:
 			var have: int = quest_kills.get(enemy_id, 0)
 			lines.append("  %s: %d/%d" % [prettify_enemy(enemy_id), mini(have, need), need])
 	if q.has("stones"):
-		lines.append("  Omphaloi: %d/3" % mini(omphaloi_destroyed, 3))
+		var need_s: int = int(q["stones"])
+		lines.append("  Omphaloi: %d/%d" % [mini(omphaloi_destroyed, need_s), need_s])
 	if q.has("boss"):
 		lines.append("  Minotaur: %s" % ("slain" if minotaur_slain else "alive"))
 	return "\n".join(lines)
 
 func prettify_enemy(enemy_id: String) -> String:
-	return enemy_id.replace("_enemy", "").capitalize()
+	const PRETTY: = {
+		"wolf_enemy": "Wolf",
+		"wolf_black_enemy": "Stygian Wolf",
+		"boar_enemy": "Boar",
+		"satyr_enemy": "Satyr",
+		"harpy_enemy": "Harpy",
+		"centaur_enemy": "Centaur",
+		"gorgon_enemy": "Gorgon",
+		"siren_enemy": "Siren",
+		"gorgon_matron": "Cadmean Matron",
+		"centaur_champion": "Taygetus Champion",
+		"harpy_matriarch": "Boreas Matriarch",
+		"hellhound_enemy": "Hound of Hades",
+		"hydra_boss": "Lernaean Hydra",
+		"titan_thrall": "Titan Thrall",
+		"olympian_shade": "Olympian Shade",
+	}
+	if PRETTY.has(enemy_id):
+		return String(PRETTY[enemy_id])
+	return enemy_id.replace("_enemy", "").replace("_", " ").capitalize()
 
 func register_kill(enemy_id: String) -> void :
 	quest_kills[enemy_id] = quest_kills.get(enemy_id, 0) + 1

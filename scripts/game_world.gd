@@ -710,6 +710,11 @@ func _build_wilds() -> void :
 		[Vector2(200.0, -220.0), 5],
 		[Vector2(280.0, -150.0), 15],
 		[Vector2(0.0, 230.0), 10],
+		## High-tier Omphaloi for Titans' Remnant / late chain.
+		[Vector2(200.0, 60.0), 15],
+		[Vector2(240.0, 100.0), 15],
+		[Vector2(-160.0, -140.0), 10],
+		[Vector2(20.0, -280.0), 15],
 	]:
 		_spawn_oracle_stone(entry[0] as Vector2, int(entry[1]))
 

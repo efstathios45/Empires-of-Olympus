@@ -773,17 +773,18 @@ func _attack_time(key: String, fallback: float) -> float:
 func _try_light_attack() -> void :
 	var cd: = GameState.class_data()
 	if cd["ranged"]:
-		_start_attack(_clip_for_alias("attack_ranged"), _attack_time("ranged_time", 0.55))
+		_start_attack(_clip_for_alias("attack_ranged"), _attack_time("ranged_time", 0.55), "attack_ranged")
 	else:
 		if combo_window <= 0.0:
 			combo_index = 0
-		_start_attack(_clip_for_alias(COMBO_ALIASES[combo_index]), _attack_time("light_time", 0.55))
+		var alias: = COMBO_ALIASES[combo_index]
+		_start_attack(_clip_for_alias(alias), _attack_time("light_time", 0.55), alias)
 		combo_index = (combo_index + 1) % COMBO_ALIASES.size()
 		combo_window = 1.1
 	_play_attack_swing_sfx(false)
 
 func _try_heavy_attack() -> void :
-	_start_attack(_clip_for_alias(HEAVY_ALIAS), _attack_time("heavy_time", 0.85))
+	_start_attack(_clip_for_alias(HEAVY_ALIAS), _attack_time("heavy_time", 0.85), HEAVY_ALIAS)
 	_play_attack_swing_sfx(true)
 
 func _play_attack_swing_sfx(heavy: bool) -> void :
@@ -797,7 +798,7 @@ func _play_attack_swing_sfx(heavy: bool) -> void :
 			AudioManager.play_sfx("sword_swing", -4.0, randf_range(0.95, 1.1))
 	_play_male_voice(MALE_ATTACK_VOICES, -5.5 if heavy else -7.0)
 
-func _start_attack(clip: String, duration: float) -> void :
+func _start_attack(clip: String, duration: float, fx_alias: String = "attack_1") -> void :
 	state = State.ATTACK
 	attack_timer = duration
 	_attack_hit_time = duration * 0.55
@@ -806,6 +807,10 @@ func _start_attack(clip: String, duration: float) -> void :
 	if clip != "" and anim != null and anim.has_animation(clip):
 		anim.play(clip)
 	combo_performed.emit()
+	## Peers need the swing anim — skills already call request_skill_fx.
+	if NetSession != null and NetSession.is_online() and fx_alias != "":
+		var yaw: float = float(mesh_root.rotation.y) if mesh_root else 0.0
+		NetSession.request_combat_fx(fx_alias, global_position, yaw)
 
 var _heavy_next: bool = false
 

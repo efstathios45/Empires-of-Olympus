@@ -39,6 +39,8 @@ const MAP_STONES: = [
 	Vector2(-200.0, 240.0), Vector2(-280.0, 180.0),
 	Vector2(200.0, -220.0), Vector2(280.0, -150.0),
 	Vector2(0.0, 230.0),
+	Vector2(200.0, 60.0), Vector2(240.0, 100.0),
+	Vector2(-160.0, -140.0), Vector2(20.0, -280.0),
 ]
 
 var ui_open: bool = false
