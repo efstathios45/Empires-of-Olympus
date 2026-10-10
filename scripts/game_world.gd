@@ -622,34 +622,50 @@ func _paint_roads_on_splat(splatmap: Image) -> void :
 				splatmap.set_pixel(ix, iz, Color(grass, rock, dirt, 0.0))
 
 
-## Paved Hellenic / Roman-style roads between capitals and dens.
+## Hellenic marble-tile roads (ashlar slabs) — never agora psifidoto/mosaic.
 func _build_roads() -> void :
-	## Packed earth + worn stone — not agora mosaic floors.
-	var mat: = StandardMaterial3D.new()
-	mat.albedo_color = Color(0.68, 0.6, 0.48)
-	if ResourceLoader.exists("res://assets/textures/nature/mediterranean_ground.png"):
-		mat.albedo_texture = load("res://assets/textures/nature/mediterranean_ground.png")
-	elif ResourceLoader.exists("res://assets/textures/nature/terrain_dirt.png"):
-		mat.albedo_texture = load("res://assets/textures/nature/terrain_dirt.png")
-	mat.roughness = 0.95
-	mat.uv1_scale = Vector3(1.8, 1.8, 1.8)
-	var edge_mat: = StandardMaterial3D.new()
-	edge_mat.albedo_color = Color(0.78, 0.74, 0.66)
-	if ResourceLoader.exists("res://assets/textures/stone/terrain_rock.png"):
-		edge_mat.albedo_texture = load("res://assets/textures/stone/terrain_rock.png")
-	elif ResourceLoader.exists("res://assets/textures/stone/white_marble.png"):
-		edge_mat.albedo_texture = load("res://assets/textures/stone/white_marble.png")
-	edge_mat.roughness = 0.9
+	const TILE_W: = 2.05 ## across the road (3 tiles ≈ full width)
+	const TILE_L: = 2.05 ## along the road
+	const TILE_H: = 0.11
+	const GAP: = 0.08 ## grout gap between marble tiles
+	const STEP: = TILE_L + GAP
 
-	var slab_mesh: = BoxMesh.new()
-	slab_mesh.size = Vector3(ROAD_HALF_W * 2.0, 0.1, 3.2)
+	var marble_tex: Texture2D = null
+	if ResourceLoader.exists("res://assets/textures/stone/white_marble.png"):
+		marble_tex = load("res://assets/textures/stone/white_marble.png")
+	## A few worn shades so the road reads as laid tiles, not one sheet.
+	var tile_mats: Array[StandardMaterial3D] = []
+	for shade in [
+		Color(0.92, 0.9, 0.86), Color(0.88, 0.86, 0.8),
+		Color(0.9, 0.87, 0.82), Color(0.85, 0.83, 0.78),
+	]:
+		var m: = StandardMaterial3D.new()
+		m.albedo_color = shade
+		if marble_tex != null:
+			m.albedo_texture = marble_tex
+		m.roughness = 0.78
+		m.metallic = 0.02
+		m.uv1_scale = Vector3(1.0, 1.0, 1.0)
+		tile_mats.append(m)
+
+	var curb_mat: = StandardMaterial3D.new()
+	curb_mat.albedo_color = Color(0.86, 0.84, 0.8)
+	if marble_tex != null:
+		curb_mat.albedo_texture = marble_tex
+	curb_mat.roughness = 0.72
+
+	var tile_mesh: = BoxMesh.new()
+	tile_mesh.size = Vector3(TILE_W, TILE_H, TILE_L)
 	var curb_mesh: = BoxMesh.new()
-	curb_mesh.size = Vector3(0.42, 0.22, 3.0)
+	curb_mesh.size = Vector3(0.38, 0.2, TILE_L)
 
+	## Lane offsets: left / center / right marble courses.
+	var lanes: Array[float] = [-(TILE_W + GAP), 0.0, (TILE_W + GAP)]
 	var i: = 0
-	for sample in HellasMapData.road_segment_samples(3.1):
+	var rng: = RandomNumberGenerator.new()
+	rng.seed = 77
+	for sample in HellasMapData.road_segment_samples(STEP):
 		var p: Vector2 = sample["pos"]
-		## Skip slabs inside plazas so agora floors stay clean.
 		var near_plaza: = false
 		for city in CITIES:
 			if p.distance_to(city["c"]) < PLAZA_R + 2.0:
@@ -657,32 +673,38 @@ func _build_roads() -> void :
 				break
 		if near_plaza:
 			continue
-		var y: = sample_height(p.x, p.y) + 0.04
+		var y: = sample_height(p.x, p.y) + 0.03
 		var yaw: float = float(sample["yaw"])
-		var mi: = MeshInstance3D.new()
-		mi.mesh = slab_mesh
-		mi.material_override = mat
-		mi.cast_shadow = GeometryInstance3D.SHADOW_CASTING_SETTING_OFF
-		add_child(mi)
-		mi.global_position = Vector3(p.x, y, p.y)
-		mi.rotation.y = yaw
-		## Marble curbs every other slab.
 		var right: = Vector3(cos(yaw), 0.0, -sin(yaw))
-		if i % 2 == 0:
-			for side in [-1.0, 1.0]:
-				var curb: = MeshInstance3D.new()
-				curb.mesh = curb_mesh
-				curb.material_override = edge_mat
-				curb.cast_shadow = GeometryInstance3D.SHADOW_CASTING_SETTING_OFF
-				add_child(curb)
-				curb.global_position = Vector3(p.x, y, p.y) + right * side * (ROAD_HALF_W + 0.1) + Vector3(0, 0.08, 0)
-				curb.rotation.y = yaw
-		## Occasional roadside marker stones.
-		if i % 7 == 0 and ResourceLoader.exists("res://assets/props/stones/kenney_stones.glb"):
-			var side2: = 1.0 if (i % 14 == 0) else -1.0
-			var edge: = Vector3(p.x, 0.0, p.y) + right * side2 * (ROAD_HALF_W + 1.6)
+		## Stagger every other row like ashlar masonry.
+		var stagger: float = (TILE_W + GAP) * 0.5 if (i % 2 == 1) else 0.0
+		for lane_i in lanes.size():
+			var lat: float = float(lanes[lane_i]) + stagger
+			## Outer staggered tiles that overhang too far — skip.
+			if absf(lat) > ROAD_HALF_W + 0.4:
+				continue
+			var mi: = MeshInstance3D.new()
+			mi.mesh = tile_mesh
+			mi.material_override = tile_mats[rng.randi() % tile_mats.size()]
+			mi.cast_shadow = GeometryInstance3D.SHADOW_CASTING_SETTING_OFF
+			add_child(mi)
+			var jitter: = Vector3(rng.randf_range(-0.02, 0.02), rng.randf_range(0.0, 0.015), rng.randf_range(-0.02, 0.02))
+			mi.global_position = Vector3(p.x, y, p.y) + right * lat + jitter
+			mi.rotation.y = yaw + rng.randf_range(-0.012, 0.012)
+		## Marble curb stones on both edges.
+		for side in [-1.0, 1.0]:
+			var curb: = MeshInstance3D.new()
+			curb.mesh = curb_mesh
+			curb.material_override = curb_mat
+			curb.cast_shadow = GeometryInstance3D.SHADOW_CASTING_SETTING_OFF
+			add_child(curb)
+			curb.global_position = Vector3(p.x, y + 0.05, p.y) + right * side * (ROAD_HALF_W + 0.15)
+			curb.rotation.y = yaw
+		if i % 8 == 0 and ResourceLoader.exists("res://assets/props/stones/kenney_stones.glb"):
+			var side2: = 1.0 if (i % 16 == 0) else -1.0
+			var edge: = Vector3(p.x, 0.0, p.y) + right * side2 * (ROAD_HALF_W + 1.8)
 			_place_glb("res://assets/props/stones/kenney_stones.glb", edge.x, edge.z,
-				randf_range(0.7, 1.3), rad_to_deg(yaw) + randf_range(-20.0, 20.0), 0)
+				rng.randf_range(0.7, 1.2), rad_to_deg(yaw) + rng.randf_range(-15.0, 15.0), 0)
 		i += 1
 
 
