@@ -27,8 +27,8 @@ Full zip (includes .exe):
 Engine SHA-256 (stock Godot 4.4.1 template):
   b493c1d53fb915f7805f360cfe42d1c3126e720dfc234a4b0f2feb99200f9a4b
 
-Hellenic cobblestone roads + dens/capitals spread + olive orchards +
-peer combat FX sync + Melite chain to ~30 + open PvP.
+Hellenic cobblestone roads + horse caravans + dens/capitals + olives +
+Video Settings (144 FPS) + peer combat FX + Melite chain + open PvP.
 
 If Defender quarantines: Protection history → Allow on this device.
 
