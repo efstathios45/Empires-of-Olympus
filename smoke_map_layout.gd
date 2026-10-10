@@ -12,6 +12,7 @@ func _run() -> void:
 	failed += _check_roads()
 	failed += _check_olives()
 	failed += _check_world_wiring()
+	failed += _check_road_grass_and_caravans()
 	if failed > 0:
 		print("SMOKE FAIL: %d" % failed)
 		quit(1)
@@ -127,6 +128,12 @@ func _check_world_wiring() -> int:
 	if src.find("OLIVE_ORCHARDS") < 0:
 		print("FAIL forests not using olive orchards")
 		return 1
+	if src.find("_spawn_road_caravans") < 0:
+		print("FAIL missing road caravan spawn")
+		return 1
+	if src.find("dist_to_nearest_road(p) < ROAD_HALF_W") < 0:
+		print("FAIL grass_weight does not hard-clear roads")
+		return 1
 	if src.find("Vector2(-240.0, 210.0)") >= 0:
 		print("FAIL old Sparta coords still in game_world")
 		return 1
@@ -138,4 +145,33 @@ func _check_world_wiring() -> int:
 		print("FAIL CITIES not synced", sparta)
 		return 1
 	print("OK game_world roads+olives wiring")
+	return 0
+
+
+func _check_road_grass_and_caravans() -> int:
+	var src: = FileAccess.get_file_as_string("res://scripts/game_world.gd")
+	## grass_weight must zero the roadbed before reading splat.
+	var gw: = src.find("func grass_weight")
+	var gk: = src.find("func ground_kind")
+	if gw < 0 or gk < gw:
+		print("FAIL grass_weight missing")
+		return 1
+	var body: = src.substr(gw, gk - gw)
+	if body.find("dist_to_nearest_road") < 0 or body.find("return 0.0") < 0:
+		print("FAIL grass_weight missing hard road clear")
+		return 1
+	if not FileAccess.file_exists("res://scripts/world/road_caravan.gd"):
+		print("FAIL road_caravan.gd missing")
+		return 1
+	if not FileAccess.file_exists("res://assets/characters/horse/animal_horse.glb"):
+		print("FAIL horse glb missing")
+		return 1
+	var esrc: = FileAccess.get_file_as_string("res://scripts/enemy.gd")
+	if esrc.find("caravan_bandit") < 0 or esrc.find("caravan_guard") < 0:
+		print("FAIL caravan enemy configs missing")
+		return 1
+	if esrc.find("var caravan") < 0:
+		print("FAIL enemy missing caravan hook")
+		return 1
+	print("OK road grass clear + caravan wiring")
 	return 0

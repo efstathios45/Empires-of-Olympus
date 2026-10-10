@@ -92,6 +92,7 @@ func _ready() -> void :
 	## Guests skip local mob spawns — host pushes the shared instance roster.
 	if NetSession == null or NetSession.should_spawn_world_mobs_locally():
 		_spawn_zones()
+		_spawn_road_caravans()
 	_build_grass()
 	_build_forests()
 	_build_hud()
@@ -331,6 +332,9 @@ func sample_height(world_x: float, world_z: float) -> float:
 
 func grass_weight(world_x: float, world_z: float) -> float:
 	var p: = Vector2(world_x, world_z)
+	## Hard-clear roadbeds (+ shoulder) so blades never sprout through the paving.
+	if HellasMapData.dist_to_nearest_road(p) < ROAD_HALF_W + 1.8:
+		return 0.0
 	for city in CITIES:
 		if p.distance_to(city["c"]) < PLAZA_R:
 			return 0.12
@@ -614,12 +618,8 @@ func _paint_roads_on_splat(splatmap: Image) -> void :
 				var dist: = sqrt(float(dx * dx + dz * dz))
 				if dist > ROAD_HALF_W:
 					continue
-				var px: = splatmap.get_pixel(ix, iz)
-				var amt: float = 1.0 - dist / ROAD_HALF_W
-				var dirt: float = maxf(px.b, 0.9 * amt)
-				var rock: float = px.g * (1.0 - 0.6 * amt)
-				var grass: float = maxf(1.0 - rock - dirt, 0.0)
-				splatmap.set_pixel(ix, iz, Color(grass, rock, dirt, 0.0))
+				## Full dirt bed under the paving — no grass channel on the road.
+				splatmap.set_pixel(ix, iz, Color(0.0, 0.05, 1.0, 0.0))
 
 
 ## Hellenic roads — Poly Haven cobblestone_large_01 (CC0) paved ribbons + Kenney edge rubble.
@@ -960,6 +960,30 @@ func _spawn_zones() -> void :
 		var zone: Dictionary = ZONES[zi]
 		for id in zone["ids"]:
 			_spawn_enemy_in_zone(id, zi)
+
+
+## Horse + olive-cart caravans shuttling the three capital roads.
+func _spawn_road_caravans() -> void :
+	if NetSession and not NetSession.should_spawn_world_mobs_locally():
+		return
+	const CaravanScr = preload("res://scripts/world/road_caravan.gd")
+	var routes: Array = []
+	for road in HellasMapData.ROADS:
+		var nm: String = String(road.get("name", ""))
+		## City↔city highways only (skip dens/spurs).
+		if nm == "Sacred Way (Athens–Sparta)" \
+				or nm == "Boeotian Road (Athens–Thebes)" \
+				or nm == "Isthmus Road (Sparta–Thebes)":
+			routes.append(road)
+	var seed_i: = 501
+	for ri in routes.size():
+		var road: Dictionary = routes[ri]
+		## Two caravans per highway, staggered, opposite phases.
+		for k in 2:
+			var frac: float = 0.18 + 0.55 * float(k) + 0.04 * float(ri)
+			var c: Node3D = CaravanScr.create(String(road.get("name", "")), road["pts"], frac, seed_i)
+			seed_i += 17
+			add_child(c)
 
 func _spawn_enemy_in_zone(enemy_id: String, zone_idx: int) -> void :
 	if NetSession and not NetSession.should_spawn_world_mobs_locally():
