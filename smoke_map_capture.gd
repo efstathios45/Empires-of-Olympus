@@ -34,13 +34,12 @@ func run() -> void:
 		return
 
 	var MapData = load("res://scripts/world/hellas_map_data.gd")
-	## Centaur March sits on the Athens–Sparta road — clear of city walls.
-	var den: Dictionary = MapData.DENS[1]
+	## Stand near Centaur March overlooking the Sacred Way + olives.
+	var den: Dictionary = MapData.DENS[3] ## centaur_march in new layout
 	var den_pos: Vector2 = den["pos"]
 	var den_r: float = float(den["r"])
-	## Stand SE of the ring, face NW into the camp.
-	var px: = den_pos.x + den_r * 0.95
-	var pz: = den_pos.y + den_r * 0.95
+	var px: = den_pos.x + den_r * 0.7
+	var pz: = den_pos.y + den_r * 0.7
 	player.global_position = Vector3(px, world.sample_height(px, pz) + 1.6, pz)
 	if "velocity" in player:
 		player.velocity = Vector3.ZERO

@@ -21,11 +21,11 @@ const MAP_SCALE: = Vector3(1.0, 26.0, 1.0)
 const TERRAIN_OFFSET: = Vector3(-384.0, 0.0, -384.0)
 const WALL_HALF: = 340.0
 
-## Capitals — Athens keeps the mosaic quest; Sparta / Thebes are full sister cities.
+## Capitals — keep in sync with HellasMapData.CAPITALS (wide triangle).
 const CITIES: = [
 	{"id": "athens", "empire": "athens", "c": Vector2(0.0, 0.0), "theme": "athens", "mosaic": true},
-	{"id": "sparta", "empire": "sparta", "c": Vector2(-240.0, 210.0), "theme": "sparta", "mosaic": false},
-	{"id": "thebes", "empire": "corinth", "c": Vector2(240.0, -190.0), "theme": "thebes", "mosaic": false},
+	{"id": "sparta", "empire": "sparta", "c": Vector2(-280.0, 200.0), "theme": "sparta", "mosaic": false},
+	{"id": "thebes", "empire": "corinth", "c": Vector2(270.0, -180.0), "theme": "thebes", "mosaic": false},
 ]
 
 const HUB_POS: = Vector2(0.0, 0.0)
@@ -33,24 +33,14 @@ const HUB_RADIUS: = 50.0
 const HUB_H: = 0.45
 const CITY_WALL_R: = 38.0
 const DEN_H: = 0.48
+const ROAD_H: = 0.46
+const ROAD_HALF_W: = 4.2
 
 const PLAZA_R: = HUB_RADIUS * 0.55
 const SANCTUARY_R: = PLAZA_R
-const ARENA_POS: = Vector2(0.0, 280.0)
+const ARENA_POS: = Vector2(90.0, 290.0)
 const ARENA_RADIUS: = 26.0
 const ARENA_H: = 0.42
-
-const GROVES: = [
-	{"c": Vector2(118.0, -58.0), "r": 26.0, "h": 0.52, "count": 14, "seed": 11},
-	{"c": Vector2(-118.0, -88.0), "r": 28.0, "h": 0.5, "count": 16, "seed": 23},
-	{"c": Vector2(-52.0, -136.0), "r": 24.0, "h": 0.48, "count": 12, "seed": 37},
-	{"c": Vector2(96.0, 96.0), "r": 24.0, "h": 0.5, "count": 12, "seed": 51},
-	{"c": Vector2(-280.0, 140.0), "r": 26.0, "h": 0.5, "count": 14, "seed": 67},
-	{"c": Vector2(-160.0, 280.0), "r": 24.0, "h": 0.48, "count": 12, "seed": 71},
-	{"c": Vector2(280.0, -100.0), "r": 26.0, "h": 0.5, "count": 14, "seed": 83},
-	{"c": Vector2(150.0, -280.0), "r": 24.0, "h": 0.48, "count": 12, "seed": 97},
-	{"c": Vector2(0.0, -200.0), "r": 22.0, "h": 0.5, "count": 10, "seed": 101},
-]
 
 ## Giant dens between hostile capitals — filled from HellasMapData at ready.
 var ZONES: Array = []
@@ -94,6 +84,7 @@ func _ready() -> void :
 	_generate_terrain(20260807)
 	_build_bounds()
 	_build_hub()
+	_build_roads()
 	_build_dens()
 	_build_wilds()
 	_build_arena()
@@ -244,12 +235,14 @@ func _generate_terrain(seed_val: int) -> void :
 			h = _flatten_toward(h, ARENA_H, Vector2(wx, wz).distance_to(ARENA_POS), ARENA_RADIUS)
 			for den in HellasMapData.DENS:
 				h = _flatten_toward(h, DEN_H, Vector2(wx, wz).distance_to(den["pos"]), float(den["r"]) + 6.0)
-			for g in GROVES:
-				h = _flatten_toward(h, g["h"], Vector2(wx, wz).distance_to(g["c"]), g["r"])
+			for g in HellasMapData.OLIVE_ORCHARDS:
+				h = _flatten_toward(h, 0.5, Vector2(wx, wz).distance_to(g["c"]), float(g["r"]) + 2.0)
 			var fx: = clampf(minf(float(x), float(TERRAIN_SIZE - 1 - x)) / edge_margin, 0.0, 1.0)
 			var fz: = clampf(minf(float(z), float(TERRAIN_SIZE - 1 - z)) / edge_margin, 0.0, 1.0)
 			h = lerpf(0.3, h, fx * fz)
 			heightmap.set_pixel(x, z, Color(h, 0, 0, 1))
+	## Road beds: sample along polylines (cheap) instead of per-pixel distance.
+	_flatten_roads_on_heightmap(heightmap)
 
 
 	var norm_step: = 3
@@ -281,6 +274,8 @@ func _generate_terrain(seed_val: int) -> void :
 					dirt_w = maxf(dirt_w, 0.88 * (1.0 - rock_w) * (1.0 - dd / dr))
 			var grass_w: float = maxf(1.0 - rock_w - dirt_w, 0.0)
 			splatmap.set_pixel(x, z, Color(grass_w, rock_w, dirt_w, 0.0))
+
+	_paint_roads_on_splat(splatmap)
 
 	var full_rect: = Rect2(0, 0, TERRAIN_SIZE, TERRAIN_SIZE)
 	data.notify_region_change(full_rect, HTerrainData.CHANNEL_HEIGHT)
@@ -582,6 +577,108 @@ func _build_hub() -> void :
 	apply_player_mosaic()
 
 
+func _flatten_roads_on_heightmap(heightmap: Image) -> void :
+	var radius: = int(ceil(ROAD_HALF_W + 2.5))
+	for sample in HellasMapData.road_segment_samples(2.5):
+		var p: Vector2 = sample["pos"]
+		var cx: = int(p.x - TERRAIN_OFFSET.x)
+		var cz: = int(p.y - TERRAIN_OFFSET.z)
+		for dz in range(-radius, radius + 1):
+			for dx in range(-radius, radius + 1):
+				var ix: = cx + dx
+				var iz: = cz + dz
+				if ix < 0 or iz < 0 or ix >= TERRAIN_SIZE or iz >= TERRAIN_SIZE:
+					continue
+				var dist: = sqrt(float(dx * dx + dz * dz))
+				if dist > float(radius):
+					continue
+				var h: float = heightmap.get_pixel(ix, iz).r
+				h = _flatten_toward(h, ROAD_H, dist, float(radius))
+				heightmap.set_pixel(ix, iz, Color(h, 0, 0, 1))
+
+
+func _paint_roads_on_splat(splatmap: Image) -> void :
+	var radius: = int(ceil(ROAD_HALF_W))
+	for sample in HellasMapData.road_segment_samples(2.0):
+		var p: Vector2 = sample["pos"]
+		var cx: = int(p.x - TERRAIN_OFFSET.x)
+		var cz: = int(p.y - TERRAIN_OFFSET.z)
+		for dz in range(-radius, radius + 1):
+			for dx in range(-radius, radius + 1):
+				var ix: = cx + dx
+				var iz: = cz + dz
+				if ix < 0 or iz < 0 or ix >= TERRAIN_SIZE or iz >= TERRAIN_SIZE:
+					continue
+				var dist: = sqrt(float(dx * dx + dz * dz))
+				if dist > ROAD_HALF_W:
+					continue
+				var px: = splatmap.get_pixel(ix, iz)
+				var amt: float = 1.0 - dist / ROAD_HALF_W
+				var dirt: float = maxf(px.b, 0.9 * amt)
+				var rock: float = px.g * (1.0 - 0.6 * amt)
+				var grass: float = maxf(1.0 - rock - dirt, 0.0)
+				splatmap.set_pixel(ix, iz, Color(grass, rock, dirt, 0.0))
+
+
+## Paved Hellenic / Roman-style roads between capitals and dens.
+func _build_roads() -> void :
+	var mat: = StandardMaterial3D.new()
+	mat.albedo_color = Color(0.72, 0.68, 0.58)
+	if ResourceLoader.exists("res://assets/textures/stone/greek_pebble_mosaic.png"):
+		mat.albedo_texture = load("res://assets/textures/stone/greek_pebble_mosaic.png")
+	mat.roughness = 0.92
+	mat.uv1_scale = Vector3(2.5, 2.5, 2.5)
+	var edge_mat: = StandardMaterial3D.new()
+	edge_mat.albedo_color = Color(0.82, 0.8, 0.74)
+	if ResourceLoader.exists("res://assets/textures/stone/white_marble.png"):
+		edge_mat.albedo_texture = load("res://assets/textures/stone/white_marble.png")
+	edge_mat.roughness = 0.85
+
+	var slab_mesh: = BoxMesh.new()
+	slab_mesh.size = Vector3(ROAD_HALF_W * 2.0, 0.12, 3.2)
+	var curb_mesh: = BoxMesh.new()
+	curb_mesh.size = Vector3(0.35, 0.28, 3.0)
+
+	var i: = 0
+	for sample in HellasMapData.road_segment_samples(3.1):
+		var p: Vector2 = sample["pos"]
+		## Skip slabs inside plazas so agora floors stay clean.
+		var near_plaza: = false
+		for city in CITIES:
+			if p.distance_to(city["c"]) < PLAZA_R + 2.0:
+				near_plaza = true
+				break
+		if near_plaza:
+			continue
+		var y: = sample_height(p.x, p.y) + 0.04
+		var yaw: float = float(sample["yaw"])
+		var mi: = MeshInstance3D.new()
+		mi.mesh = slab_mesh
+		mi.material_override = mat
+		mi.cast_shadow = GeometryInstance3D.SHADOW_CASTING_SETTING_OFF
+		add_child(mi)
+		mi.global_position = Vector3(p.x, y, p.y)
+		mi.rotation.y = yaw
+		## Marble curbs every other slab.
+		var right: = Vector3(cos(yaw), 0.0, -sin(yaw))
+		if i % 2 == 0:
+			for side in [-1.0, 1.0]:
+				var curb: = MeshInstance3D.new()
+				curb.mesh = curb_mesh
+				curb.material_override = edge_mat
+				curb.cast_shadow = GeometryInstance3D.SHADOW_CASTING_SETTING_OFF
+				add_child(curb)
+				curb.global_position = Vector3(p.x, y, p.y) + right * side * (ROAD_HALF_W + 0.1) + Vector3(0, 0.08, 0)
+				curb.rotation.y = yaw
+		## Occasional roadside marker stones.
+		if i % 7 == 0 and ResourceLoader.exists("res://assets/props/stones/kenney_stones.glb"):
+			var side2: = 1.0 if (i % 14 == 0) else -1.0
+			var edge: = Vector3(p.x, 0.0, p.y) + right * side2 * (ROAD_HALF_W + 1.6)
+			_place_glb("res://assets/props/stones/kenney_stones.glb", edge.x, edge.z,
+				randf_range(0.7, 1.3), rad_to_deg(yaw) + randf_range(-20.0, 20.0), 0)
+		i += 1
+
+
 ## Giant beast dens between the three hostile capitals — rock rings + ruin camps.
 func _build_dens() -> void :
 	var rng: = RandomNumberGenerator.new()
@@ -657,15 +754,15 @@ func apply_player_mosaic() -> void :
 func _build_wilds() -> void :
 	## Ruins along the roads between capitals.
 	for entry in [
-		[70.0, -32.0, 6.5, 40.0],
-		[94.0, -6.0, 5.0, 160.0],
-		[-70.0, 34.0, 5.5, -60.0],
-		[-150.0, 130.0, 6.0, 25.0],
-		[-200.0, 180.0, 5.5, -40.0],
-		[150.0, -120.0, 6.0, 110.0],
-		[210.0, -160.0, 5.5, 200.0],
-		[40.0, 220.0, 5.0, 15.0],
-		[-40.0, -180.0, 5.5, 90.0],
+		[60.0, -50.0, 6.5, 40.0],
+		[-100.0, 50.0, 5.0, 160.0],
+		[90.0, 80.0, 5.5, -60.0],
+		[-190.0, 100.0, 6.0, 25.0],
+		[180.0, -90.0, 5.5, -40.0],
+		[-60.0, -160.0, 6.0, 110.0],
+		[140.0, 170.0, 5.5, 200.0],
+		[-200.0, -100.0, 5.0, 15.0],
+		[50.0, -250.0, 5.5, 90.0],
 	]:
 		_place_glb("res://assets/environment/structures/broken_ruins.glb",
 			float(entry[0]), float(entry[1]), float(entry[2]), float(entry[3]), 0)
@@ -702,27 +799,27 @@ func _build_wilds() -> void :
 		placed += 1
 
 	for entry in [
-		[Vector2(40.0, -70.0), 1],
-		[Vector2(-70.0, -25.0), 5],
-		[Vector2(35.0, 55.0), 10],
-		[Vector2(-200.0, 240.0), 5],
-		[Vector2(-280.0, 180.0), 10],
-		[Vector2(200.0, -220.0), 5],
-		[Vector2(280.0, -150.0), 15],
-		[Vector2(0.0, 230.0), 10],
+		[Vector2(45.0, -80.0), 1],
+		[Vector2(-100.0, -30.0), 5],
+		[Vector2(80.0, 60.0), 10],
+		[Vector2(-230.0, 250.0), 5],
+		[Vector2(-300.0, 150.0), 10],
+		[Vector2(250.0, -230.0), 5],
+		[Vector2(300.0, -120.0), 15],
+		[Vector2(60.0, 250.0), 10],
 		## High-tier Omphaloi for Titans' Remnant / late chain.
-		[Vector2(200.0, 60.0), 15],
-		[Vector2(240.0, 100.0), 15],
-		[Vector2(-160.0, -140.0), 10],
+		[Vector2(190.0, 50.0), 15],
+		[Vector2(230.0, 100.0), 15],
+		[Vector2(-200.0, -150.0), 10],
 		[Vector2(20.0, -280.0), 15],
 	]:
 		_spawn_oracle_stone(entry[0] as Vector2, int(entry[1]))
 
 	for pos in [
-		Vector2(30.0, -58.0), Vector2(-62.0, 10.0), Vector2(18.0, 88.0),
-		Vector2(-220.0, 250.0), Vector2(-260.0, 190.0),
-		Vector2(220.0, -230.0), Vector2(260.0, -170.0),
-		Vector2(10.0, 240.0),
+		Vector2(35.0, -60.0), Vector2(-90.0, 20.0), Vector2(70.0, 90.0),
+		Vector2(-230.0, 260.0), Vector2(-290.0, 170.0),
+		Vector2(250.0, -240.0), Vector2(280.0, -140.0),
+		Vector2(50.0, 250.0),
 	]:
 		var chest: = ChestScript.create(Vector3(pos.x, sample_height(pos.x, pos.y), pos.y))
 		add_child(chest)
@@ -850,63 +947,146 @@ func _build_grass() -> void :
 	_grass.set_tier(String(preset.get("grass", "balanced")))
 
 func _build_forests() -> void :
+	## Mediterranean islands: small olive orchards + sparse cypress, not a carpet forest.
 	if not ResourceLoader.exists("res://assets/trees/leaf_atlas.gdshader"):
 		return
 	var leaf_shader: Shader = load("res://assets/trees/leaf_atlas.gdshader")
 	var atlas: Texture2D = load("res://assets/trees/foliage/savanna_dry.png")
-	var leaf_mat: = TreeForest.make_leaf_material(leaf_shader, atlas, {
-		"tint_color": Vector3(0.98, 0.92, 0.62), "tint_strength": 0.22, 
+	var olive_leaf: = TreeForest.make_leaf_material(leaf_shader, atlas, {
+		"tint_color": Vector3(0.72, 0.82, 0.48), "tint_strength": 0.42,
+	})
+	var cypress_leaf: = TreeForest.make_leaf_material(leaf_shader, atlas, {
+		"tint_color": Vector3(0.35, 0.52, 0.28), "tint_strength": 0.55,
 	})
 	var bark_tex: Texture2D = null
 	if ResourceLoader.exists("res://assets/trees/bark/acacia_bark.png"):
 		bark_tex = load("res://assets/trees/bark/acacia_bark.png")
-	var bark_mat: = TreeForest.make_bark_material(Color(0.45, 0.36, 0.28), bark_tex)
+	var olive_bark: = TreeForest.make_bark_material(Color(0.52, 0.42, 0.3), bark_tex)
+	var cypress_bark: = TreeForest.make_bark_material(Color(0.32, 0.28, 0.22), bark_tex)
 
-	var params: = TreeFactory.DEFAULTS.duplicate()
-	params.merge({
-		"branch_mode": 0, "droop": 0.0, "length_falloff": 0.0, 
-		"cluster_flatten": 0.85, "cluster_along": 0.1, 
-		"trunk_height": 9.0, "trunk_radius": 0.24, 
-		"branch_start": 0.55, "upward_bias": 0.35, "leaf_card_size": 1.7, 
+	var olive_params: = TreeFactory.DEFAULTS.duplicate()
+	olive_params.merge({
+		"branch_mode": 0, "droop": 0.38, "length_falloff": 0.12,
+		"cluster_flatten": 0.55, "cluster_along": 0.2,
+		"trunk_height": 4.6, "trunk_radius": 0.16,
+		"branch_start": 0.4, "upward_bias": 0.22, "leaf_card_size": 1.35,
+		"leaves_per_cluster": 6, "cluster_radius": 0.75,
+	}, true)
+	var cypress_params: = TreeFactory.DEFAULTS.duplicate()
+	cypress_params.merge({
+		"branch_mode": 0, "droop": 0.05, "length_falloff": 0.05,
+		"cluster_flatten": 0.25, "cluster_along": 0.35,
+		"trunk_height": 10.5, "trunk_radius": 0.14,
+		"branch_start": 0.25, "upward_bias": 0.72, "leaf_card_size": 1.05,
+		"leaves_per_cluster": 5, "cluster_radius": 0.45,
 	}, true)
 
-	for g in GROVES:
-		var forest: = TreeForest.new()
-		add_child(forest)
+	for g in HellasMapData.OLIVE_ORCHARDS:
+		var kind: = String(g.get("kind", "olive"))
+		var params: Dictionary = olive_params if kind == "olive" else cypress_params
+		var leaf_mat: Material = olive_leaf if kind == "olive" else cypress_leaf
+		var bark_mat: Material = olive_bark if kind == "olive" else cypress_bark
 		var c: Vector2 = g["c"]
-		var base_y: float = sample_height(c.x, c.y)
-		forest.global_position = Vector3(c.x, base_y, c.y)
+		## Keep orchards off road beds and plazas.
+		if HellasMapData.dist_to_nearest_road(c) < ROAD_HALF_W + 3.0:
+			continue
+		var near_plaza: = false
+		for city in CITIES:
+			if c.distance_to(city["c"]) < HUB_RADIUS:
+				near_plaza = true
+				break
+		if near_plaza:
+			continue
+		## Place as individuals — TreeForest's clearing hole fights small orchards.
+		var ogrng: = RandomNumberGenerator.new()
+		ogrng.seed = int(g["seed"])
+		var spots: Array[Vector2] = []
+		var want: = int(g["count"])
+		var tries: = 0
+		var min_sp: = 5.2 if kind == "olive" else 4.2
+		while spots.size() < want and tries < want * 30:
+			tries += 1
+			var ang: = ogrng.randf() * TAU
+			var rr: = float(g["r"]) * sqrt(ogrng.randf())
+			var sp: = c + Vector2(cos(ang) * rr, sin(ang) * rr)
+			var ok: = true
+			for prev in spots:
+				if sp.distance_to(prev) < min_sp:
+					ok = false
+					break
+			if ok:
+				spots.append(sp)
+		for sp2 in spots:
+			var p2: Dictionary = params.duplicate()
+			p2["seed"] = ogrng.randi()
+			p2["trunk_height"] = float(params["trunk_height"]) * ogrng.randf_range(0.88, 1.15)
+			var y2: = sample_height(sp2.x, sp2.y)
+			var xf2: = Transform3D(Basis(Vector3.UP, ogrng.randf() * TAU), Vector3(sp2.x, y2, sp2.y))
+			var t2: = TreeForest.spawn_tree(self, p2, 2, leaf_mat, bark_mat, xf2)
+			var body2: = StaticBody3D.new()
+			body2.collision_layer = 1
+			var sh2: = CollisionShape3D.new()
+			var cyl2: = CylinderShape3D.new()
+			cyl2.radius = 0.26
+			cyl2.height = 3.8 if kind == "olive" else 6.5
+			sh2.shape = cyl2
+			sh2.position.y = cyl2.height * 0.5
+			body2.add_child(sh2)
+			t2.add_child(body2)
 
-		var height_fn: = func(lx: float, lz: float) -> float:
-			return sample_height(c.x + lx, c.y + lz) - base_y
-		forest.setup(params, 2, leaf_mat, bark_mat, int(g["count"]), float(g["r"]), {
-			"seed": int(g["seed"]), "scale_jitter": 0.3, 
-			"variant_jitter": {"trunk_height": 0.2, "leaf_card_size": 0.15}, 
-			"lod_distance": 34.0, "lod_blend_band": 14.0, 
-			"cast_leaf_shadows": false, 
-			"height_sampler": height_fn, 
-		})
-		forest.build()
-
-
-	for pos in [
-		Vector2(20.0, -40.0), Vector2(-25.0, -52.0), Vector2(52.0, 8.0),
-		Vector2(-45.0, 45.0), Vector2(15.0, 40.0), Vector2(-18.0, 68.0),
-		Vector2(-200.0, 180.0), Vector2(-260.0, 240.0), Vector2(-170.0, 230.0),
-		Vector2(200.0, -150.0), Vector2(260.0, -220.0), Vector2(170.0, -210.0),
-		Vector2(30.0, 200.0), Vector2(-40.0, -150.0),
-	]:
-		var y: = sample_height(pos.x, pos.y)
-		var xform: = Transform3D(Basis(Vector3.UP, randf() * TAU), Vector3(pos.x, y, pos.y))
-		var tree: = TreeForest.spawn_tree(self, params, 2, leaf_mat, bark_mat, xform)
+	## Lone trees dotted across Hellas — island density, not woodland.
+	var rng: = RandomNumberGenerator.new()
+	rng.seed = 20261010
+	var placed: = 0
+	var attempts: = 0
+	var loners: Array[Vector2] = []
+	while placed < 48 and attempts < 900:
+		attempts += 1
+		var wx: = rng.randf_range(-WALL_HALF + 18.0, WALL_HALF - 18.0)
+		var wz: = rng.randf_range(-WALL_HALF + 18.0, WALL_HALF - 18.0)
+		var p: = Vector2(wx, wz)
+		if HellasMapData.dist_to_nearest_road(p) < ROAD_HALF_W + 4.0:
+			continue
+		var blocked: = false
+		for city in CITIES:
+			if p.distance_to(city["c"]) < HUB_RADIUS + 6.0:
+				blocked = true
+				break
+		if blocked:
+			continue
+		for den in HellasMapData.DENS:
+			if p.distance_to(den["pos"]) < float(den["r"]) + 4.0:
+				blocked = true
+				break
+		if blocked:
+			continue
+		for prev in loners:
+			if p.distance_to(prev) < 16.0:
+				blocked = true
+				break
+		if blocked:
+			continue
+		loners.append(p)
+		placed += 1
+		var is_olive: = rng.randf() < 0.7
+		var params2: Dictionary = (olive_params if is_olive else cypress_params).duplicate()
+		params2["seed"] = rng.randi()
+		params2["trunk_height"] = float(params2["trunk_height"]) * rng.randf_range(0.85, 1.2)
+		var y: = sample_height(wx, wz)
+		var xform: = Transform3D(Basis(Vector3.UP, rng.randf() * TAU), Vector3(wx, y, wz))
+		var tree: = TreeForest.spawn_tree(
+			self, params2, 2,
+			olive_leaf if is_olive else cypress_leaf,
+			olive_bark if is_olive else cypress_bark,
+			xform)
 		var body: = StaticBody3D.new()
 		body.collision_layer = 1
 		var shape: = CollisionShape3D.new()
 		var cyl: = CylinderShape3D.new()
-		cyl.radius = 0.32
-		cyl.height = 5.0
+		cyl.radius = 0.28
+		cyl.height = 4.2 if is_olive else 7.0
 		shape.shape = cyl
-		shape.position.y = 2.5
+		shape.position.y = cyl.height * 0.5
 		body.add_child(shape)
 		tree.add_child(body)
 

@@ -35,12 +35,12 @@ const MAP_FIELD_PX: = 520.0
 
 
 const MAP_STONES: = [
-	Vector2(40.0, -70.0), Vector2(-70.0, -25.0), Vector2(35.0, 55.0),
-	Vector2(-200.0, 240.0), Vector2(-280.0, 180.0),
-	Vector2(200.0, -220.0), Vector2(280.0, -150.0),
-	Vector2(0.0, 230.0),
-	Vector2(200.0, 60.0), Vector2(240.0, 100.0),
-	Vector2(-160.0, -140.0), Vector2(20.0, -280.0),
+	Vector2(45.0, -80.0), Vector2(-100.0, -30.0), Vector2(80.0, 60.0),
+	Vector2(-230.0, 250.0), Vector2(-300.0, 150.0),
+	Vector2(250.0, -230.0), Vector2(300.0, -120.0),
+	Vector2(60.0, 250.0),
+	Vector2(190.0, 50.0), Vector2(230.0, 100.0),
+	Vector2(-200.0, -150.0), Vector2(20.0, -280.0),
 ]
 
 var ui_open: bool = false
@@ -971,24 +971,40 @@ func _paint_map_region(field: Panel, r: Dictionary, icon_px: int) -> void :
 
 
 func _add_map_war_roads(field: Panel) -> void :
-	## Thin crimson roads between hostile capitals — open-war marches.
+	## Hellenic roads from HellasMapData — sand-stone dashes (war routes in crimson accents).
+	for road in HellasMapData.ROADS:
+		var pts: Array = road["pts"]
+		for i in pts.size() - 1:
+			var a: Vector2 = pts[i]
+			var b: Vector2 = pts[i + 1]
+			var pa: = _world_to_map(a)
+			var pb: = _world_to_map(b)
+			var steps: = maxi(6, int(pa.distance_to(pb) / 8.0))
+			for s in steps + 1:
+				var t: float = float(s) / float(steps)
+				var p: = pa.lerp(pb, t)
+				var dash: = ColorRect.new()
+				dash.color = Color(0.62, 0.48, 0.28, 0.55)
+				dash.position = p - Vector2(1.5, 1.5)
+				dash.size = Vector2(3, 3)
+				dash.mouse_filter = Control.MOUSE_FILTER_IGNORE
+				field.add_child(dash)
+	## Hostile capital axes overlaid in crimson.
 	var caps: Array = HellasMapData.CAPITALS
-	var pairs: Array = [[0, 1], [0, 2], [1, 2]]
-	for pair in pairs:
-		var a: Vector2 = caps[int(pair[0])]["pos"]
-		var b: Vector2 = caps[int(pair[1])]["pos"]
-		var pa: = _world_to_map(a)
-		var pb: = _world_to_map(b)
-		var steps: = 28
-		for i in steps:
-			var t: float = float(i) / float(steps)
-			var p: = pa.lerp(pb, t)
-			var dash: = ColorRect.new()
-			dash.color = Color(0.72, 0.22, 0.16, 0.45)
-			dash.position = p - Vector2(1.5, 1.5)
-			dash.size = Vector2(3, 3)
-			dash.mouse_filter = Control.MOUSE_FILTER_IGNORE
-			field.add_child(dash)
+	for pair in [[0, 1], [0, 2], [1, 2]]:
+		var a2: Vector2 = caps[int(pair[0])]["pos"]
+		var b2: Vector2 = caps[int(pair[1])]["pos"]
+		var pa2: = _world_to_map(a2)
+		var pb2: = _world_to_map(b2)
+		for s2 in 12:
+			var t2: float = float(s2) / 12.0
+			var p2: = pa2.lerp(pb2, t2)
+			var war: = ColorRect.new()
+			war.color = Color(0.72, 0.22, 0.16, 0.35)
+			war.position = p2 - Vector2(1.0, 1.0)
+			war.size = Vector2(2, 2)
+			war.mouse_filter = Control.MOUSE_FILTER_IGNORE
+			field.add_child(war)
 
 func _add_map_grid(field: Panel) -> void :
 	var line_col: = Color(0.4, 0.3, 0.13, 0.2)

@@ -777,7 +777,7 @@ func _try_light_attack() -> void :
 	else:
 		if combo_window <= 0.0:
 			combo_index = 0
-		var alias: = COMBO_ALIASES[combo_index]
+		var alias: String = String(COMBO_ALIASES[combo_index])
 		_start_attack(_clip_for_alias(alias), _attack_time("light_time", 0.55), alias)
 		combo_index = (combo_index + 1) % COMBO_ALIASES.size()
 		combo_window = 1.1
