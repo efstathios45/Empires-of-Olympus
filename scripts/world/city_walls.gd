@@ -51,19 +51,22 @@ static func build(world, center: Vector2, radius: float = 38.0, theme: String = 
 
 static func _wall_material(theme: String) -> StandardMaterial3D:
 	var mat: = StandardMaterial3D.new()
+	## Prefer marble/limestone ashlar over orange rock brick.
 	match theme:
 		"sparta":
-			mat.albedo_color = Color(0.78, 0.62, 0.52)
+			mat.albedo_color = Color(0.92, 0.78, 0.68)
 		"thebes":
-			mat.albedo_color = Color(0.72, 0.74, 0.58)
+			mat.albedo_color = Color(0.86, 0.88, 0.72)
 		_:
-			mat.albedo_color = Color(0.86, 0.8, 0.68)
-	if ResourceLoader.exists(ROCK_TEX):
+			mat.albedo_color = Color(0.94, 0.9, 0.82)
+	if ResourceLoader.exists(MARBLE_TEX):
+		mat.albedo_texture = load(MARBLE_TEX)
+	elif ResourceLoader.exists(ROCK_TEX):
 		mat.albedo_texture = load(ROCK_TEX)
-	mat.uv1_scale = Vector3(1.8, 1.2, 1.8)
+	mat.uv1_scale = Vector3(0.9, 0.7, 0.9)
 	mat.uv1_triplanar = true
-	mat.uv1_triplanar_sharpness = 4.0
-	mat.roughness = 0.92
+	mat.uv1_triplanar_sharpness = 6.0
+	mat.roughness = 0.9
 	mat.metallic = 0.0
 	return mat
 
@@ -72,18 +75,16 @@ static func _cap_material(theme: String) -> StandardMaterial3D:
 	var mat: = StandardMaterial3D.new()
 	match theme:
 		"sparta":
-			mat.albedo_color = Color(0.7, 0.55, 0.45)
+			mat.albedo_color = Color(0.85, 0.7, 0.58)
 		"thebes":
-			mat.albedo_color = Color(0.62, 0.66, 0.5)
+			mat.albedo_color = Color(0.78, 0.82, 0.62)
 		_:
-			mat.albedo_color = Color(0.8, 0.76, 0.66)
+			mat.albedo_color = Color(0.9, 0.86, 0.76)
 	if ResourceLoader.exists(MARBLE_TEX):
 		mat.albedo_texture = load(MARBLE_TEX)
-	elif ResourceLoader.exists(ROCK_TEX):
-		mat.albedo_texture = load(ROCK_TEX)
-	mat.uv1_scale = Vector3(2.2, 1.4, 2.2)
+	mat.uv1_scale = Vector3(1.2, 0.9, 1.2)
 	mat.uv1_triplanar = true
-	mat.roughness = 0.85
+	mat.roughness = 0.82
 	return mat
 
 

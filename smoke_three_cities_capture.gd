@@ -62,7 +62,14 @@ func run() -> void:
 			px = c.x
 			pz = c.y + 48.0
 			yaw = 0.0
-		player.global_position = Vector3(px, world.sample_height(px, pz) + 1.35, pz)
+		player.global_position = Vector3(px, world.sample_height(px, pz) + 1.6, pz)
+		if "velocity" in player:
+			player.velocity = Vector3.ZERO
+		## Survive teleport across the large map (no fall / stray hits).
+		if "hp" in player and "max_hp" in player:
+			player.hp = player.max_hp
+		if "dead" in player:
+			player.dead = false
 		player.cam_pitch = -0.18
 		player.cam_yaw = yaw
 		if player.mesh_root:
@@ -75,7 +82,15 @@ func run() -> void:
 		if player.spring_arm:
 			player.spring_arm.spring_length = 9.0
 			player.spring_arm.position.y = 0.45
-		for _j in 50:
+		## Close any death panel from a prior shot.
+		var hud2 = get_first_node_in_group("hud")
+		if hud2 != null and hud2.has_method("hide_death"):
+			hud2.hide_death()
+		elif hud2 != null:
+			for ch in hud2.get_children():
+				if String(ch.name).to_lower().contains("death") or String(ch.name).to_lower().contains("fallen"):
+					ch.visible = false
+		for _j in 55:
 			await process_frame
 		var path: = "/opt/cursor/artifacts/city_%s.png" % shot_name
 		root.get_viewport().get_texture().get_image().save_png(path)
