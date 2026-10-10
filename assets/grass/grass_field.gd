@@ -43,9 +43,11 @@ const REDENSIFY_THRESHOLD: = 80
 
 
 const TIERS: = {
-	"performance": {"mode": MODE_NORMAL, "render_scale": 0.7}, 
-	"balanced": {"mode": MODE_RIM, "render_scale": 0.7}, 
-	"quality": {"mode": MODE_MAP, "render_scale": 0.85}, 
+	## Keep render_scale at 1.0 — downscaling left the GPU idle while the
+	## main thread still paid for grass streaming.
+	"performance": {"mode": MODE_NORMAL, "render_scale": 1.0},
+	"balanced": {"mode": MODE_RIM, "render_scale": 1.0},
+	"quality": {"mode": MODE_MAP, "render_scale": 1.0},
 }
 
 var terrain

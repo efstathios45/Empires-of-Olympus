@@ -730,6 +730,11 @@ func _flash_plate() -> void :
 	_flash_tween = name_label.create_tween()
 	_flash_tween.tween_property(name_label, "modulate", _plate_color(), 0.8).set_delay(0.3)
 
+## Sleep far AI — keeps ~95-mob worlds from starving the main thread.
+const AI_SLEEP_DIST: = 72.0
+const AI_SLEEP_DIST_SQ: = AI_SLEEP_DIST * AI_SLEEP_DIST
+
+
 func _physics_process(delta: float) -> void :
 	_plate_timer -= delta
 	if _plate_timer <= 0.0:
@@ -749,6 +754,15 @@ func _physics_process(delta: float) -> void :
 	if player == null or not is_instance_valid(player):
 		_find_player()
 		if player == null:
+			_apply_gravity(delta)
+			move_and_slide()
+			return
+
+	## Distant idle mobs skip chase/attack logic (still visible).
+	if not is_boss and state == State.IDLE:
+		var d2: = global_position.distance_squared_to(player.global_position)
+		if d2 > AI_SLEEP_DIST_SQ:
+			velocity = Vector3.ZERO
 			_apply_gravity(delta)
 			move_and_slide()
 			return

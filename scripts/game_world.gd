@@ -118,12 +118,14 @@ var _terrain: HTerrain = null
 var _splatmap: Image = null
 var _grass: MultiMeshInstance3D = null
 var _sun: DirectionalLight3D = null
+var _world_env: WorldEnvironment = null
 var player: Node3D = null
 var interactables: Array[Node3D] = []
 var _music_timer: float = 0.0
 var _boss_node: Node3D = null
 var _stone_timer: float = 8.0
 var _autosave_timer: float = 45.0
+var _fps_label: Label = null
 
 
 class GrassTerrain extends RefCounted:
@@ -150,7 +152,11 @@ func _ready() -> void :
 	_build_grass()
 	_build_forests()
 	_build_hud()
-
+	if DisplaySettings:
+		if not DisplaySettings.settings_changed.is_connected(_on_display_settings_changed):
+			DisplaySettings.settings_changed.connect(_on_display_settings_changed)
+		apply_display_quality(DisplaySettings.quality_preset())
+		_sync_fps_overlay()
 
 	AudioManager.play_music("city")
 	AudioManager.play_ambient("city_crowd")
@@ -194,28 +200,58 @@ func _setup_environment() -> void :
 	env.tonemap_mode = Environment.TONE_MAPPER_ACES
 	env.tonemap_exposure = 1.06
 	env.glow_enabled = true
-	env.glow_intensity = 0.35
-	env.glow_bloom = 0.08
+	env.glow_intensity = 0.28
+	env.glow_bloom = 0.06
 	env.fog_enabled = true
 	env.fog_light_color = Color(0.92, 0.82, 0.66)
 	env.fog_sun_scatter = 0.28
 	## Larger Hellas — keep atmosphere but let distant capitals read.
 	env.fog_density = 0.0022
-	var world_env: = WorldEnvironment.new()
-	world_env.environment = env
-	add_child(world_env)
+	_world_env = WorldEnvironment.new()
+	_world_env.environment = env
+	add_child(_world_env)
 
 	_sun = DirectionalLight3D.new()
 	_sun.rotation_degrees = Vector3(-48.0, -35.0, 0.0)
 	_sun.light_color = Color(1.0, 0.93, 0.78)
 	_sun.light_energy = 1.2
 	_sun.shadow_enabled = true
-
-
-	_sun.directional_shadow_mode = DirectionalLight3D.SHADOW_ORTHOGONAL
-	_sun.directional_shadow_max_distance = 80.0
+	_sun.directional_shadow_mode = DirectionalLight3D.SHADOW_PARALLEL_2_SPLITS
+	_sun.directional_shadow_max_distance = 90.0
 	_sun.directional_shadow_fade_start = 0.85
 	add_child(_sun)
+
+
+func apply_display_quality(preset: Dictionary) -> void:
+	if _sun != null:
+		_sun.directional_shadow_max_distance = float(preset.get("shadow_dist", 90.0))
+	if _world_env != null and _world_env.environment != null:
+		_world_env.environment.glow_enabled = bool(preset.get("glow", true))
+	if _grass != null:
+		_grass.playable_half = float(preset.get("grass_half", 96.0))
+		_grass.clusters_per_cell = int(preset.get("grass_clusters", 80))
+		_grass.outer_half = mini(WALL_HALF, _grass.playable_half * 2.4)
+		_grass.set_tier(String(preset.get("grass", "balanced")))
+	_sync_fps_overlay()
+
+
+func _on_display_settings_changed() -> void:
+	if DisplaySettings:
+		apply_display_quality(DisplaySettings.quality_preset())
+
+
+func _sync_fps_overlay() -> void:
+	var show: = DisplaySettings != null and DisplaySettings.show_fps
+	if show and _fps_label == null:
+		_fps_label = Label.new()
+		_fps_label.name = "FpsOverlay"
+		_fps_label.add_theme_font_size_override("font_size", 18)
+		_fps_label.add_theme_color_override("font_color", Color(0.95, 0.92, 0.7))
+		_fps_label.position = Vector2(16, 120)
+		_fps_label.z_index = 80
+		add_child(_fps_label)
+	if _fps_label != null:
+		_fps_label.visible = show
 
 
 
@@ -783,16 +819,11 @@ func _build_grass() -> void :
 	_grass.terrain = GrassTerrain.new(self)
 	_grass.focus_node = player
 	_grass.sun = _sun
-
-
-
-
-
-
-	_grass.playable_half = 140.0
-	_grass.outer_half = WALL_HALF
-	_grass.clusters_per_cell = 110
-	_grass.sparse_clusters = 18
+	var preset: Dictionary = DisplaySettings.quality_preset() if DisplaySettings else {}
+	_grass.playable_half = float(preset.get("grass_half", 96.0))
+	_grass.outer_half = mini(WALL_HALF, _grass.playable_half * 2.4)
+	_grass.clusters_per_cell = int(preset.get("grass_clusters", 80))
+	_grass.sparse_clusters = 14
 	_grass.grass_type = "patchy"
 	_grass.grass_color = Color(0.55, 0.58, 0.27)
 	add_child(_grass)
@@ -800,9 +831,7 @@ func _build_grass() -> void :
 	if ResourceLoader.exists("res://assets/grass/textures/tesana-grass.png"):
 		leaf_tex = load("res://assets/grass/textures/tesana-grass.png")
 	_grass.build(leaf_tex, - _sun.global_transform.basis.z)
-
-
-	_grass.set_tier("performance")
+	_grass.set_tier(String(preset.get("grass", "balanced")))
 
 func _build_forests() -> void :
 	if not ResourceLoader.exists("res://assets/trees/leaf_atlas.gdshader"):
@@ -882,6 +911,13 @@ func _build_hud() -> void :
 func _process(delta: float) -> void :
 	if _grass != null and player != null and is_instance_valid(player):
 		_grass.set_player_position(player.global_position)
+
+	if _fps_label != null and _fps_label.visible:
+		_fps_label.text = "%d FPS · %s · max %s" % [
+			Engine.get_frames_per_second(),
+			DisplaySettings.quality_label() if DisplaySettings else "?",
+			DisplaySettings.max_fps_label() if DisplaySettings else "?",
+		]
 
 	_music_timer -= delta
 	if _music_timer <= 0.0:
