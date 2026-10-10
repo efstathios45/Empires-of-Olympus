@@ -5,7 +5,7 @@ Enter-to-chat, Minecraft-style server browser, and online host/join.
 
 ## Windows download
 
-**https://gofile.io/d/MOVVJ2UK** — `EmpiresOfOlympus-windows.zip`
+**https://gofile.io/d/cJmHKKwl** — `EmpiresOfOlympus-windows.zip`
 
 Larger Hellas with walled **Athens**, **Sparta**, and **Thebes**, wide mob
 belts between cities, party 50/50 share, and host-synced world/mobs.

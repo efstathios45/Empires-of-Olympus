@@ -12,8 +12,8 @@ Three cities + party share
 Download
 ------------------------------------------------------------
 Full zip (includes .exe):
-  https://gofile.io/d/MOVVJ2UK
-  SHA-256: 1a5be01ed7f9d9ca7f58efb36129bfd834d00426ffe73423e3c2137d64bb4dfc
+  https://gofile.io/d/cJmHKKwl
+  SHA-256: cbb9c2715f88b9e83a787b14bef1ff1e279384dd4498fd365c9796cb4f1632f7
 
 Pck SHA-256: 9049493f961bc40f2988d11eb3970c918aba1b388e477e2f59d737e8f1d0e2d6
 Engine SHA-256 (stock Godot 4.4.1 template):
