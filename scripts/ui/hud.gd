@@ -19,33 +19,27 @@ const TradePanel = preload("res://scripts/ui/panel_trade.gd")
 const SocialInvite = preload("res://scripts/ui/panel_social_invite.gd")
 const WhisperPanel = preload("res://scripts/ui/panel_whisper.gd")
 const ChatOverlay = preload("res://scripts/ui/chat_overlay.gd")
+const HellasMapData = preload("res://scripts/world/hellas_map_data.gd")
 
 
 const HUD_GOLD: = Color(1.0, 0.88, 0.55)
 const HUD_CREAM: = Color(0.97, 0.94, 0.86)
 const HUD_GREEN: = Color(0.62, 0.95, 0.62)
+const HUD_WAR: = Color(1.0, 0.55, 0.42)
 
 
 
-const MAP_WORLD_SPAN: = 300.0
-const MAP_FIELD_PX: = 460.0
+const MAP_WORLD_SPAN: = HellasMapData.MAP_WORLD_SPAN
+const MAP_FIELD_PX: = 520.0
 
 
 
-const MAP_REGIONS: = [
-	{"name": "Sanctuary", "pos": Vector2(0.0, 0.0), "r": 30.0, 
-		"col": Color(0.9, 0.82, 0.52, 0.9), "icon": "icon_laurel"}, 
-	{"name": "Wolf & Boar Hunting Grounds", "pos": Vector2(0.0, -80.0), "r": 17.0, 
-		"col": Color(0.52, 0.44, 0.22, 0.85), "icon": "icon_sword"}, 
-	{"name": "Satyr & Harpy Slopes", "pos": Vector2(80.0, -20.0), "r": 17.0, 
-		"col": Color(0.36, 0.5, 0.26, 0.85), "icon": "icon_sword"}, 
-	{"name": "Centaur & Gorgon Wilds", "pos": Vector2(-80.0, 20.0), "r": 17.0, 
-		"col": Color(0.3, 0.38, 0.54, 0.85), "icon": "icon_sword"}, 
-	{"name": "Minotaur's Arena", "pos": Vector2(0.0, 105.0), "r": 26.0, 
-		"col": Color(0.62, 0.18, 0.16, 0.88), "icon": "icon_skull"}, 
+const MAP_STONES: = [
+	Vector2(40.0, -70.0), Vector2(-70.0, -25.0), Vector2(35.0, 55.0),
+	Vector2(-200.0, 240.0), Vector2(-280.0, 180.0),
+	Vector2(200.0, -220.0), Vector2(280.0, -150.0),
+	Vector2(0.0, 230.0),
 ]
-
-const MAP_STONES: = [Vector2(40.0, -70.0), Vector2(-70.0, -25.0), Vector2(35.0, 55.0)]
 
 var ui_open: bool = false
 
@@ -848,6 +842,13 @@ func _build_map_panel() -> Control:
 	head.add_child(Kit.make_icon("icon_map", 40))
 	head.add_child(Kit.make_label("Map of Hellas", 32, Kit.INK_TITLE))
 
+	var war: = Kit.make_label(
+		"Open war — Athens, Sparta & Thebes are hostile. Rival empires are free PvP.",
+		16, HUD_WAR, HORIZONTAL_ALIGNMENT_CENTER)
+	war.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
+	war.custom_minimum_size = Vector2(MAP_FIELD_PX, 0)
+	v.add_child(war)
+
 	_map_where = Kit.make_label("", 18, Kit.INK_SOFT, HORIZONTAL_ALIGNMENT_CENTER)
 	_map_where.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
 	_map_where.custom_minimum_size = Vector2(MAP_FIELD_PX, 0)
@@ -871,6 +872,10 @@ func _build_map_panel() -> Control:
 	_update_map_marker()
 	return root
 
+func _map_regions() -> Array:
+	return HellasMapData.map_regions()
+
+
 func _build_map_field() -> Panel:
 	var field: = Panel.new()
 	var sb: = StyleBoxFlat.new()
@@ -884,43 +889,54 @@ func _build_map_field() -> Panel:
 	field.mouse_filter = Control.MOUSE_FILTER_IGNORE
 
 	_add_map_grid(field)
+	_add_map_war_roads(field)
 
-
-	for entry in MAP_REGIONS:
+	## Dens first (under), capitals + arena on top.
+	for entry in _map_regions():
 		var r: Dictionary = entry
+		if String(r.get("kind", "")) == "capital":
+			continue
+		_paint_map_region(field, r, 22)
+
+	for entry in _map_regions():
+		var r: Dictionary = entry
+		if String(r.get("kind", "")) != "capital":
+			continue
+		_paint_map_region(field, r, 30)
 		var pos: Vector2 = r["pos"]
-		var radius: float = r["r"]
-		var col: Color = r["col"]
-		var dia: float = radius * 2.0 * (MAP_FIELD_PX / MAP_WORLD_SPAN)
-		var disc: = _map_circle(dia, col, Color(0.28, 0.2, 0.09, 0.85))
-		disc.position = _world_to_map(pos) - Vector2(dia, dia) * 0.5
-		field.add_child(disc)
-		var ic: = Kit.make_icon(String(r["icon"]), 26)
-		ic.position = _world_to_map(pos) - Vector2(13, 13)
-		ic.size = Vector2(26, 26)
-		field.add_child(ic)
+		var label_at: = _world_to_map(pos) + Vector2(-48, 18)
+		_add_map_label(field, String(r["name"]), label_at, Vector2(96, 22))
 
+	## Den names — short labels near dens so capitals stay readable.
+	for entry in _map_regions():
+		var r: Dictionary = entry
+		if String(r.get("kind", "")) != "den":
+			continue
+		var nm: = String(r["name"])
+		## Prefer the lead word (Lykaon / Centaur / Satyr…) for clutter control.
+		var short: = nm.split(" ")[0] if nm.find(" ") > 0 else nm
+		var pos2: Vector2 = r["pos"]
+		var at: = _world_to_map(pos2) + Vector2(-40, -28)
+		_add_map_label(field, short, at, Vector2(80, 20))
 
-	_add_map_label(field, "Wolf & Boar Hunting Grounds", Vector2(145, 32), Vector2(170, 46))
-	_add_map_label(field, "Satyr & Harpy Slopes", Vector2(286, 124), Vector2(170, 46))
-	_add_map_label(field, "Sanctuary", Vector2(282, 219), Vector2(140, 26))
-	_add_map_label(field, "Centaur & Gorgon Wilds", Vector2(10, 291), Vector2(130, 46))
-	_add_map_label(field, "Minotaur's Arena", Vector2(145, 328), Vector2(170, 26))
-
+	for entry in _map_regions():
+		var r: Dictionary = entry
+		if String(r.get("kind", "")) != "boss":
+			continue
+		var bpos: Vector2 = r["pos"]
+		_add_map_label(field, String(r["name"]), _world_to_map(bpos) + Vector2(-70, 16), Vector2(140, 22))
 
 	for stone_pos in MAP_STONES:
 		var sp: Vector2 = stone_pos
-		var gem: = Kit.make_icon("icon_gem", 22)
-		gem.position = _world_to_map(sp) - Vector2(11, 11)
-		gem.size = Vector2(22, 22)
+		var gem: = Kit.make_icon("icon_gem", 18)
+		gem.position = _world_to_map(sp) - Vector2(9, 9)
+		gem.size = Vector2(18, 18)
 		field.add_child(gem)
-
 
 	var north: = Kit.make_label("N", 18, Color(0.35, 0.25, 0.1), HORIZONTAL_ALIGNMENT_CENTER)
 	north.position = Vector2(MAP_FIELD_PX * 0.5 - 20, 6)
 	north.size = Vector2(40, 24)
 	field.add_child(north)
-
 
 	_map_marker = _map_circle(20.0, Color(1.0, 0.86, 0.25, 1.0), Color(0.15, 0.1, 0.04))
 	field.add_child(_map_marker)
@@ -929,6 +945,48 @@ func _build_map_field() -> Panel:
 	pulse.tween_property(_map_marker, "modulate:a", 0.35, 0.55)
 	pulse.tween_property(_map_marker, "modulate:a", 1.0, 0.55)
 	return field
+
+
+func _paint_map_region(field: Panel, r: Dictionary, icon_px: int) -> void :
+	var pos: Vector2 = r["pos"]
+	var radius: float = float(r["r"])
+	var col: Color = r["col"]
+	var dia: float = radius * 2.0 * (MAP_FIELD_PX / MAP_WORLD_SPAN)
+	var border: = Color(0.28, 0.2, 0.09, 0.85)
+	if String(r.get("kind", "")) == "capital":
+		border = Color(0.55, 0.12, 0.1, 0.95)
+		## Hostile capital ring — thicker crimson rim.
+		var rim: = _map_circle(dia + 8.0, Color(0.75, 0.18, 0.12, 0.35), Color(0.7, 0.15, 0.1, 0.8))
+		rim.position = _world_to_map(pos) - Vector2(dia + 8.0, dia + 8.0) * 0.5
+		field.add_child(rim)
+	var disc: = _map_circle(dia, col, border)
+	disc.position = _world_to_map(pos) - Vector2(dia, dia) * 0.5
+	field.add_child(disc)
+	var ic: = Kit.make_icon(String(r["icon"]), icon_px)
+	ic.position = _world_to_map(pos) - Vector2(icon_px, icon_px) * 0.5
+	ic.size = Vector2(icon_px, icon_px)
+	field.add_child(ic)
+
+
+func _add_map_war_roads(field: Panel) -> void :
+	## Thin crimson roads between hostile capitals — open-war marches.
+	var caps: Array = HellasMapData.CAPITALS
+	var pairs: Array = [[0, 1], [0, 2], [1, 2]]
+	for pair in pairs:
+		var a: Vector2 = caps[int(pair[0])]["pos"]
+		var b: Vector2 = caps[int(pair[1])]["pos"]
+		var pa: = _world_to_map(a)
+		var pb: = _world_to_map(b)
+		var steps: = 28
+		for i in steps:
+			var t: float = float(i) / float(steps)
+			var p: = pa.lerp(pb, t)
+			var dash: = ColorRect.new()
+			dash.color = Color(0.72, 0.22, 0.16, 0.45)
+			dash.position = p - Vector2(1.5, 1.5)
+			dash.size = Vector2(3, 3)
+			dash.mouse_filter = Control.MOUSE_FILTER_IGNORE
+			field.add_child(dash)
 
 func _add_map_grid(field: Panel) -> void :
 	var line_col: = Color(0.4, 0.3, 0.13, 0.2)
@@ -972,14 +1030,18 @@ func _add_map_label(field: Panel, text: String, at: Vector2, box: Vector2) -> vo
 func _build_map_legend() -> HBoxContainer:
 	var legend: = HBoxContainer.new()
 	legend.alignment = BoxContainer.ALIGNMENT_CENTER
-	legend.add_theme_constant_override("separation", 18)
+	legend.add_theme_constant_override("separation", 14)
 	legend.add_child(_map_circle(16.0, Color(1.0, 0.86, 0.25), Color(0.15, 0.1, 0.04)))
-	legend.add_child(Kit.make_label("You", 16, Kit.INK))
-	legend.add_child(Kit.make_icon("icon_gem", 20))
-	legend.add_child(Kit.make_label("Oracle Stone", 16, Kit.INK))
-	legend.add_child(Kit.make_icon("icon_skull", 20))
-	legend.add_child(Kit.make_label("Boss lair", 16, Kit.INK))
-	legend.add_child(Kit.make_label("Esc or M to close", 16, Kit.INK_SOFT))
+	legend.add_child(Kit.make_label("You", 15, Kit.INK))
+	legend.add_child(_map_circle(16.0, Color(0.25, 0.45, 0.78), Color(0.55, 0.12, 0.1)))
+	legend.add_child(Kit.make_label("Capital (hostile)", 15, Kit.INK))
+	legend.add_child(Kit.make_icon("icon_sword", 18))
+	legend.add_child(Kit.make_label("Beast den", 15, Kit.INK))
+	legend.add_child(Kit.make_icon("icon_gem", 18))
+	legend.add_child(Kit.make_label("Oracle", 15, Kit.INK))
+	legend.add_child(Kit.make_icon("icon_skull", 18))
+	legend.add_child(Kit.make_label("Boss", 15, Kit.INK))
+	legend.add_child(Kit.make_label("Esc / M", 15, Kit.INK_SOFT))
 	return legend
 
 func _update_map_marker() -> void :
@@ -1032,6 +1094,8 @@ func _tick_tutorial() -> void :
 		2:
 			show_announcement("Open your bag with I. Buy from plaza merchants or craft mats at Brontes the Smith.")
 		3:
+			show_announcement("Open war: Athens, Sparta & Thebes are hostile — rival empires are free PvP. Same empire & party are safe. Press M for the map.")
+		4:
 			show_announcement("Host a world from Pause — friends join your save (peer sync, no conflicts). Party: L.")
 		_:
 			pass
@@ -1039,14 +1103,16 @@ func _tick_tutorial() -> void :
 func _nearest_region_name(here: Vector2) -> String:
 	var best: = "the open wilds"
 	var best_d: = 999999.0
-	for entry in MAP_REGIONS:
+	for entry in _map_regions():
 		var r: Dictionary = entry
 		var pos: Vector2 = r["pos"]
 		var d: float = here.distance_to(pos)
 		if d < best_d:
 			best_d = d
 			best = String(r["name"])
-	if best_d > 55.0:
+			if d <= float(r.get("r", 30.0)):
+				return best
+	if best_d > 70.0:
 		return "the open wilds"
 	return best
 

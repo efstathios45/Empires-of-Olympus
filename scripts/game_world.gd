@@ -13,6 +13,7 @@ const OracleStoneScript = preload("res://scripts/oracle_stone.gd")
 const ChestScript = preload("res://scripts/treasure_chest.gd")
 const CityPlazaScript = preload("res://scripts/world/city_plaza.gd")
 const CityWallsScript = preload("res://scripts/world/city_walls.gd")
+const HellasMapData = preload("res://scripts/world/hellas_map_data.gd")
 
 ## Larger Hellas: ~768 m heightmap, playable ~±340 m.
 const TERRAIN_SIZE: = 769
@@ -31,6 +32,7 @@ const HUB_POS: = Vector2(0.0, 0.0)
 const HUB_RADIUS: = 50.0
 const HUB_H: = 0.45
 const CITY_WALL_R: = 38.0
+const DEN_H: = 0.48
 
 const PLAZA_R: = HUB_RADIUS * 0.55
 const SANCTUARY_R: = PLAZA_R
@@ -50,60 +52,8 @@ const GROVES: = [
 	{"c": Vector2(0.0, -200.0), "r": 22.0, "h": 0.5, "count": 10, "seed": 101},
 ]
 
-## Wide wild belts around each capital + roads between them.
-const ZONES: = [
-	## Athens approaches
-	{"c": Vector2(0.0, -80.0), "r": 22.0,
-		"ids": ["wolf_enemy", "wolf_enemy", "wolf_black_enemy",
-			"wolf_dire_enemy", "boar_enemy", "boar_enemy", "wolf_enemy"]},
-	{"c": Vector2(90.0, -30.0), "r": 20.0,
-		"ids": ["satyr_enemy", "satyr_enemy", "satyr_enemy",
-			"harpy_enemy", "harpy_enemy", "boar_enemy"]},
-	{"c": Vector2(-90.0, 30.0), "r": 20.0,
-		"ids": ["centaur_enemy", "centaur_enemy",
-			"gorgon_enemy", "gorgon_enemy", "wolf_black_enemy"]},
-	{"c": Vector2(55.0, 70.0), "r": 18.0,
-		"ids": ["boar_enemy", "boar_enemy", "wolf_enemy", "satyr_enemy", "harpy_enemy"]},
-	## Road Athens → Sparta (SW)
-	{"c": Vector2(-120.0, 110.0), "r": 22.0,
-		"ids": ["centaur_enemy", "centaur_enemy", "centaur_enemy",
-			"wolf_dire_enemy", "boar_enemy", "gorgon_enemy"]},
-	{"c": Vector2(-180.0, 160.0), "r": 20.0,
-		"ids": ["wolf_enemy", "wolf_black_enemy", "wolf_dire_enemy",
-			"boar_enemy", "boar_enemy", "centaur_enemy"]},
-	## Sparta wilds
-	{"c": Vector2(-240.0, 270.0), "r": 24.0,
-		"ids": ["centaur_enemy", "centaur_enemy", "gorgon_enemy",
-			"gorgon_enemy", "wolf_dire_enemy", "boar_enemy", "centaur_enemy"]},
-	{"c": Vector2(-300.0, 210.0), "r": 20.0,
-		"ids": ["wolf_black_enemy", "wolf_dire_enemy", "boar_enemy",
-			"boar_enemy", "centaur_enemy", "harpy_enemy"]},
-	{"c": Vector2(-200.0, 250.0), "r": 18.0,
-		"ids": ["satyr_enemy", "satyr_enemy", "harpy_enemy", "harpy_enemy", "wolf_enemy"]},
-	## Road Athens → Thebes (NE)
-	{"c": Vector2(120.0, -100.0), "r": 22.0,
-		"ids": ["satyr_enemy", "satyr_enemy", "harpy_enemy",
-			"harpy_enemy", "wolf_enemy", "boar_enemy"]},
-	{"c": Vector2(180.0, -140.0), "r": 20.0,
-		"ids": ["harpy_enemy", "harpy_enemy", "satyr_enemy",
-			"gorgon_enemy", "wolf_black_enemy", "boar_enemy"]},
-	## Thebes wilds
-	{"c": Vector2(240.0, -250.0), "r": 24.0,
-		"ids": ["satyr_enemy", "satyr_enemy", "satyr_enemy",
-			"harpy_enemy", "harpy_enemy", "gorgon_enemy", "boar_enemy"]},
-	{"c": Vector2(300.0, -190.0), "r": 20.0,
-		"ids": ["gorgon_enemy", "gorgon_enemy", "harpy_enemy",
-			"wolf_dire_enemy", "satyr_enemy", "boar_enemy"]},
-	{"c": Vector2(200.0, -230.0), "r": 18.0,
-		"ids": ["wolf_enemy", "wolf_black_enemy", "boar_enemy",
-			"centaur_enemy", "harpy_enemy"]},
-	## Cross-country / arena approach
-	{"c": Vector2(0.0, 200.0), "r": 22.0,
-		"ids": ["centaur_enemy", "gorgon_enemy", "wolf_dire_enemy",
-			"harpy_enemy", "satyr_enemy", "boar_enemy"]},
-	{"c": Vector2(-60.0, -160.0), "r": 18.0,
-		"ids": ["wolf_enemy", "wolf_enemy", "wolf_black_enemy", "boar_enemy", "boar_enemy"]},
-]
+## Giant dens between hostile capitals — filled from HellasMapData at ready.
+var ZONES: Array = []
 
 const RESPAWN_DELAY: = 40.0
 const BOSS_MUSIC_RANGE: = 34.0
@@ -139,10 +89,12 @@ class GrassTerrain extends RefCounted:
 
 func _ready() -> void :
 	add_to_group("game_world")
+	ZONES = HellasMapData.zones_for_spawns()
 	_setup_environment()
 	_generate_terrain(20260807)
 	_build_bounds()
 	_build_hub()
+	_build_dens()
 	_build_wilds()
 	_build_arena()
 	_spawn_player()
@@ -290,6 +242,8 @@ func _generate_terrain(seed_val: int) -> void :
 			for city in CITIES:
 				h = _flatten_toward(h, HUB_H, Vector2(wx, wz).distance_to(city["c"]), HUB_RADIUS)
 			h = _flatten_toward(h, ARENA_H, Vector2(wx, wz).distance_to(ARENA_POS), ARENA_RADIUS)
+			for den in HellasMapData.DENS:
+				h = _flatten_toward(h, DEN_H, Vector2(wx, wz).distance_to(den["pos"]), float(den["r"]) + 6.0)
 			for g in GROVES:
 				h = _flatten_toward(h, g["h"], Vector2(wx, wz).distance_to(g["c"]), g["r"])
 			var fx: = clampf(minf(float(x), float(TERRAIN_SIZE - 1 - x)) / edge_margin, 0.0, 1.0)
@@ -320,6 +274,11 @@ func _generate_terrain(seed_val: int) -> void :
 					break
 			if Vector2(wx2, wz2).distance_to(ARENA_POS) < ARENA_RADIUS * 0.8:
 				dirt_w = maxf(dirt_w, 0.9 * (1.0 - rock_w))
+			for den in HellasMapData.DENS:
+				var dd: float = Vector2(wx2, wz2).distance_to(den["pos"])
+				var dr: float = float(den["r"])
+				if dd < dr:
+					dirt_w = maxf(dirt_w, 0.88 * (1.0 - rock_w) * (1.0 - dd / dr))
 			var grass_w: float = maxf(1.0 - rock_w - dirt_w, 0.0)
 			splatmap.set_pixel(x, z, Color(grass_w, rock_w, dirt_w, 0.0))
 
@@ -382,6 +341,9 @@ func grass_weight(world_x: float, world_z: float) -> float:
 			return 0.12
 	if p.distance_to(ARENA_POS) < ARENA_RADIUS * 0.8:
 		return 0.08
+	for den in HellasMapData.DENS:
+		if p.distance_to(den["pos"]) < float(den["r"]) * 0.85:
+			return 0.1
 	if _splatmap == null:
 		return 1.0
 	var ix: = clampi(int(world_x - TERRAIN_OFFSET.x), 0, TERRAIN_SIZE - 1)
@@ -397,6 +359,10 @@ func ground_kind(x: float, z: float) -> String:
 	var arena_r: float = ARENA_RADIUS * 0.9
 	if p.distance_squared_to(ARENA_POS) < arena_r * arena_r:
 		return "dirt"
+	for den in HellasMapData.DENS:
+		var dr: float = float(den["r"]) * 0.9
+		if p.distance_squared_to(den["pos"]) < dr * dr:
+			return "dirt"
 	if _splatmap != null:
 		var ix: = clampi(int(x - TERRAIN_OFFSET.x), 0, TERRAIN_SIZE - 1)
 		var iz: = clampi(int(z - TERRAIN_OFFSET.z), 0, TERRAIN_SIZE - 1)
@@ -616,6 +582,44 @@ func _build_hub() -> void :
 	apply_player_mosaic()
 
 
+## Giant beast dens between the three hostile capitals — rock rings + ruin camps.
+func _build_dens() -> void :
+	var rng: = RandomNumberGenerator.new()
+	rng.seed = 404
+	for den in HellasMapData.DENS:
+		var c: Vector2 = den["pos"]
+		var r: float = float(den["r"])
+		## Central ruin camp — dens read as giant bases, not loose packs.
+		_place_glb("res://assets/environment/structures/broken_ruins.glb",
+			c.x, c.y, 9.0, rng.randf() * 360.0, 0)
+		_place_glb("res://assets/environment/structures/broken_ruins.glb",
+			c.x + rng.randf_range(-4.0, 4.0), c.y + rng.randf_range(-4.0, 4.0),
+			6.5, rng.randf() * 360.0, 0)
+		## Outer rock ring so dens read as fortresses from the roads.
+		var ring_n: = 10 + int(r / 8.0)
+		for i in ring_n:
+			var a: float = TAU * float(i) / float(ring_n) + rng.randf_range(-0.12, 0.12)
+			var rr: float = r * rng.randf_range(0.82, 1.05)
+			_place_glb("res://assets/environment/rocks/cliff_rock.glb",
+				c.x + cos(a) * rr, c.y + sin(a) * rr,
+				rng.randf_range(3.2, 5.8), rng.randf() * 360.0, 2)
+		## Inner scatter — dens feel packed.
+		for _j in 5:
+			var a2: float = rng.randf() * TAU
+			var rr2: float = r * rng.randf_range(0.25, 0.55)
+			_place_glb("res://assets/environment/rocks/cliff_rock.glb",
+				c.x + cos(a2) * rr2, c.y + sin(a2) * rr2,
+				rng.randf_range(1.6, 3.2), rng.randf() * 360.0, 2)
+		## Broken columns mark the dens on the horizon.
+		for k in 3:
+			var a3: float = TAU * float(k) / 3.0 + 0.35
+			var col: = _place_glb("res://assets/environment/structures/marble_column.glb",
+				c.x + cos(a3) * (r * 0.45), c.y + sin(a3) * (r * 0.45),
+				rng.randf_range(4.5, 6.5), rng.randf() * 360.0, 0)
+			if col != null:
+				_add_pillar_collider(col, 0.45, 5.5)
+
+
 ## Apply the logged-in player's sealed/draft Psifidoto to the Athens agora disc.
 func apply_player_mosaic() -> void :
 	var disc: MeshInstance3D = null
@@ -680,6 +684,13 @@ func _build_wilds() -> void :
 				near_city = true
 				break
 		if near_city:
+			continue
+		var near_den: = false
+		for den in HellasMapData.DENS:
+			if Vector2(wx, wz).distance_to(den["pos"]) < float(den["r"]) + 6.0:
+				near_den = true
+				break
+		if near_den:
 			continue
 		if _splatmap != null:
 			var ix: = clampi(int(wx - TERRAIN_OFFSET.x), 0, TERRAIN_SIZE - 1)

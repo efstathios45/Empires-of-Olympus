@@ -40,9 +40,14 @@ func _check_constants() -> int:
 	if wall_half < 250.0:
 		print("FAIL map not enlarged", wall_half)
 		return 1
-	var zones = cmap.get("ZONES", [])
-	if typeof(zones) != TYPE_ARRAY or zones.size() < 10:
-		print("FAIL too few zones", zones)
+	## ZONES is filled at runtime from HellasMapData dens.
+	var MapData = load("res://scripts/world/hellas_map_data.gd")
+	if MapData == null or MapData.DENS.size() < 6:
+		print("FAIL dens missing for zones", MapData)
+		return 1
+	var zones: Array = MapData.zones_for_spawns()
+	if zones.size() < 6:
+		print("FAIL too few zones", zones.size())
 		return 1
 	var a: Vector2 = cities[0]["c"]
 	var b: Vector2 = cities[1]["c"]
