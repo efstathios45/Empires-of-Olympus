@@ -622,27 +622,61 @@ func _paint_roads_on_splat(splatmap: Image) -> void :
 				splatmap.set_pixel(ix, iz, Color(grass, rock, dirt, 0.0))
 
 
-## Hellenic stone roads — Kenney Nature Kit path_stone cobbles (CC0), not box slabs.
+## Hellenic roads — Poly Haven cobblestone_large_01 (CC0) paved ribbons + Kenney edge rubble.
 func _build_roads() -> void :
-	const PIECE: = "res://assets/props/roads/path_stone.glb"
-	const PIECE_END: = "res://assets/props/roads/path_stoneEnd.glb"
-	## Native piece is ~1.0m wide × 0.58m long; scale up to a real road course.
-	const SCALE: = 3.5
-	const STEP: = 0.55 * SCALE ## slight overlap so seams don't show gaps
-	var lane_w: float = 1.0 * SCALE * 0.9
-	var lanes: Array[float] = [-lane_w, 0.0, lane_w]
+	const TEX_DIR: = "res://assets/textures/stone/cobblestone_large_01/"
+	const DIFF: = TEX_DIR + "cobblestone_large_01_diff_2k.jpg"
+	const NOR: = TEX_DIR + "cobblestone_large_01_nor_gl_2k.jpg"
+	const ROUGH: = TEX_DIR + "cobblestone_large_01_rough_2k.jpg"
+	const AO: = TEX_DIR + "cobblestone_large_01_ao_2k.jpg"
+	const EDGE: = "res://assets/props/roads/path_stone.glb"
+	## Continuous paved course (Roman / Hellenic highway), not scattered stepping stones.
+	const SLAB_L: = 4.0
+	const SLAB_H: = 0.14
+	const STEP: = SLAB_L * 0.92 ## slight overlap hides seams on bends
 
-	var stone_mesh: Mesh = _first_mesh_from_glb(PIECE)
-	if stone_mesh == null:
-		push_warning("game_world: missing %s — roads skipped" % PIECE)
+	if not ResourceLoader.exists(DIFF):
+		push_warning("game_world: missing cobblestone_large_01 — roads skipped")
 		return
-	var end_mesh: Mesh = _first_mesh_from_glb(PIECE_END)
+
+	var mat: = StandardMaterial3D.new()
+	mat.albedo_texture = load(DIFF)
+	mat.normal_enabled = true
+	mat.normal_texture = load(NOR)
+	mat.normal_scale = 1.15
+	mat.roughness_texture = load(ROUGH)
+	mat.roughness_texture_channel = BaseMaterial3D.TEXTURE_CHANNEL_RED
+	mat.roughness = 1.0
+	mat.ao_enabled = true
+	mat.ao_texture = load(AO)
+	mat.ao_texture_channel = BaseMaterial3D.TEXTURE_CHANNEL_RED
+	mat.ao_light_affect = 0.55
+	mat.metallic = 0.0
+	## World-triplanar so paving tiles continuously along every bend.
+	mat.uv1_triplanar = true
+	mat.uv1_world_triplanar = true
+	mat.uv1_triplanar_sharpness = 8.0
+	mat.uv1_scale = Vector3(0.38, 0.38, 0.38)
+	mat.texture_filter = BaseMaterial3D.TEXTURE_FILTER_LINEAR_WITH_MIPMAPS_ANISOTROPIC
+
+	var slab: = BoxMesh.new()
+	slab.size = Vector3(ROAD_HALF_W * 2.05, SLAB_H, SLAB_L)
+	slab.material = mat
+
+	var curb_mat: = mat.duplicate() as StandardMaterial3D
+	curb_mat.albedo_color = Color(0.82, 0.78, 0.7)
+	curb_mat.uv1_scale = Vector3(0.55, 0.55, 0.55)
+	var curb: = BoxMesh.new()
+	curb.size = Vector3(0.45, 0.22, SLAB_L)
+	curb.material = curb_mat
 
 	var xforms: Array[Transform3D] = []
-	var end_xforms: Array[Transform3D] = []
+	var curb_xforms: Array[Transform3D] = []
+	var edge_xforms: Array[Transform3D] = []
 	var i: = 0
 	var rng: = RandomNumberGenerator.new()
 	rng.seed = 77
+	var edge_mesh: Mesh = _first_mesh_from_glb(EDGE)
 	for sample in HellasMapData.road_segment_samples(STEP):
 		var p: Vector2 = sample["pos"]
 		var near_plaza: = false
@@ -652,37 +686,32 @@ func _build_roads() -> void :
 				break
 		if near_plaza:
 			continue
-		var y: = sample_height(p.x, p.y) + 0.02
-		var yaw: float = float(sample["yaw"]) + rng.randf_range(-0.02, 0.02)
+		var y: = sample_height(p.x, p.y) + 0.04
+		var yaw: float = float(sample["yaw"])
 		var right: = Vector3(cos(yaw), 0.0, -sin(yaw))
-		## Stagger every other row like laid paving.
-		var stagger: float = lane_w * 0.5 if (i % 2 == 1) else 0.0
-		for lane_i in lanes.size():
-			var lat: float = float(lanes[lane_i]) + stagger
-			if absf(lat) > ROAD_HALF_W + 0.5:
-				continue
-			var origin: = Vector3(p.x, y, p.y) + right * lat
-			origin.x += rng.randf_range(-0.04, 0.04)
-			origin.z += rng.randf_range(-0.04, 0.04)
-			var basis: = Basis.from_euler(Vector3(0.0, yaw, 0.0)).scaled(Vector3(SCALE, SCALE, SCALE))
-			xforms.append(Transform3D(basis, origin))
-		## Occasional end-cap pieces + roadside rubble so edges read as stone, not boxes.
-		if end_mesh != null and i % 11 == 0:
-			var side: = 1.0 if (i % 22 == 0) else -1.0
-			var e_origin: = Vector3(p.x, y, p.y) + right * side * (ROAD_HALF_W + 0.2)
-			var e_basis: = Basis.from_euler(Vector3(0.0, yaw + side * PI * 0.5, 0.0)).scaled(
-				Vector3(SCALE * 0.85, SCALE * 0.85, SCALE * 0.85))
-			end_xforms.append(Transform3D(e_basis, e_origin))
-		if i % 9 == 0 and ResourceLoader.exists("res://assets/props/stones/kenney_stones.glb"):
-			var side2: = 1.0 if (i % 18 == 0) else -1.0
-			var edge: = Vector3(p.x, 0.0, p.y) + right * side2 * (ROAD_HALF_W + 1.8)
+		var basis: = Basis.from_euler(Vector3(0.0, yaw, 0.0))
+		xforms.append(Transform3D(basis, Vector3(p.x, y, p.y)))
+		for side in [-1.0, 1.0]:
+			curb_xforms.append(Transform3D(basis,
+				Vector3(p.x, y + 0.04, p.y) + right * side * (ROAD_HALF_W + 0.05)))
+		## Sparse Kenney cobble clusters as roadside rubble (not the road bed).
+		if edge_mesh != null and i % 14 == 0:
+			var side2: = 1.0 if (i % 28 == 0) else -1.0
+			var e_basis: = Basis.from_euler(Vector3(0.0, yaw + rng.randf_range(-0.4, 0.4), 0.0)).scaled(
+				Vector3(2.2, 2.2, 2.2))
+			edge_xforms.append(Transform3D(e_basis,
+				Vector3(p.x, y - 0.02, p.y) + right * side2 * (ROAD_HALF_W + 1.4)))
+		if i % 22 == 0 and ResourceLoader.exists("res://assets/props/stones/kenney_stones.glb"):
+			var side3: = -1.0 if (i % 44 == 0) else 1.0
+			var edge: = Vector3(p.x, 0.0, p.y) + right * side3 * (ROAD_HALF_W + 2.2)
 			_place_glb("res://assets/props/stones/kenney_stones.glb", edge.x, edge.z,
-				rng.randf_range(0.7, 1.2), rad_to_deg(yaw) + rng.randf_range(-15.0, 15.0), 0)
+				rng.randf_range(0.7, 1.15), rad_to_deg(yaw) + rng.randf_range(-20.0, 20.0), 0)
 		i += 1
 
-	_add_road_multimesh(stone_mesh, xforms)
-	if end_mesh != null and not end_xforms.is_empty():
-		_add_road_multimesh(end_mesh, end_xforms)
+	_add_road_multimesh(slab, xforms)
+	_add_road_multimesh(curb, curb_xforms)
+	if edge_mesh != null and not edge_xforms.is_empty():
+		_add_road_multimesh(edge_mesh, edge_xforms)
 
 
 func _first_mesh_from_glb(path: String) -> Mesh:
@@ -715,7 +744,6 @@ func _add_road_multimesh(mesh: Mesh, xforms: Array[Transform3D]) -> void :
 	mmi.multimesh = mm
 	mmi.cast_shadow = GeometryInstance3D.SHADOW_CASTING_SETTING_OFF
 	add_child(mmi)
-
 ## Giant beast dens between the three hostile capitals — rock rings + ruin camps.
 func _build_dens() -> void :
 	var rng: = RandomNumberGenerator.new()
